@@ -8,12 +8,12 @@ const WIKI_NAV = [
     ]
   },
   {
-    title: "注册新内容",
+    title: "MOD开发基础",
     links: [
       ["mod-quickstart", "从一个 MOD 开始", "mod-quickstart.html"],
-      ["mod-manifest", "mod.json 清单", "mod-manifest.html"],
-      ["mod-data", "注册物品、方块和规则", "mod-data.html"],
-      ["mod-examples", "Copper Age 示例", "mod-examples.html"]
+      ["mod-directory", "MOD 目录结构", "mod-directory.html"],
+      ["mod-manifest", "mod.json", "mod-manifest.html"],
+      ["mod-blockregistry", "方块注册", "mod-blockregistry.html"]
     ]
   },
   {

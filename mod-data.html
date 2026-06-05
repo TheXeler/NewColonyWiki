@@ -42,6 +42,34 @@
 }</code></pre>
     <p>工作台类的方块（如 <code>workbench</code>、<code>stone_furnace</code>）还会声明关联的配方类型或可用操作。</p>
 
+    <h3>材质</h3>
+    <p>方块材质用于决定每个面的显示贴图。当前 <code>Data/blocks/*.json</code> 只负责注册方块数据，不能单独通过新增 <code>texture</code> 字段让方块换贴图；实际渲染贴图由渲染器的方块材质注册表加载。</p>
+    <p>内置内容目前有两类材质来源：</p>
+    <ul>
+      <li><code>NewColonyTextures/*.json</code> + <code>.png</code>：Blockbench / Minecraft Bedrock 风格的模型 JSON 和贴图图集。JSON 里的 <code>elements[0].faces</code> 声明六个面的 UV，PNG 会按 16x16 tile 切入纹理图集。</li>
+      <li>程序生成 fallback：没有材质映射的基础方块会按固定颜色生成临时纹理，例如 stone、wood、leaves、water 等。</li>
+    </ul>
+    <pre><code>{
+  "texture_size": [64, 64],
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "uv": [0, 0, 4, 4], "texture": "#0" },
+        "east":  { "uv": [0, 4, 4, 8], "texture": "#0" },
+        "south": { "uv": [4, 0, 8, 4], "texture": "#0" },
+        "west":  { "uv": [4, 4, 8, 8], "texture": "#0" },
+        "up":    { "uv": [4, 12, 0, 8], "texture": "#0" },
+        "down":  { "uv": [12, 0, 8, 4], "texture": "#0" }
+      }
+    }
+  ]
+}</code></pre>
+    <div class="callout warning">
+      这部分仍属于渲染器内部能力，不是稳定的 MOD 数据接口。内容型 MOD 现在可以安全依赖 <code>Data/blocks/</code> 的注册、掉落和堆叠行为；自定义方块材质需要等材质映射被暴露为正式的 MOD 配置后再作为稳定接口使用。
+    </div>
+
     <h2>实体原型（entities）</h2>
     <p>实体原型用于 <code>spawn_proto</code> 控制台命令和 <code>engine.ecs.spawn_prototype</code>。放在 <code>Data/entities/</code> 下。一个实体由多个组件拼成，每个组件描述一种能力或属性。</p>
     <p>引擎内置了 17 种标准组件——你可以混搭它们来定义不同类型的实体：</p>

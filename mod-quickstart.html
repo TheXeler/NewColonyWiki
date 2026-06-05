@@ -18,13 +18,26 @@
     </div>
 
     <h2>1. 建目录</h2>
-    <p>把 MOD 放在 <code>Mods/</code> 下。目录名随便起，但建议和 MOD ID 一样，好管理。</p>
+    <p>把 MOD 放在 <code>Mods/</code> 下。目录名随便起，但建议和 MOD ID 一样，好管理。最小目录结构如下：</p>
     <pre><code>Mods/copper_age/
   mod.json
   Scripts/
     bootstrap.lua
   Data/
-    items/</code></pre>
+    blocks/
+    entities/
+    recipes/
+    professions/
+    civilizations/
+    focuses/
+    factions/
+    name_pools/
+    actions/
+    crops/
+    biomes/
+  Assets/
+  Localization/</code></pre>
+    <p>各目录的详细用途和规则见 <a href="mod-directory.html">MOD 目录结构</a>。</p>
 
     <h2>2. 写 mod.json</h2>
     <p><code>id</code> 是最重要的字段，后面所有数据 ID 都建议以它开头。至少写一条 <code>dependencies</code> 指向 <code>core</code>，不然你的 MOD 数据可能引用不到 core 里已有的物品和职业。</p>
