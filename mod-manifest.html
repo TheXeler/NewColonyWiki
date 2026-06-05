@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mod.json 清单 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-manifest">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>mod.json 清单</div></div>
+  <div class="content">
+    <h1>mod.json 清单</h1>
+    <p class="subtitle">清单文件告诉游戏：我是谁、从哪启动、依赖谁、默认配置是什么。</p>
+
+    <h2>推荐模板</h2>
+    <p>下面是一个完整的 <code>mod.json</code> 模板，可以直接复制。不需要的字段删掉就行——除了 <code>id</code>，其他都不是必填。</p>
+    <pre><code>{
+  "id": "copper_age",
+  "name": "Copper Age",
+  "version": "0.1.0",
+  "description": "Adds early copper content.",
+  "api_version": "0.1",
+  "license": "MIT",
+  "entry": "Scripts/bootstrap.lua",
+  "dependencies": [
+    {"name": "core", "minVer": "0.1.0", "maxVer": "1.0.0"}
+  ],
+  "load_after": [],
+  "load_before": [],
+  "conflicts": [],
+  "settings": {
+    "enable_debug_logs": false
+  }
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>是</td><td>MOD 的唯一标识。建议用小写英文、数字和下划线，比如 <code>copper_age</code>。内容数据再用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。</td></tr>
+        <tr><td><code>name</code></td><td>否</td><td>显示名称。不写就用 <code>id</code> 代替。</td></tr>
+        <tr><td><code>version</code></td><td>否</td><td>MOD 版本号，建议用语义化版本。不写默认为 <code>0.0.0</code>。</td></tr>
+        <tr><td><code>api_version</code></td><td>否</td><td>期望的公共 MOD API 版本。当前示例用 <code>0.1</code>。引擎会比对兼容性，不兼容时给出警告。</td></tr>
+        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。不写默认为 <code>Scripts/bootstrap.lua</code>。</td></tr>
+        <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
+        <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
+        <tr><td><code>dependencies</code></td><td>否</td><td>必须在这个 MOD 之前加载的其他 MOD。数组格式，每项包含 <code>name</code>（MOD ID）、可选的 <code>minVer</code> 和 <code>maxVer</code>（均为包含边界）。示例：<code>[{"name":"core", "minVer":"0.1.0", "maxVer":"1.0.0"}]</code>。</td></tr>
+        <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
+        <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>
+        <tr><td><code>conflicts</code></td><td>否</td><td>和这些 MOD 同时存在时加载失败。</td></tr>
+        <tr><td><code>settings</code></td><td>否</td><td>默认配置。只支持字符串、数字和布尔值。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>玩家配置覆盖</h2>
+    <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在：</p>
+    <pre><code>Game/Config/ModSettings/copper_age.json</code></pre>
+    <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>
+    <pre><code>local debug_logs = engine.modding.get_setting("copper_age", "enable_debug_logs", false)</code></pre>
+
+    <div class="callout warn">
+      <code>dependencies</code> 决定能否加载，<code>load_after</code> 只是排序建议。你的数据引用了另一个 MOD 的物品或职业时，应该写 <code>dependencies</code>，不能只靠 <code>load_after</code>。
+    </div>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

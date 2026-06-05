@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>从一个 MOD 开始 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-quickstart">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>从一个 MOD 开始</div></div>
+  <div class="content">
+    <h1>从一个 MOD 开始</h1>
+    <p class="subtitle">先做一个最小 MOD：能被游戏发现、输出日志、注册一条物品数据。跑通这个流程后，再往上加配方、职业、文明、Focus。</p>
+
+    <div class="callout info">
+      完整的可复制模板在 <code>Examples/Mods/copper_age/</code>。你可以直接把整个目录复制走，改一下 <code>id</code> 和内容，比从零开始快。
+    </div>
+
+    <h2>1. 建目录</h2>
+    <p>把 MOD 放在 <code>Mods/</code> 下。目录名随便起，但建议和 MOD ID 一样，好管理。</p>
+    <pre><code>Mods/copper_age/
+  mod.json
+  Scripts/
+    bootstrap.lua
+  Data/
+    items/</code></pre>
+
+    <h2>2. 写 mod.json</h2>
+    <p><code>id</code> 是最重要的字段，后面所有数据 ID 都建议以它开头。至少写一条 <code>dependencies</code> 指向 <code>core</code>，不然你的 MOD 数据可能引用不到 core 里已有的物品和职业。</p>
+    <pre><code>{
+  "id": "copper_age",
+  "name": "Copper Age",
+  "version": "0.1.0",
+  "description": "Adds early copper content.",
+  "api_version": "0.1",
+  "license": "MIT",
+  "entry": "Scripts/bootstrap.lua",
+  "dependencies": [
+    {"name": "core", "minVer": "0.1.0", "maxVer": "1.0.0"}
+  ],
+  "settings": {}
+}</code></pre>
+
+    <h2>3. 写入口脚本</h2>
+    <p>入口脚本返回一个表。最少需要 <code>on_load</code>，让 MOD 加载时有东西执行。</p>
+    <pre><code>local M = {}
+
+function M.on_load()
+  engine.log.info("[copper_age] loaded")
+end
+
+return M</code></pre>
+    <p>如果你在脚本里需要加载额外的 Lua 文件（比如 worldgen 辅助函数），用 <code>dofile</code>，不要用 <code>require</code>——后者在当前沙箱里不可用。</p>
+    <pre><code>local Blocks = dofile("Game/Scripts/worldgen/blocks.lua")</code></pre>
+
+    <h2>4. 注册第一件物品</h2>
+    <p>新物品放在 <code>Data/items/*.json</code>。文件名随便取，真正的唯一标识是 JSON 里面的 <code>id</code>。</p>
+    <pre><code>{
+  "id": "copper_age:copper_ore",
+  "name": "Copper Ore",
+  "stack_size": 64,
+  "category": "material"
+}</code></pre>
+
+    <h2>5. 启动后检查</h2>
+    <p>打开控制台（按 <code>~</code>），按下面顺序确认每一步都正常。这是调试 MOD 的标准流程。</p>
+    <pre><code>mods
+list_data items prefix=copper_age:
+data copper_age:copper_ore</code></pre>
+
+    <p>如果 <code>mods</code> 没看到你的 MOD，先查 <code>mod.json</code> 的路径和 JSON 格式。如果 MOD 已加载但 <code>list_data</code> 没结果，检查文件是否放在 <code>Data/items</code> 下，以及 <code>id</code> 是否有 <code>copper_age:</code> 前缀。</p>
+    <p>另外看一下 <code>Logs/latest.log</code>——即使控制台打不开，日志通常也会写进去。</p>
+
+    <div class="callout info">
+      最小 MOD 跑通以后，再逐步加配方、职业、文明和 Focus。一次只加一类内容，加完就在控制台验证，这样更容易定位加载失败的原因。
+    </div>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

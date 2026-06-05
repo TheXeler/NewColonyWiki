@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOD 开发手册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-manual">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>开发手册</div></div>
+  <div class="content">
+    <h1>MOD 开发手册</h1>
+    <p class="subtitle">把 MOD 从最小示例扩展成可维护内容包的阅读路线。</p>
+
+    <div class="callout info">本页是流程导航。需要具体格式时，请进入对应的参考页面。</div>
+
+    <h2>推荐流程</h2>
+    <p>如果你是第一次做 MOD，按下面顺序走一遍：</p>
+    <ol>
+      <li>先完成 <a href="mod-quickstart.html">快速开始</a>，确认 MOD 能加载。</li>
+      <li>阅读 <a href="mod-guide.html">MOD 是怎样加载的</a>，理解数据注册和脚本执行的先后关系。</li>
+      <li>阅读 <a href="mod-manifest.html">清单文件</a>，整理依赖、版本和配置项。</li>
+      <li>用 <a href="mod-data.html">数据格式</a> 添加物品、配方、职业、实体和 Focus。</li>
+      <li>需要规则逻辑时，再接入 <a href="mod-lua-api.html">Lua API</a>。</li>
+      <li>最后用 <a href="mod-console.html">调试控制台</a> 检查数据和脚本。</li>
+    </ol>
+
+    <h2>建议目录</h2>
+    <pre><code>my_mod/
+  mod.json
+  README.md
+  Scripts/
+    bootstrap.lua
+  Data/
+    items/
+    blocks/
+    entities/
+    recipes/
+    professions/
+    civilizations/
+    focuses/
+    factions/
+    name_pools/
+  Assets/
+  Localization/</code></pre>
+
+    <h2>写作原则</h2>
+    <ul>
+      <li>能用 JSON 表达的内容优先放在 <code>Data/</code>。</li>
+      <li>Lua 只处理数据难以表达的规则、条件和选项行为。</li>
+      <li>ID 使用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，避免和其他 MOD 冲突。</li>
+      <li>公共文档没有列出的内部字段，不要当作兼容依赖。</li>
+    </ul>
+
+    <h2>从示例复制</h2>
+    <p>最省事的做法：直接把 <code>Examples/Mods/copper_age/</code> 整个目录复制到 <code>Mods/</code> 下，改掉 <code>id</code> 和内容。示例提供了物品、职业、文明、配方、Focus 和完整事件的完整模板。</p>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>
