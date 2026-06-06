@@ -22,6 +22,7 @@ const WIKI_NAV = [
       ["mod-lua-api", "Lua 怎么写", "mod-lua-api.html"],
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
+      ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
       ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]
     ]
   },
