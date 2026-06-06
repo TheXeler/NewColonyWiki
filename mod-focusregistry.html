@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>焦点注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-focusregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>焦点注册</div></div>
+  <div class="content">
+    <h1>焦点注册</h1>
+    <p class="subtitle">焦点（Focus）是一种事件驱动的提示系统。当游戏内条件满足时，引擎会触发一个焦点，向玩家展示一段信息并提供可选的响应动作。焦点定义放在 <code>Data/focuses/</code> 下。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+  "id": "core:first_colonist",
+  "title": "First Colonist Active",
+  "body": "The first colonist has entered the world. Review their needs and role.",
+  "severity": "info",
+  "icon": "colonist",
+  "enabled": true,
+  "one_shot": true,
+  "cooldown_ticks": 0,
+  "priority": 0,
+  "conditions": [
+    { "type": "tick_at_least", "tick": 1 },
+    { "type": "entity_count_at_least", "count": 1 }
+  ],
+  "choices": [
+    {
+      "id": "inspect",
+      "label": "Inspect Colonist",
+      "description": "Open the colonist inspection panel.",
+      "action": "inspect_last_colonist"
+    },
+    {
+      "id": "dismiss",
+      "label": "Dismiss",
+      "description": "Close this focus."
+    }
+  ]
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
+        <tr><td><code>title</code></td><td>string</td><td>否</td><td>焦点触发时显示的标题。</td></tr>
+        <tr><td><code>body</code></td><td>string</td><td>否</td><td>焦点触发时显示的正文描述。</td></tr>
+        <tr><td><code>severity</code></td><td>string</td><td>否</td><td>严重程度，影响 UI 显示风格。可选值：<code>info</code>（默认）、<code>warning</code>、<code>critical</code>。</td></tr>
+        <tr><td><code>icon</code></td><td>string</td><td>否</td><td>焦点图标名称，对应实体或 UI 图标 ID。</td></tr>
+        <tr><td><code>enabled</code></td><td>bool</td><td>否</td><td>是否启用该焦点，默认 <code>true</code>。设为 <code>false</code> 可临时禁用。</td></tr>
+        <tr><td><code>one_shot</code></td><td>bool</td><td>否</td><td>是否只触发一次，默认 <code>true</code>。设为 <code>false</code> 表示满足条件时会反复触发。</td></tr>
+        <tr><td><code>cooldown_ticks</code></td><td>uint</td><td>否</td><td>冷却时间（游戏刻）。仅在 <code>one_shot</code> 为 <code>false</code> 时有效，控制两次触发的最小间隔。默认 0 表示无冷却。</td></tr>
+        <tr><td><code>priority</code></td><td>int</td><td>否</td><td>优先级，数值越小越优先展示给玩家。同一时刻有多个焦点触发时按优先级排序。默认 0。</td></tr>
+        <tr><td><code>conditions</code></td><td>object[]</td><td>是</td><td>触发条件列表。所有条件同时满足时焦点才会触发。每个条件必须包含 <code>type</code> 字段（见下方条件类型说明）。</td></tr>
+        <tr><td><code>choices</code></td><td>object[]</td><td>否</td><td>玩家可选的响应动作列表。如果不提供，系统会自动添加一个 "Dismiss"（关闭）选项。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>条件类型</h2>
+    <table>
+      <thead><tr><th>type</th><th>所需字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>tick_at_least</code></td><td><code>tick</code> (uint)</td><td>当前游戏刻大于等于指定值时满足。</td></tr>
+        <tr><td><code>entity_count_at_least</code></td><td><code>count</code> (uint)</td><td>世界中的实体数量大于等于指定值时满足。</td></tr>
+        <tr><td><code>entity_count_at_most</code></td><td><code>count</code> (uint)</td><td>世界中的实体数量小于等于指定值时满足。</td></tr>
+        <tr><td><code>colonist_need</code></td><td><code>need</code> (string)、<code>op</code> (string)、<code>value</code> (float)</td><td>
+          检查任一殖民者的需求值。<br>
+          <code>need</code> 可选值：<code>hunger</code>（饥饿）、<code>fatigue</code>（疲劳）、<code>social</code>（社交）。<br>
+          <code>op</code> 可选值：<code>&lt;</code>、<code>&lt;=</code>、<code>==</code>、<code>&gt;=</code>、<code>&gt;</code>。
+        </td></tr>
+        <tr><td><code>lua</code></td><td><code>name</code> (string)</td><td>调用 Lua 条件函数，<code>name</code> 为 Lua 中注册的函数名（如 <code>core:faction_relation_daily_8_up</code>）。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>选项字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>选项的唯一标识（在同一焦点内不重复）。</td></tr>
+        <tr><td><code>label</code></td><td>string</td><td>是</td><td>选项按钮上显示的文本。</td></tr>
+        <tr><td><code>description</code></td><td>string</td><td>否</td><td>选项的详细描述（鼠标悬停提示）。</td></tr>
+        <tr><td><code>action</code></td><td>string</td><td>否</td><td>关联的 Lua 动作名称，玩家选择后由脚本引擎执行。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      焦点系统通过 <code>one_shot</code> + <code>cooldown_ticks</code> 控制触发频率。<code>one_shot: true</code>（默认）时事件只触发一次；设为 <code>false</code> 并配合 <code>cooldown_ticks</code> 可实现周期性提醒（如每 24000 刻检查一次派系关系）。
+    </div>
+
+    <h2>Lua 条件函数</h2>
+    <p>使用 <code>lua</code> 类型的条件时，需要在 Lua 脚本中注册对应的条件函数。函数签名：</p>
+    <pre><code>-- 返回 true 表示条件满足
+function faction_relation_daily_8_up(focus_id, tick)
+  -- 自定义逻辑
+  return true
+end
+
+-- 在 bootstrap.lua 中注册
+focus_conditions["core:faction_relation_daily_8_up"] = faction_relation_daily_8_up</code></pre>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按 <code>~</code>）中确认焦点注册成功：</p>
+    <pre><code>mods                            —— 确认 MOD 已加载
+list_data focuses               —— 列出所有已注册焦点
+data core:first_colonist        —— 查看单个焦点的完整 JSON
+focuses.list()                  —— Lua 中列出所有焦点 ID
+focuses.active()                —— Lua 中查看当前活跃焦点</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

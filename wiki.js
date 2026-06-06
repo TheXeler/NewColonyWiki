@@ -13,7 +13,10 @@ const WIKI_NAV = [
       ["mod-quickstart", "从一个 MOD 开始", "mod-quickstart.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
-      ["mod-blockregistry", "方块注册", "mod-blockregistry.html"]
+      ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
+      ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
+      ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
+      ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"]
     ]
   },
   {
@@ -53,8 +56,15 @@ function createSidebar(activePage) {
     const title = document.createElement("div");
     title.className = "nav-section-title";
     title.textContent = group.title;
+
+    // 折叠/展开：点击标题切换 collapsed 类
+    title.addEventListener("click", () => {
+      nav.classList.toggle("collapsed");
+    });
+
     nav.appendChild(title);
 
+    let hasActive = false;
     for (const [page, label, href] of group.links) {
       const a = document.createElement("a");
       a.href = href;
@@ -62,9 +72,16 @@ function createSidebar(activePage) {
       if (page === activePage) {
         a.className = "active";
         a.setAttribute("aria-current", "page");
+        hasActive = true;
       }
       nav.appendChild(a);
     }
+
+    // 默认折叠非活跃分组
+    if (!hasActive) {
+      nav.classList.add("collapsed");
+    }
+
     sidebar.appendChild(nav);
   }
   return sidebar;

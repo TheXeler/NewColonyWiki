@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>职业注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-professionregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>职业注册</div></div>
+  <div class="content">
+    <h1>职业注册</h1>
+    <p class="subtitle">职业定义放在 <code>Data/professions/</code> 下，引擎加载时自动扫描。职业决定了殖民者可以解锁哪些配方，以及需要什么工具块才能从事该职业。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+  "id": "core:blacksmith",
+  "name": "Blacksmith",
+  "max_level": 5,
+  "required_block": { "id": "core:anvil_item", "count": 1 },
+  "prerequisites": [],
+  "unlocks_recipes": [
+    { "id": "core:smelt_iron", "level": 1 },
+    { "id": "core:craft_iron_pickaxe", "level": 2 }
+  ]
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>是</td><td>职业显示名称。</td></tr>
+        <tr><td><code>max_level</code></td><td>int</td><td>是</td><td>最大等级，决定配方解锁的等级上限。</td></tr>
+        <tr><td><code>required_block</code></td><td>object</td><td>是</td><td>从事该职业所需的工具方块。<code>id</code> 指向已注册的方块 ID，<code>count</code> 为所需数量。</td></tr>
+        <tr><td><code>prerequisites</code></td><td>string[]</td><td>否</td><td>前置职业 ID 列表。例如铁匠可能需要先成为工人。空数组表示无条件可转职。</td></tr>
+        <tr><td><code>unlocks_recipes</code></td><td>object[]</td><td>否</td><td>该职业解锁的配方列表。每个条目包含 <code>id</code>（配方 ID）和 <code>level</code>（解锁所需等级）。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      职业系统通过 <code>required_block</code> 控制门槛——殖民者背包中必须持有指定数量和类型的物品才能转职。配方按 <code>level</code> 阶梯解锁，等级提升后可获得更高级的制造能力。
+    </div>
+
+    <h2>ID 规则</h2>
+    <ul>
+      <li>职业 ID 只能包含小写字母 <code>a-z</code>、数字 <code>0-9</code>、下划线 <code>_</code>、短横线 <code>-</code>、冒号 <code>:</code>。</li>
+      <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如 <code>copper_age:coppersmith</code>。</li>
+      <li>如果省略冒号前缀，引擎自动补全为 <code>&lt;当前mod_id&gt;:&lt;名称&gt;</code>。</li>
+    </ul>
+
+    <h2>文件放置规则</h2>
+    <ul>
+      <li>放在 <code>Data/professions/</code> 下，支持任意深度的子目录。</li>
+      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
+      <li>每个 JSON 文件定义一个职业。</li>
+    </ul>
+
+    <h2>前置职业示例</h2>
+    <p>如果铁匠要求先成为工人，可以这样写：</p>
+    <pre><code>{
+  "id": "core:blacksmith",
+  "prerequisites": ["core:worker"],
+  ...
+}</code></pre>
+    <p>引擎按拓扑顺序校验前置链，发现循环依赖或缺失前置时会报错。</p>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按 <code>~</code>）中确认职业注册成功：</p>
+    <pre><code>mods                                  —— 确认 MOD 已加载
+list_data professions                  —— 列出所有已注册职业
+data core:blacksmith                   —— 查看单个职业的完整 JSON</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

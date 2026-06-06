@@ -80,6 +80,27 @@ body {
   text-transform: uppercase;
   letter-spacing: 1.2px;
   color: var(--color-muted);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-section-title::before {
+  content: "▾";
+  display: inline-block;
+  font-size: .75rem;
+  transition: transform .2s;
+}
+
+.nav-section.collapsed .nav-section-title::before {
+  transform: rotate(-90deg);
+}
+
+/* 折叠时隐藏链接 */
+.nav-section.collapsed a {
+  display: none;
 }
 
 .nav-section a {
