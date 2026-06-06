@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>示例工程</div></div>
   <div class="content">
     <h1>MOD 示例：Copper Age</h1>
-    <p class="subtitle">一个最小内容型 MOD：新增铜矿、铜锭、铜锤、铜匠职业、文明开局、配方和 Focus。可以直接复制 <code>Examples/mods/copper_age/</code> 作为起点。</p>
+    <p class="subtitle">一个最小内容型 MOD：新增铜矿、铜锭、铜锤、铜匠职业、文明开局、配方和焦点。可以直接复制 <code>Examples/mods/copper_age/</code> 作为起点。</p>
 
     <h2>目录</h2>
     <p>打开 <code>Examples/mods/copper_age/</code>，你能看到这些文件：</p>
@@ -84,7 +84,7 @@
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
 
-    <h2>Focus</h2>
+    <h2>焦点</h2>
     <pre><code>{
   "id": "copper_age:copper_found",
   "title": "Copper Work Available",
@@ -100,7 +100,7 @@
 }</code></pre>
 
     <h2>脚本</h2>
-    <p>下面是完整的入口脚本，展示了如何订阅事件、设置定时器、监听 Focus 触发。每次加新功能时，可以参考这里的事件名和写法。</p>
+    <p>下面是完整的入口脚本，展示了如何订阅事件、设置定时器、监听 焦点 触发。每次加新功能时，可以参考这里的事件名和写法。</p>
     <pre><code>local M = {}
 
 function M.on_load()

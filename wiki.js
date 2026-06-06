@@ -8,7 +8,7 @@ const WIKI_NAV = [
     ]
   },
   {
-    title: "Mod开发",
+    title: "Mod 开发基础",
     links: [
       ["mod-quickstart", "从头开始", "mod-quickstart.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
@@ -46,6 +46,7 @@ const WIKI_NAV = [
     links: [
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
       ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
+      ["mod-lua-data-components", "数据组件 API", "mod-lua-data-components.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
       ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]

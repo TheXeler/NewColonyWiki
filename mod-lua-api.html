@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
     <h1>Lua 怎么用</h1>
-    <p class="subtitle">Lua 入口用来连接事件、定时器、Focus、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
+    <p class="subtitle">Lua 入口用来连接事件、定时器、焦点、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
 
     <h2>入口脚本结构</h2>
     <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。</p>
@@ -36,7 +36,7 @@ return M</code></pre>
 
     <p>四个生命周期函数的用途：</p>
     <ul>
-      <li><strong>on_load</strong> —— 适合订阅事件、注册 Focus 条件、读取配置。此时数据已注册完毕，但世界还没生成。</li>
+      <li><strong>on_load</strong> —— 适合订阅事件、注册 焦点 条件、读取配置。此时数据已注册完毕，但世界还没生成。</li>
       <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore。此时地形 API 已可用。</li>
       <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
       <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
@@ -61,6 +61,13 @@ end
 
 local hp = engine.ecs.get_health(id)
 engine.log.info("health: " .. tostring(hp.current) .. "/" .. tostring(hp.max))</code></pre>
+
+    <h2>实体脚本数据</h2>
+    <p>需要给实体挂任务状态、临时标记或脚本私有计数时，使用 <code>engine.data</code> 数据组件 API。它提供类似 NBT compound 的点分路径读写。完整说明见 <a href="mod-lua-data-components.html">数据组件 API</a>。</p>
+    <pre><code>engine.data.set(id, "quest.stage", 2)
+engine.data.set(id, "quest.flags.met_elder", true)
+
+local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
 
     <h2>合成和职业</h2>
     <p>配方和职业本体写在 JSON 里，Lua 只负责触发或响应结果。</p>
@@ -168,8 +175,8 @@ end
 engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
-    <h2>Focus</h2>
-    <p>Focus 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 Focus 被触发、选择或关闭。</p>
+    <h2>焦点</h2>
+    <p>焦点 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 焦点 被触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20
 end)

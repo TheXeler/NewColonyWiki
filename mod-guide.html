@@ -44,7 +44,7 @@
     </ol>
 
     <h2>什么时候写 JSON，什么时候写 Lua</h2>
-    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。包括方块、实体、配方、职业、文明、Focus、NPC 阵营、名称池、动作（actions）和作物（crops）。Lua 只用来补充 JSON 做不到的事情：监听事件、注册 Focus 条件、定时执行逻辑、生成实体、操作地形。</p>
+    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。包括方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、动作（actions）和作物（crops）。Lua 只用来补充 JSON 做不到的事情：监听事件、注册焦点条件、定时执行逻辑、生成实体、操作地形。</p>
 
     <div class="callout warn">
       不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询。

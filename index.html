@@ -21,7 +21,7 @@
     <ol class="step-list">
       <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（10 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
       <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、作物和区域类型。能用 JSON 表达的内容优先写 JSON。</li>
-      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、Focus 条件和运行时逻辑，不是用来重建数据系统的。</li>
+      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、焦点条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
 
     <h2>当前能稳定使用的能力</h2>
@@ -44,7 +44,7 @@
     </table>
 
     <div class="callout info">
-      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、Focus、NPC 阵营、作物、区域和少量 Lua 辅助逻辑。完整能力清单见 <a href="mod-status.html">当前能力状态</a>。示例工程在 <code>Examples/mods/copper_age/</code>。
+      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、焦点、NPC 阵营、作物、区域和少量 Lua 辅助逻辑。完整能力清单见 <a href="mod-status.html">当前能力状态</a>。示例工程在 <code>Examples/mods/copper_age/</code>。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

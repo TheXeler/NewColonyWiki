@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据组件 API · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-lua-data-components">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>数据组件 API</div></div>
+  <div class="content">
+    <h1>数据组件 API</h1>
+    <p class="subtitle">给 Lua 脚本使用的实体附加数据表，适合保存任务状态、临时标记、计数器和脚本私有配置。结构参考 Minecraft NBT 的 compound 思路，但使用 Lua 表和点分路径。</p>
+
+    <div class="callout warn">
+      当前数据组件是运行时 Lua 状态，不进入存档，也不参与网络复制。联机时客户端本地写入可能被主机状态覆盖；需要跨网络生效的操作应通过网络命令请求主机执行。
+    </div>
+
+    <h2>基本用法</h2>
+    <p>所有接口挂在 <code>engine.data</code> 下。数据只允许附加到存活实体；实体销毁后接口会返回失败或 <code>nil</code>。</p>
+    <pre><code>local entity = engine.ecs.spawn_prototype("core:colonist")
+
+engine.data.ensure(entity)
+engine.data.set(entity, "quest.stage", 2)
+engine.data.set(entity, "quest.flags.met_elder", true)
+engine.data.set(entity, "quest.owner", "core:village")
+
+local stage = engine.data.get(entity, "quest.stage", 0)
+if engine.data.get(entity, "quest.flags.met_elder", false) then
+  engine.log.info("quest stage: " .. tostring(stage))
+end</code></pre>
+
+    <h2>路径规则</h2>
+    <p>路径用点号分隔，每一段都是 compound 里的键。写入深层路径时，中间 compound 会自动创建。</p>
+    <table>
+      <thead><tr><th>路径</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>quest.stage</code></td><td><code>data.quest.stage</code></td></tr>
+        <tr><td><code>quest.flags.met_elder</code></td><td><code>data.quest.flags.met_elder</code></td></tr>
+        <tr><td><code>cooldowns.mining</code></td><td>脚本自定义的挖矿冷却计数。</td></tr>
+      </tbody>
+    </table>
+    <p>空路径、连续点号或末尾点号都是无效路径，例如 <code>quest..stage</code> 和 <code>quest.</code>。</p>
+
+    <h2>支持的值</h2>
+    <p>建议使用确定、轻量的 Lua 值：<code>nil</code>、布尔、数字、字符串和表。表会作为 compound 使用，也可以直接写入子表。</p>
+    <pre><code>engine.data.set(entity, "npc.reputation", 12)
+engine.data.set(entity, "npc.tags", {
+  hostile = false,
+  faction = "core:merchant_guild"
+})
+
+local tags = engine.data.get(entity, "npc.tags")
+if tags and tags.faction == "core:merchant_guild" then
+  engine.log.info("merchant related entity")
+end</code></pre>
+
+    <h2>API 列表</h2>
+    <table>
+      <thead><tr><th>API</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.data.ensure(entity)</code></td><td>创建数据组件。实体不存在时返回 <code>false</code>。</td></tr>
+        <tr><td><code>engine.data.has(entity)</code></td><td>检查实体是否已有数据组件。</td></tr>
+        <tr><td><code>engine.data.set(entity, path, value)</code></td><td>写入路径上的值。成功返回 <code>true</code>。</td></tr>
+        <tr><td><code>engine.data.get(entity, path, fallback)</code></td><td>读取路径上的值。不存在时返回 <code>fallback</code>，没有 fallback 时返回 <code>nil</code>。</td></tr>
+        <tr><td><code>engine.data.remove(entity, path)</code></td><td>删除路径上的值。路径存在并被删除时返回 <code>true</code>。</td></tr>
+        <tr><td><code>engine.data.type(entity, path)</code></td><td>返回 <code>nil</code>、<code>boolean</code>、<code>number</code>、<code>string</code> 或 <code>compound</code>。</td></tr>
+        <tr><td><code>engine.data.get_all(entity)</code></td><td>返回整个 compound；实体没有数据组件时返回 <code>nil</code>。</td></tr>
+        <tr><td><code>engine.data.clear(entity)</code></td><td>移除整个数据组件。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>典型场景</h2>
+    <p>数据组件适合把脚本事件串起来，例如给被玩家交互过的实体打标记，在后续事件里读取。</p>
+    <pre><code>engine.events.subscribe("block:interacted", function(evt)
+  local entity = evt.entity_id
+  engine.data.set(entity, "last_action.type", evt.action)
+  engine.data.set(entity, "last_action.x", evt.x)
+  engine.data.set(entity, "last_action.y", evt.y)
+  engine.data.set(entity, "last_action.z", evt.z)
+end)
+
+engine.timers.every(20, function()
+  for _, entity in ipairs(engine.ecs.query_all_entities()) do
+    local action = engine.data.get(entity, "last_action.type")
+    if action == "mine" then
+      engine.log.info("recent miner: " .. tostring(entity))
+    end
+  end
+end)</code></pre>
+
+    <h2>边界</h2>
+    <ul>
+      <li>不要用数据组件保存必须读档恢复的核心进度；当前它不是存档格式的一部分。</li>
+      <li>不要保存 C++ userdata、函数或协程作为长期状态。推荐只存标量和普通 Lua 表。</li>
+      <li>需要大量实体查询时，先用 <code>engine.ecs.query_*</code> 缩小范围，再读取数据组件。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

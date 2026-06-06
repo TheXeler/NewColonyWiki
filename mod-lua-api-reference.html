@@ -77,6 +77,16 @@
         <tr class="api-row" data-api-row><td><code>engine.ecs.add_equipment(entity)</code></td><td><code>entity id</code></td><td>-</td><td>给实体添加 Equipment 组件（空装备栏）。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.has_equipment(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否有 Equipment 组件。</td></tr>
 
+        <!-- Data Components -->
+        <tr class="api-row" data-api-row><td><code>engine.data.ensure(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>给存活实体创建脚本数据组件；已存在时保持原数据。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.has(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否有脚本数据组件。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.set(entity, path, value)</code></td><td>entity, string, any</td><td>bool</td><td>按点分路径写入值，自动创建中间 compound。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.get(entity, path, fallback)</code></td><td>entity, string, any?</td><td>any</td><td>按点分路径读取值；不存在时返回 fallback 或 nil。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.remove(entity, path)</code></td><td>entity, string</td><td>bool</td><td>删除路径上的值。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.type(entity, path)</code></td><td>entity, string</td><td>string</td><td>返回 nil、boolean、number、string 或 compound。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.get_all(entity)</code></td><td><code>entity id</code></td><td>table 或 nil</td><td>返回整个数据 compound。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.data.clear(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>清空实体脚本数据组件。</td></tr>
+
         <!-- Modding -->
         <tr class="api-row" data-api-row><td><code>engine.modding.get_data_json(id)</code></td><td><code>data id</code></td><td>string</td><td>返回注册表中的原始 JSON，未找到时返回空字符串。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.modding.list_by_type(type)</code></td><td><code>blocks</code> 等</td><td>table</td><td>列出指定数据类型的全部 ID。</td></tr>
@@ -107,15 +117,15 @@
         <tr class="api-row" data-api-row><td><code>engine.timers.cancel(id)</code></td><td>timer id</td><td>bool</td><td>取消定时器。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.timers.clear()</code></td><td>-</td><td>-</td><td>清空全部 Lua 定时器。</td></tr>
 
-        <!-- Focus -->
-        <tr class="api-row" data-api-row><td><code>engine.focus.register_condition(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 条件，回调返回 bool。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.register_choice_action(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 选项动作。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.subscribe(fn)</code></td><td>function</td><td>handler id</td><td>监听 Focus 触发通知。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.unsubscribe(id)</code></td><td>handler id</td><td>bool</td><td>取消 Focus 触发监听。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.list()</code></td><td>-</td><td>table</td><td>列出 Focus 定义 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.active()</code></td><td>-</td><td>table</td><td>列出当前活跃的 Focus 实例和 choices。</td></tr>
+        <!-- 焦点 -->
+        <tr class="api-row" data-api-row><td><code>engine.focus.register_condition(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 焦点 条件，回调返回 bool。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.register_choice_action(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 焦点 选项动作。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.subscribe(fn)</code></td><td>function</td><td>handler id</td><td>监听 焦点 触发通知。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.unsubscribe(id)</code></td><td>handler id</td><td>bool</td><td>取消 焦点 触发监听。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.list()</code></td><td>-</td><td>table</td><td>列出 焦点 定义 ID。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.active()</code></td><td>-</td><td>table</td><td>列出当前活跃的 焦点 实例和 choices。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.focuses.choose(instance, choice)</code></td><td>instance id, string</td><td>bool</td><td>执行选项动作并触发 <code>focus:chosen</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.dismiss(instance)</code></td><td>instance id</td><td>bool</td><td>关闭 Focus 并触发 <code>focus:dismissed</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.dismiss(instance)</code></td><td>instance id</td><td>bool</td><td>关闭 焦点 并触发 <code>focus:dismissed</code>。</td></tr>
 
         <!-- Inventory -->
         <tr class="api-row" data-api-row><td><code>engine.inventory.hash(id)</code></td><td><code>data id</code></td><td>hashed id</td><td>把字符串 ID 转为库存内部 ID。</td></tr>
