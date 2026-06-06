@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配置文件 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-configfiles">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>配置文件</div></div>
+  <div class="content">
+    <h1>配置文件</h1>
+    <p class="subtitle">游戏使用三类配置文件：MOD 设置（<code>mod.json</code> 中的 <code>settings</code>）、控制台配置（权限和别名）、键位绑定。MOD 可以通过 <code>config/</code> 目录提供默认的控制台配置和键位覆盖。</p>
+
+    <h2>MOD 设置</h2>
+    <p>在 <code>mod.json</code> 的 <code>settings</code> 字段中声明默认值：</p>
+    <pre><code>{
+    "id": "copper_age",
+    "settings": {
+        "enable_debug_logs": false,
+        "ore_spawn_rate": 1.0
+    }
+}</code></pre>
+    <p>设置项支持字符串、数字和布尔值。玩家可以在 <code>Config/ModSettings/&lt;mod_id&gt;.json</code> 中覆盖默认值，覆盖值的类型必须和默认值一致。</p>
+    <p>Lua 中读取设置：</p>
+    <pre><code>local debug = engine.modding.get_setting("copper_age", "enable_debug_logs", false)
+local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</code></pre>
+    <p>第三个参数是 fallback 值，防止旧配置缺字段时出错。详见 <a href="mod-manifest.html">mod.json</a>。</p>
+
+    <h2>控制台权限</h2>
+    <p>文件：<code>config/console_permissions.json</code></p>
+    <p>控制哪些控制台命令在什么权限等级下可用。</p>
+    <pre><code>{
+    "access_level": "developer",
+    "command_permissions": {}
+}</code></pre>
+
+    <h3>权限等级</h3>
+    <table>
+      <thead><tr><th>等级</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>player</code></td><td>普通玩家。只能使用最基本的命令。</td></tr>
+        <tr><td><code>modder</code></td><td>MOD 开发者。可以使用 MOD 相关命令（<code>mods</code>、<code>reload</code>、<code>list_data</code> 等）。</td></tr>
+        <tr><td><code>developer</code></td><td>开发者。可以使用所有命令，包括配置重载和快照。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>命令权限覆盖</h3>
+    <p><code>command_permissions</code> 可以为单个命令指定不同于全局的权限等级：</p>
+    <pre><code>{
+    "access_level": "player",
+    "command_permissions": {
+        "mods": "player",
+        "list_data": "player",
+        "reload": "modder",
+        "spawn_proto": "developer"
+    }
+}</code></pre>
+    <p>未在 <code>command_permissions</code> 中列出的命令使用 <code>access_level</code> 的全局默认值。</p>
+
+    <h2>控制台别名</h2>
+    <p>文件：<code>config/console_aliases.json</code></p>
+    <p>为常用命令序列创建快捷别名。</p>
+    <pre><code>{
+    "aliases": {
+        "test_copper": "spawn_proto core:copper_ingot 5",
+        "reset": "clear && mods"
+    }
+}</code></pre>
+    <p>在控制台中输入别名等同于输入其展开后的完整命令。别名不能递归引用其他别名。</p>
+
+    <h2>键位绑定</h2>
+    <p>文件：<code>config/keybindings.json</code></p>
+    <p>自定义游戏的操作键位。CoreMod 提供了默认绑定，MOD 可以提供自己的 <code>config/keybindings.json</code> 来覆盖。</p>
+    <pre><code>{
+  "bindings": {
+    "camera_orbit": [
+      { "type": "mouse_button", "button": 1 }
+    ],
+    "camera_zoom_in": [
+      { "type": "scroll", "scroll_direction": 1 }
+    ],
+    "camera_zoom_out": [
+      { "type": "scroll", "scroll_direction": -1 }
+    ],
+    "camera_move_forward": [
+      { "type": "key", "key": "W" }
+    ],
+    "camera_move_backward": [
+      { "type": "key", "key": "S" }
+    ],
+    "camera_move_left": [
+      { "type": "key", "key": "A" }
+    ],
+    "camera_move_right": [
+      { "type": "key", "key": "D" }
+    ],
+    "camera_move_up": [
+      { "type": "key", "key": "SPACE" }
+    ],
+    "camera_move_down": [
+      { "type": "key", "key": "LEFT_SHIFT" }
+    ],
+    "select": [
+      { "type": "mouse_button", "button": 0 }
+    ],
+    "deselect": [
+      { "type": "key", "key": "ESCAPE" }
+    ],
+    "toggle_pause": [
+      { "type": "key", "key": "ESCAPE" }
+    ],
+    "set_speed_1": [
+      { "type": "key", "key": "1" }
+    ],
+    "set_speed_2": [
+      { "type": "key", "key": "2" }
+    ],
+    "set_speed_3": [
+      { "type": "key", "key": "3" }
+    ],
+    "set_speed_4": [
+      { "type": "key", "key": "4" }
+    ],
+    "toggle_debug_hud": [
+      { "type": "key", "key": "F3" }
+    ]
+  }
+}</code></pre>
+
+    <h3>绑定条目格式</h3>
+    <p>每个动作绑定一个数组，支持同时绑定多个输入。数组中的每个条目是一个独立的绑定。</p>
+    <table>
+      <thead><tr><th>类型</th><th><code>type</code> 值</th><th>额外字段</th></tr></thead>
+      <tbody>
+        <tr><td>键盘按键</td><td><code>"key"</code></td><td><code>"key"</code>: 按键名称（见下表）</td></tr>
+        <tr><td>鼠标按键</td><td><code>"mouse_button"</code></td><td><code>"button"</code>: 0=左键, 1=右键, 2=中键</td></tr>
+        <tr><td>滚轮</td><td><code>"scroll"</code></td><td><code>"scroll_direction"</code>: 1=向上, -1=向下</td></tr>
+      </tbody>
+    </table>
+
+    <h3>按键名称</h3>
+    <p>常见按键名称（不区分大小写）：</p>
+    <table>
+      <thead><tr><th>分类</th><th>按键名称</th></tr></thead>
+      <tbody>
+        <tr><td>字母</td><td><code>A</code> ~ <code>Z</code></td></tr>
+        <tr><td>数字</td><td><code>0</code> ~ <code>9</code></td></tr>
+        <tr><td>功能键</td><td><code>F1</code> ~ <code>F12</code></td></tr>
+        <tr><td>方向键</td><td><code>UP</code>、<code>DOWN</code>、<code>LEFT</code>、<code>RIGHT</code></td></tr>
+        <tr><td>修饰键</td><td><code>LEFT_SHIFT</code>、<code>RIGHT_SHIFT</code>、<code>LEFT_CONTROL</code>、<code>RIGHT_CONTROL</code>、<code>LEFT_ALT</code>、<code>RIGHT_ALT</code></td></tr>
+        <tr><td>特殊键</td><td><code>SPACE</code>、<code>ENTER</code>、<code>ESCAPE</code>、<code>TAB</code>、<code>BACKSPACE</code>、<code>DELETE</code>、<code>INSERT</code></td></tr>
+        <tr><td>翻页</td><td><code>PAGE_UP</code>、<code>PAGE_DOWN</code>、<code>HOME</code>、<code>END</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>可绑定的动作</h3>
+    <table>
+      <thead><tr><th>动作名</th><th>默认绑定</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>camera_orbit</code></td><td>鼠标右键</td><td>按住拖拽旋转视角</td></tr>
+        <tr><td><code>camera_zoom_in</code></td><td>滚轮上</td><td>拉近视角</td></tr>
+        <tr><td><code>camera_zoom_out</code></td><td>滚轮下</td><td>拉远视角</td></tr>
+        <tr><td><code>camera_move_forward</code></td><td>W</td><td>镜头前进</td></tr>
+        <tr><td><code>camera_move_backward</code></td><td>S</td><td>镜头后退</td></tr>
+        <tr><td><code>camera_move_left</code></td><td>A</td><td>镜头左移</td></tr>
+        <tr><td><code>camera_move_right</code></td><td>D</td><td>镜头右移</td></tr>
+        <tr><td><code>camera_move_up</code></td><td>Space</td><td>镜头升高</td></tr>
+        <tr><td><code>camera_move_down</code></td><td>Left Shift</td><td>镜头降低</td></tr>
+        <tr><td><code>select</code></td><td>鼠标左键</td><td>选择/交互</td></tr>
+        <tr><td><code>deselect</code></td><td>Escape</td><td>取消选择</td></tr>
+        <tr><td><code>toggle_pause</code></td><td>Escape</td><td>暂停/继续</td></tr>
+        <tr><td><code>set_speed_1</code></td><td>1</td><td>游戏速度 1x</td></tr>
+        <tr><td><code>set_speed_2</code></td><td>2</td><td>游戏速度 2x</td></tr>
+        <tr><td><code>set_speed_3</code></td><td>3</td><td>游戏速度 3x</td></tr>
+        <tr><td><code>set_speed_4</code></td><td>4</td><td>游戏速度 4x</td></tr>
+        <tr><td><code>toggle_debug_hud</code></td><td>F3</td><td>切换调试 HUD 显示</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      一个动作可以绑定多个输入。例如可以同时绑定键盘和鼠标到同一个动作。修改键位文件后需要重启游戏才能生效。
+    </div>
+
+    <h2>config/ 目录放置</h2>
+    <p>MOD 的配置文件放在 <code>config/</code> 目录下：</p>
+    <pre><code>my_mod/
+  mod.json
+  config/
+    console_permissions.json    （可选）
+    console_aliases.json        （可选）
+    keybindings.json            （可选）</code></pre>
+    <p>只有 CoreMod 的配置文件会在启动时自动加载。第三方 MOD 如果需要自定义配置，建议在 Lua 入口脚本中读取和解析。</p>
+
+    <h2>验证和重载命令</h2>
+    <p>在控制台（按 <code>~</code>）中管理配置：</p>
+    <pre><code>reload_config permissions         -- 重载控制台权限
+reload_config aliases             -- 重载控制台别名
+reload_config all                 -- 重载全部配置
+validate_config permissions       -- 校验权限配置
+validate_config aliases           -- 校验别名配置
+mod_settings                      -- 查看所有 MOD 设置</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

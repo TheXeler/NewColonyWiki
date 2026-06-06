@@ -99,8 +99,64 @@ body {
 }
 
 /* 折叠时隐藏链接 */
-.nav-section.collapsed a {
+.nav-section.collapsed a,
+.nav-section.collapsed .nav-sub-group {
   display: none;
+}
+
+/* ===== Nested Sub-Group ===== */
+.nav-sub-group {
+  padding: 2px 0;
+}
+
+.nav-sub-title {
+  padding: 5px 20px 5px 28px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nav-sub-title::before {
+  content: "▾";
+  display: inline-block;
+  font-size: .7rem;
+  transition: transform .2s;
+}
+
+.nav-sub-group.collapsed .nav-sub-title::before {
+  transform: rotate(-90deg);
+}
+
+.nav-section .nav-sub-group.collapsed > a {
+  display: none;
+}
+
+.nav-section .nav-sub-group > a {
+  display: block;
+  padding: 5px 20px 5px 42px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: .86rem;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+}
+
+.nav-section .nav-sub-group > a:hover {
+  background: rgba(124, 58, 237, .08);
+  color: var(--color-link-hover);
+  border-left-color: var(--color-accent);
+}
+
+.nav-section .nav-sub-group > a.active,
+.nav-section .nav-sub-group > a[aria-current="page"] {
+  background: rgba(124, 58, 237, .12);
+  color: var(--color-accent-light);
+  border-left-color: var(--color-accent);
 }
 
 .nav-section a {

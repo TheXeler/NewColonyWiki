@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型格式 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-assets-model">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>模型格式</div></div>
+  <div class="content">
+    <h1>模型格式</h1>
+    <p class="subtitle">方块模型使用 Blockbench JSON 格式，兼容 Minecraft 基岩版方块模型规范。模型文件与纹理 PNG 放在同一目录下。</p>
+
+    <h2>支持的格式</h2>
+    <table>
+      <thead><tr><th>格式</th><th>扩展名</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Blockbench JSON</td><td><code>.json</code></td><td>兼容 Minecraft 基岩版方块模型格式。由 Blockbench 编辑器导出。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      推荐使用 <strong>Blockbench</strong> 编辑器创建和导出模型。Blockbench 可直接生成兼容的 JSON 格式，并实时预览 UV 映射效果。
+    </div>
+
+    <h2>目录放置</h2>
+    <p>模型 JSON 和对应的纹理 PNG 放在 <code>assets/textures/blocks/</code> 的同一子目录下：</p>
+    <pre><code>assets/textures/blocks/NewColonyTextures/
+  grass.png                  -- 纹理图（64×64）
+  grass.json                 -- Blockbench 模型定义
+  lantern.png                -- 纹理图
+  lantern.json               -- Blockbench 模型定义</code></pre>
+
+    <h2>模型 JSON 结构</h2>
+    <pre><code>{
+    "format_version": "1.21.11",
+    "credit": "Made with Blockbench",
+    "texture_size": [64, 64],
+    "textures": {
+        "0": "my_texture"
+    },
+    "elements": [
+        {
+            "from": [0, 0, 0],
+            "to": [16, 16, 16],
+            "rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+            "faces": {
+                "north": {"uv": [0, 0, 4, 4], "texture": "#0"},
+                "east":  {"uv": [0, 4, 4, 8], "texture": "#0"},
+                "south": {"uv": [4, 0, 8, 4], "texture": "#0"},
+                "west":  {"uv": [4, 4, 8, 8], "texture": "#0"},
+                "up":    {"uv": [4, 12, 0, 8], "texture": "#0"},
+                "down":  {"uv": [12, 0, 8, 4], "texture": "#0"}
+            }
+        }
+    ]
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>format_version</code></td><td>string</td><td>模型格式版本，当前为 <code>"1.21.11"</code>。</td></tr>
+        <tr><td><code>texture_size</code></td><td>[int, int]</td><td>纹理图尺寸（像素），如 <code>[64, 64]</code>。UV 坐标基于此尺寸计算。标准方块为 <code>[16, 16]</code>。</td></tr>
+        <tr><td><code>textures</code></td><td>object</td><td>纹理引用表。键为纹理 ID（如 <code>"0"</code>、<code>"13"</code>），值为 PNG 文件名（不含扩展名）。</td></tr>
+        <tr><td><code>elements</code></td><td>array</td><td>模型元素数组。每个元素是一个长方体。一个模型可以有多个元素组成复杂形状。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>元素字段</h3>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>from</code></td><td>[float × 3]</td><td>长方体最小角坐标，范围 0~16（方块像素单位）。</td></tr>
+        <tr><td><code>to</code></td><td>[float × 3]</td><td>长方体最大角坐标，范围 0~16。</td></tr>
+        <tr><td><code>rotation</code></td><td>object</td><td>旋转参数。<code>angle</code> 必须是 90 的整数倍（0/90/180/270），<code>axis</code> 为 <code>"x"</code>/<code>"y"</code>/<code>"z"</code>，<code>origin</code> 为旋转中心坐标。</td></tr>
+        <tr><td><code>faces</code></td><td>object</td><td>六个面的 UV 和纹理引用。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>面方向</h3>
+    <table>
+      <thead><tr><th>方向名</th><th>朝向</th></tr></thead>
+      <tbody>
+        <tr><td><code>north</code></td><td>-Z</td></tr>
+        <tr><td><code>south</code></td><td>+Z</td></tr>
+        <tr><td><code>east</code></td><td>+X</td></tr>
+        <tr><td><code>west</code></td><td>-X</td></tr>
+        <tr><td><code>up</code></td><td>+Y</td></tr>
+        <tr><td><code>down</code></td><td>-Y</td></tr>
+      </tbody>
+    </table>
+
+    <h3>面字段</h3>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>uv</code></td><td>[float × 4]</td><td>UV 坐标 <code>[u0, v0, u1, v1]</code>，以 <code>texture_size</code> 为基准的像素坐标。例如 <code>texture_size</code> 为 64 时，<code>[0, 0, 4, 4]</code> 表示纹理图左上角 4×4 像素区域。</td></tr>
+        <tr><td><code>texture</code></td><td>string</td><td>纹理引用，格式 <code>"#纹理ID"</code>（如 <code>"#0"</code>）。指向 <code>textures</code> 表中的条目。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>示例：多元素灯笼模型</h2>
+    <p>灯笼由底座、灯柱、灯罩和火焰多个元素组成，每个元素有独立的 <code>from/to</code> 和 UV：</p>
+    <pre><code>{
+    "format_version": "1.21.11",
+    "textures": {
+        "13": "lantern_texture"
+    },
+    "elements": [
+        {
+            "from": [6.9, 1.45, 6.9],
+            "to": [9.1, 1.75, 9.1],
+            "rotation": {"angle": 0, "axis": "y", "origin": [5, 1, 5]},
+            "faces": {
+                "north": {"uv": [9, 12, 11, 12.5], "texture": "#13"},
+                "east":  {"uv": [11, 12, 13, 12.5], "texture": "#13"},
+                "south": {"uv": [12, 11, 14, 11.5], "texture": "#13"},
+                "west":  {"uv": [7, 13, 9, 13.5], "texture": "#13"},
+                "up":    {"uv": [9, 9, 7, 7], "texture": "#13"},
+                "down":  {"uv": [5, 8, 3, 10], "texture": "#13"}
+            }
+        },
+        {
+            "from": [7, 1.75, 7],
+            "to": [9, 5, 9],
+            "rotation": {"angle": 0, "axis": "y", "origin": [5, 1, 5]},
+            "faces": {
+                "north": {"uv": [3, 0, 5, 3.5], "texture": "#13"},
+                "east":  {"uv": [3, 4, 5, 7.5], "texture": "#13"},
+                "south": {"uv": [5, 0, 7, 3.5], "texture": "#13"},
+                "west":  {"uv": [5, 4, 7, 7.5], "texture": "#13"},
+                "up":    {"uv": [7, 10, 5, 8], "texture": "#13"},
+                "down":  {"uv": [2, 9, 0, 11], "texture": "#13"}
+            }
+        }
+    ]
+}</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

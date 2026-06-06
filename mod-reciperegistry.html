@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配方注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-reciperegistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>配方注册</div></div>
+  <div class="content">
+    <h1>配方注册</h1>
+    <p class="subtitle">配方（Recipe）定义在 <code>data/recipes/</code> 下，以 JSON 描述。每份配方定义了输入材料、产出物品和可选的职业/等级要求。殖民者通过工作系统使用配方将原材料加工为成品。</p>
+
+    <h2>JSON 格式</h2>
+    <p><strong>基本配方</strong>（无职业要求）：</p>
+    <pre><code>{
+    "id": "my_mod:grind_flour",
+    "inputs": [
+        { "id": "my_mod:wheat", "count": 2 }
+    ],
+    "output": { "id": "my_mod:flour", "count": 1 }
+}</code></pre>
+
+    <p><strong>带职业要求的配方</strong>：</p>
+    <pre><code>{
+    "id": "my_mod:forge_steel_sword",
+    "inputs": [
+        { "id": "my_mod:steel_ingot", "count": 3 },
+        { "id": "my_mod:stick", "count": 1 }
+    ],
+    "output": { "id": "my_mod:steel_sword", "count": 1 },
+    "profession": { "id": "my_mod:blacksmith", "level": 3 }
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
+        <tr><td><code>inputs</code></td><td>array</td><td>是</td><td>输入材料列表。至少 1 项。每个材料包含 <code>id</code> 和 <code>count</code>。</td></tr>
+        <tr><td><code>inputs[].id</code></td><td>string</td><td>是</td><td>材料方块的完整 ID。必须指向已注册的方块。</td></tr>
+        <tr><td><code>inputs[].count</code></td><td>int</td><td>是</td><td>材料数量，必须 ≥ 1。</td></tr>
+        <tr><td><code>output</code></td><td>object</td><td>是</td><td>产出物品。包含 <code>id</code> 和 <code>count</code>。</td></tr>
+        <tr><td><code>output.id</code></td><td>string</td><td>是</td><td>产出方块的完整 ID。必须指向已注册的方块。</td></tr>
+        <tr><td><code>output.count</code></td><td>int</td><td>是</td><td>产出数量，必须 ≥ 1。</td></tr>
+        <tr><td><code>profession</code></td><td>object</td><td>否</td><td>职业限制。只有指定职业且达到指定等级的殖民者才能执行此配方。省略时任何殖民者都可执行。</td></tr>
+        <tr><td><code>profession.id</code></td><td>string</td><td>是</td><td>职业的完整 ID。必须指向已注册的职业。</td></tr>
+        <tr><td><code>profession.level</code></td><td>int</td><td>否</td><td>要求的职业等级，范围 1~5。省略时不检查等级。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      配方中的所有 ID（材料、产出、职业）在加载时会进行交叉引用校验。引用不存在的方块或职业会导致加载报错并跳过该配方。
+    </div>
+
+    <h2>配方分类</h2>
+    <p>CoreMod 中配方按用途大致分为以下几类：</p>
+    <table>
+      <thead><tr><th>分类</th><th>示例</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>冶炼</td><td><code>core:smelt_iron</code></td><td>矿石锭转换，需要熔炉工作站。</td></tr>
+        <tr><td>工具制造</td><td><code>core:craft_wooden_pickaxe</code></td><td>镐、斧、剑、锄等工具。</td></tr>
+        <tr><td>防具锻造</td><td><code>core:copper_chestplate</code></td><td>头盔、胸甲、护腿、靴子。</td></tr>
+        <tr><td>建筑方块</td><td><code>core:stone_brick</code></td><td>石砖、木地板、茅草屋顶等建材。</td></tr>
+        <tr><td>家具</td><td><code>core:wooden_table</code></td><td>桌、椅、床、箱子、门等。</td></tr>
+        <tr><td>烹饪</td><td><code>core:bake_bread</code></td><td>面包、炖汤、烤肉等食物。</td></tr>
+        <tr><td>饮品酿造</td><td><code>core:beer</code></td><td>啤酒、草药茶、果汁等。</td></tr>
+        <tr><td>种植</td><td><code>core:wheat_seed_to_farmland</code></td><td>种子 + 泥土 → 农田。</td></tr>
+        <tr><td>工作站</td><td><code>core:workbench</code></td><td>工作台、熔炉、铁砧、织布机等设施。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>内置配方示例</h2>
+
+    <h3>面包 <code>core:bake_bread</code></h3>
+    <p>最基础的烹饪配方，3 个小麦合成 1 个面包。</p>
+    <pre><code>{ "inputs": [{ "id": "core:wheat", "count": 3 }], "output": { "id": "core:bread", "count": 1 } }</code></pre>
+
+    <h3>木镐 <code>core:craft_wooden_pickaxe</code></h3>
+    <p>多材料输入示例：3 木板 + 2 木棍。</p>
+    <pre><code>{
+    "inputs": [
+        { "id": "core:wood_plank", "count": 3 },
+        { "id": "core:stick", "count": 2 }
+    ],
+    "output": { "id": "core:wooden_pickaxe", "count": 1 }
+}</code></pre>
+
+    <h3>小麦种植 <code>core:wheat_seed_to_farmland</code></h3>
+    <p>1 麦种 + 1 泥土 → 1 农田方块。</p>
+    <pre><code>{
+    "inputs": [
+        { "id": "core:wheat_seed", "count": 1 },
+        { "id": "core:dirt_pile", "count": 1 }
+    ],
+    "output": { "id": "core:farmland", "count": 1 }
+}</code></pre>
+
+    <h2>交叉引用校验</h2>
+    <p>引擎在加载配方时会校验：</p>
+    <ul>
+      <li><code>inputs[].id</code> 必须指向已注册的方块。</li>
+      <li><code>output.id</code> 必须指向已注册的方块。</li>
+      <li><code>profession.id</code>（如果填写）必须指向已注册的职业。</li>
+      <li><code>profession.level</code>（如果填写）必须在 1~5 范围内。</li>
+      <li>引用不存在的 ID 会导致加载报错。</li>
+    </ul>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按 <code>~</code>）中确认配方注册：</p>
+    <pre><code>list_data recipes                       -- 列出所有已注册的配方
+list_data recipes mod=core:             -- 列出 core 前缀的配方
+data core:bake_bread                    -- 查看单个配方的完整 JSON
+list_recipes prefix=core:               -- 列出指定前缀的配方（含输入输出摘要）</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

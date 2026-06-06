@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>纹理格式 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-assets-texture">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>纹理格式</div></div>
+  <div class="content">
+    <h1>纹理格式</h1>
+    <p class="subtitle">纹理放在 <code>assets/textures/</code> 下。引擎只支持 PNG 格式，启动时自动将方块纹理打包到纹理图集（Texture Atlas）中。</p>
+
+    <h2>支持的格式</h2>
+    <table>
+      <thead><tr><th>格式</th><th>扩展名</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>PNG</td><td><code>.png</code></td><td>唯一支持的纹理格式。支持 RGBA 通道。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      纹理文件名只使用小写字母、数字和下划线。避免使用大写字母和特殊字符。不支持 JPG、BMP、TGA 等格式。
+    </div>
+
+    <h2>方块纹理</h2>
+    <p>方块纹理放在 <code>assets/textures/blocks/</code> 下。标准方块纹理尺寸为 <strong>16×16 像素</strong>，引擎会自动拼入图集。</p>
+    <pre><code>assets/textures/blocks/
+  dirt.png                   -- 16×16 方块贴图
+  stone.png                  -- 16×16 方块贴图
+  my_custom_block.png        -- 自定义方块贴图</code></pre>
+
+    <h2>多元素方块模型纹理</h2>
+    <p>使用 Blockbench 模型的方块可以有更大的纹理图，通过模型 JSON 中的 <code>texture_size</code> 字段指定尺寸（如 64×64）。纹理内的像素坐标由模型 JSON 中的 UV 值引用。详见 <a href="mod-assets-model.html">模型格式</a>。</p>
+    <pre><code>assets/textures/blocks/NewColonyTextures/
+  grass.png                  -- 64×64 纹理图（配合 grass.json 模型使用）
+  lantern.png                -- 配合 lantern.json 模型使用
+  grass.json                 -- Blockbench 模型文件
+  lantern.json               -- Blockbench 模型文件</code></pre>
+
+    <h2>实体纹理</h2>
+    <p>实体纹理放在 <code>assets/textures/entities/</code> 下。</p>
+    <pre><code>assets/textures/entities/
+  colonist.png               -- 殖民者贴图</code></pre>
+
+    <h2>图集打包</h2>
+    <p>引擎启动时自动扫描 <code>assets/textures/blocks/</code> 下的所有 PNG 文件，将它们拼入一张大的纹理图集。每个 16×16 的方块纹理占图集中的一个 tile。多元素模型的纹理按 <code>texture_size</code> 分割为多个 tile。</p>
+    <p>MOD 不需要手动配置图集——只需把 PNG 放到正确目录，引擎会自动处理。</p>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作物注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-cropregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>作物注册</div></div>
+  <div class="content">
+    <h1>作物注册</h1>
+    <p class="subtitle">作物（Crop）定义在 <code>data/crops/</code> 下，以 JSON 描述。每份作物定义了所需的农田类型、生长阶段、温度范围和收获产物。殖民者在种植区域中播种后，引擎根据作物配置自动推进生长阶段。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+    "id": "my_mod:tea_crop_data",
+    "name": "Tea",
+    "farmland_type": "my_mod:farmland",
+    "growth_stages": [
+        { "ticks": 800, "block": "my_mod:tea_crop" },
+        { "ticks": 1000, "block": "my_mod:tea_crop" },
+        { "ticks": 1200, "block": "my_mod:tea_crop" }
+    ],
+    "temperature": { "min": 12.0, "max": 32.0 },
+    "outputs": [
+        { "id": "my_mod:tea_leaves", "count": 3 },
+        { "id": "my_mod:tea_seed", "count": 1 }
+    ]
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。建议以 <code>_crop_data</code> 结尾以便区分。</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。</td></tr>
+        <tr><td><code>farmland_type</code></td><td>string</td><td>是</td><td>所需农田方块的完整 ID。必须指向已注册的方块。常见值：<code>core:farmland</code>（旱地）、<code>core:paddy</code>（水田）。</td></tr>
+        <tr><td><code>growth_stages</code></td><td>array</td><td>是</td><td>生长阶段数组，至少 1 个阶段。每个阶段包含 <code>ticks</code> 和 <code>block</code>。阶段按顺序推进，最后一个阶段结束后作物成熟可收获。</td></tr>
+        <tr><td><code>growth_stages[].ticks</code></td><td>int</td><td>是</td><td>本阶段持续的游戏 tick 数（1 tick = 50ms，即 20 TPS）。例如 1200 ticks = 60 秒真实时间。</td></tr>
+        <tr><td><code>growth_stages[].block</code></td><td>string</td><td>否</td><td>本阶段显示的方块 ID。必须指向已注册的方块。省略时保持上一阶段的方块不变。</td></tr>
+        <tr><td><code>temperature</code></td><td>object</td><td>是</td><td>适宜温度范围。包含 <code>min</code> 和 <code>max</code> 两个浮点数（单位：度）。</td></tr>
+        <tr><td><code>temperature.min</code></td><td>float</td><td>是</td><td>最低适宜温度。必须 ≤ <code>max</code>。</td></tr>
+        <tr><td><code>temperature.max</code></td><td>float</td><td>是</td><td>最高适宜温度。</td></tr>
+        <tr><td><code>outputs</code></td><td>array</td><td>是</td><td>收获产物列表，至少 1 个。每个产物包含 <code>id</code> 和 <code>count</code>。</td></tr>
+        <tr><td><code>outputs[].id</code></td><td>string</td><td>是</td><td>产物方块的完整 ID。必须指向已注册的方块。</td></tr>
+        <tr><td><code>outputs[].count</code></td><td>int</td><td>是</td><td>产物数量，必须 > 0。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      Tick 换算：游戏以 20 TPS 运行，即 1 秒 = 20 ticks。<code>ticks: 1200</code> 表示本阶段持续 1200 ÷ 20 = 60 秒真实时间。一个 3 阶段的作物如果每阶段 1200 ticks，总生长时间为 180 秒（3 分钟）。
+    </div>
+
+    <h2>农田类型</h2>
+    <p><code>farmland_type</code> 决定了作物能种在什么方块上。CoreMod 提供两种农田：</p>
+    <table>
+      <thead><tr><th>农田 ID</th><th>说明</th><th>适用作物</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:farmland</code></td><td>普通旱地农田</td><td>小麦、土豆、玉米、棉花、草药、南瓜、甘蔗</td></tr>
+        <tr><td><code>core:paddy</code></td><td>水田（浸水农田）</td><td>水稻</td></tr>
+      </tbody>
+    </table>
+    <p>MOD 可以注册新的农田方块，只要在方块的 JSON 中正确定义，然后在作物的 <code>farmland_type</code> 中引用即可。</p>
+
+    <h2>交叉引用校验</h2>
+    <p>引擎在加载作物时会自动进行以下校验：</p>
+    <ul>
+      <li><code>farmland_type</code> 必须指向已注册的方块。</li>
+      <li><code>growth_stages[].block</code>（如果填写）必须指向已注册的方块。</li>
+      <li><code>outputs[].id</code> 必须指向已注册的方块。</li>
+      <li>引用不存在的 ID 会导致加载报错并跳过该作物。</li>
+    </ul>
+
+    <h2>内置作物</h2>
+    <p>CoreMod 注册了 8 种作物：</p>
+    <table>
+      <thead><tr><th>作物</th><th>ID</th><th>农田</th><th>阶段数</th><th>总 ticks</th><th>温度范围</th><th>产物</th></tr></thead>
+      <tbody>
+        <tr><td>小麦</td><td><code>core:wheat_crop_data</code></td><td>旱地</td><td>3</td><td>3600</td><td>10~35°C</td><td>小麦×2 + 种子×1</td></tr>
+        <tr><td>土豆</td><td><code>core:potato_crop_data</code></td><td>旱地</td><td>3</td><td>2800</td><td>5~25°C</td><td>土豆×3 + 种子×1</td></tr>
+        <tr><td>水稻</td><td><code>core:rice_crop_data</code></td><td>水田</td><td>3</td><td>3000</td><td>20~40°C</td><td>水稻×2 + 种子×1</td></tr>
+        <tr><td>玉米</td><td><code>core:corn_crop_data</code></td><td>旱地</td><td>3</td><td>4200</td><td>15~38°C</td><td>玉米×2 + 种子×1</td></tr>
+        <tr><td>棉花</td><td><code>core:cotton_crop_data</code></td><td>旱地</td><td>4</td><td>4400</td><td>15~35°C</td><td>棉花×3 + 种子×1</td></tr>
+        <tr><td>草药</td><td><code>core:herb_crop_data</code></td><td>旱地</td><td>2</td><td>1600</td><td>10~28°C</td><td>草药×3 + 种子×1</td></tr>
+        <tr><td>南瓜</td><td><code>core:pumpkin_crop_data</code></td><td>旱地</td><td>3</td><td>4500</td><td>15~30°C</td><td>南瓜×2 + 种子×2</td></tr>
+        <tr><td>甘蔗</td><td><code>core:sugarcane_crop_data</code></td><td>旱地</td><td>4</td><td>3200</td><td>20~40°C</td><td>甘蔗×3 + 种子×1</td></tr>
+      </tbody>
+    </table>
+
+    <h3>小麦 <code>core:wheat_crop_data</code></h3>
+    <p>基础粮食作物，3 阶段各 1200 ticks（共 180 秒）。适应温度范围宽，适合大多数群系种植。</p>
+
+    <h3>土豆 <code>core:potato_crop_data</code></h3>
+    <p>耐寒作物，3 阶段共 2800 ticks（140 秒）。温度下限仅 5°C，是寒冷地区的首选作物。产量较高（3 个土豆）。</p>
+
+    <h3>水稻 <code>core:rice_crop_data</code></h3>
+    <p>需要水田（<code>core:paddy</code>）的热带作物。3 阶段共 3000 ticks（150 秒）。温度下限 20°C，适合温暖群系。</p>
+
+    <h3>玉米 <code>core:corn_crop_data</code></h3>
+    <p>高产作物但生长周期较长。3 阶段共 4200 ticks（210 秒）。温度范围 15~38°C，适合温带到热带。</p>
+
+    <h3>棉花 <code>core:cotton_crop_data</code></h3>
+    <p>4 阶段的纤维作物，生长时间最长（4400 ticks = 220 秒）。产出棉花×3 用于纺织。</p>
+
+    <h3>草药 <code>core:herb_crop_data</code></h3>
+    <p>生长最快的作物，仅 2 阶段共 1600 ticks（80 秒）。产出草药×3，适合快速轮作。</p>
+
+    <h3>南瓜 <code>core:pumpkin_crop_data</code></h3>
+    <p>生长周期长但种子产出翻倍（种子×2）。3 阶段共 4500 ticks（225 秒）。</p>
+
+    <h3>甘蔗 <code>core:sugarcane_crop_data</code></h3>
+    <p>4 阶段的热带作物，共 3200 ticks（160 秒）。温度上限高达 40°C。产出甘蔗×3。</p>
+
+    <h2>生长与收获流程</h2>
+    <ol>
+      <li><strong>播种</strong>：殖民者在种植区域（zone type = <code>plant</code>）的空闲农田方块上放置种子方块。</li>
+      <li><strong>生长</strong>：引擎按 tick 计时，每经过 <code>growth_stages[N].ticks</code> 个 tick 后推进到下一阶段。阶段推进时替换为对应 <code>block</code>。</li>
+      <li><strong>成熟</strong>：最后一个阶段结束后，作物标记为可收获状态。</li>
+      <li><strong>收获</strong>：殖民者执行收获动作（<code>core:harvest_crop</code>），触发 <code>block:interacted</code> 事件。Lua 脚本监听此事件，根据 <code>outputs</code> 生成产物物品。</li>
+    </ol>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按 <code>~</code>）中确认作物注册：</p>
+    <pre><code>list_data crops                 -- 列出所有已注册的作物
+data core:wheat_crop_data       -- 查看单个作物的完整 JSON</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

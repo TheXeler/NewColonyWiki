@@ -20,69 +20,9 @@
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
       <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（10 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
-      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、Focus、NPC 阵营、名称池、作物和区域类型。能用 JSON 表达的内容优先写 JSON。</li>
+      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、作物和区域类型。能用 JSON 表达的内容优先写 JSON。</li>
       <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、Focus 条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
-
-    <h2>入口</h2>
-    <div class="card-grid">
-      <a href="mod-guide.html" class="card">
-        <h3>MOD 是怎样加载的</h3>
-        <p>理解目录结构、加载流程、数据注册和脚本生命周期。</p>
-      </a>
-      <a href="mod-quickstart.html" class="card">
-        <h3>从一个 MOD 开始</h3>
-        <p>从零做一个最小 MOD，让游戏能发现它、加载它、在控制台看到它。</p>
-      </a>
-      <a href="mod-manifest.html" class="card">
-        <h3>mod.json 字段</h3>
-        <p>清单格式完整说明：id、依赖、加载顺序、设置项。</p>
-      </a>
-      <a href="mod-data.html" class="card">
-        <h3>数据注册格式</h3>
-        <p>10 种数据类型的 JSON schema 与字段详解。</p>
-      </a>
-      <a href="mod-blockregistry.html" class="card">
-        <h3>方块注册</h3>
-        <p>方块和物品的 JSON 格式、字段说明、ID 规则与验证命令。</p>
-      </a>
-      <a href="mod-civilizationregistry.html" class="card">
-        <h3>文明注册</h3>
-        <p>文明定义格式、职业绑定、开局配置和加成系统。</p>
-      </a>
-      <a href="mod-focusregistry.html" class="card">
-        <h3>Focus 注册</h3>
-        <p>弹窗事件的 JSON schema、条件类型、选项格式和 Lua 集成。</p>
-      </a>
-      <a href="mod-professionregistry.html" class="card">
-        <h3>职业注册</h3>
-        <p>职业定义格式、等级上限、前置条件和配方解锁。</p>
-      </a>
-      <a href="mod-lua-api.html" class="card">
-        <h3>Lua 怎么用</h3>
-        <p>生命周期、事件、定时器、Focus、UI、网络以及完整示例。</p>
-      </a>
-      <a href="mod-lua-api-reference.html" class="card">
-        <h3>Lua API 速查</h3>
-        <p>可搜索的函数表，查参数、返回值和用法备注。</p>
-      </a>
-      <a href="mod-ui-api.html" class="card">
-        <h3>UI 框架</h3>
-        <p>底边栏按钮、浮动提示、窗口系统和完整示例。</p>
-      </a>
-      <a href="mod-ui-theme.html" class="card">
-        <h3>UI CSS 主题</h3>
-        <p>用 CSS 文件自定义游戏 UI 的颜色、圆角和间距。</p>
-      </a>
-      <a href="mod-console.html" class="card">
-        <h3>控制台命令</h3>
-        <p>用 <code>mods</code>、<code>list_data</code>、<code>spawn_proto</code> 等命令验证 MOD。</p>
-      </a>
-      <a href="mod-network-sync.html" class="card">
-        <h3>网络同步与 Mod 数据</h3>
-        <p>主机-客户端架构、快照同步、MOD 列表校验和 Lua 网络编程。</p>
-      </a>
-    </div>
 
     <h2>当前能稳定使用的能力</h2>
     <table>

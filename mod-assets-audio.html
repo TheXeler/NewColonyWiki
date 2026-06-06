@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音乐格式 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-assets-audio">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>音乐格式</div></div>
+  <div class="content">
+    <h1>音乐和音效格式</h1>
+    <p class="subtitle">音频文件放在 <code>assets/audio/</code> 下，通过 <code>sounds.json</code> 注册。引擎使用 miniaudio 后端，支持 WAV、MP3、FLAC 和 OGG 四种格式。</p>
+
+    <h2>支持的格式</h2>
+    <table>
+      <thead><tr><th>格式</th><th>扩展名</th><th>特点</th><th>适用场景</th></tr></thead>
+      <tbody>
+        <tr><td>WAV</td><td><code>.wav</code></td><td>无压缩，文件较大，加载快</td><td>短音效（挖掘、放置、点击）</td></tr>
+        <tr><td>MP3</td><td><code>.mp3</code></td><td>有损压缩，文件小</td><td>背景音乐、较长音效</td></tr>
+        <tr><td>FLAC</td><td><code>.flac</code></td><td>无损压缩，音质最好，文件较大</td><td>高品质音乐</td></tr>
+        <tr><td>Vorbis</td><td><code>.ogg</code></td><td>开源有损压缩，文件小且音质好</td><td>背景音乐、环境音</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      音频后端使用 miniaudio 库，自动检测文件格式。MOD 作者无需关心解码细节——只要扩展名正确，引擎就能加载。
+    </div>
+
+    <h2>音频分类</h2>
+    <table>
+      <thead><tr><th>分类</th><th><code>category</code> 值</th><th>说明</th><th>建议格式</th><th>streaming 建议</th></tr></thead>
+      <tbody>
+        <tr><td>音乐</td><td><code>music</code></td><td>背景音乐。受音乐音量滑块控制。</td><td>OGG / MP3</td><td>true</td></tr>
+        <tr><td>音效</td><td><code>effect</code></td><td>短促的游戏音效。受音效音量滑块控制。</td><td>WAV</td><td>false</td></tr>
+        <tr><td>环境</td><td><code>ambient</code></td><td>环境氛围声。可能循环播放。受环境音量滑块控制。</td><td>OGG / WAV</td><td>视长度而定</td></tr>
+      </tbody>
+    </table>
+
+    <h2>目录结构</h2>
+    <pre><code>my_mod/
+  assets/
+    audio/
+      music/
+        title_theme.ogg
+        exploration.mp3
+      effects/
+        pickaxe_hit.wav
+        block_place.wav
+        ui_click.wav
+      ambient/
+        wind.ogg
+        birds.wav
+    sounds.json               -- 音频注册清单</code></pre>
+
+    <h2>音频注册</h2>
+    <p>通过 <code>sounds.json</code> 注册音频文件：</p>
+    <pre><code>{
+    "sounds": [
+        {
+            "id": "my_mod:title_theme",
+            "file": "assets/audio/music/title_theme.ogg",
+            "category": "music",
+            "streaming": true,
+            "loop": true,
+            "volume": 0.8
+        },
+        {
+            "id": "my_mod:pickaxe_hit",
+            "file": "assets/audio/effects/pickaxe_hit.wav",
+            "category": "effect",
+            "streaming": false,
+            "volume": 0.6
+        },
+        {
+            "id": "my_mod:wind",
+            "file": "assets/audio/ambient/wind.ogg",
+            "category": "ambient",
+            "streaming": true,
+            "loop": true,
+            "volume": 0.4
+        }
+    ]
+}</code></pre>
+
+    <h2>sounds.json 字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>—</td><td>音频的唯一标识。后续通过此 ID 播放。</td></tr>
+        <tr><td><code>file</code></td><td>string</td><td>是</td><td>—</td><td>音频文件的相对路径（相对于 MOD 根目录）。</td></tr>
+        <tr><td><code>category</code></td><td>string</td><td>否</td><td><code>effect</code></td><td>音频分类：<code>music</code>、<code>effect</code>、<code>ambient</code>。</td></tr>
+        <tr><td><code>streaming</code></td><td>bool</td><td>否</td><td>false</td><td>是否流式加载。长音频建议设为 true 以减少内存占用。</td></tr>
+        <tr><td><code>loop</code></td><td>bool</td><td>否</td><td>false</td><td>是否循环播放。</td></tr>
+        <tr><td><code>volume</code></td><td>float</td><td>否</td><td>1.0</td><td>默认音量（0.0~1.0）。与分类音量相乘得到最终音量。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Lua 播放接口</h2>
+    <pre><code>-- 播放音效
+engine.audio.play("my_mod:pickaxe_hit")
+
+-- 指定音量和循环
+engine.audio.play("my_mod:title_theme", 0.7, true)
+
+-- 3D 空间音频（音效从指定世界坐标发出）
+engine.audio.play_3d("my_mod:explosion", x, y, z, 0.8)
+
+-- 停止所有音乐
+engine.audio.stop_music()</code></pre>
+
+    <h2>格式选择建议</h2>
+    <ul>
+      <li><strong>短音效（< 3 秒）</strong>：使用 WAV。无解码开销，即用即播。</li>
+      <li><strong>背景音乐</strong>：使用 OGG。文件小，streaming 模式下内存占用低。</li>
+      <li><strong>环境循环音</strong>：使用 OGG 或 WAV。需要循环的音频确保首尾能平滑衔接。</li>
+      <li><strong>高品质需求</strong>：使用 FLAC。音质最好但文件最大，仅在必要时使用。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

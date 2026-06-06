@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>名称池注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-namepoolregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>名称池注册</div></div>
+  <div class="content">
+    <h1>名称池注册</h1>
+    <p class="subtitle">名称池（Name Pool）定义在 <code>data/name_pools/</code> 下，以 JSON 描述。名称池提供随机命名素材，NPC 阵营在实例化时从中抽取词语生成随机名称。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+    "id": "my_mod:viking",
+    "words": [
+        "Ragnar", "Bjorn", "Erik", "Sigurd", "Harald",
+        "Longship", "Shield", "Axe", "Fjord", "Saga"
+    ]
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
+        <tr><td><code>words</code></td><td>string[]</td><td>是</td><td>词汇列表。阵营从列表中随机抽取一个或多个词拼接为名称。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      词汇数量没有上限，但建议保持 20~100 个以保证命名多样性。词汇越少，生成名称的重复率越高。
+    </div>
+
+    <h2>与阵营的关系</h2>
+    <p>名称池被 NPC 阵营（<code>data/factions/</code>）引用。阵营定义中的 <code>name_template</code> 字段使用 <code>${random_name}</code> 占位符，<code>name_pools</code> 字段指定引用哪些名称池：</p>
+    <pre><code>{
+    "id": "my_mod:viking_clan",
+    "name_template": "${random_name} Clan",
+    "initial_relation": 0,
+    "max_relation": 50,
+    "min_relation": -80,
+    "inclination": "warlike",
+    "name_pools": ["my_mod:viking"]
+}</code></pre>
+    <p>引擎在实例化阵营时，从 <code>name_pools</code> 指定的池中收集所有词汇，随机选取一个替换每个 <code>${random_name}</code>，生成如"Ironhide Clan"这样的名称。</p>
+
+    <h2>使用案例</h2>
+
+    <h3>案例 1：单池单占位符</h3>
+    <p>最基础的用法：一个阵营引用一个名称池，模板中有一个 <code>${random_name}</code>。</p>
+    <p><strong>名称池</strong> <code>data/name_pools/viking.json</code>：</p>
+    <pre><code>{
+    "id": "my_mod:viking",
+    "words": ["Ragnar", "Bjorn", "Erik", "Sigurd", "Fjord", "Shield", "Axe"]
+}</code></pre>
+    <p><strong>阵营</strong> <code>data/factions/viking_clan.json</code>：</p>
+    <pre><code>{
+    "id": "my_mod:viking_clan",
+    "name_template": "${random_name}部落",
+    "initial_relation": -10,
+    "max_relation": 30,
+    "min_relation": -100,
+    "inclination": "warlike",
+    "name_pools": ["my_mod:viking"]
+}</code></pre>
+    <p>生成结果：<strong>"Ragnar部落"</strong>、<strong>"Shield部落"</strong>、<strong>"Fjord部落"</strong>……每次实例化随机选一个词。</p>
+
+    <h3>案例 2：多池合并</h3>
+    <p>一个阵营可以引用多个名称池，引擎会将所有池的词汇合并后再随机选取。</p>
+    <p><strong>名称池 A</strong> <code>data/name_pools/colors.json</code>：</p>
+    <pre><code>{
+    "id": "my_mod:colors",
+    "words": ["Crimson", "Azure", "Golden", "Silver", "Obsidian"]
+}</code></pre>
+    <p><strong>名称池 B</strong> <code>data/name_pools/animals.json</code>：</p>
+    <pre><code>{
+    "id": "my_mod:animals",
+    "words": ["Wolf", "Eagle", "Dragon", "Serpent", "Phoenix"]
+}</code></pre>
+    <p><strong>阵营</strong> <code>data/factions/beast_clan.json</code>：</p>
+    <pre><code>{
+    "id": "my_mod:beast_clan",
+    "name_template": "${random_name}氏族",
+    "initial_relation": 0,
+    "max_relation": 60,
+    "min_relation": -60,
+    "inclination": "neutral",
+    "name_pools": ["my_mod:colors", "my_mod:animals"]
+}</code></pre>
+    <p>生成结果：从 colors + animals 共 10 个词中随机选，可能是 <strong>"Crimson氏族"</strong>、<strong>"Dragon氏族"</strong>、<strong>"Golden氏族"</strong>等。</p>
+
+    <h3>案例 3：多重占位符</h3>
+    <p>模板中可以使用多个 <code>${random_name}</code>，每次独立抽取（允许重复）。</p>
+    <pre><code>{
+    "id": "my_mod:ancient_order",
+    "name_template": "The ${random_name} ${random_name}",
+    "initial_relation": 20,
+    "max_relation": 100,
+    "min_relation": -30,
+    "inclination": "commercial",
+    "name_pools": ["core:generic"]
+}</code></pre>
+    <p>生成结果：<strong>"The Iron Wolf"</strong>、<strong>"The Storm Eagle"</strong>、<strong>"The Silver Silver"</strong>（可能重复）等。使用大池（如 <code>core:generic</code> 约 400 词）可以显著降低重复率。</p>
+
+    <h3>案例 4：使用 CoreMod 通用池</h3>
+    <p>不想创建自定义名称池时，可以直接引用内置的 <code>core:generic</code>。CoreMod 的所有阵营都这样做：</p>
+    <pre><code>{
+    "id": "core:merchant_guild",
+    "name_template": "${random_name}商会",
+    "initial_relation": 20,
+    "max_relation": 100,
+    "min_relation": -50,
+    "inclination": "commercial",
+    "name_pools": ["core:generic"]
+}</code></pre>
+    <p>生成结果：<strong>"Ironhide商会"</strong>、<strong>"Stormcaller商会"</strong>等。</p>
+
+    <h2>名称生成规则</h2>
+    <ul>
+      <li><code>${random_name}</code> 是唯一的占位符，大小写敏感。</li>
+      <li>每个 <code>${random_name}</code> 独立从合并后的词汇池中随机抽取，多次出现可能抽到同一个词。</li>
+      <li>如果 <code>name_pools</code> 中引用的池 ID 不存在，该池被跳过；如果所有池都不存在，引擎回退使用全部已注册名称池。</li>
+      <li>如果模板中没有 <code>${random_name}</code>，名称就是模板原文（静态名称）。</li>
+      <li>每个阵营实例的名称不同——同一个阵营定义被多次实例化时，每次独立生成。</li>
+    </ul>
+
+    <h2>内置名称池</h2>
+    <p>CoreMod 注册了 1 个通用名称池：</p>
+
+    <h3>通用 <code>core:generic</code></h3>
+    <p>包含约 400 个词汇，涵盖自然、金属、颜色、动物、地形、职业等类别。所有未指定专用名称池的阵营默认使用此名称池。</p>
+    <p>词汇分类示例：</p>
+    <table>
+      <thead><tr><th>类别</th><th>示例词汇</th></tr></thead>
+      <tbody>
+        <tr><td>金属/材质</td><td>Iron, Copper, Bronze, Steel, Obsidian, Onyx</td></tr>
+        <tr><td>颜色</td><td>Crimson, Azure, Violet, Amber, Scarlet, Cobalt</td></tr>
+        <tr><td>动物</td><td>Wolf, Eagle, Raven, Dragon, Phoenix, Serpent</td></tr>
+        <tr><td>地形</td><td>Ridge, Hollow, Vale, Glen, Summit, Canyon</td></tr>
+        <tr><td>建筑</td><td>Fortress, Citadel, Tower, Bastion, Spire</td></tr>
+        <tr><td>职业</td><td>Smith, Weaver, Mason, Brewer, Fletcher, Cooper</td></tr>
+        <tr><td>复合词</td><td>Ironhide, Stormcaller, Moonshadow, Firebrand</td></tr>
+      </tbody>
+    </table>
+
+    <h2>文件放置规则</h2>
+    <ul>
+      <li>放在 <code>data/name_pools/</code> 下，支持子目录。</li>
+      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
+    </ul>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按 <code>~</code>）中确认名称池注册：</p>
+    <pre><code>list_data name_pools              -- 列出所有已注册的名称池
+data core:generic                -- 查看名称池的完整 JSON</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

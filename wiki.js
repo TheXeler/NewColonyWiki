@@ -8,22 +8,44 @@ const WIKI_NAV = [
     ]
   },
   {
-    title: "MOD开发基础",
+    title: "Mod开发",
     links: [
-      ["mod-quickstart", "从一个 MOD 开始", "mod-quickstart.html"],
+      ["mod-quickstart", "从头开始", "mod-quickstart.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
-      ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
-      ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
-      ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
-      ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"]
+      ["mod-configfiles", "配置文件", "mod-configfiles.html"],
+      {
+        title: "MOD素材",
+        children: [
+          ["mod-assets-texture", "纹理格式", "mod-assets-texture.html"],
+          ["mod-assets-shader", "着色器格式", "mod-assets-shader.html"],
+          ["mod-assets-model", "模型格式", "mod-assets-model.html"],
+          ["mod-assets-audio", "音乐格式", "mod-assets-audio.html"]
+        ]
+      },
+      {
+        title: "注册表",
+        children: [
+          ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
+          ["mod-biomeregistry", "群系注册", "mod-biomeregistry.html"],
+          ["mod-entityregistry", "实体注册", "mod-entityregistry.html"],
+          ["mod-actionregistry", "动作注册", "mod-actionregistry.html"],
+          ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
+          ["mod-reciperegistry", "配方注册", "mod-reciperegistry.html"],
+          ["mod-cropregistry", "作物注册", "mod-cropregistry.html"],
+          ["mod-zoneregistry", "区域注册", "mod-zoneregistry.html"],
+          ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
+          ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
+          ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"]
+        ]
+      }
     ]
   },
   {
     title: "Lua 脚本",
     links: [
-      ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
+      ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
       ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]
@@ -50,6 +72,42 @@ function createSidebar(activePage) {
     </a>
   `;
 
+  function renderLinks(container, links, hasActiveRef) {
+    for (const item of links) {
+      if (Array.isArray(item)) {
+        const [page, label, href] = item;
+        const a = document.createElement("a");
+        a.href = href;
+        a.textContent = label;
+        if (page === activePage) {
+          a.className = "active";
+          a.setAttribute("aria-current", "page");
+          hasActiveRef.value = true;
+        }
+        container.appendChild(a);
+      } else {
+        // Nested sub-group
+        const sub = document.createElement("div");
+        sub.className = "nav-sub-group";
+        const subTitle = document.createElement("div");
+        subTitle.className = "nav-sub-title";
+        subTitle.textContent = item.title;
+        subTitle.addEventListener("click", () => {
+          sub.classList.toggle("collapsed");
+        });
+        sub.appendChild(subTitle);
+
+        const subActive = { value: false };
+        renderLinks(sub, item.children, subActive);
+        if (!subActive.value) {
+          sub.classList.add("collapsed");
+        }
+        if (subActive.value) hasActiveRef.value = true;
+        container.appendChild(sub);
+      }
+    }
+  }
+
   for (const group of WIKI_NAV) {
     const nav = document.createElement("nav");
     nav.className = "nav-section";
@@ -57,28 +115,16 @@ function createSidebar(activePage) {
     title.className = "nav-section-title";
     title.textContent = group.title;
 
-    // 折叠/展开：点击标题切换 collapsed 类
     title.addEventListener("click", () => {
       nav.classList.toggle("collapsed");
     });
 
     nav.appendChild(title);
 
-    let hasActive = false;
-    for (const [page, label, href] of group.links) {
-      const a = document.createElement("a");
-      a.href = href;
-      a.textContent = label;
-      if (page === activePage) {
-        a.className = "active";
-        a.setAttribute("aria-current", "page");
-        hasActive = true;
-      }
-      nav.appendChild(a);
-    }
+    const hasActiveRef = { value: false };
+    renderLinks(nav, group.links, hasActiveRef);
 
-    // 默认折叠非活跃分组
-    if (!hasActive) {
+    if (!hasActiveRef.value) {
       nav.classList.add("collapsed");
     }
 
