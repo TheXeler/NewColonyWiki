@@ -11,17 +11,17 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI CSS 主题</div></div>
   <div class="content">
     <h1>UI CSS 主题</h1>
-    <p class="subtitle">通过 CSS 文件自定义游�?UI 的颜色、圆角、间距等样式，无需修改 C++ 代码或编�?Lua 脚本。将 <code>.css</code> 文件放到 <code>themes/</code> 目录即可被游戏发现并使用�?/p>
+    <p class="subtitle">通过 CSS 文件自定义游�?UI 的颜色、圆角、间距等样式，无需修改 C++ 代码或编�?Lua 脚本。将 <code>.css</code> 文件放到 <code>themes/</code> 目录即可被游戏发现并使用。/p>
 
     <div class="callout info">
-      CSS 主题系统作用�?ImGui 渲染层，控制的是全局 UI 样式（颜色、圆角、间距等）。如果你需�?MOD 内部的自定义 UI 逻辑，请参�?<a href="mod-ui-api.html">UI 框架</a>�?    </div>
+      CSS 主题系统作用�?ImGui 渲染层，控制的是全局 UI 样式（颜色、圆角、间距等）。如果你需�?MOD 内部的自定义 UI 逻辑，请参�?<a href="mod-ui-api.html">UI 框架</a>。    </div>
 
     <h2>快速开�?/h2>
     <ol class="step-list">
-      <li><strong>创建 CSS 文件�?/strong>在游戏根目录�?<code>themes/</code> 文件夹中创建一�?<code>.css</code> 文件，例�?<code>themes/my-theme.css</code>�?/li>
-      <li><strong>编写样式规则�?/strong>按照下文的属性表设置颜色和样式变量�?/li>
-      <li><strong>在游戏中切换�?/strong>打开 <strong>Settings �?Interface �?Theme</strong> 下拉框，选择你的主题名称。也可以用控制台命令 <code>theme &lt;name&gt;</code> 切换�?/li>
-      <li><strong>调试�?/strong>修改 CSS 后点�?Theme 旁的 <strong>Reload</strong> 按钮，或在控制台执行 <code>theme reload</code> 即时预览效果�?/li>
+      <li><strong>创建 CSS 文件。/strong>在游戏根目录�?<code>themes/</code> 文件夹中创建一一<code>.css</code> 文件，例如<code>themes/my-theme.css</code>。/li>
+      <li><strong>编写样式规则。/strong>按照下文的属性表设置颜色和样式变量。/li>
+      <li><strong>在游戏中切换。/strong>打开 <strong>Settings �?Interface �?Theme</strong> 下拉框，选择你的主题名称。也可以用控制台命令 <code>theme &lt;name&gt;</code> 切换。/li>
+      <li><strong>调试。/strong>修改 CSS 后点�?Theme 旁的 <strong>Reload</strong> 按钮，或在控制台执行 <code>theme reload</code> 即时预览效果。/li>
     </ol>
 
     <h2>文件结构</h2>
@@ -29,15 +29,15 @@
 ├── themes/                    �?主题文件放这�?�?  ├── default-dark.css       �?内置深色主题（绿色调�?�?  ├── warm-sand.css          �?内置暖沙色亮色主�?�?  ├── deep-ocean.css         �?内置深海蓝主�?�?  └── my-custom.css          �?你的自定义主�?├── Engine/
 └── ...</code></pre>
 
-    <p>主题名称从文件名自动推导�?code>my-custom.css</code> �?显示�?<strong>My custom</strong>。连字符和下划线会被替换为空格，首字母大写�?/p>
+    <p>主题名称从文件名自动推导�?code>my-custom.css</code> �?显示一<strong>My custom</strong>。连字符和下划线会被替换为空格，首字母大写。/p>
 
     <h2>CSS 语法</h2>
     <p>主题 CSS 的写法和普�?CSS 类似，但有以下特点：</p>
     <ul>
-      <li><strong>选择器仅作分组用�?/strong>，不影响样式匹配。常�?<code>imgui</code> �?<code>imgui-colors</code> 两个选择器分别放置样式变量和颜色�?/li>
-      <li><strong>属性名</strong>对应 ImGui 的样式变量，不是标准 CSS 属性�?/li>
-      <li><strong>支持注释</strong>�?code>/* ... */</code> �?<code>// ...</code>（行尾注释）�?/li>
-      <li><strong>不支持嵌套、媒体查询、伪�?/strong>等高�?CSS 特性�?/li>
+      <li><strong>选择器仅作分组用�?/strong>，不影响样式匹配。常�?<code>imgui</code> �?<code>imgui-colors</code> 两个选择器分别放置样式变量和颜色。/li>
+      <li><strong>属性名</strong>对应 ImGui 的样式变量，不是标准 CSS 属性。/li>
+      <li><strong>支持注释</strong>�?code>/* ... */</code> �?<code>// ...</code>（行尾注释）。/li>
+      <li><strong>不支持嵌套、媒体查询、伪�?/strong>等高�?CSS 特性。/li>
     </ul>
 
     <h3>最小示�?/h3>
@@ -118,7 +118,7 @@ imgui-colors {
     </table>
 
     <h2>样式属�?/h2>
-    <p>样式属性控�?UI 的几何参数（圆角、间距、边框等），直接写属性名，不需要前缀�?/p>
+    <p>样式属性控�?UI 的几何参数（圆角、间距、边框等），直接写属性名，不需要前缀。/p>
 
     <h3>圆角</h3>
     <table>
@@ -157,7 +157,7 @@ imgui-colors {
     <table>
       <thead><tr><th>属�?/th><th>默认�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>window-border-size</code></td><td><code>1.0</code></td><td>窗口边框宽度，设�?<code>0</code> 隐藏</td></tr>
+        <tr><td><code>window-border-size</code></td><td><code>1.0</code></td><td>窗口边框宽度，设一<code>0</code> 隐藏</td></tr>
         <tr><td><code>child-border-size</code></td><td><code>1.0</code></td><td>子窗口边�?/td></tr>
         <tr><td><code>popup-border-size</code></td><td><code>1.0</code></td><td>弹出窗口边框</td></tr>
         <tr><td><code>frame-border-size</code></td><td><code>0.0</code></td><td>输入框边�?/td></tr>
@@ -181,7 +181,7 @@ imgui-colors {
     </table>
 
     <div class="callout warn">
-      间距和圆角属性的单位�?strong>逻辑像素</strong>，会�?UI Scale 设置缩放。值写纯数字即可，不需要加 <code>px</code> 后缀�?    </div>
+      间距和圆角属性的单位�?strong>逻辑像素</strong>，会�?UI Scale 设置缩放。值写纯数字即可，不需要加 <code>px</code> 后缀。    </div>
 
     <h2>完整主题示例</h2>
     <p>以下是内�?<code>default-dark.css</code> 主题的完整内容，可作为自定义主题的参考模板：</p>
@@ -252,49 +252,49 @@ imgui-colors {
     </table>
 
     <div class="callout info">
-      <code>theme</code> 命令对所有玩家开放�?code>load_theme</code> 可以�?<code>themes/</code> 以外的路径加载主题，仅限 Modder 权限，用于开发调试�?    </div>
+      <code>theme</code> 命令对所有玩家开放。code>load_theme</code> 可以�?<code>themes/</code> 以外的路径加载主题，仅限 Modder 权限，用于开发调试。    </div>
 
     <h2>�?Settings UI 中切�?/h2>
     <p>游戏内切换主题的最简单方式：</p>
     <ol class="step-list">
-      <li>打开 <strong>Settings</strong>（主菜单或暂停菜单）�?/li>
-      <li>进入 <strong>Interface</strong> 页面�?/li>
-      <li>找到 <strong>Theme</strong> 下拉框，选择想要的主题�?/li>
-      <li>修改 CSS 文件后，点击下拉框旁�?<strong>Reload</strong> 按钮即时预览�?/li>
+      <li>打开 <strong>Settings</strong>（主菜单或暂停菜单）。/li>
+      <li>进入 <strong>Interface</strong> 页面。/li>
+      <li>找到 <strong>Theme</strong> 下拉框，选择想要的主题。/li>
+      <li>修改 CSS 文件后，点击下拉框旁�?<strong>Reload</strong> 按钮即时预览。/li>
     </ol>
 
     <h2>设计原则</h2>
     <ul>
-      <li><strong>CSS 只控制样式，不控制布局�?/strong>窗口位置、大小、层级等由引擎代码决定�?/li>
-      <li><strong>热重载友好�?/strong>修改 CSS �?<code>theme reload</code> 即时生效，不需要重启游戏�?/li>
-      <li><strong>不透明度是关键�?/strong>游戏 UI 常需要半透明效果（HUD、小地图等），善�?<code>rgba()</code> �?alpha 通道�?/li>
-      <li><strong>内置默认主题总是可恢复�?/strong>�?<code>Default</code> 即可回到引擎内置样式�?/li>
+      <li><strong>CSS 只控制样式，不控制布局。/strong>窗口位置、大小、层级等由引擎代码决定。/li>
+      <li><strong>热重载友好。/strong>修改 CSS �?<code>theme reload</code> 即时生效，不需要重启游戏。/li>
+      <li><strong>不透明度是关键。/strong>游戏 UI 常需要半透明效果（HUD、小地图等），善�?<code>rgba()</code> �?alpha 通道。/li>
+      <li><strong>内置默认主题总是可恢复。/strong>�?<code>Default</code> 即可回到引擎内置样式。/li>
     </ul>
 
     <h2>常见问题</h2>
 
     <h3>我的主题没有出现在下拉框�?/h3>
     <ul>
-      <li>确认文件扩展名是 <code>.css</code>（不�?<code>.txt</code> �?<code>.scss</code>）�?/li>
-      <li>确认文件�?<code>themes/</code> 目录下�?/li>
-      <li>在控制台执行 <code>theme list</code> 查看被发现的文件�?/li>
+      <li>确认文件扩展名是 <code>.css</code>（不�?<code>.txt</code> �?<code>.scss</code>）。/li>
+      <li>确认文件�?<code>themes/</code> 目录下。/li>
+      <li>在控制台执行 <code>theme list</code> 查看被发现的文件。/li>
     </ul>
 
     <h3>修改�?CSS 但没有变�?/h3>
     <ul>
-      <li>点击 <strong>Reload</strong> 按钮或执�?<code>theme reload</code>�?/li>
-      <li>检�?CSS 语法——解析器遇到错误会跳过该规则并在日志中输出警告�?/li>
-      <li>确认属性名拼写正确。例如颜色属性必须带 <code>imgui-color-</code> 前缀�?/li>
+      <li>点击 <strong>Reload</strong> 按钮或执�?<code>theme reload</code>。/li>
+      <li>检�?CSS 语法——解析器遇到错误会跳过该规则并在日志中输出警告。/li>
+      <li>确认属性名拼写正确。例如颜色属性必须带 <code>imgui-color-</code> 前缀。/li>
     </ul>
 
     <h3>部分窗口样式不受影响</h3>
-    <p>某些窗口（如小地图、HUD 叠加层）在代码中使用 <code>PushStyleColor/PopStyleColor</code> 覆盖了局部样式，这些硬编码覆盖优先于全局主题。如果你希望它们也跟随主题，可以�?CSS 中设置对应的颜色属性——引擎会在初始化时应用全局主题，之后各 UI 组件的局部覆盖仍然生效�?/p>
+    <p>某些窗口（如小地图、HUD 叠加层）在代码中使用 <code>PushStyleColor/PopStyleColor</code> 覆盖了局部样式，这些硬编码覆盖优先于全局主题。如果你希望它们也跟随主题，可以�?CSS 中设置对应的颜色属性——引擎会在初始化时应用全局主题，之后各 UI 组件的局部覆盖仍然生效。/p>
 
     <h3>如何�?MOD 中附带主题？</h3>
     <p>目前主题文件需要手动放到游戏根目录�?<code>themes/</code> 文件夹中。MOD 目录中的 CSS 文件不会被自动发现。你可以�?/p>
     <ul>
-      <li>�?MOD �?README 中提示玩家将 CSS 文件复制�?<code>themes/</code>�?/li>
-      <li>�?Lua 脚本调用控制台命�?<code>load_theme</code> 加载 MOD 目录中的 CSS 文件�?/li>
+      <li>�?MOD �?README 中提示玩家将 CSS 文件复制�?<code>themes/</code>。/li>
+      <li>�?Lua 脚本调用控制台命�?<code>load_theme</code> 加载 MOD 目录中的 CSS 文件。/li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

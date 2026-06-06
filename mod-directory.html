@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>MOD 目录结构</div></div>
   <div class="content">
     <h1>MOD 目录结构</h1>
-    <p class="subtitle">一�?MOD 的完整目录树及各目录的用途说明。引擎在加载阶段自动扫描 <code>data/</code> 下的类型子目录，不需要你�?Lua 里手动注册�?/p>
+    <p class="subtitle">一一MOD 的完整目录树及各目录的用途说明。引擎在加载阶段自动扫描 <code>data/</code> 下的类型子目录，不需要你�?Lua 里手动注册。/p>
 
     <h2>完整目录�?/h2>
     <pre><code>my_mod/
@@ -30,31 +30,31 @@
     <table>
       <thead><tr><th>路径</th><th>必填</th><th>用�?/th></tr></thead>
       <tbody>
-        <tr><td><code>mod.json</code></td><td>�?/td><td>MOD 清单文件，声�?ID、版本、依赖、入口脚本等。详�?<a href="mod-manifest.html">mod.json 清单</a>�?/td></tr>
-        <tr><td><code>scripts/bootstrap.lua</code></td><td>�?</td><td>Lua 入口脚本，返回一个包�?<code>on_load</code> 等生命周期函数的表。引擎对每个 MOD 只执行这一个入口文件�?不写入口脚本的纯数据 MOD 也合法�?/td></tr>
-        <tr><td><code>data/blocks/</code></td><td>�?/td><td>体素方块定义。字段包�?<code>name</code>�?code>hardness</code>�?code>drops</code>。工作台类方块可额外声明关联的配方类型�?/td></tr>
-        <tr><td><code>data/entities/</code></td><td>�?/td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。可用组件：Position、Velocity、Health、Needs、Inventory、Equipment、Profession、AIState、NavAgent、ColonistTag �?17 种�?/td></tr>
-        <tr><td><code>data/recipes/</code></td><td>�?/td><td>合成配方。声明输入材料、产物、可选的职业与等级要求。合成成功触�?<code>recipe:crafted</code> 事件�?/td></tr>
-        <tr><td><code>data/professions/</code></td><td>�?/td><td>职业定义。等级范�?1-5，可声明转职所需物品、前置职业、各等级解锁的配方。分配成功触�?<code>profession:assigned</code> 事件�?/td></tr>
-        <tr><td><code>data/civilizations/</code></td><td>�?/td><td>文明定义。组织可用职业、开局选项（初始物品和殖民者）、配方限制�?/td></tr>
-        <tr><td><code>data/focuses/</code></td><td>�?/td><td>焦点事件。展示给玩家的消息，可附带选择项。条件可以是内置条件�?code>tick_at_least</code>�?code>entity_count</code>）或 Lua 注册的自定义条件�?/td></tr>
-        <tr><td><code>data/factions/</code></td><td>�?/td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池�?/td></tr>
-        <tr><td><code>data/name_pools/</code></td><td>�?/td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材�?code>words</code> 字段为字符串数组�?/td></tr>
-        <tr><td><code>data/actions/</code></td><td>�?/td><td>AI 可执行的原子动作定义（如 <code>mine</code>�?code>chop_wood</code>�?code>eat_food</code>�?code>harvest_crop</code>）�?/td></tr>
-        <tr><td><code>data/crops/</code></td><td>�?/td><td>作物定义，包含生长阶段和产出�?/td></tr>
-        <tr><td><code>data/biomes/</code></td><td>�?/td><td>生物群系数据，由 core 脚本在世界初始化�?code>on_world_init</code>）时读取使用�?/td></tr>
-        <tr><td><code>assets/</code></td><td>�?/td><td>模型�?obj / .gltf）、纹理（.png）、着色器�?glsl）等资源文件�?/td></tr>
-        <tr><td><code>Localization/</code></td><td>�?/td><td>翻译文件，提供多语言支持�?/td></tr>
+        <tr><td><code>mod.json</code></td><td>�?/td><td>MOD 清单文件，声�?ID、版本、依赖、入口脚本等。详�?<a href="mod-manifest.html">mod.json 清单</a>。/td></tr>
+        <tr><td><code>scripts/bootstrap.lua</code></td><td>�?</td><td>Lua 入口脚本，返回一个包�?<code>on_load</code> 等生命周期函数的表。引擎对每个 MOD 只执行这一个入口文件。不写入口脚本的纯数据 MOD 也合法。/td></tr>
+        <tr><td><code>data/blocks/</code></td><td>�?/td><td>体素方块定义。字段包�?<code>name</code>。code>hardness</code>。code>drops</code>。工作台类方块可额外声明关联的配方类型。/td></tr>
+        <tr><td><code>data/entities/</code></td><td>�?/td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。可用组件：Position、Velocity、Health、Needs、Inventory、Equipment、Profession、AIState、NavAgent、ColonistTag �?17 种。/td></tr>
+        <tr><td><code>data/recipes/</code></td><td>�?/td><td>合成配方。声明输入材料、产物、可选的职业与等级要求。合成成功触�?<code>recipe:crafted</code> 事件。/td></tr>
+        <tr><td><code>data/professions/</code></td><td>�?/td><td>职业定义。等级范�?1-5，可声明转职所需物品、前置职业、各等级解锁的配方。分配成功触�?<code>profession:assigned</code> 事件。/td></tr>
+        <tr><td><code>data/civilizations/</code></td><td>�?/td><td>文明定义。组织可用职业、开局选项（初始物品和殖民者）、配方限制。/td></tr>
+        <tr><td><code>data/focuses/</code></td><td>�?/td><td>焦点事件。展示给玩家的消息，可附带选择项。条件可以是内置条件�?code>tick_at_least</code>。code>entity_count</code>）或 Lua 注册的自定义条件。/td></tr>
+        <tr><td><code>data/factions/</code></td><td>�?/td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池。/td></tr>
+        <tr><td><code>data/name_pools/</code></td><td>�?/td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材�?code>words</code> 字段为字符串数组。/td></tr>
+        <tr><td><code>data/actions/</code></td><td>�?/td><td>AI 可执行的原子动作定义（如 <code>mine</code>。code>chop_wood</code>。code>eat_food</code>。code>harvest_crop</code>）。/td></tr>
+        <tr><td><code>data/crops/</code></td><td>�?/td><td>作物定义，包含生长阶段和产出。/td></tr>
+        <tr><td><code>data/biomes/</code></td><td>�?/td><td>生物群系数据，由 core 脚本在世界初始化�?code>on_world_init</code>）时读取使用。/td></tr>
+        <tr><td><code>assets/</code></td><td>�?/td><td>模型�?obj / .gltf）、纹理（.png）、着色器�?glsl）等资源文件。/td></tr>
+        <tr><td><code>Localization/</code></td><td>�?/td><td>翻译文件，提供多语言支持。/td></tr>
       </tbody>
     </table>
 
     <h2>数据文件的通用规则</h2>
     <ul>
-      <li>每个 JSON 都必须有唯一�?<code>id</code>，推荐格�?<code>&lt;mod_id&gt;:&lt;name&gt;</code>�?/li>
-      <li>引用其他内容时必须写完整 ID，比�?<code>copper_age:copper_ingot</code>�?/li>
-      <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要在正确的类型根目录下即可。例�?<code>data/blocks/materials/copper.json</code> �?<code>data/blocks/copper.json</code> 都行�?/li>
-      <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导�?MOD 加载失败，引擎会报出具体是哪个文件和哪条记录�?/li>
-      <li>能用 JSON 表达的内容优先放�?<code>data/</code>，Lua 只处理数据难以表达的规则、条件和选项行为�?/li>
+      <li>每个 JSON 都必须有唯一�?<code>id</code>，推荐格�?<code>&lt;mod_id&gt;:&lt;name&gt;</code>。/li>
+      <li>引用其他内容时必须写完整 ID，比如<code>copper_age:copper_ingot</code>。/li>
+      <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要在正确的类型根目录下即可。例如<code>data/blocks/materials/copper.json</code> �?<code>data/blocks/copper.json</code> 都行。/li>
+      <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导�?MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。/li>
+      <li>能用 JSON 表达的内容优先放�?<code>data/</code>，Lua 只处理数据难以表达的规则、条件和选项行为。/li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

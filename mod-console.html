@@ -11,55 +11,55 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>调试控制�?/div></div>
   <div class="content">
     <h1>MOD 调试控制�?/h1>
-    <p class="subtitle">控制台是你调�?MOD 最重要的工具。按 <code>~</code> 键打开�?/p>
+    <p class="subtitle">控制台是你调�?MOD 最重要的工具。按 <code>~</code> 键打开。/p>
 
-    <div class="callout info">如果控制台没反应，先�?<code>logs/latest.log</code>。即使控制台不可见，日志通常还是会写�?<code>logs/</code> 目录�?/div>
+    <div class="callout info">如果控制台没反应，先�?<code>logs/latest.log</code>。即使控制台不可见，日志通常还是会写�?<code>logs/</code> 目录。/div>
 
     <h2>常用命令</h2>
     <table>
       <thead><tr><th>命令</th><th>用�?/th></tr></thead>
       <tbody>
-        <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表�?/td></tr>
-        <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值�?/td></tr>
-        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 items、blocks、entities、recipes、professions、civilizations、focuses；不�?type 时会列出全部类型�?/td></tr>
-        <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据�?code>data type:factions</code> �?<code>data type:name_pools</code> 可查看阵营和名称池�?/td></tr>
-        <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方�?/td></tr>
-        <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型�?/td></tr>
-        <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原�?ID 生成一个实体�?/td></tr>
-        <tr><td><code>give &lt;entity&gt; &lt;item&gt; &lt;count&gt;</code></td><td>给指定实体发物品�?/td></tr>
-        <tr><td><code>craft &lt;entity&gt; &lt;recipe&gt;</code></td><td>让指定实体执行一次合成�?/td></tr>
-        <tr><td><code>inventory &lt;entity&gt;</code></td><td>查看实体的背包内容�?/td></tr>
-        <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池�?/td></tr>
-        <tr><td><code>spawn_faction &lt;faction_def_id&gt; [seed]</code></td><td>生成一�?NPC 阵营实例�?/td></tr>
-        <tr><td><code>list_faction_instances</code></td><td>查看已经生成�?NPC 阵营实例�?/td></tr>
-        <tr><td><code>faction_relation &lt;instance_id&gt; &lt;delta&gt;</code></td><td>调整阵营关系值，结果会被限制在定义的最�?最大关系内�?/td></tr>
-        <tr><td><code>gen_name &lt;template&gt; [seed]</code></td><td>按名称模板生成调试名称。模板里可写 <code>${random_name}</code>�?/td></tr>
-        <tr><td><code>net_status</code></td><td>查看网络角色、连接状态和同步计数�?/td></tr>
-        <tr><td><code>net_host [port]</code> / <code>net_join host [port]</code></td><td>启动主机或连接到主机�?/td></tr>
-        <tr><td><code>net_disconnect</code></td><td>断开网络连接�?/td></tr>
-        <tr><td><code>mod_list</code> / <code>export_mod_list</code></td><td>列出/导出 MOD 列表及校验码（调试网�?MOD 一致性）�?/td></tr>
-        <tr><td><code>lua &lt;code&gt;</code></td><td>直接执行一�?Lua 代码�?/td></tr>
-        <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档�?/td></tr>
-        <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体�?/td></tr>
-        <tr><td><code>list_civs</code></td><td>查看文明系统状态�?/td></tr>
+        <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表。/td></tr>
+        <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值。/td></tr>
+        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 items、blocks、entities、recipes、professions、civilizations、focuses；不�?type 时会列出全部类型。/td></tr>
+        <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。code>data type:factions</code> �?<code>data type:name_pools</code> 可查看阵营和名称池。/td></tr>
+        <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。/td></tr>
+        <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。/td></tr>
+        <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原�?ID 生成一个实体。/td></tr>
+        <tr><td><code>give &lt;entity&gt; &lt;item&gt; &lt;count&gt;</code></td><td>给指定实体发物品。/td></tr>
+        <tr><td><code>craft &lt;entity&gt; &lt;recipe&gt;</code></td><td>让指定实体执行一次合成。/td></tr>
+        <tr><td><code>inventory &lt;entity&gt;</code></td><td>查看实体的背包内容。/td></tr>
+        <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池。/td></tr>
+        <tr><td><code>spawn_faction &lt;faction_def_id&gt; [seed]</code></td><td>生成一一NPC 阵营实例。/td></tr>
+        <tr><td><code>list_faction_instances</code></td><td>查看已经生成�?NPC 阵营实例。/td></tr>
+        <tr><td><code>faction_relation &lt;instance_id&gt; &lt;delta&gt;</code></td><td>调整阵营关系值，结果会被限制在定义的最�?最大关系内。/td></tr>
+        <tr><td><code>gen_name &lt;template&gt; [seed]</code></td><td>按名称模板生成调试名称。模板里可写 <code>${random_name}</code>。/td></tr>
+        <tr><td><code>net_status</code></td><td>查看网络角色、连接状态和同步计数。/td></tr>
+        <tr><td><code>net_host [port]</code> / <code>net_join host [port]</code></td><td>启动主机或连接到主机。/td></tr>
+        <tr><td><code>net_disconnect</code></td><td>断开网络连接。/td></tr>
+        <tr><td><code>mod_list</code> / <code>export_mod_list</code></td><td>列出/导出 MOD 列表及校验码（调试网�?MOD 一致性）。/td></tr>
+        <tr><td><code>lua &lt;code&gt;</code></td><td>直接执行一�?Lua 代码。/td></tr>
+        <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档。/td></tr>
+        <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体。/td></tr>
+        <tr><td><code>list_civs</code></td><td>查看文明系统状态。/td></tr>
       </tbody>
     </table>
 
     <h2>标准检查流�?/h2>
     <p>做好 MOD 后，按这个顺序跑一遍，基本能把注册问题都找出来�?/p>
     <ol>
-      <li><code>mods</code> —�?确认 MOD 出现在加载列表中�?/li>
-      <li><code>list_data items prefix=copper_age:</code> —�?检查物品是否注册�?/li>
-      <li><code>list_data professions prefix=copper_age:</code> —�?检查职业是否注册�?/li>
-      <li><code>list_data civilizations prefix=copper_age:</code> —�?检查文明是否注册�?/li>
-      <li><code>list_data focuses prefix=copper_age:</code> —�?检�?Focus 是否注册�?/li>
-      <li><code>data type:factions</code> —�?检�?NPC 阵营定义是否注册�?/li>
-      <li><code>data copper_age:copper_clan</code> —�?查看单条记录详情�?/li>
-      <li><code>list_recipes 1 20 prefix=copper_age:</code> —�?检查配方是否注册�?/li>
+      <li><code>mods</code> —�?确认 MOD 出现在加载列表中。/li>
+      <li><code>list_data items prefix=copper_age:</code> —�?检查物品是否注册。/li>
+      <li><code>list_data professions prefix=copper_age:</code> —�?检查职业是否注册。/li>
+      <li><code>list_data civilizations prefix=copper_age:</code> —�?检查文明是否注册。/li>
+      <li><code>list_data focuses prefix=copper_age:</code> —�?检�?Focus 是否注册。/li>
+      <li><code>data type:factions</code> —�?检�?NPC 阵营定义是否注册。/li>
+      <li><code>data copper_age:copper_clan</code> —�?查看单条记录详情。/li>
+      <li><code>list_recipes 1 20 prefix=copper_age:</code> —�?检查配方是否注册。/li>
     </ol>
 
     <h2>说明</h2>
-    <p><code>doctor_*</code>�?code>archive_*</code>�?code>snapshot_*</code> 这些命令主要给引擎维护者用。普�?MOD 作者一般不需要关心它们�?/p>
+    <p><code>doctor_*</code>。code>archive_*</code>。code>snapshot_*</code> 这些命令主要给引擎维护者用。普�?MOD 作者一般不需要关心它们。/p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

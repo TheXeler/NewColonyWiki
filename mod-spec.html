@@ -11,53 +11,53 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>发布规范</div></div>
   <div class="content">
     <h1>MOD 发布规范</h1>
-    <p class="subtitle">�?MOD 作者的几点建议，避免把内部实现当成兼容承诺�?/p>
+    <p class="subtitle">�?MOD 作者的几点建议，避免把内部实现当成兼容承诺。/p>
 
     <h2>包结�?/h2>
     <ul>
-      <li>每个 MOD 使用独立目录，目录名建议�?MOD ID 一致�?/li>
-      <li>根目录必须包�?<code>mod.json</code>�?/li>
-      <li>入口脚本建议放在 <code>scripts/bootstrap.lua</code>�?/li>
-      <li>数据文件放在 <code>data/</code> 下的类型目录中�?/li>
-      <li>如果�?README，放�?MOD 根目录�?/li>
+      <li>每个 MOD 使用独立目录，目录名建议�?MOD ID 一致。/li>
+      <li>根目录必须包�?<code>mod.json</code>。/li>
+      <li>入口脚本建议放在 <code>scripts/bootstrap.lua</code>。/li>
+      <li>数据文件放在 <code>data/</code> 下的类型目录中。/li>
+      <li>如果�?README，放�?MOD 根目录。/li>
     </ul>
 
     <h2>命名与版�?/h2>
     <ul>
-      <li>MOD ID 保持稳定，建议用小写英文、数字和下划线�?/li>
-      <li>版本号建议用 <code>MAJOR.MINOR.PATCH</code> 语义化格式�?/li>
-      <li>公共数据 ID 使用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式�?/li>
-      <li>如果更新会破坏存档或移除公开 ID，在发布说明里写清楚�?/li>
+      <li>MOD ID 保持稳定，建议用小写英文、数字和下划线。/li>
+      <li>版本号建议用 <code>MAJOR.MINOR.PATCH</code> 语义化格式。/li>
+      <li>公共数据 ID 使用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式。/li>
+      <li>如果更新会破坏存档或移除公开 ID，在发布说明里写清楚。/li>
     </ul>
 
     <h2>数据与脚�?/h2>
     <ul>
-      <li>能用 JSON 表达的内容优先放�?<code>data/</code>�?/li>
-      <li>Lua 只补�?JSON 做不到的事情：监听事件、注�?Focus 条件、定时执行逻辑�?/li>
-      <li>脚本中自定义的事件名也加�?MOD 命名空间前缀�?/li>
-      <li><code>on_tick</code> 里的逻辑保持短小，不要在每个 tick 做大规模实体扫描�?/li>
-      <li>涉及随机结果时使�?<code>engine.random</code>，不�?<code>math.random</code>�?/li>
+      <li>能用 JSON 表达的内容优先放�?<code>data/</code>。/li>
+      <li>Lua 只补�?JSON 做不到的事情：监听事件、注�?Focus 条件、定时执行逻辑。/li>
+      <li>脚本中自定义的事件名也加一MOD 命名空间前缀。/li>
+      <li><code>on_tick</code> 里的逻辑保持短小，不要在每个 tick 做大规模实体扫描。/li>
+      <li>涉及随机结果时使�?<code>engine.random</code>，不�?<code>math.random</code>。/li>
     </ul>
 
     <h2>依赖声明</h2>
     <ul>
-      <li>引用了其�?MOD 的物品、职业或文明时，应该�?<code>dependencies</code> 中声明�?/li>
-      <li>纯排序需求才�?<code>load_after</code> �?<code>load_before</code>�?/li>
-      <li>如有冲突�?MOD，在 <code>conflicts</code> 中列出�?/li>
+      <li>引用了其�?MOD 的物品、职业或文明时，应该�?<code>dependencies</code> 中声明。/li>
+      <li>纯排序需求才�?<code>load_after</code> �?<code>load_before</code>。/li>
+      <li>如有冲突�?MOD，在 <code>conflicts</code> 中列出。/li>
     </ul>
 
     <h2>发布前检查清�?/h2>
     <ol>
-      <li>启动游戏后用 <code>mods</code> 确认 MOD 出现在列表中�?/li>
-      <li>�?<code>data &lt;id&gt;</code> 确认关键数据能查到�?/li>
-      <li>�?<code>list_recipes</code> 确认关键配方能查到�?/li>
-      <li>Lua 入口脚本没有启动报错（看 <code>logs/latest.log</code>）�?/li>
-      <li>检�?<code>dependencies</code> 是否包含所有跨 MOD 引用的目标�?/li>
-      <li>README 里写清楚依赖、冲突、配置项和兼容版本�?/li>
+      <li>启动游戏后用 <code>mods</code> 确认 MOD 出现在列表中。/li>
+      <li>�?<code>data &lt;id&gt;</code> 确认关键数据能查到。/li>
+      <li>�?<code>list_recipes</code> 确认关键配方能查到。/li>
+      <li>Lua 入口脚本没有启动报错（看 <code>logs/latest.log</code>）。/li>
+      <li>检�?<code>dependencies</code> 是否包含所有跨 MOD 引用的目标。/li>
+      <li>README 里写清楚依赖、冲突、配置项和兼容版本。/li>
     </ol>
 
     <div class="callout warn">
-      引擎内部类、临时调试命令和未列�?Wiki 的字段，都不要把它们当作兼容承诺。只有本 Wiki 明确列出�?API 和数据格式才是稳定可依赖的�?
+      引擎内部类、临时调试命令和未列�?Wiki 的字段，都不要把它们当作兼容承诺。只有本 Wiki 明确列出�?API 和数据格式才是稳定可依赖的。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
