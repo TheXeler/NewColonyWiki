@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>焦点注册</div></div>
   <div class="content">
     <h1>焦点注册</h1>
-    <p class="subtitle">焦点（Focus）是一种事件驱动的提示系统。当游戏内条件满足时，引擎会触发一个焦点，向玩家展示一段信息并提供可选的响应动作。焦点定义放在 <code>Data/focuses/</code> 下。</p>
+    <p class="subtitle">焦点（Focus）是一种事件驱动的提示系统。当游戏内条件满足时，引擎会触发一个焦点，向玩家展示一段信息并提供可选的响应动作。焦点定义放在 <code>data/focuses/</code> 下。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
@@ -107,9 +107,7 @@ focus_conditions["core:faction_relation_daily_8_up"] = faction_relation_daily_8_
     <p>在控制台（按 <code>~</code>）中确认焦点注册成功：</p>
     <pre><code>mods                            —— 确认 MOD 已加载
 list_data focuses               —— 列出所有已注册焦点
-data core:first_colonist        —— 查看单个焦点的完整 JSON
-focuses.list()                  —— Lua 中列出所有焦点 ID
-focuses.active()                —— Lua 中查看当前活跃焦点</code></pre>
+data core:first_colonist        —— 查看单个焦点的完整 JSON</code></pre>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

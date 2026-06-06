@@ -22,13 +22,14 @@
   "description": "Adds early copper content.",
   "api_version": "0.1",
   "license": "MIT",
-  "entry": "Scripts/bootstrap.lua",
+  "entry": "scripts/bootstrap.lua",
   "dependencies": [
     {"name": "core", "minVer": "0.1.0", "maxVer": "1.0.0"}
   ],
   "load_after": [],
   "load_before": [],
   "conflicts": [],
+  "side": "both",
   "settings": {
     "enable_debug_logs": false
   }
@@ -42,7 +43,7 @@
         <tr><td><code>name</code></td><td>否</td><td>显示名称。不写就用 <code>id</code> 代替。</td></tr>
         <tr><td><code>version</code></td><td>否</td><td>MOD 版本号，建议用语义化版本。不写默认为 <code>0.0.0</code>。</td></tr>
         <tr><td><code>api_version</code></td><td>否</td><td>期望的公共 MOD API 版本。当前示例用 <code>0.1</code>。引擎会比对兼容性，不兼容时给出警告。</td></tr>
-        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。不写默认为 <code>Scripts/bootstrap.lua</code>。</td></tr>
+        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。不写则不执行入口脚本（纯数据 MOD 合法）。</td></tr>
         <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
         <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
         <tr><td><code>dependencies</code></td><td>否</td><td>必须在这个 MOD 之前加载的其他 MOD。数组格式，每项包含 <code>name</code>（MOD ID）、可选的 <code>minVer</code> 和 <code>maxVer</code>（均为包含边界）。示例：<code>[{"name":"core", "minVer":"0.1.0", "maxVer":"1.0.0"}]</code>。</td></tr>
@@ -54,13 +55,13 @@
     </table>
 
     <h2>玩家配置覆盖</h2>
-    <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在：</p>
-    <pre><code>Game/Config/ModSettings/copper_age.json</code></pre>
+    <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>Config/ModSettings/</code> 目录下：</p>
+    <pre><code>Config/ModSettings/copper_age.json</code></pre>
     <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>
     <pre><code>local debug_logs = engine.modding.get_setting("copper_age", "enable_debug_logs", false)</code></pre>
 
     <div class="callout warn">
-      <code>dependencies</code> 决定能否加载，<code>load_after</code> 只是排序建议。你的数据引用了另一个 MOD 的物品或职业时，应该写 <code>dependencies</code>，不能只靠 <code>load_after</code>。
+      <code>dependencies</code> 决定能否加载，<code>load_after</code> 只是排序建议。你的数据引用了另一个 MOD 的方块或职业时，应该写 <code>dependencies</code>，不能只靠 <code>load_after</code>。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

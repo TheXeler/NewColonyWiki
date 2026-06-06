@@ -11,21 +11,21 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI 框架</div></div>
   <div class="content">
     <h1>UI 框架</h1>
-    <p class="subtitle">通过 Lua 注册底边栏按钮、浮动提示和样式，不需要直接操�?ImGui。引擎统一调度渲染，Lua 只负责声明和回调。/p>
+    <p class="subtitle">通过 Lua 注册底边栏按钮、浮动提示和样式，不需要直接操作 ImGui。引擎统一调度渲染，Lua 只负责声明和回调。</p>
 
     <h2>设计思路</h2>
     <ul>
-      <li>所�?Lua UI API 挂在 <code>engine.ui</code> 全局表下。/li>
-      <li>Lua 注册 UI 内容，引擎负责渲染。Lua 不持�?ImGui 指针。/li>
-      <li>注册 API 返回正整数句柄（失败时返�?<code>0</code>），方便后续更新、隐藏和注销。/li>
-      <li>同一 <code>id</code> 重复注册会覆盖旧定义，适合脚本热重载。/li>
-      <li>回调中的错误不会中断游戏循环——引擎记录日志并跳过本帧对应 UI。/li>
+      <li>所有 Lua UI API 挂在 <code>engine.ui</code> 全局表下。</li>
+      <li>Lua 注册 UI 内容，引擎负责渲染。Lua 不持有 ImGui 指针。</li>
+      <li>注册 API 返回正整数句柄（失败时返回 <code>0</code>），方便后续更新、隐藏和注销。</li>
+      <li>同一 <code>id</code> 重复注册会覆盖旧定义，适合脚本热重载。</li>
+      <li>回调中的错误不会中断游戏循环——引擎记录日志并跳过本帧对应 UI。</li>
     </ul>
 
     <h2>命名空间</h2>
     <p>UI API 分为三个子命名空间：</p>
     <table>
-      <thead><tr><th>命名空间</th><th>用�?/th></tr></thead>
+      <thead><tr><th>命名空间</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>engine.ui.bottom_bar</code></td><td>屏幕底部的常驻工具栏按钮、状态指示器</td></tr>
         <tr><td><code>engine.ui.floating</code></td><td>浮动提示、屏幕消息、教程提示和告警</td></tr>
@@ -34,21 +34,21 @@
     </table>
 
     <h2>通用字段</h2>
-    <p>所有可注册 UI 共享以下字段�?/p>
+    <p>所有可注册 UI 共享以下字段：</p>
     <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认�?/th><th>说明</th></tr></thead>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>�?/td><td>�?/td><td>全局唯一稳定 ID，建�?<code>mod_id:name</code></td></tr>
-        <tr><td><code>priority</code></td><td>integer</td><td>�?/td><td><code>0</code></td><td>渲染排序，值越大越靠前</td></tr>
-        <tr><td><code>visible</code></td><td>boolean / function</td><td>�?/td><td><code>true</code></td><td>是否显示；函数返�?boolean</td></tr>
-        <tr><td><code>enabled</code></td><td>boolean / function</td><td>�?/td><td><code>true</code></td><td>是否可交互；函数返回 boolean</td></tr>
-        <tr><td><code>tooltip</code></td><td>string / function</td><td>�?/td><td><code>nil</code></td><td>鼠标悬停提示</td></tr>
-        <tr><td><code>on_click</code></td><td>function</td><td>�?/td><td><code>nil</code></td><td>点击回调</td></tr>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>-</td><td>全局唯一稳定 ID，建议 <code>mod_id:name</code></td></tr>
+        <tr><td><code>priority</code></td><td>integer</td><td>否</td><td><code>0</code></td><td>渲染排序，值越大越靠前</td></tr>
+        <tr><td><code>visible</code></td><td>boolean / function</td><td>否</td><td><code>true</code></td><td>是否显示；函数返回 boolean</td></tr>
+        <tr><td><code>enabled</code></td><td>boolean / function</td><td>否</td><td><code>true</code></td><td>是否可交互；函数返回 boolean</td></tr>
+        <tr><td><code>tooltip</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>鼠标悬停提示</td></tr>
+        <tr><td><code>on_click</code></td><td>function</td><td>否</td><td><code>nil</code></td><td>点击回调</td></tr>
       </tbody>
     </table>
 
-    <h3>回调上下�?/h3>
-    <p><code>on_click</code> 回调接收一个上下文�?<code>ctx</code>�?/p>
+    <h3>回调上下文</h3>
+    <p><code>on_click</code> 回调接收一个上下文表 <code>ctx</code>：</p>
     <pre><code>{
     id = "core:jobs",
     handle = 12,
@@ -58,18 +58,18 @@
     active = false
 }</code></pre>
 
-    <h2>底边�?API</h2>
-    <p>底边栏用于注册屏幕底部的常驻工具、状态按钮和模式切换入口。引擎负责布局，Lua 只提供按�?文本/状态。/p>
+    <h2>底边栏 API</h2>
+    <p>底边栏用于注册屏幕底部的常驻工具、状态按钮和模式切换入口。引擎负责布局，Lua 只提供按钮文本/状态。</p>
 
     <h3>注册槽位</h3>
-    <p><code>engine.ui.bottom_bar.register_slot(def)</code> —�?注册一个底边栏槽位，成功返回句柄，失败返回 <code>0</code>。/p>
+    <p><code>engine.ui.bottom_bar.register_slot(def)</code> —— 注册一个底边栏槽位，成功返回句柄，失败返回 <code>0</code>。</p>
     <pre><code>local handle = engine.ui.bottom_bar.register_slot({
     id = "core:build_menu",
     priority = 100,
     kind = "button",
     icon = "hammer",
-    label = "建�?,
-    tooltip = "打开建造菜�?,
+    label = "建造",
+    tooltip = "打开建造菜单",
     hotkey = "B",
     on_click = function(ctx)
         engine.events.emit("ui:build_menu:toggle", { source = ctx.id })
@@ -78,38 +78,38 @@
 
     <p>除通用字段外，槽位还支持以下字段：</p>
     <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认�?/th><th>说明</th></tr></thead>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>kind</code></td><td>string</td><td>�?/td><td><code>"button"</code></td><td><code>"button"</code>。code>"toggle"</code>。code>"label"</code>。code>"meter"</code></td></tr>
-        <tr><td><code>label</code></td><td>string / function</td><td>�?/td><td><code>""</code></td><td>显示文本</td></tr>
-        <tr><td><code>icon</code></td><td>string / function</td><td>�?/td><td><code>nil</code></td><td>图标 ID；初版可只显示文�?/td></tr>
-        <tr><td><code>hotkey</code></td><td>string</td><td>�?/td><td><code>nil</code></td><td>仅作 UI 提示显示；实际输入走输入系统</td></tr>
+        <tr><td><code>kind</code></td><td>string</td><td>否</td><td><code>"button"</code></td><td><code>"button"</code>、<code>"toggle"</code>、<code>"label"</code>、<code>"meter"</code></td></tr>
+        <tr><td><code>label</code></td><td>string / function</td><td>否</td><td><code>""</code></td><td>显示文本</td></tr>
+        <tr><td><code>icon</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>图标 ID；初版可只显示文本</td></tr>
+        <tr><td><code>hotkey</code></td><td>string</td><td>否</td><td><code>nil</code></td><td>仅作 UI 提示显示；实际输入走输入系统</td></tr>
         <tr><td><code>value</code></td><td>number / function</td><td>meter 必填</td><td><code>nil</code></td><td>meter 当前值，范围 0..1</td></tr>
-        <tr><td><code>active</code></td><td>boolean / function</td><td>toggle 推荐</td><td><code>false</code></td><td>toggle 是否处于激活状�?/td></tr>
-        <tr><td><code>badge</code></td><td>string / number / function</td><td>�?/td><td><code>nil</code></td><td>角标，如任务数量</td></tr>
+        <tr><td><code>active</code></td><td>boolean / function</td><td>toggle 推荐</td><td><code>false</code></td><td>toggle 是否处于激活状态</td></tr>
+        <tr><td><code>badge</code></td><td>string / number / function</td><td>否</td><td><code>nil</code></td><td>角标，如任务数量</td></tr>
       </tbody>
     </table>
 
     <h3>更新槽位</h3>
-    <p><code>engine.ui.bottom_bar.update_slot(handle_or_id, patch)</code> —�?局部更新已注册槽位。返�?<code>true</code> �?<code>false</code>。/p>
+    <p><code>engine.ui.bottom_bar.update_slot(handle_or_id, patch)</code> —— 局部更新已注册槽位。返回 <code>true</code> 或 <code>false</code>。</p>
     <pre><code>engine.ui.bottom_bar.update_slot("core:jobs", {
     badge = 5,
-    tooltip = "当前�?5 个待处理工作"
+    tooltip = "当前有 5 个待处理工作"
 })</code></pre>
 
     <h3>注销槽位</h3>
-    <p><code>engine.ui.bottom_bar.unregister_slot(handle_or_id)</code> —�?注销底边栏槽位。返�?<code>true</code> �?<code>false</code>。/p>
+    <p><code>engine.ui.bottom_bar.unregister_slot(handle_or_id)</code> —— 注销底边栏槽位。返回 <code>true</code> 或 <code>false</code>。</p>
     <pre><code>engine.ui.bottom_bar.unregister_slot("core:build_menu")</code></pre>
 
     <h3>批量清理</h3>
-    <p><code>engine.ui.bottom_bar.clear(mod_id)</code> —�?清理指定 MOD 注册的所有底边栏槽位。留空时只允�?debug/dev 场景清理全部。/p>
+    <p><code>engine.ui.bottom_bar.clear(mod_id)</code> —— 清理指定 MOD 注册的所有底边栏槽位。留空时只允许 debug/dev 场景清理全部。</p>
     <pre><code>engine.ui.bottom_bar.clear("core")</code></pre>
 
     <h2>浮动提示 API</h2>
-    <p>浮动提示用于短生命周期的世界提示、屏幕提示、教程提示和告警。支持屏幕坐标（固定位置）和世界坐标（跟随世界实体投影到屏幕）两种模式。/p>
+    <p>浮动提示用于短生命周期的世界提示、屏幕提示、教程提示和告警。支持屏幕坐标（固定位置）和世界坐标（跟随世界实体投影到屏幕）两种模式。</p>
 
     <h3>注册常驻锚点</h3>
-    <p><code>engine.ui.floating.register_anchor(def)</code> —�?注册可重复使用的浮动提示锚点，适合常驻的实体状态提示、选中对象提示。/p>
+    <p><code>engine.ui.floating.register_anchor(def)</code> —— 注册可重复使用的浮动提示锚点，适合常驻的实体状态提示、选中对象提示。</p>
     <pre><code>local anchor = engine.ui.floating.register_anchor({
     id = "core:selected_block_hint",
     mode = "screen",
@@ -121,66 +121,68 @@
     render = function(ctx)
         return {
             title = "方块",
-            body = "左键选择，右键取�?,
+            body = "左键选择，右键取消",
             severity = "info"
         }
     end
 })</code></pre>
 
-    <p>锚点特有字段�?/p>
+    <p>锚点特有字段：</p>
     <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认�?/th><th>说明</th></tr></thead>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>mode</code></td><td>string</td><td>�?/td><td><code>"screen"</code></td><td><code>"screen"</code> �?<code>"world"</code></td></tr>
+        <tr><td><code>mode</code></td><td>string</td><td>否</td><td><code>"screen"</code></td><td><code>"screen"</code> 或 <code>"world"</code></td></tr>
         <tr><td><code>x</code></td><td>number / function</td><td>screen 必填</td><td><code>0</code></td><td>屏幕 X</td></tr>
         <tr><td><code>y</code></td><td>number / function</td><td>screen 必填</td><td><code>0</code></td><td>屏幕 Y</td></tr>
         <tr><td><code>world_x</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 X</td></tr>
         <tr><td><code>world_y</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 Y</td></tr>
         <tr><td><code>world_z</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 Z</td></tr>
-        <tr><td><code>offset_x</code></td><td>number</td><td>�?/td><td><code>0</code></td><td>屏幕偏移 X</td></tr>
-        <tr><td><code>offset_y</code></td><td>number</td><td>�?/td><td><code>0</code></td><td>屏幕偏移 Y</td></tr>
-        <tr><td><code>ttl_ticks</code></td><td>integer</td><td>�?/td><td><code>0</code></td><td><code>0</code> 表示常驻，正数表示自动过�?tick �?/td></tr>
-        <tr><td><code>render</code></td><td>function</td><td>�?/td><td><code>nil</code></td><td>返回提示内容表的函数</td></tr>
+        <tr><td><code>offset_x</code></td><td>number</td><td>否</td><td><code>0</code></td><td>屏幕偏移 X</td></tr>
+        <tr><td><code>offset_y</code></td><td>number</td><td>否</td><td><code>0</code></td><td>屏幕偏移 Y</td></tr>
+        <tr><td><code>ttl_ticks</code></td><td>integer</td><td>否</td><td><code>0</code></td><td><code>0</code> 表示常驻，正数表示自动过期 tick 数</td></tr>
+        <tr><td><code>render</code></td><td>function</td><td>是</td><td><code>nil</code></td><td>返回提示内容表的函数</td></tr>
       </tbody>
     </table>
 
-    <h3>render 函数返回�?/h3>
+    <h3>render 函数返回值</h3>
     <p><code>render(ctx)</code> 返回一个描述提示内容的表：</p>
     <pre><code>{
     title = "库存已满",
-    body = "殖民者无法继续搬运。,
+    body = "殖民者无法继续搬运。",
     icon = "warning",
     severity = "warning",   -- info | success | warning | error
-    progress = 0.35,        -- 可选，0..1 进度�?    actions = {             -- 可选，初版可先不实现按�?        { id = "open_jobs", label = "查看工作" }
+    progress = 0.35,        -- 可选，0..1 进度条
+    actions = {             -- 可选，初版可先不实现按钮
+        { id = "open_jobs", label = "查看工作" }
     }
 }</code></pre>
 
-    <h3>显示一次性提�?/h3>
-    <p><code>engine.ui.floating.show(def)</code> —�?显示一次性浮动提示，适合教程和短消息。字段与锚点基本一致，但可直接提供 <code>title</code>/<code>body</code> 等字段，无需 <code>render</code> 函数。/p>
+    <h3>显示一次性提示</h3>
+    <p><code>engine.ui.floating.show(def)</code> —— 显示一次性浮动提示，适合教程和短消息。字段与锚点基本一致，但可直接提供 <code>title</code>/<code>body</code> 等字段，无需 <code>render</code> 函数。</p>
     <pre><code>engine.ui.floating.show({
     id = "core:first_colonist_tip",
     mode = "screen",
     x = 24,
     y = 120,
     title = "殖民者已抵达",
-    body = "为他安排采矿、搬运或建造工作。,
+    body = "为他安排采矿、搬运或建造工作。",
     severity = "success",
     ttl_ticks = engine.time.tps * 6
 })</code></pre>
 
     <h3>更新提示</h3>
-    <p><code>engine.ui.floating.update(handle_or_id, patch)</code> —�?更新常驻锚点或一次性提示。/p>
+    <p><code>engine.ui.floating.update(handle_or_id, patch)</code> —— 更新常驻锚点或一次性提示。</p>
     <pre><code>engine.ui.floating.update("core:first_colonist_tip", {
-    body = "选择一个方块开始建造。,
+    body = "选择一个方块开始建造。",
     severity = "info"
 })</code></pre>
 
     <h3>关闭提示</h3>
-    <p><code>engine.ui.floating.dismiss(handle_or_id)</code> —�?关闭指定提示。/p>
+    <p><code>engine.ui.floating.dismiss(handle_or_id)</code> —— 关闭指定提示。</p>
     <pre><code>engine.ui.floating.dismiss("core:first_colonist_tip")</code></pre>
 
     <h2>样式枚举</h2>
-    <p>初版只提供有限的 severity 枚举，不要在 Lua 中直接操�?ImGui 样式栈。/p>
+    <p>初版只提供有限的 severity 枚举，不要在 Lua 中直接操作 ImGui 样式栈。</p>
     <pre><code>engine.ui.style.severity = {
     info = "info",
     success = "success",
@@ -191,27 +193,28 @@
     <table>
       <thead><tr><th>severity</th><th>渲染映射</th></tr></thead>
       <tbody>
-        <tr><td><code>info</code></td><td>普通提示，�?灰色�?/td></tr>
+        <tr><td><code>info</code></td><td>普通提示，灰色调</td></tr>
         <tr><td><code>success</code></td><td>成功反馈，绿色调</td></tr>
-        <tr><td><code>warning</code></td><td>可恢复问题，黄色�?/td></tr>
-        <tr><td><code>error</code></td><td>失败或阻塞问题，红色�?/td></tr>
+        <tr><td><code>warning</code></td><td>可恢复问题，黄色调</td></tr>
+        <tr><td><code>error</code></td><td>失败或阻塞问题，红色调</td></tr>
       </tbody>
     </table>
 
-    <h2>生命周期与调用时�?/h2>
+    <h2>生命周期与调用时机</h2>
     <ol class="step-list">
-      <li><strong>on_load</strong> —�?注册静态底边栏槽位（按钮、toggle 等）。/li>
-      <li><strong>on_world_init</strong> —�?注册依赖世界状态的浮动锚点。/li>
-      <li>引擎每帧 UI 阶段调用渲染系统，Lua 函数字段被求值。/li>
-      <li>引擎�?tick 清理过期�?<code>ttl_ticks</code> 提示。/li>
-      <li>热重载或 MOD 卸载时调�?<code>clear(mod_id)</code>。/li>
+      <li><strong>on_load</strong> —— 注册静态底边栏槽位（按钮、toggle 等）。</li>
+      <li><strong>on_world_init</strong> —— 注册依赖世界状态的浮动锚点。</li>
+      <li>引擎每帧 UI 阶段调用渲染系统，Lua 函数字段被求值。</li>
+      <li>引擎每 tick 清理过期的 <code>ttl_ticks</code> 提示。</li>
+      <li>热重载或 MOD 卸载时调用 <code>clear(mod_id)</code>。</li>
     </ol>
 
     <div class="callout info">
-      注册 UI 的时机要和生命周期配合：<code>bottom_bar</code> �?<code>on_load</code> 注册�?code>floating</code> 锚点�?<code>on_world_init</code> 注册。一次性提示可以在任何时机调用 <code>floating.show</code>。    </div>
+      注册 UI 的时机要和生命周期配合：<code>bottom_bar</code> 在 <code>on_load</code> 注册；<code>floating</code> 锚点在 <code>on_world_init</code> 注册。一次性提示可以在任何时机调用 <code>floating.show</code>。
+    </div>
 
     <h2>完整示例</h2>
-    <p>以下是一一MOD 注册底边栏和浮动提示的完整示例：</p>
+    <p>以下是一个 MOD 注册底边栏和浮动提示的完整示例：</p>
     <pre><code>local M = {}
 
 local jobs_badge = 0
@@ -249,14 +252,14 @@ function M.on_load()
 end
 
 function M.on_world_init()
-    -- 欢迎提示�? 秒后自动消失
+    -- 欢迎提示，8 秒后自动消失
     engine.ui.floating.show({
         id = "core:welcome_tip",
         mode = "screen",
         x = 24,
         y = 96,
         title = "欢迎来到 NewColony",
-        body = "使用底边栏打开工作和建造界面。,
+        body = "使用底边栏打开工作和建造界面。",
         severity = "info",
         ttl_ticks = engine.time.tps * 8
     })
@@ -264,34 +267,35 @@ end
 
 function M.on_tick(tick, dt)
     if tick % 20 == 0 then
-        -- 实际实现后应从工作系统读�?        jobs_badge = jobs_badge
+        -- 实际实现后应从工作系统读取
+        jobs_badge = jobs_badge
     end
 end
 
 return M</code></pre>
 
     <h2>C++ 实现备注</h2>
-    <p>这部分面向引擎开发者，MOD 作者通常不需要关心。/p>
+    <p>这部分面向引擎开发者，MOD 作者通常不需要关心。</p>
     <ul>
-      <li>建议新增模块 <code>Engine/UI/LuaUi.hpp</code> �?<code>Engine/UI/LuaUi.cpp</code>。/li>
-      <li>Lua 函数字段保存一<code>sol::object</code> �?<code>sol::protected_function</code>，每帧求值时必须使用 protected call。/li>
-      <li>句柄�?UI 系统统一分配，使用递增 <code>u64</code>。/li>
-      <li>�?<code>id -> handle</code> 建索引，重复注册同一 <code>id</code> 时替换旧项。/li>
-      <li>渲染排序：按 <code>priority</code> 降序，同优先级按注册顺序升序。/li>
-      <li><code>clear(mod_id)</code> 删除指定 MOD 的所有注册项。/li>
-      <li>初版只渲染文本按钮、文本角标和普�?tooltip；图标字段先保留。/li>
+      <li>建议新增模块 <code>Engine/UI/LuaUi.hpp</code> 和 <code>Engine/UI/LuaUi.cpp</code>。</li>
+      <li>Lua 函数字段保存为 <code>sol::object</code> 或 <code>sol::protected_function</code>，每帧求值时必须使用 protected call。</li>
+      <li>句柄由 UI 系统统一分配，使用递增 <code>u64</code>。</li>
+      <li>以 <code>id -> handle</code> 建索引，重复注册同一 <code>id</code> 时替换旧项。</li>
+      <li>渲染排序：按 <code>priority</code> 降序，同优先级按注册顺序升序。</li>
+      <li><code>clear(mod_id)</code> 删除指定 MOD 的所有注册项。</li>
+      <li>初版只渲染文本按钮、文本角标和普通 tooltip；图标字段先保留。</li>
     </ul>
 
     <h2>验收标准</h2>
     <table>
       <thead><tr><th>检查项</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>注册底边栏按�?/td><td>通过 <code>register_slot</code> 添加按钮并可�?/td></tr>
-        <tr><td>创建浮动提示</td><td>通过 <code>floating.show</code> 创建�?TTL 的屏幕提�?/td></tr>
-        <tr><td>中文文本显示</td><td>中文文本�?Lua 传入并正确渲�?/td></tr>
-        <tr><td>去重</td><td>重复注册相同 <code>id</code> 不产生重�?UI</td></tr>
-        <tr><td>错误隔离</td><td>Lua 回调报错只记录日志，不导致崩�?/td></tr>
-        <tr><td>热重载清�?/td><td>MOD 热重载后调用 <code>clear(mod_id)</code> 可清除旧 UI</td></tr>
+        <tr><td>注册底边栏按钮</td><td>通过 <code>register_slot</code> 添加按钮并可点击</td></tr>
+        <tr><td>创建浮动提示</td><td>通过 <code>floating.show</code> 创建有 TTL 的屏幕提示</td></tr>
+        <tr><td>中文文本显示</td><td>中文文本从 Lua 传入并正确渲染</td></tr>
+        <tr><td>去重</td><td>重复注册相同 <code>id</code> 不产生重复 UI</td></tr>
+        <tr><td>错误隔离</td><td>Lua 回调报错只记录日志，不导致崩溃</td></tr>
+        <tr><td>热重载清理</td><td>MOD 热重载后调用 <code>clear(mod_id)</code> 可清除旧 UI</td></tr>
       </tbody>
     </table>
 

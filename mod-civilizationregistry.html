@@ -11,28 +11,26 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>文明注册</div></div>
   <div class="content">
     <h1>文明注册</h1>
-    <p class="subtitle">文明定义放在 <code>Data/civilizations/</code> 下，引擎加载时自动扫描。文明决定了初始工人配置、可制造物品、独特配方和加成效果。</p>
+    <p class="subtitle">文明定义放在 <code>data/civilizations/</code> 下，引擎加载时自动扫描。文明决定了可用职业、开局选项和配方限制。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
-  "id": "core:cave_civ",
-  "name": "Cave Civilization",
-  "leader": "core:stonemason",
-  "description": "A resilient civilization led by a master stonemason.",
-  "workers": ["core:miner", "core:blacksmith_entity", "core:potter_entity"],
-  "craftable_blocks": ["core:stone_pickaxe", "core:iron_pickaxe"],
-  "unique_recipes": [
-    "core:craft_stone_pickaxe",
-    "core:smelt_iron",
-    "core:build_anvil"
+  "id": "copper_age:copper_clan",
+  "name": "Copper Clan",
+  "professions": ["copper_age:coppersmith"],
+  "starting_options": [
+    {
+      "id": "copper_age:starter",
+      "name": "Workshop Start",
+      "blocks": [
+        { "id": "copper_age:copper_ore", "count": 4 }
+      ],
+      "professions": [
+        { "id": "copper_age:coppersmith", "level": 1, "count": 1 }
+      ]
+    }
   ],
-  "starting_buildings": ["core:stone_furnace"],
-  "traits": ["mining", "stoneworking", "smithing", "resilient"],
-  "bonuses": {
-    "mine_speed": 1.1,
-    "underground_vision": 1.2,
-    "smelting_speed": 1.05
-  }
+  "recipe_modifiers": []
 }</code></pre>
 
     <h2>字段说明</h2>
@@ -40,45 +38,27 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
-        <tr><td><code>name</code></td><td>string</td><td>是</td><td>文明显示名称。</td></tr>
-        <tr><td><code>leader</code></td><td>string</td><td>是</td><td>领袖实体 ID，指向 <code>Data/entities/</code> 下已注册的实体。</td></tr>
-        <tr><td><code>description</code></td><td>string</td><td>否</td><td>文明描述文本。</td></tr>
-        <tr><td><code>workers</code></td><td>string[]</td><td>是</td><td>初始工人实体 ID 列表。游戏开始时该文明会生成这些实体。</td></tr>
-        <tr><td><code>craftable_blocks</code></td><td>string[]</td><td>否</td><td>该文明可直接制造的方块 ID 列表（无需配方工作台）。</td></tr>
-        <tr><td><code>unique_recipes</code></td><td>string[]</td><td>是</td><td>该文明独有的配方 ID 列表，指向 <code>Data/recipes/</code> 下已注册的配方。</td></tr>
-        <tr><td><code>starting_buildings</code></td><td>string[]</td><td>否</td><td>游戏开始时预置的建筑方块 ID 列表。</td></tr>
-        <tr><td><code>traits</code></td><td>string[]</td><td>否</td><td>文明特性标签列表，用于脚本中的条件判断和风格标识。</td></tr>
-        <tr><td><code>bonuses</code></td><td>object</td><td>否</td><td>文明加成效果，键值对映射。键为加成名称（如 <code>mine_speed</code>），值为倍率（float），1.0 为基准值。例如 1.1 表示 10% 加成。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>加成效果参考</h2>
-    <table>
-      <thead><tr><th>加成键</th><th>类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>mine_speed</code></td><td>float</td><td>挖掘速度倍率。</td></tr>
-        <tr><td><code>underground_vision</code></td><td>float</td><td>地下视野范围倍率。</td></tr>
-        <tr><td><code>smelting_speed</code></td><td>float</td><td>熔炼速度倍率。</td></tr>
-        <tr><td><code>farm_yield</code></td><td>float</td><td>农作物产量倍率。</td></tr>
-        <tr><td><code>wood_gather_speed</code></td><td>float</td><td>伐木速度倍率。</td></tr>
-        <tr><td><code>cooking_quality</code></td><td>float</td><td>烹饪品质倍率。</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>否</td><td>文明显示名称。</td></tr>
+        <tr><td><code>professions</code></td><td>string[]</td><td>否</td><td>该文明可用的职业 ID 列表，指向 <code>data/professions/</code> 下的职业。</td></tr>
+        <tr><td><code>starting_options</code></td><td>object[]</td><td>否</td><td>开局选项。每项包含 <code>id</code>、可选的 <code>name</code>、<code>blocks</code>（初始方块及数量）和 <code>professions</code>（初始殖民者职业、等级和数量）。</td></tr>
+        <tr><td><code>recipe_modifiers</code></td><td>object[]</td><td>否</td><td>配方规则修改。每项包含 <code>profession</code>（职业 ID）以及 <code>deny</code>、<code>blocked_recipes</code>、<code>unlock</code>、<code>extra_recipes</code> 中的一个或多个，用于微调配方可制造性。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      文明系统定义了游戏的初始条件和玩法风格。<code>workers</code> + <code>leader</code> 决定了初始人力资源，<code>unique_recipes</code> 决定技术路线，<code>bonuses</code> 提供数值差异化。不同文明的加成可以叠加使用。
+      文明系统定义了游戏的初始条件和玩法风格。<code>professions</code> 决定可选职业，<code>starting_options</code> 决定初始资源和人手，<code>recipe_modifiers</code> 提供配方层面的差异化控制。
     </div>
 
     <h2>ID 规则</h2>
     <ul>
       <li>文明 ID 只能包含小写字母 <code>a-z</code>、数字 <code>0-9</code>、下划线 <code>_</code>、短横线 <code>-</code>、冒号 <code>:</code>。</li>
       <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如 <code>nomad:desert_tribe</code>。</li>
-      <li><code>workers</code>、<code>leader</code>、<code>unique_recipes</code> 中引用的 ID 必须是已注册的完整 ID（含 mod 前缀），否则加载报错。</li>
+      <li><code>professions</code>、<code>recipe_modifiers</code> 中引用的 ID 必须是已注册的完整 ID（含 mod 前缀），否则加载报错。</li>
     </ul>
 
     <h2>文件放置规则</h2>
     <ul>
-      <li>放在 <code>Data/civilizations/</code> 下，支持任意深度的子目录。</li>
+      <li>放在 <code>data/civilizations/</code> 下，支持任意深度的子目录。</li>
       <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
       <li>每个 JSON 文件定义一个文明。</li>
     </ul>
@@ -87,7 +67,7 @@
     <p>在控制台（按 <code>~</code>）中确认文明注册成功：</p>
     <pre><code>mods                                  —— 确认 MOD 已加载
 list_data civilizations               —— 列出所有已注册文明
-data core:cave_civ                     —— 查看单个文明的完整 JSON</code></pre>
+data copper_age:copper_clan            —— 查看单个文明的完整 JSON</code></pre>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

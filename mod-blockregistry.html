@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块注册</div></div>
   <div class="content">
     <h1>方块注册</h1>
-    <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。方块既是世界中的体素单元，也是库存中的物品——没有单独的"物品"类型。/p>
+    <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。方块既是世界中的体素单元，也是库存中的物品——没有单独的"物品"类型。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
@@ -27,44 +27,46 @@
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>�?/td><td>唯一标识，格�?<code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。省略前缀时引擎自动补全为 <code>&lt;mod_id&gt;:&lt;名称&gt;</code>。/td></tr>
-        <tr><td><code>name</code></td><td>string</td><td>�?/td><td>显示名称。/td></tr>
-        <tr><td><code>stack_size</code></td><td>int</td><td>�?/td><td>背包每格最大堆叠数，范�?1~999。不填默认为 1（不可堆叠）。/td></tr>
-        <tr><td><code>hardness</code></td><td>float</td><td>�?/td><td>挖掘硬度，决定挖掘所需时间。/td></tr>
-        <tr><td><code>drops</code></td><td>string[]</td><td>�?/td><td>挖掘后掉落的物品 ID 列表，必须指向已注册的方�?ID。/td></tr>
-        <tr><td><code>category</code></td><td>string</td><td>�?/td><td>分类标签，如 <code>material</code>。code>tool</code>。code>food</code>。code>equipment</code> 等。/td></tr>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。省略前缀时引擎自动补全为 <code>&lt;mod_id&gt;:&lt;名称&gt;</code>。</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。</td></tr>
+        <tr><td><code>stack_size</code></td><td>int</td><td>否</td><td>背包每格最大堆叠数，范围 1~999。不填默认为 1（不可堆叠）。</td></tr>
+        <tr><td><code>hardness</code></td><td>float</td><td>否</td><td>挖掘硬度，决定挖掘所需时间。</td></tr>
+        <tr><td><code>drops</code></td><td>string[]</td><td>否</td><td>挖掘后掉落的物品 ID 列表，必须指向已注册的方块 ID。</td></tr>
+        <tr><td><code>category</code></td><td>string</td><td>否</td><td>分类标签，如 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      方块和物品是同一个概念。放在背包里就是物品，放在世界里就是方块。code>stack_size</code> 控制了物品形态下的堆叠行为，<code>hardness</code> �?<code>drops</code> 控制方块形态下的交互行为。    </div>
+      方块和物品是同一个概念。放在背包里就是物品，放在世界里就是方块。<code>stack_size</code> 控制了物品形态下的堆叠行为，<code>hardness</code> 和 <code>drops</code> 控制方块形态下的交互行为。
+    </div>
 
     <h2>ID 规则</h2>
     <ul>
-      <li>ID 只能包含小写字母 <code>a-z</code>、数�?<code>0-9</code>、下划线 <code>_</code>、短横线 <code>-</code>、冒�?<code>:</code>。/li>
-      <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如<code>copper_age:copper_ore</code>。/li>
-      <li>如果省略冒号前缀（只�?<code>copper_ore</code>），引擎自动补全一<code>&lt;当前mod_id&gt;:copper_ore</code>。/li>
-      <li>以冒号开头（<code>:copper_ore</code>）同样自动补全。/li>
-      <li>引用其他方块�?<code>drops</code> 时必须写完整 ID（含 mod 前缀），否则跨引用校验失败会导致加载报错。/li>
+      <li>ID 只能包含小写字母 <code>a-z</code>、数字 <code>0-9</code>、下划线 <code>_</code>、短横线 <code>-</code>、冒号 <code>:</code>。</li>
+      <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如 <code>copper_age:copper_ore</code>。</li>
+      <li>如果省略冒号前缀（只写 <code>copper_ore</code>），引擎自动补全为 <code>&lt;当前mod_id&gt;:copper_ore</code>。</li>
+      <li>以冒号开头（<code>:copper_ore</code>）同样自动补全。</li>
+      <li>引用其他方块（<code>drops</code>）时必须写完整 ID（含 mod 前缀），否则跨引用校验失败会导致加载报错。</li>
     </ul>
 
     <h2>文件放置规则</h2>
     <ul>
-      <li>放在 <code>data/blocks/</code> 下，支持任意深度的子目录，例如<code>data/blocks/materials/copper.json</code> 也合法。/li>
-      <li>文件名随意，引擎只关�?JSON 内的 <code>id</code> 字段。但建议文件名和 ID �?<code>&lt;name&gt;</code> 部分保持一致方便维护。/li>
-      <li>引擎通过 <code>reload</code> 字段支持热重载（设为 <code>true</code> 时覆盖已有同 ID 记录）。/li>
+      <li>放在 <code>data/blocks/</code> 下，支持任意深度的子目录，例如 <code>data/blocks/materials/copper.json</code> 也合法。</li>
+      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。但建议文件名和 ID 的 <code>&lt;name&gt;</code> 部分保持一致方便维护。</li>
     </ul>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认方块注册成功�?/p>
-    <pre><code>mods                             —�?确认 MOD 已加�?list_data blocks prefix=copper_age:  —�?列出该前缀下所有方�?data copper_age:copper_ore        —�?查看单个方块的完�?JSON</code></pre>
+    <p>在控制台（按 <code>~</code>）中确认方块注册成功：</p>
+    <pre><code>mods                             —— 确认 MOD 已加载
+list_data blocks prefix=copper_age:  —— 列出该前缀下所有方块
+data copper_age:copper_ore        —— 查看单个方块的完整 JSON</code></pre>
 
     <h2>引擎内部处理</h2>
-    <p>方块类型�?ModRegistry 中有特殊处理�?/p>
+    <p>方块类型在 ModRegistry 中有特殊处理：</p>
     <ul>
-      <li>每个方块 ID 被哈希为 32 位整数，用于运行时快速查找（<code>resolve_block_id</code>）。/li>
-      <li><code>stack_size</code> 被独立解析存�?<code>m_block_stack_limit</code> 表，库存系统直接查询哈希表获取堆叠上限。/li>
-      <li>热重载时旧元数据自动清理，新元数据重新填入。/li>
+      <li>每个方块 ID 被哈希为 32 位整数，用于运行时快速查找（<code>resolve_block_id</code>）。</li>
+      <li><code>stack_size</code> 被独立解析存入 <code>m_block_stack_limit</code> 表，库存系统直接查询哈希表获取堆叠上限。</li>
+      <li>热重载时旧元数据自动清理，新元数据重新填入。</li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

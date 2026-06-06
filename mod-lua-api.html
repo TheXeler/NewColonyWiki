@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lua 怎么�?· NewColony Wiki</title>
+  <title>Lua 怎么用 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="mod-lua-api">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么�?/div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
-    <h1>Lua 怎么�?/h1>
-    <p class="subtitle">Lua 入口用来连接事件、定时器、Focus、实体和地形扩展。能�?JSON 的内容仍然优先写 JSON。/p>
+    <h1>Lua 怎么用</h1>
+    <p class="subtitle">Lua 入口用来连接事件、定时器、Focus、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
 
     <h2>入口脚本结构</h2>
-    <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。/p>
+    <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。</p>
     <pre><code>local M = {}
 
 function M.on_load()
@@ -36,22 +36,22 @@ return M</code></pre>
 
     <p>四个生命周期函数的用途：</p>
     <ul>
-      <li><strong>on_load</strong> —�?适合订阅事件、注�?Focus 条件、读取配置。此时数据已注册完毕，但世界还没生成。/li>
-      <li><strong>on_world_init</strong> —�?适合生成世界相关内容、初始实体、注�?terrain biome/ore。此时地�?API 已可用。/li>
-      <li><strong>on_tick(tick, dt)</strong> —�?每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。/li>
-      <li><strong>on_shutdown</strong> —�?清理工作，比如写日志。/li>
+      <li><strong>on_load</strong> —— 适合订阅事件、注册 Focus 条件、读取配置。此时数据已注册完毕，但世界还没生成。</li>
+      <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore。此时地形 API 已可用。</li>
+      <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
+      <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
     </ul>
 
-    <h2>日志和配�?/h2>
-    <p>读取 MOD 配置时记得给第三个参�?fallback，避免旧配置缺字段时报错。/p>
+    <h2>日志和配置</h2>
+    <p>读取 MOD 配置时记得给第三个参数 fallback，避免旧配置缺字段时报错。</p>
     <pre><code>local debug_logs = engine.modding.get_setting("copper_age", "enable_debug_logs", false)
 
 if debug_logs then
   engine.log.info("[copper_age] debug logging enabled")
 end</code></pre>
 
-    <h2>创建和操作实�?/h2>
-    <p>如果�?<code>data/entities</code> 里写了实体原型，优先�?<code>spawn_prototype</code>。如果只是临时测试，也可以手动创建实体并逐个设置组件。/p>
+    <h2>创建和操作实体</h2>
+    <p>如果在 <code>data/entities</code> 里写了实体原型，优先用 <code>spawn_prototype</code>。如果只是临时测试，也可以手动创建实体并逐个设置组件。</p>
     <pre><code>local id = engine.ecs.spawn_prototype("core:colonist")
 if id ~= 0 then
   engine.ecs.set_position(id, 16, 65, 16)
@@ -62,8 +62,8 @@ end
 local hp = engine.ecs.get_health(id)
 engine.log.info("health: " .. tostring(hp.current) .. "/" .. tostring(hp.max))</code></pre>
 
-    <h2>合成和职一/h2>
-    <p>配方和职业本体写�?JSON 里，Lua 只负责触发或响应结果。/p>
+    <h2>合成和职业</h2>
+    <p>配方和职业本体写在 JSON 里，Lua 只负责触发或响应结果。</p>
     <pre><code>local ok = engine.professions.assign(id, "core:worker", 1)
 if ok and engine.crafting.craft(id, "core:wood_saw") then
   engine.log.info("crafted wood planks")
@@ -74,7 +74,7 @@ for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
 end</code></pre>
 
     <h2>事件</h2>
-    <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。/p>
+    <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
     <pre><code>local handler = engine.events.subscribe("inventory:changed", function(evt)
   if evt.item_key == "copper_age:copper_ingot" then
     engine.log.info("copper ingot changed by " .. tostring(evt.delta))
@@ -83,9 +83,9 @@ end, 10)
 
 engine.events.unsubscribe("inventory:changed", handler)</code></pre>
 
-    <p>引擎内置了六个事件，此外 CoreMod 的游戏系统也会发出自定义事件�?/p>
+    <p>引擎内置了六个事件，此外 CoreMod 的游戏系统也会发出自定义事件：</p>
     <table>
-      <thead><tr><th>事件�?/th><th>payload 字段</th></tr></thead>
+      <thead><tr><th>事件名</th><th>payload 字段</th></tr></thead>
       <tbody>
         <tr><td><code>inventory:changed</code></td><td>entity_id, reason, item_id, item_key, delta</td></tr>
         <tr><td><code>recipe:crafted</code></td><td>entity_id, recipe_id, output_item_id, output_item_key, output_count</td></tr>
@@ -95,18 +95,21 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
         <tr><td><code>focus:dismissed</code></td><td>focus_id, instance_id, tick</td></tr>
       </tbody>
     </table>
-    <p>也可以用 <code>engine.events.emit("name", payload)</code> 发送自定义 Lua 事件。/p>
+    <p>也可以用 <code>engine.events.emit("name", payload)</code> 发送自定义 Lua 事件。</p>
 
-    <h2>装备�?/h2>
-    <p>CoreMod �?<code>on_load</code> 阶段注册了三个装备栏位：<code>weapon</code>（武器）。code>armor</code>（护甲）。code>held_item</code>（手持物品）。栏位通过 Lua API 注册，不使用 JSON 数据注册表。/p>
-    <pre><code>-- 注册一个新栏位（通常�?on_load 中调用）
+    <h2>装备系统</h2>
+    <p>CoreMod 在 <code>on_load</code> 阶段注册了三个装备栏位：<code>weapon</code>（武器）、<code>armor</code>（护甲）、<code>held_item</code>（手持物品）。栏位通过 Lua API 注册，不使用 JSON 数据注册表。</p>
+    <pre><code>-- 注册一个新栏位（通常在 on_load 中调用）
 engine.equipment.register_slot("weapon")
 
--- 将物品装备到栏位（item_id 一data ID hash�?engine.equipment.equip(entity_id, "held_item", item_hash, 1)
+-- 将物品装备到栏位（item_id 为 data ID 的哈希值）
+engine.equipment.equip(entity_id, "held_item", item_hash, 1)
 
--- 从栏位卸一engine.equipment.unequip(entity_id, "held_item")
+-- 从栏位卸下
+engine.equipment.unequip(entity_id, "held_item")
 
--- 查询实体所有栏�?local eq = engine.equipment.get_equipment(entity_id)
+-- 查询实体所有栏位
+local eq = engine.equipment.get_equipment(entity_id)
 engine.log.info("weapon: " .. tostring(eq.weapon.item_id))
 
 -- 查询单个栏位
@@ -119,14 +122,15 @@ end
 if engine.equipment.has_slot("weapon") then
   engine.log.info("weapon slot exists")
 end</code></pre>
-    <p>物品 ID �?<code>engine.util.data_id_hash("core:wooden_sword")</code> 格式�?FNV-1a 哈希值。/p>
+    <p>物品 ID 使用 <code>engine.util.data_id_hash("core:wooden_sword")</code> 格式的 FNV-1a 哈希值。</p>
 
     <h2>世界操作</h2>
-    <p>对体素世界进行方块级别的操作。CoreMod 的挖矿、搬运、建造系统使用这�?API。/p>
+    <p>对体素世界进行方块级别的操作。CoreMod 的挖矿、搬运、建造系统使用这些 API。</p>
     <pre><code>-- 移除方块
 engine.world.remove_block(x, y, z)
 
--- 放置方块（block_id 为字符串如"core:stone"�?engine.world.place_block(x, y, z, "core:stone")
+-- 放置方块（block_id 为字符串如 "core:stone"）
+engine.world.place_block(x, y, z, "core:stone")
 
 -- 查询方块
 local block = engine.world.get_block(x, y, z)
@@ -135,10 +139,11 @@ if block.exists then
 end</code></pre>
 
     <h2>工具函数</h2>
-    <pre><code>-- 计算 data ID 的哈希值（用于物品/方块 ID 一inventory/equipment 交互�?local hash = engine.util.data_id_hash("core:wooden_sword")</code></pre>
+    <pre><code>-- 计算 data ID 的哈希值（用于物品/方块 ID 与 inventory/equipment 交互）
+local hash = engine.util.data_id_hash("core:wooden_sword")</code></pre>
 
-    <h2>定时�?/h2>
-    <p>定时器按模拟 tick 执行，不是按真实时间。/p>
+    <h2>定时器</h2>
+    <p>定时器按模拟 tick 执行，不是按真实时间。</p>
     <pre><code>engine.timers.after(20, function(tick)
   engine.log.info("runs once at tick " .. tostring(tick))
 end)
@@ -151,8 +156,8 @@ timer_id = engine.timers.every(100, function(tick)
   end
 end)</code></pre>
 
-    <h2>确定性随�?/h2>
-    <p><code>math.random</code> 在脚本环境中会报错——这是有意为之，确保跨平台和跨存档确定性。需要脚本随机数时使�?<code>engine.random</code>，它会在引擎初始化、新世界和读档时用世�?seed 重置。/p>
+    <h2>确定性随机</h2>
+    <p><code>math.random</code> 在脚本环境中会报错——这是有意为之，确保跨平台和跨存档确定性。需要脚本随机数时使用 <code>engine.random</code>，它会在引擎初始化、新世界和读档时用世界 seed 重置。</p>
     <pre><code>local roll = engine.random.int(1, 100)
 local chance = engine.random.float()
 
@@ -164,7 +169,7 @@ engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
     <h2>Focus</h2>
-    <p>Focus 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 Focus 被触发、选择或关闭。/p>
+    <p>Focus 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 Focus 被触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20
 end)
@@ -182,7 +187,7 @@ engine.events.subscribe("focus:chosen", function(evt)
 end)</code></pre>
 
     <h2>地形扩展</h2>
-    <p>地形 API 通常�?<code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome �?ore 的方式，参�?<code>mods/core/scripts/bootstrap.lua</code> 中的 <code>on_world_init</code> 即可。/p>
+    <p>地形 API 通常在 <code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome 和 ore 的方式，参考 <code>CoreMod/scripts/bootstrap.lua</code> 中的 <code>on_world_init</code> 即可。</p>
     <pre><code>function M.on_world_init()
   engine.terrain.register_ore({
     block = 12,
@@ -197,7 +202,7 @@ end)</code></pre>
 end</code></pre>
 
     <h2>NPC 阵营</h2>
-    <p>阵营定义和名称池优先写在 <code>data/factions</code>。code>data/name_pools</code>。Lua 适合在事件发生时生成实例、修改关系或生成调试名称。/p>
+    <p>阵营定义和名称池优先写在 <code>data/factions</code>、<code>data/name_pools</code>。Lua 适合在事件发生时生成实例、修改关系或生成调试名称。</p>
     <pre><code>local faction = engine.factions.spawn("core:merchant_guild", 1234)
 if faction.id ~= "" then
   engine.log.info("spawned faction: " .. faction.display_name)
@@ -208,19 +213,20 @@ local name = engine.factions.generate_name("${random_name} Guild", {"core:generi
 engine.log.info("sample name: " .. name)</code></pre>
 
     <h2>网络命令</h2>
-    <p>网络 API 用于联机和命令同步。内容型 MOD 不建议把核心玩法依赖放在网络回调里。详情见<a href="mod-network-sync.html">网络同步</a>。/p>
+    <p>网络 API 用于联机和命令同步。内容型 MOD 不建议把核心玩法依赖放在网络回调里。详情见<a href="mod-network-sync.html">网络同步</a>。</p>
     <pre><code>if engine.network.is_connected() then
   engine.log.info("network mode: " .. engine.network.mode())
 end</code></pre>
 
-    <h2>本地�?/h2>
-    <p>如果需要翻�?UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放�?<code>Game/lang/</code>。/p>
+    <h2>本地化</h2>
+    <p>如果需要翻译 UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放在 <code>Localization/</code>。</p>
     <pre><code>engine.locale.set_locale("zh_CN")
 local text = engine.locale.t("ui.menu.start")
 engine.log.info(engine.locale.get("ui", "menu.start"))</code></pre>
 
     <div class="callout info">
-      需要查函数签名时看 <a href="mod-lua-api-reference.html">Lua API 速查</a>。那一页有搜索框，适合�?<code>focus</code>。code>inventory</code>。code>terrain</code> 之类关键词快速过滤。    </div>
+      需要查函数签名时看 <a href="mod-lua-api-reference.html">Lua API 速查</a>。那一页有搜索框，适合用 <code>focus</code>、<code>inventory</code>、<code>terrain</code> 之类关键词快速过滤。
+    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

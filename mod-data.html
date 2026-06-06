@@ -11,20 +11,20 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>注册物品、方块和规则</div></div>
   <div class="content">
     <h1>注册物品、方块和规则</h1>
-    <p class="subtitle">所有内容数据都放在 <code>data/</code> 下。引擎在加载阶段自动扫描这些目录，不需要你�?Lua 里手动注册。/p>
+    <p class="subtitle">所有内容数据都放在 <code>data/</code> 下。引擎在加载阶段自动扫描这些目录，不需要你在 Lua 里手动注册。</p>
 
     <h2>通用规则</h2>
     <p>不管哪种数据类型，下面几条规则是通用的：</p>
     <ul>
-      <li>每个 JSON 都必须有唯一�?<code>id</code>，推荐格�?<code>&lt;mod_id&gt;:&lt;name&gt;</code>。/li>
-      <li>引用其他内容时必须写完整 ID，比如<code>copper_age:copper_ingot</code>。/li>
-      <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导�?MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。/li>
-      <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如<code>data/items/materials/copper.json</code> �?<code>data/items/copper.json</code> 都行。/li>
-      <li>当前游戏支持 11 种数据类型：<code>items</code>。code>blocks</code>。code>entities</code>。code>recipes</code>。code>professions</code>。code>civilizations</code>。code>focuses</code>。code>factions</code>。code>name_pools</code>。code>actions</code>。code>crops</code>。此�?<code>data/biomes</code> 下的 JSON 也被 core 脚本�?<code>on_world_init</code> 中使用。/li>
+      <li>每个 JSON 都必须有唯一的 <code>id</code>，推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</li>
+      <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
+      <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
+      <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
+      <li>当前引擎支持 10 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>crops</code>。此外 <code>data/biomes</code> 下的 JSON 也被 core 脚本在 <code>on_world_init</code> 中使用。</li>
     </ul>
 
-    <h2>物品（items�?/h2>
-    <p>物品是库存、配方输入输出、职业转职道具的基本单元。放�?<code>data/items/</code> 下。code>stack_size</code> 表示一个背包格子能堆叠多少个，范围 1 �?999。code>category</code> 用来分类，可以取 <code>material</code>。code>tool</code>。code>food</code>。code>equipment</code> 等。/p>
+    <h2>方块（blocks）</h2>
+    <p>方块是体素世界的基本构成单位，放在 <code>data/blocks/</code> 下。<code>stack_size</code> 表示一个背包格子能堆叠多少个，范围 1~999。<code>category</code> 用来分类，可以取 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</p>
     <pre><code>{
   "id": "copper_age:copper_ingot",
   "name": "Copper Ingot",
@@ -32,22 +32,21 @@
   "category": "material"
 }</code></pre>
 
-    <h2>方块（blocks�?/h2>
-    <p>方块是体素世界的基本构成单位。放�?<code>data/blocks/</code> 下。code>hardness</code> 决定挖掘所需时间�?code>drops</code> 里的 ID 必须指向已注册的物品或方块。/p>
+    <p>方块既是世界中的体素单元，也是库存中的物品——没有单独的"物品"类型。<code>hardness</code> 决定挖掘所需时间，<code>drops</code> 里的 ID 必须指向已注册的方块。</p>
     <pre><code>{
   "id": "copper_age:copper_ore_block",
   "name": "Copper Ore",
   "hardness": 3.0,
   "drops": ["copper_age:copper_ore"]
 }</code></pre>
-    <p>工作台类的方块（如<code>workbench</code>。code>stone_furnace</code>）还会声明关联的配方类型或可用操作。/p>
+    <p>工作台类的方块（如 <code>workbench</code>、<code>stone_furnace</code>）还会声明关联的配方类型或可用操作。</p>
 
     <h3>材质</h3>
-    <p>方块材质用于决定每个面的显示贴图。当�?<code>data/blocks/*.json</code> 只负责注册方块数据，不能单独通过新增 <code>texture</code> 字段让方块换贴图；实际渲染贴图由渲染器的方块材质注册表加载。/p>
+    <p>方块材质用于决定每个面的显示贴图。当前 <code>data/blocks/*.json</code> 只负责注册方块数据，不能单独通过新增 <code>texture</code> 字段让方块换贴图；实际渲染贴图由渲染器的方块材质注册表加载。</p>
     <p>内置内容目前有两类材质来源：</p>
     <ul>
-      <li><code>NewColonyTextures/*.json</code> + <code>.png</code>：Blockbench / Minecraft Bedrock 风格的模�?JSON 和贴图图集。JSON 里的 <code>elements[0].faces</code> 声明六个面的 UV，PNG 会按 16x16 tile 切入纹理图集。/li>
-      <li>程序生成 fallback：没有材质映射的基础方块会按固定颜色生成临时纹理，例如stone、wood、leaves、water 等。/li>
+      <li><code>NewColonyTextures/*.json</code> + <code>.png</code>：Blockbench / Minecraft Bedrock 风格的模型 JSON 和贴图图集。JSON 里的 <code>elements[0].faces</code> 声明六个面的 UV，PNG 会按 16x16 tile 切入纹理图集。</li>
+      <li>程序生成 fallback：没有材质映射的基础方块会按固定颜色生成临时纹理，例如 stone、wood、leaves、water 等。</li>
     </ul>
     <pre><code>{
   "texture_size": [64, 64],
@@ -66,12 +65,13 @@
     }
   ]
 }</code></pre>
-    <div class="callout warning">
-      这部分仍属于渲染器内部能力，不是稳定�?MOD 数据接口。内容型 MOD 现在可以安全依赖 <code>data/blocks/</code> 的注册、掉落和堆叠行为；自定义方块材质需要等材质映射被暴露为正式�?MOD 配置后再作为稳定接口使用。    </div>
+    <div class="callout warn">
+      这部分仍属于渲染器内部能力，不是稳定的 MOD 数据接口。内容型 MOD 现在可以安全依赖 <code>data/blocks/</code> 的注册、掉落和堆叠行为；自定义方块材质需要等材质映射被暴露为正式的 MOD 配置后再作为稳定接口使用。
+    </div>
 
-    <h2>实体原型（entities�?/h2>
-    <p>实体原型用于 <code>spawn_proto</code> 控制台命令和 <code>engine.ecs.spawn_prototype</code>。放�?<code>data/entities/</code> 下。一个实体由多个组件拼成，每个组件描述一种能力或属性。/p>
-    <p>引擎内置�?17 种标准组件——你可以混搭它们来定义不同类型的实体�?/p>
+    <h2>实体原型（entities）</h2>
+    <p>实体原型用于 <code>spawn_proto</code> 控制台命令和 <code>engine.ecs.spawn_prototype</code>。放在 <code>data/entities/</code> 下。一个实体由多个组件拼成，每个组件描述一种能力或属性。</p>
+    <p>引擎内置了 17 种标准组件——你可以混搭它们来定义不同类型的实体：</p>
     <table>
       <thead><tr><th>组件</th><th>描述</th></tr></thead>
       <tbody>
@@ -79,23 +79,23 @@
         <tr><td><code>Velocity</code></td><td>移动速度向量</td></tr>
         <tr><td><code>Rotation</code></td><td>朝向 (yaw, pitch)</td></tr>
         <tr><td><code>Scale</code></td><td>缩放比例 (x, y, z)</td></tr>
-        <tr><td><code>Health</code></td><td>生命�?(current, max)</td></tr>
-        <tr><td><code>Needs</code></td><td>三项需�?(hunger, fatigue, social)</td></tr>
-        <tr><td><code>Inventory</code></td><td>背包（最�?20 个格子）</td></tr>
+        <tr><td><code>Health</code></td><td>生命值 (current, max)</td></tr>
+        <tr><td><code>Needs</code></td><td>三项需求 (hunger, fatigue, social)</td></tr>
+        <tr><td><code>Inventory</code></td><td>背包（最多 20 个格子）</td></tr>
         <tr><td><code>Equipment</code></td><td>装备栏（武器、护甲、手持物品）</td></tr>
-        <tr><td><code>Profession</code></td><td>职业 ID 和等�?(1-5)</td></tr>
+        <tr><td><code>Profession</code></td><td>职业 ID 和等级 (1-5)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
-        <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤�?/td></tr>
-        <tr><td><code>AIState</code></td><td>AI 状�?(行为�?ID, 当前节点, LoD 层级, busy 标志)</td></tr>
+        <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤）</td></tr>
+        <tr><td><code>AIState</code></td><td>AI 状态（行为树 ID, 当前节点, LoD 层级, busy 标志）</td></tr>
         <tr><td><code>NavAgent</code></td><td>导航代理（路径跟随）</td></tr>
         <tr><td><code>WorkerPriorityConfig</code></td><td>工作优先级配置（5 类任务，1-7 级）</td></tr>
-        <tr><td><code>Civilization</code></td><td>所属文�?ID</td></tr>
-        <tr><td><code>BlockInteractor</code></td><td>方块交互意图（挖�?放置/交互�?/td></tr>
-        <tr><td><code>PrototypeRef</code></td><td>原型引用（记录实体的数据来源�?/td></tr>
+        <tr><td><code>Civilization</code></td><td>所属文明 ID</td></tr>
+        <tr><td><code>BlockInteractor</code></td><td>方块交互意图（挖掘/放置/交互）</td></tr>
+        <tr><td><code>PrototypeRef</code></td><td>原型引用（记录实体的数据来源）</td></tr>
       </tbody>
     </table>
 
-    <p>下面是一个殖民者的实体原型示例�?/p>
+    <p>下面是一个殖民者的实体原型示例：</p>
     <pre><code>{
   "id": "copper_age:copper_worker",
   "components": {
@@ -111,8 +111,8 @@
   }
 }</code></pre>
 
-    <h2>配方（recipes�?/h2>
-    <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写�?<code>profession</code> 后，只有满足职业与等级要求的实体能制作。/p>
+    <h2>配方（recipes）</h2>
+    <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写了 <code>profession</code> 后，只有满足职业与等级要求的实体能制作。</p>
     <pre><code>{
   "id": "copper_age:smelt_copper",
   "inputs": [
@@ -121,15 +121,15 @@
   "profession": { "id": "copper_age:coppersmith", "level": 1 },
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
-    <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以�?Lua 里订阅它来响应。/p>
+    <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。</p>
 
-    <h2>职业（professions�?/h2>
-    <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的物品、前置职业和到达特定等级后解锁的配方。等级范�?1-5。/p>
+    <h2>职业（professions）</h2>
+    <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。</p>
     <pre><code>{
   "id": "copper_age:coppersmith",
   "name": "Coppersmith",
   "max_level": 5,
-  "required_item": { "id": "copper_age:copper_hammer", "count": 1 },
+  "required_block": { "id": "copper_age:copper_hammer", "count": 1 },
   "prerequisites": [
     { "id": "core:worker", "level": 1 }
   ],
@@ -137,10 +137,10 @@
     { "id": "copper_age:smelt_copper", "level": 1 }
   ]
 }</code></pre>
-    <p>分配职业成功时会触发 <code>profession:assigned</code> 事件。/p>
+    <p>分配职业成功时会触发 <code>profession:assigned</code> 事件。</p>
 
-    <h2>文明（civilizations�?/h2>
-    <p>文明用来把职业、开局选项和配方限制组织在一起。放�?<code>data/civilizations/</code> 下。目前建议保持简单：声明可用职业、一个开局选项，需要时再加配方限制。/p>
+    <h2>文明（civilizations）</h2>
+    <p>文明用来把职业、开局选项和配方限制组织在一起。放在 <code>data/civilizations/</code> 下。目前建议保持简单：声明可用职业、一个开局选项，需要时再加配方限制。</p>
     <pre><code>{
   "id": "copper_age:copper_clan",
   "name": "Copper Clan",
@@ -148,7 +148,7 @@
   "starting_options": [
     {
       "id": "copper_age:starter",
-      "items": [
+      "blocks": [
         { "id": "copper_age:copper_ore", "count": 4 }
       ],
       "professions": [
@@ -159,7 +159,7 @@
 }</code></pre>
 
     <h2>Focus（焦点事件）</h2>
-    <p>Focus 是展示给玩家的消息。放�?<code>data/focuses/</code> 下。条件可以是内置条件�?code>tick_at_least</code>。code>entity_count</code>。code>colonist_need</code>），也可以是 Lua 注册的自定义条件。/p>
+    <p>Focus 是展示给玩家的消息。放在 <code>data/focuses/</code> 下。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count</code>、<code>colonist_need</code>），也可以是 Lua 注册的自定义条件。</p>
     <pre><code>{
   "id": "copper_age:copper_found",
   "title": "Copper Discovered",
@@ -174,8 +174,8 @@
   ]
 }</code></pre>
 
-    <h2>NPC 阵营（factions�?/h2>
-    <p>阵营定义放在 <code>data/factions</code>。code>name_template</code> 可以包含 <code>${random_name}</code>，生成实例时会从指定的名称池里取词；关系值会限制�?<code>min_relation</code> �?<code>max_relation</code> 之间。/p>
+    <h2>NPC 阵营（factions）</h2>
+    <p>阵营定义放在 <code>data/factions</code>。<code>name_template</code> 可以包含 <code>${random_name}</code>，生成实例时会从指定的名称池里取词；关系值会被限制在 <code>min_relation</code> 和 <code>max_relation</code> 之间。</p>
     <pre><code>{
   "id": "copper_age:merchant_guild",
   "name_template": "${random_name} Merchant Guild",
@@ -185,19 +185,19 @@
   "name_pools": ["copper_age:metals"]
 }</code></pre>
 
-    <h2>名称池（name_pools�?/h2>
-    <p>名称池给 NPC 阵营生成名称使用。放�?<code>data/name_pools/</code> 下。code>words</code> 必须是字符串数组，空数组会被跳过。/p>
+    <h2>名称池（name_pools）</h2>
+    <p>名称池给 NPC 阵营生成名称使用。放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过。</p>
     <pre><code>{
   "id": "copper_age:metals",
   "words": ["Copper", "Bronze", "Tin", "Verdigris"]
 }</code></pre>
 
-    <h2>动作（actions）与作物（crops�?/h2>
-    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>。code>chop_wood</code>。code>eat_food</code>。code>harvest_crop</code> 等）。code>data/crops/</code> 定义作物的生长阶段和产出。它们的格式和上述类型类似，但更多依赖引擎内部系统解析。core 内容里已有示例，可以对照 <code>mods/core/data/actions/</code> �?<code>mods/core/data/crops/</code>。/p>
+    <h2>动作（actions）与作物（crops）</h2>
+    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。<code>data/crops/</code> 定义作物的生长阶段和产出。它们的格式和上述类型类似，但更多依赖引擎内部系统解析。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
 
     <h2>验证命令</h2>
-    <p>在控制台中用这些命令确认数据注册成功�?/p>
-    <pre><code>list_data items prefix=copper_age:
+    <p>在控制台中用这些命令确认数据注册成功：</p>
+    <pre><code>list_data blocks prefix=copper_age:
 list_data recipes prefix=copper_age:
 list_data professions prefix=copper_age:
 list_data civilizations prefix=copper_age:
