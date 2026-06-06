@@ -11,174 +11,173 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua API 速查</div></div>
   <div class="content">
     <h1>Lua API 速查</h1>
-    <p class="subtitle">按当前引擎绑定整理的函数表。用搜索框过滤模块、函数名、参数或说明。</p>
+    <p class="subtitle">按当前引擎绑定整理的函数表。用搜索框过滤模块、函数名、参数或说明。/p>
 
     <div class="search-box">
-      <input data-api-search type="search" placeholder="搜索 API，例如 focus、inventory、spawn、terrain、locale">
+      <input data-api-search type="search" placeholder="搜索 API，例如focus、inventory、spawn、terrain、locale">
     </div>
 
     <table>
       <thead><tr><th>API</th><th>参数</th><th>返回</th><th>备注</th></tr></thead>
       <tbody>
         <!-- Version / Logging / Time -->
-        <tr class="api-row" data-api-row><td><code>engine.api.version()</code></td><td>无</td><td>string</td><td>当前公共 MOD API 版本。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.api.compatible(version)</code></td><td><code>string</code></td><td>bool</td><td>判断请求的版本是否兼容。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.log.info(msg)</code></td><td><code>string</code></td><td>无</td><td>写信息日志，自动带 Lua 标记。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.log.warn(msg)</code></td><td><code>string</code></td><td>无</td><td>写警告日志。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.log.error(msg)</code></td><td><code>string</code></td><td>无</td><td>写错误日志。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.time.tps</code></td><td>属性</td><td>number</td><td>模拟每秒 tick 数。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.time.dt</code></td><td>属性</td><td>number</td><td>单 tick 的模拟时间间隔。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.api.version()</code></td><td>�?/td><td>string</td><td>当前公共 MOD API 版本。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.api.compatible(version)</code></td><td><code>string</code></td><td>bool</td><td>判断请求的版本是否兼容。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.log.info(msg)</code></td><td><code>string</code></td><td>�?/td><td>写信息日志，自动�?Lua 标记。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.log.warn(msg)</code></td><td><code>string</code></td><td>�?/td><td>写警告日志。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.log.error(msg)</code></td><td><code>string</code></td><td>�?/td><td>写错误日志。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.time.tps</code></td><td>属�?/td><td>number</td><td>模拟每秒 tick 数。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.time.dt</code></td><td>属�?/td><td>number</td><td>�?tick 的模拟时间间隔。/td></tr>
 
         <!-- Random (Deterministic) -->
-        <tr class="api-row" data-api-row><td><code>engine.random.seed(seed)</code></td><td>integer</td><td>无</td><td>重置 Lua 确定性随机流。引擎初始化、新世界和读档时会用世界 seed 自动调用。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.random.float()</code></td><td>无</td><td>number</td><td>返回 <code>[0, 1)</code> 范围内的确定性浮点数。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.random.int(min, max)</code></td><td>integer, integer</td><td>integer</td><td>返回闭区间 <code>[min, max]</code> 内的确定性整数；参数顺序反了会自动交换。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.random.bool()</code></td><td>无</td><td>bool</td><td>返回确定性布尔值。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.random.seed(seed)</code></td><td>integer</td><td>�?/td><td>重置 Lua 确定性随机流。引擎初始化、新世界和读档时会用世界 seed 自动调用。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.random.float()</code></td><td>�?/td><td>number</td><td>返回 <code>[0, 1)</code> 范围内的确定性浮点数。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.random.int(min, max)</code></td><td>integer, integer</td><td>integer</td><td>返回闭区�?<code>[min, max]</code> 内的确定性整数；参数顺序反了会自动交换。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.random.bool()</code></td><td>�?/td><td>bool</td><td>返回确定性布尔值。/td></tr>
 
         <!-- ECS -->
-        <tr class="api-row" data-api-row><td><code>engine.ecs.create_entity()</code></td><td>无</td><td>entity id</td><td>创建一个空实体。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.spawn_prototype(id)</code></td><td><code>data id</code></td><td>entity id 或 0</td><td>从 <code>Data/entities</code> 原型创建实体。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.destroy_entity(entity)</code></td><td><code>entity id</code></td><td>无</td><td>销毁实体。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.is_alive(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否还存在。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.entity_count()</code></td><td>无</td><td>number</td><td>当前实体总数。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.has_component(entity, name)</code></td><td><code>entity id</code>, <code>string</code></td><td>bool</td><td>组件名用小写，如 <code>position</code>、<code>health</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_position(entity, x, y, z)</code></td><td>number, number, number</td><td>无</td><td>设置 Position 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_position(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>，没有组件时返回空表。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_velocity(entity, x, y, z)</code></td><td>number, number, number</td><td>无</td><td>设置 Velocity 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_velocity(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_rotation(entity, yaw, pitch)</code></td><td>number, number</td><td>无</td><td>设置 Rotation 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_rotation(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ yaw, pitch }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_scale(entity, x, y, z)</code></td><td>number, number, number</td><td>无</td><td>设置 Scale 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_scale(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_health(entity, current, max)</code></td><td>integer, integer</td><td>无</td><td>设置 Health 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_health(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ current, max }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_needs(entity, hunger, fatigue, social)</code></td><td>number, number, number</td><td>无</td><td>设置殖民者的三项需求。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_needs(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ hunger, fatigue, social }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_name(entity, name)</code></td><td><code>string</code></td><td>无</td><td>设置 Name 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_name(entity)</code></td><td><code>entity id</code></td><td>string</td><td>没有 Name 时返回空字符串。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.add_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>无</td><td>给实体加上殖民者标记。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.has_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>检查实体是否有殖民者标记。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_ai_state(entity, tree, lod)</code></td><td>integer, integer</td><td>无</td><td>设置 AIState，current_node 置为 0。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_ai_state(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 behavior_tree_id、current_node、lod_level。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_profession(entity, id, level)</code></td><td><code>data id</code>, integer</td><td>无</td><td>直接设置 Profession 组件，不检查职业规则。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_profession(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回哈希后的 profession_id 和 level。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.give_item(entity, id, count)</code></td><td><code>data id</code>, integer</td><td>bool</td><td>按物品堆叠上限加入库存，成功时触发 <code>inventory:changed</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_inventory(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回原始 item_id 和 count。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.add_inventory_item(entity, item_id, count)</code></td><td>hashed id, integer</td><td>bool</td><td>底层库存接口，不解析字符串 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.remove_inventory_item(entity, item_id, count)</code></td><td>hashed id, integer</td><td>bool</td><td>底层库存接口，数量不足时不删除。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_block_interactor(entity, x, y, z, action)</code></td><td>integer...</td><td>无</td><td>设置方块交互意图并触发 <code>block:interacted</code>。action: 1=mine, 2=place, 3=interact。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_block_interactor(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>x</code>、<code>y</code>、<code>z</code>、<code>action_type</code>，没有组件时返回空表。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_prototype_ref(entity, id)</code></td><td><code>entity id</code>, <code>data id</code></td><td>无</td><td>直接设置 PrototypeRef 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_prototype_ref(entity)</code></td><td><code>entity id</code></td><td>string</td><td>读取 PrototypeRef；没有组件时返回空字符串。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.query_all_entities()</code></td><td>无</td><td>table</td><td>返回所有实体 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.query_colonists()</code></td><td>无</td><td>table</td><td>返回带 Position 和 ColonistTag 的实体条目。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.query_with_position()</code></td><td>无</td><td>table</td><td>返回有 Position 组件的实体条目。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.query_with_health()</code></td><td>无</td><td>table</td><td>返回有 Health 组件的实体条目。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.add_equipment(entity)</code></td><td><code>entity id</code></td><td>无</td><td>给实体添加 Equipment 组件（空装备栏）。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.has_equipment(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否有 Equipment 组件。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.create_entity()</code></td><td>�?/td><td>entity id</td><td>创建一个空实体。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.spawn_prototype(id)</code></td><td><code>data id</code></td><td>entity id �?0</td><td>�?<code>data/entities</code> 原型创建实体。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.destroy_entity(entity)</code></td><td><code>entity id</code></td><td>�?/td><td>销毁实体。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.is_alive(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否还存在。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.entity_count()</code></td><td>�?/td><td>number</td><td>当前实体总数。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.has_component(entity, name)</code></td><td><code>entity id</code>, <code>string</code></td><td>bool</td><td>组件名用小写，如 <code>position</code>。code>health</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_position(entity, x, y, z)</code></td><td>number, number, number</td><td>�?/td><td>设置 Position 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_position(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>，没有组件时返回空表。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_velocity(entity, x, y, z)</code></td><td>number, number, number</td><td>�?/td><td>设置 Velocity 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_velocity(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_rotation(entity, yaw, pitch)</code></td><td>number, number</td><td>�?/td><td>设置 Rotation 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_rotation(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ yaw, pitch }</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_scale(entity, x, y, z)</code></td><td>number, number, number</td><td>�?/td><td>设置 Scale 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_scale(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_health(entity, current, max)</code></td><td>integer, integer</td><td>�?/td><td>设置 Health 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_health(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ current, max }</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_needs(entity, hunger, fatigue, social)</code></td><td>number, number, number</td><td>�?/td><td>设置殖民者的三项需求。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_needs(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ hunger, fatigue, social }</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_name(entity, name)</code></td><td><code>string</code></td><td>�?/td><td>设置 Name 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_name(entity)</code></td><td><code>entity id</code></td><td>string</td><td>没有 Name 时返回空字符串。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.add_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>�?/td><td>给实体加上殖民者标记。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.has_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>检查实体是否有殖民者标记。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_ai_state(entity, tree, lod)</code></td><td>integer, integer</td><td>�?/td><td>设置 AIState，current_node 置为 0。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_ai_state(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 behavior_tree_id、current_node、lod_level。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_profession(entity, id, level)</code></td><td><code>data id</code>, integer</td><td>�?/td><td>直接设置 Profession 组件，不检查职业规则。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_profession(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回哈希后的 profession_id �?level。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.give_item(entity, id, count)</code></td><td><code>data id</code>, integer</td><td>bool</td><td>按物品堆叠上限加入库存，成功时触�?<code>inventory:changed</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_inventory(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回原始 item_id �?count。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.add_inventory_item(entity, item_id, count)</code></td><td>hashed id, integer</td><td>bool</td><td>底层库存接口，不解析字符一ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.remove_inventory_item(entity, item_id, count)</code></td><td>hashed id, integer</td><td>bool</td><td>底层库存接口，数量不足时不删除。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_block_interactor(entity, x, y, z, action)</code></td><td>integer...</td><td>�?/td><td>设置方块交互意图并触�?<code>block:interacted</code>。action: 1=mine, 2=place, 3=interact。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_block_interactor(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>x</code>。code>y</code>。code>z</code>。code>action_type</code>，没有组件时返回空表。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_prototype_ref(entity, id)</code></td><td><code>entity id</code>, <code>data id</code></td><td>�?/td><td>直接设置 PrototypeRef 组件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_prototype_ref(entity)</code></td><td><code>entity id</code></td><td>string</td><td>读取 PrototypeRef；没有组件时返回空字符串。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.query_all_entities()</code></td><td>�?/td><td>table</td><td>返回所有实�?ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.query_colonists()</code></td><td>�?/td><td>table</td><td>返回�?Position �?ColonistTag 的实体条目。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.query_with_position()</code></td><td>�?/td><td>table</td><td>返回�?Position 组件的实体条目。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.query_with_health()</code></td><td>�?/td><td>table</td><td>返回�?Health 组件的实体条目。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.add_equipment(entity)</code></td><td><code>entity id</code></td><td>�?/td><td>给实体添�?Equipment 组件（空装备栏）。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.has_equipment(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>实体是否�?Equipment 组件。/td></tr>
 
         <!-- Modding -->
-        <tr class="api-row" data-api-row><td><code>engine.modding.get_data_json(id)</code></td><td><code>data id</code></td><td>string</td><td>返回注册表中的原始 JSON，未找到时返回空字符串。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.modding.list_by_type(type)</code></td><td><code>items</code> 等</td><td>table</td><td>列出指定数据类型的全部 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.modding.get_setting(mod, key, fallback)</code></td><td>string, string, any</td><td>any</td><td>读取配置，结合清单默认值和用户覆盖后的最终值。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.modding.get_data_json(id)</code></td><td><code>data id</code></td><td>string</td><td>返回注册表中的原�?JSON，未找到时返回空字符串。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.modding.list_by_type(type)</code></td><td><code>items</code> �?/td><td>table</td><td>列出指定数据类型的全�?ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.modding.get_setting(mod, key, fallback)</code></td><td>string, string, any</td><td>any</td><td>读取配置，结合清单默认值和用户覆盖后的最终值。/td></tr>
 
         <!-- Crafting & Professions -->
-        <tr class="api-row" data-api-row><td><code>engine.crafting.craft(entity, recipe)</code></td><td><code>entity id</code>, <code>data id</code></td><td>bool</td><td>成功时扣除输入、添加输出，并触发库存和配方事件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.crafting.list_recipes()</code></td><td>无</td><td>table</td><td>列出已加载的配方 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.professions.list()</code></td><td>无</td><td>table</td><td>列出已加载的职业 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.professions.can_assign(entity, profession)</code></td><td>entity, data id</td><td>bool</td><td>检查实体是否满足转职条件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.professions.assign(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>bool</td><td>分配职业，成功时触发 <code>profession:assigned</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.crafting.craft(entity, recipe)</code></td><td><code>entity id</code>, <code>data id</code></td><td>bool</td><td>成功时扣除输入、添加输出，并触发库存和配方事件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.crafting.list_recipes()</code></td><td>�?/td><td>table</td><td>列出已加载的配方 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.professions.list()</code></td><td>�?/td><td>table</td><td>列出已加载的职业 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.professions.can_assign(entity, profession)</code></td><td>entity, data id</td><td>bool</td><td>检查实体是否满足转职条件。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.professions.assign(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>bool</td><td>分配职业，成功时触发 <code>profession:assigned</code>。/td></tr>
 
         <!-- Events -->
-        <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.events.unsubscribe(name, id)</code></td><td>string, handler id</td><td>bool</td><td>取消订阅。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.events.clear(name)</code></td><td>string</td><td>无</td><td>清空某事件的所有处理器。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.events.emit(name, payload)</code></td><td>string, any</td><td>无</td><td>发送自定义 Lua 事件，不会进入 C++ 系统。</td></tr>
-        <tr class="api-row" data-api-row><td><code>inventory:changed</code></td><td>事件</td><td>payload</td><td>字段：entity_id、reason、item_id、item_key、delta。</td></tr>
-        <tr class="api-row" data-api-row><td><code>recipe:crafted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、recipe_id、output_item_id、output_item_key、output_count。</td></tr>
-        <tr class="api-row" data-api-row><td><code>profession:assigned</code></td><td>事件</td><td>payload</td><td>字段：entity_id、profession_id、level。</td></tr>
-        <tr class="api-row" data-api-row><td><code>block:interacted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、x、y、z、action_type、action。</td></tr>
-        <tr class="api-row" data-api-row><td><code>focus:chosen</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、choice_id、choice_action、tick。</td></tr>
-        <tr class="api-row" data-api-row><td><code>focus:dismissed</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、tick。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.events.unsubscribe(name, id)</code></td><td>string, handler id</td><td>bool</td><td>取消订阅。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.events.clear(name)</code></td><td>string</td><td>�?/td><td>清空某事件的所有处理器。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.events.emit(name, payload)</code></td><td>string, any</td><td>�?/td><td>发送自定义 Lua 事件，不会进�?C++ 系统。/td></tr>
+        <tr class="api-row" data-api-row><td><code>inventory:changed</code></td><td>事件</td><td>payload</td><td>字段：entity_id、reason、item_id、item_key、delta。/td></tr>
+        <tr class="api-row" data-api-row><td><code>recipe:crafted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、recipe_id、output_item_id、output_item_key、output_count。/td></tr>
+        <tr class="api-row" data-api-row><td><code>profession:assigned</code></td><td>事件</td><td>payload</td><td>字段：entity_id、profession_id、level。/td></tr>
+        <tr class="api-row" data-api-row><td><code>block:interacted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、x、y、z、action_type、action。/td></tr>
+        <tr class="api-row" data-api-row><td><code>focus:chosen</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、choice_id、choice_action、tick。/td></tr>
+        <tr class="api-row" data-api-row><td><code>focus:dismissed</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、tick。/td></tr>
 
         <!-- Timers -->
-        <tr class="api-row" data-api-row><td><code>engine.timers.after(ticks, fn)</code></td><td>integer, function</td><td>timer id</td><td>一次性定时器，回调参数为 tick、dt、timer_id。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.timers.every(ticks, fn)</code></td><td>integer, function</td><td>timer id</td><td>重复定时器，ticks 为 0 时按 1 处理。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.timers.cancel(id)</code></td><td>timer id</td><td>bool</td><td>取消定时器。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.timers.clear()</code></td><td>无</td><td>无</td><td>清空全部 Lua 定时器。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.timers.after(ticks, fn)</code></td><td>integer, function</td><td>timer id</td><td>一次性定时器，回调参数为 tick、dt、timer_id。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.timers.every(ticks, fn)</code></td><td>integer, function</td><td>timer id</td><td>重复定时器，ticks 一0 时按 1 处理。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.timers.cancel(id)</code></td><td>timer id</td><td>bool</td><td>取消定时器。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.timers.clear()</code></td><td>�?/td><td>�?/td><td>清空全部 Lua 定时器。/td></tr>
 
         <!-- Focus -->
-        <tr class="api-row" data-api-row><td><code>engine.focus.register_condition(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 条件，回调返回 bool。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.register_choice_action(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 选项动作。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.subscribe(fn)</code></td><td>function</td><td>handler id</td><td>监听 Focus 触发通知。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focus.unsubscribe(id)</code></td><td>handler id</td><td>bool</td><td>取消 Focus 触发监听。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.list()</code></td><td>无</td><td>table</td><td>列出 Focus 定义 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.active()</code></td><td>无</td><td>table</td><td>列出当前活跃的 Focus 实例和 choices。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.choose(instance, choice)</code></td><td>instance id, string</td><td>bool</td><td>执行选项动作并触发 <code>focus:chosen</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.focuses.dismiss(instance)</code></td><td>instance id</td><td>bool</td><td>关闭 Focus 并触发 <code>focus:dismissed</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.register_condition(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 条件，回调返�?bool。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.register_choice_action(name, fn)</code></td><td>string, function</td><td>bool</td><td>注册 Focus 选项动作。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.subscribe(fn)</code></td><td>function</td><td>handler id</td><td>监听 Focus 触发通知。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focus.unsubscribe(id)</code></td><td>handler id</td><td>bool</td><td>取消 Focus 触发监听。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.list()</code></td><td>�?/td><td>table</td><td>列出 Focus 定义 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.active()</code></td><td>�?/td><td>table</td><td>列出当前活跃�?Focus 实例�?choices。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.choose(instance, choice)</code></td><td>instance id, string</td><td>bool</td><td>执行选项动作并触�?<code>focus:chosen</code>。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.focuses.dismiss(instance)</code></td><td>instance id</td><td>bool</td><td>关闭 Focus 并触�?<code>focus:dismissed</code>。/td></tr>
 
         <!-- Inventory -->
-        <tr class="api-row" data-api-row><td><code>engine.inventory.hash(id)</code></td><td><code>data id</code></td><td>hashed id</td><td>把字符串 ID 转为库存内部 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.inventory.resolve(item_id)</code></td><td>hashed id</td><td>string</td><td>把库存内部 ID 转回数据 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.inventory.inspect(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 slot、item_id、id、count。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.inventory.hash(id)</code></td><td><code>data id</code></td><td>hashed id</td><td>把字符串 ID 转为库存内部 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.inventory.resolve(item_id)</code></td><td>hashed id</td><td>string</td><td>把库存内�?ID 转回数据 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.inventory.inspect(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 slot、item_id、id、count。/td></tr>
 
         <!-- Factions -->
-        <tr class="api-row" data-api-row><td><code>engine.factions.list_defs()</code></td><td>无</td><td>table</td><td>列出已注册的 NPC 阵营定义 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.list_pools()</code></td><td>无</td><td>table</td><td>列出已注册的名称池 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.spawn(def_id, seed)</code></td><td><code>data id</code>, integer?</td><td>table</td><td>生成阵营实例并返回 id、display_name、relation、max_relation、min_relation、spawned_tick。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.get_instance(id)</code></td><td>string</td><td>table 或 nil</td><td>读取已生成阵营实例。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.list_instances()</code></td><td>无</td><td>table</td><td>列出当前已生成的阵营实例。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.modify_relation(id, delta)</code></td><td>string, integer</td><td>integer</td><td>调整关系值并返回调整后的关系；结果会按阵营定义限制范围。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.factions.generate_name(template, pools, seed)</code></td><td>string, table?, integer?</td><td>string</td><td>用 <code>${random_name}</code> 模板和可选名称池生成确定性名称。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.list_defs()</code></td><td>�?/td><td>table</td><td>列出已注册的 NPC 阵营定义 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.list_pools()</code></td><td>�?/td><td>table</td><td>列出已注册的名称�?ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.spawn(def_id, seed)</code></td><td><code>data id</code>, integer?</td><td>table</td><td>生成阵营实例并返�?id、display_name、relation、max_relation、min_relation、spawned_tick。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.get_instance(id)</code></td><td>string</td><td>table �?nil</td><td>读取已生成阵营实例。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.list_instances()</code></td><td>�?/td><td>table</td><td>列出当前已生成的阵营实例。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.modify_relation(id, delta)</code></td><td>string, integer</td><td>integer</td><td>调整关系值并返回调整后的关系；结果会按阵营定义限制范围。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.factions.generate_name(template, pools, seed)</code></td><td>string, table?, integer?</td><td>string</td><td>�?<code>${random_name}</code> 模板和可选名称池生成确定性名称。/td></tr>
 
         <!-- Network -->
-        <tr class="api-row" data-api-row><td><code>engine.network.send_move(entity, x, y, z)</code></td><td>entity, number, number, number</td><td>无</td><td>发送移动命令到网络层。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.send_build(x, y, z, block_id)</code></td><td>integer, integer, integer, integer</td><td>无</td><td>发送建造方块命令。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.send_mine(x, y, z)</code></td><td>integer, integer, integer</td><td>无</td><td>发送挖掘方块命令。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.send_profession(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>无</td><td>发送分配职业命令。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.send_give(entity, item, count)</code></td><td>entity, data id, integer</td><td>无</td><td>发送给予物品命令。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.set_command_handler(fn)</code></td><td>function</td><td>无</td><td>设置收到网络命令后的 Lua 回调；回调表包含 type、type_name、sequence 和命令字段。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.is_connected()</code></td><td>无</td><td>bool</td><td>网络层是否已初始化。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.network.mode()</code></td><td>无</td><td>string</td><td>返回当前网络模式名称。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.send_move(entity, x, y, z)</code></td><td>entity, number, number, number</td><td>�?/td><td>发送移动命令到网络层。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.send_build(x, y, z, block_id)</code></td><td>integer, integer, integer, integer</td><td>�?/td><td>发送建造方块命令。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.send_mine(x, y, z)</code></td><td>integer, integer, integer</td><td>�?/td><td>发送挖掘方块命令。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.send_profession(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>�?/td><td>发送分配职业命令。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.send_give(entity, item, count)</code></td><td>entity, data id, integer</td><td>�?/td><td>发送给予物品命令。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.set_command_handler(fn)</code></td><td>function</td><td>�?/td><td>设置收到网络命令后的 Lua 回调；回调表包含 type、type_name、sequence 和命令字段。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.is_connected()</code></td><td>�?/td><td>bool</td><td>网络层是否已初始化。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.network.mode()</code></td><td>�?/td><td>string</td><td>返回当前网络模式名称。/td></tr>
 
         <!-- Terrain -->
-        <tr class="api-row" data-api-row><td><code>engine.terrain.height_at(x, z, cfg)</code></td><td>integer, integer, table?</td><td>integer</td><td>查询地形高度，可传配置表。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.register_biome(table)</code></td><td>table</td><td>无</td><td>注册 biome，常在 <code>on_world_init</code> 使用。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.list_biomes()</code></td><td>无</td><td>table</td><td>列出 biome ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.register_ore(table)</code></td><td>table</td><td>无</td><td>注册矿物分布：block、noise_scale、threshold、min_y、max_y。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.select_biome(seed, cx, cz)</code></td><td>integer, integer, integer</td><td>table</td><td>返回选中的 biome 描述。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.height_at(x, z, cfg)</code></td><td>integer, integer, table?</td><td>integer</td><td>查询地形高度，可传配置表。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.register_biome(table)</code></td><td>table</td><td>�?/td><td>注册 biome，常�?<code>on_world_init</code> 使用。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.list_biomes()</code></td><td>�?/td><td>table</td><td>列出 biome ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.register_ore(table)</code></td><td>table</td><td>�?/td><td>注册矿物分布：block、noise_scale、threshold、min_y、max_y。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.select_biome(seed, cx, cz)</code></td><td>integer, integer, integer</td><td>table</td><td>返回选中�?biome 描述。/td></tr>
 
         <!-- Locale -->
-        <tr class="api-row" data-api-row><td><code>engine.locale.set_locale(id)</code></td><td>string</td><td>无</td><td>切换当前语言。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.get_locale()</code></td><td>无</td><td>string</td><td>当前语言 ID。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.get(category, key)</code></td><td>string, string</td><td>string</td><td>按分类和 key 获取翻译文本。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.t(key)</code></td><td>string</td><td>string</td><td>翻译完整的 key。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.list_locales()</code></td><td>无</td><td>table</td><td>列出所有可用语言。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.reload()</code></td><td>无</td><td>无</td><td>重新加载本地化资源。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.locale.load_locale(id, path)</code></td><td>string, string</td><td>bool</td><td>从文件加载语言包。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.set_locale(id)</code></td><td>string</td><td>�?/td><td>切换当前语言。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.get_locale()</code></td><td>�?/td><td>string</td><td>当前语言 ID。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.get(category, key)</code></td><td>string, string</td><td>string</td><td>按分类和 key 获取翻译文本。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.t(key)</code></td><td>string</td><td>string</td><td>翻译完整�?key。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.list_locales()</code></td><td>�?/td><td>table</td><td>列出所有可用语言。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.reload()</code></td><td>�?/td><td>�?/td><td>重新加载本地化资源。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.load_locale(id, path)</code></td><td>string, string</td><td>bool</td><td>从文件加载语言包。/td></tr>
 
         <!-- Equipment -->
-        <tr class="api-row" data-api-row><td><code>engine.equipment.register_slot(name)</code></td><td>string</td><td>bool</td><td>注册装备栏位（如 weapon、armor、held_item）。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.equipment.equip(entity, slot, item_hash, count)</code></td><td>entity, string, hashed id, integer</td><td>bool</td><td>将物品装备到指定栏位。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.equipment.unequip(entity, slot)</code></td><td>entity, string</td><td>bool</td><td>从栏位卸下物品。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.equipment.get_equipment(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回所有栏位及装备信息。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.equipment.get_slot(entity, slot)</code></td><td>entity, string</td><td>table</td><td>返回指定栏位的装备信息。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.equipment.has_slot(name)</code></td><td>string</td><td>bool</td><td>检查栏位是否已注册。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.register_slot(name)</code></td><td>string</td><td>bool</td><td>注册装备栏位（如 weapon、armor、held_item）。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.equip(entity, slot, item_hash, count)</code></td><td>entity, string, hashed id, integer</td><td>bool</td><td>将物品装备到指定栏位。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.unequip(entity, slot)</code></td><td>entity, string</td><td>bool</td><td>从栏位卸下物品。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.get_equipment(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回所有栏位及装备信息。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.get_slot(entity, slot)</code></td><td>entity, string</td><td>table</td><td>返回指定栏位的装备信息。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.equipment.has_slot(name)</code></td><td>string</td><td>bool</td><td>检查栏位是否已注册。/td></tr>
 
         <!-- World -->
-        <tr class="api-row" data-api-row><td><code>engine.world.remove_block(x, y, z)</code></td><td>integer, integer, integer</td><td>无</td><td>移除指定坐标的方块。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.world.place_block(x, y, z, block_id)</code></td><td>integer, integer, integer, string</td><td>无</td><td>在指定坐标放置方块。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.world.get_block(x, y, z)</code></td><td>integer, integer, integer</td><td>table</td><td>查询方块，返回 <code>{ exists, id }</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.world.remove_block(x, y, z)</code></td><td>integer, integer, integer</td><td>�?/td><td>移除指定坐标的方块。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.world.place_block(x, y, z, block_id)</code></td><td>integer, integer, integer, string</td><td>�?/td><td>在指定坐标放置方块。/td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.world.get_block(x, y, z)</code></td><td>integer, integer, integer</td><td>table</td><td>查询方块，返�?<code>{ exists, id }</code>。/td></tr>
 
         <!-- Util -->
-        <tr class="api-row" data-api-row><td><code>engine.util.data_id_hash(id)</code></td><td><code>data id</code></td><td>hashed id</td><td>计算 data ID 的 FNV-1a 哈希值，用于 inventory/equipment 交互。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.util.data_id_hash(id)</code></td><td><code>data id</code></td><td>hashed id</td><td>计算 data ID �?FNV-1a 哈希值，用于 inventory/equipment 交互。/td></tr>
       </tbody>
     </table>
-    <p data-api-empty hidden>没有匹配的 API。换一个关键词试试。</p>
+    <p data-api-empty hidden>没有匹配�?API。换一个关键词试试。/p>
 
     <div class="callout warn">
-      <code>math.random</code> 在脚本环境中会报错。需要确定性随机时，请使用 <code>engine.random</code>。在 MOD 脚本中加载额外文件请使用 <code>dofile</code> 而非 <code>require</code>——<code>package</code> 库未在 MOD 沙箱中加载。
-    </div>
+      <code>math.random</code> 在脚本环境中会报错。需要确定性随机时，请使用 <code>engine.random</code>。在 MOD 脚本中加载额外文件请使用 <code>dofile</code> 而非 <code>require</code>—�?code>package</code> 库未�?MOD 沙箱中加载。    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

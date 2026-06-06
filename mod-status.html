@@ -3,101 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>能力状态 · NewColony Wiki</title>
+  <title>能力状�?· NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="mod-status">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>能力状态</div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>能力状�?/div></div>
   <div class="content">
-    <h1>当前能力状态</h1>
-    <p class="subtitle">帮你判断哪些能力可以放心依赖，哪些还不行。列表基于当前代码实际状态。</p>
+    <h1>当前能力状�?/h1>
+    <p class="subtitle">帮你判断哪些能力可以放心依赖，哪些还不行。列表基于当前代码实际状态。/p>
 
     <h2>工程概况</h2>
     <table>
-      <thead><tr><th>指标</th><th>数值</th></tr></thead>
+      <thead><tr><th>指标</th><th>数�?/th></tr></thead>
       <tbody>
-        <tr><td>引擎源文件 (.hpp/.cpp)</td><td>123 个 (71 hpp + 52 cpp)</td></tr>
-        <tr><td>引擎代码行数</td><td>~24,422 行 (hpp 6,455 + cpp 17,967)</td></tr>
-        <tr><td>游戏内容文件</td><td>303 个 (Game/Data JSON 285 + Game/Scripts Lua 18)</td></tr>
-        <tr><td>测试源码</td><td>4 个测试文件，110 个 <code>TEST/TEST_F</code> 用例</td></tr>
-        <tr><td>控制台命令</td><td>73 个 (Engine 69 + DevConsole 内置 4)</td></tr>
-        <tr><td>Lua API 命名空间</td><td>20 个 (api, log, time, random, util, ecs, events, timers, focus, focuses, modding, crafting, professions, factions, terrain, locale, network, inventory, equipment, world)</td></tr>
-        <tr><td>MOD 数据类型</td><td>11 种 (blocks, items, entities, recipes, professions, civilizations, focuses, factions, name_pools, actions, crops)</td></tr>
-        <tr><td>ECS 标准组件</td><td>17 种 (Position, Velocity, Rotation, Scale, Health, Needs, ColonistTag, AIState, NavAgent, WorkerPriorityConfig, Profession, Civilization, BlockInteractor, Inventory, Equipment, PrototypeRef, Name)</td></tr>
+        <tr><td>引擎源文�?(.hpp/.cpp)</td><td>123 一(71 hpp + 52 cpp)</td></tr>
+        <tr><td>引擎代码行数</td><td>~24,422 �?(hpp 6,455 + cpp 17,967)</td></tr>
+        <tr><td>游戏内容文件</td><td>303 一(mods/core/data JSON 285 + mods/core/scripts Lua 18)</td></tr>
+        <tr><td>测试源码</td><td>4 个测试文件，110 一<code>TEST/TEST_F</code> 用例</td></tr>
+        <tr><td>控制台命�?/td><td>73 一(Engine 69 + DevConsole 内置 4)</td></tr>
+        <tr><td>Lua API 命名空间</td><td>20 一(api, log, time, random, util, ecs, events, timers, focus, focuses, modding, crafting, professions, factions, terrain, locale, network, inventory, equipment, world)</td></tr>
+        <tr><td>MOD 数据类型</td><td>11 �?(blocks, items, entities, recipes, professions, civilizations, focuses, factions, name_pools, actions, crops)</td></tr>
+        <tr><td>ECS 标准组件</td><td>17 �?(Position, Velocity, Rotation, Scale, Health, Needs, ColonistTag, AIState, NavAgent, WorkerPriorityConfig, Profession, Civilization, BlockInteractor, Inventory, Equipment, PrototypeRef, Name)</td></tr>
       </tbody>
     </table>
 
     <h2>可用</h2>
-    <p>以下能力已经在引擎中完整实现，MOD 可以放心依赖。</p>
+    <p>以下能力已经在引擎中完整实现，MOD 可以放心依赖。/p>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
+      <thead><tr><th>能力</th><th>状�?/th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>MOD 加载</td><td><span class="badge done">可用</span></td><td>mod.json、加载顺序、load_before 通配符、严格清单检查、MOD 设置覆盖</td></tr>
-        <tr><td>数据内容</td><td><span class="badge done">可用</span></td><td>11 种类型：方块、物品、实体原型、配方、职业、文明、Focus、NPC 阵营、名称池、动作、作物</td></tr>
-        <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、格式错误字段、跨引用校验均报告明确来源</td></tr>
+        <tr><td>数据内容</td><td><span class="badge done">可用</span></td><td>11 种类型：方块、物品、实体原型、配方、职业、文明、Focus、NPC 阵营、名称池、动作、作�?/td></tr>
+        <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数�?ID、格式错误字段、跨引用校验均报告明确来�?/td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>on_load、on_world_init、on_tick、on_shutdown</td></tr>
-        <tr><td>Lua 事件</td><td><span class="badge done">可用</span></td><td>订阅/发送/取消订阅，6 个内置事件：inventory:changed、recipe:crafted、profession:assigned、block:interacted、focus:chosen、focus:dismissed</td></tr>
-        <tr><td>Lua 定时器</td><td><span class="badge done">可用</span></td><td>after/every/cancel/clear，按模拟 tick 执行</td></tr>
-        <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code>，使用 Xoshiro256** 确定性 RNG</td></tr>
-        <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业等级 1-5、转职物品、配方要求、前置技能、解锁配方</td></tr>
-        <tr><td>Focus 系统</td><td><span class="badge done">可用</span></td><td>玩家可见事件，支持 tick/entity_count/colonist_need/lua 条件和选项</td></tr>
-        <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>注册 faction/name_pool，${random_name} 模板命名，阵营实例，关系值管理</td></tr>
-        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>多语言加载、MOD 翻译合并、UI 翻译 API、Lua locale API、运行时热重载</td></tr>
-        <tr><td>ECS 系统</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 带代际、17 种标准组件</td></tr>
-        <tr><td>AI 需求模拟</td><td><span class="badge done">可用</span></td><td>Hunger/Fatigue/Social 三维需求随时间变化，自动满足紧急需求</td></tr>
-        <tr><td>AI 任务调度</td><td><span class="badge done">可用</span></td><td>WorkPool 管理多类任务、5 类优先级 (1-7)、LoD 分帧调度</td></tr>
-        <tr><td>A* 寻路</td><td><span class="badge done">可用</span></td><td>基于体素地形的 8-connected A*、自动台阶跳跃</td></tr>
-        <tr><td>核心随机</td><td><span class="badge done">可用</span></td><td>Xoshiro256** 确定性 RNG，全平台可复现</td></tr>
+        <tr><td>Lua 事件</td><td><span class="badge done">可用</span></td><td>订阅/发�?取消订阅�? 个内置事件：inventory:changed、recipe:crafted、profession:assigned、block:interacted、focus:chosen、focus:dismissed</td></tr>
+        <tr><td>Lua 定时�?/td><td><span class="badge done">可用</span></td><td>after/every/cancel/clear，按模拟 tick 执行</td></tr>
+        <tr><td>Lua 随机�?API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code>，使�?Xoshiro256** 确定�?RNG</td></tr>
+        <tr><td>职业与配�?/td><td><span class="badge done">可用</span></td><td>职业等级 1-5、转职物品、配方要求、前置技能、解锁配�?/td></tr>
+        <tr><td>Focus 系统</td><td><span class="badge done">可用</span></td><td>玩家可见事件，支�?tick/entity_count/colonist_need/lua 条件和选项</td></tr>
+        <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>注册 faction/name_pool�?{random_name} 模板命名，阵营实例，关系值管�?/td></tr>
+        <tr><td>本地�?/td><td><span class="badge done">可用</span></td><td>多语言加载、MOD 翻译合并、UI 翻译 API、Lua locale API、运行时热重�?/td></tr>
+        <tr><td>ECS 系统</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实�?ID 带代际。7 种标准组�?/td></tr>
+        <tr><td>AI 需求模�?/td><td><span class="badge done">可用</span></td><td>Hunger/Fatigue/Social 三维需求随时间变化，自动满足紧急需�?/td></tr>
+        <tr><td>AI 任务调度</td><td><span class="badge done">可用</span></td><td>WorkPool 管理多类任务。 类优先级 (1-7)、LoD 分帧调度</td></tr>
+        <tr><td>A* 寻路</td><td><span class="badge done">可用</span></td><td>基于体素地形�?8-connected A*、自动台阶跳�?/td></tr>
+        <tr><td>核心随机</td><td><span class="badge done">可用</span></td><td>Xoshiro256** 确定�?RNG，全平台可复�?/td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令系统、客户端预测、延迟补偿、重连恢复、增量快照、MOD 数据交换</td></tr>
-        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>72 个命令：MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载等</td></tr>
+        <tr><td>控制台调�?/td><td><span class="badge done">可用</span></td><td>72 个命令：MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载等</td></tr>
       </tbody>
     </table>
 
     <h2>部分可用</h2>
-    <p>核心流程能跑通，但有一些功能点尚未完成。</p>
+    <p>核心流程能跑通，但有一些功能点尚未完成。/p>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>已实现</th><th>未实现</th></tr></thead>
+      <thead><tr><th>能力</th><th>状�?/th><th>已实�?/th><th>未实�?/th></tr></thead>
       <tbody>
         <tr>
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
-          <td>需求驱动、优先级任务分配、A* 寻路、NavAgent 路径跟随、LoD 更新、行为树 (Sequence/Selector/Decorator)、Blackboard 共享状态、3 种预制行为树、Action 系统、JobRegistry</td>
-          <td>任务实际效果(建造/挖矿/搬运的具体游戏逻辑)、社交/巡逻/紧急行为的完整玩法闭环</td>
+          <td>需求驱动、优先级任务分配、A* 寻路、NavAgent 路径跟随、LoD 更新、行为树 (Sequence/Selector/Decorator)、Blackboard 共享状态。 种预制行为树、Action 系统、JobRegistry</td>
+          <td>任务实际效果(建�?挖矿/搬运的具体游戏逻辑)、社�?巡�?紧急行为的完整玩法闭环</td>
         </tr>
         <tr>
           <td>文明</td>
           <td><span class="badge partial">部分</span></td>
-          <td>职业组织、开局物品/职业配置、配方限制/解锁、2 个核心文明、TechTree 科技树</td>
-          <td>文明间外交交互、AI 自动发展、复杂规则扩展</td>
+          <td>职业组织、开局物品/职业配置、配方限�?解锁。 个核心文明、TechTree 科技�?/td>
+          <td>文明间外交交互、AI 自动发展、复杂规则扩�?/td>
         </tr>
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>保存/加载框架 (v2)、存档列表、原子写入、实体/阵营/Job/Focus 状态序列化、MOD 依赖追踪</td>
-          <td>跨版本向后兼容迁移、MOD 依赖自动解析策略、自定义组件序列化</td>
+          <td>保存/加载框架 (v2)、存档列表、原子写入、实�?阵营/Job/Focus 状态序列化、MOD 依赖追踪</td>
+          <td>跨版本向后兼容迁移、MOD 依赖自动解析策略、自定义组件序列�?/td>
         </tr>
       </tbody>
     </table>
 
-    <h2>实验性 / 早期阶段</h2>
-    <p>这些功能在开发环境中可以运行验证，但还不是稳定承诺级别。</p>
+    <h2>实验�?/ 早期阶段</h2>
+    <p>这些功能在开发环境中可以运行验证，但还不是稳定承诺级别。/p>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
+      <thead><tr><th>能力</th><th>状�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>Vulkan 渲染器</td><td><span class="badge partial">实验</span></td><td>完整 Vulkan 管线、Chunk 网格、纹理图集、运行时 GLSL→SPIR-V；仅限开发环境验证</td></tr>
-        <tr><td>体素地形</td><td><span class="badge partial">实验</span></td><td>Perlin 噪声地形、生物群落、洞穴、河流、矿脉、树木装饰；运行时区块生成</td></tr>
-        <tr><td>UI 系统</td><td><span class="badge partial">部分</span></td><td>ImGui 开发者控制台、主菜单/暂停菜单、多人联机菜单；Lua UI 框架（底边栏、浮动提示、窗口）API 已设计并部分实现，渲染层仍在完善中</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge partial">未完成</span></td><td>已有发布约定文档；缺少自动打包、版本兼容检查和发布校验工具</td></tr>
+        <tr><td>Vulkan 渲染�?/td><td><span class="badge partial">实验</span></td><td>完整 Vulkan 管线、Chunk 网格、纹理图集、运行时 GLSL→SPIR-V；仅限开发环境验�?/td></tr>
+        <tr><td>体素地形</td><td><span class="badge partial">实验</span></td><td>Perlin 噪声地形、生物群落、洞穴、河流、矿脉、树木装饰；运行时区块生�?/td></tr>
+        <tr><td>UI 系统</td><td><span class="badge partial">部分</span></td><td>ImGui 开发者控制台、主菜单/暂停菜单、多人联机菜单；Lua UI 框架（底边栏、浮动提示、窗口）API 已设计并部分实现，渲染层仍在完善一/td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge partial">未完�?/span></td><td>已有发布约定文档；缺少自动打包、版本兼容检查和发布校验工具</td></tr>
       </tbody>
     </table>
 
     <h2>模块文件统计</h2>
     <table>
-      <thead><tr><th>模块</th><th>文件数</th><th>核心类</th></tr></thead>
+      <thead><tr><th>模块</th><th>文件�?/th><th>核心�?/th></tr></thead>
       <tbody>
         <tr><td>Core</td><td>18</td><td>Types, Vec3/Mat4, PoolAllocator, ArenaAllocator, Logger, Profiler</td></tr>
-        <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 17 种标准组件</td></tr>
+        <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 17 种标准组�?/td></tr>
         <tr><td>Simulation</td><td>16</td><td>TickManager, DeterministicRNG, RecipeSystem, ProfessionSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree</td></tr>
         <tr><td>AI</td><td>14</td><td>AISystem, WorkPool, JobRegistry, Action, Pathfinder, NavAgent, BehaviorTree</td></tr>
         <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
@@ -113,12 +113,11 @@
       </tbody>
     </table>
 
-    <h2>对 MOD 作者的建议</h2>
+    <h2>�?MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、Focus、NPC 阵营定义、确定性随机和少量 Lua 辅助逻辑。网络同步已升级为稳定可用（含客户端预测、延迟补偿、重连恢复、MOD 数据交换）。AI 高级行为、渲染/UI 扩展和存档迁移仍未完成到稳定承诺级别，不建议 MOD 依赖其细节。公共文档只承诺上面"可用"区列出的能力。
-    </div>
+      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、Focus、NPC 阵营定义、确定性随机和少量 Lua 辅助逻辑。网络同步已升级为稳定可用（含客户端预测、延迟补偿、重连恢复、MOD 数据交换）。AI 高级行为、渲�?UI 扩展和存档迁移仍未完成到稳定承诺级别，不建议 MOD 依赖其细节。公共文档只承诺上面"可用"区列出的能力。    </div>
 
-    <div class="footer">NewColony Wiki · 更新于 2026-06-05</div>
+    <div class="footer">NewColony Wiki · 更新�?2026-06-05</div>
   </div>
 </div>
 <script src="wiki.js"></script>

@@ -11,57 +11,57 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>常见问题</div></div>
   <div class="content">
     <h1>MOD 常见问题</h1>
-    <p class="subtitle">按症状查找你遇到的问题。</p>
+    <p class="subtitle">按症状查找你遇到的问题。/p>
 
-    <h2>MOD 没有出现在 <code>mods</code> 列表中</h2>
+    <h2>MOD 没有出现�?<code>mods</code> 列表一/h2>
     <ul>
-      <li>确认目录是 <code>Mods/&lt;mod_id&gt;/</code>。</li>
-      <li>确认根目录有 <code>mod.json</code> 且是合法的 JSON（可以用在线 JSON 校验工具检查）。</li>
-      <li>确认 <code>id</code> 字段不为空、不和其他 MOD 重复。</li>
-      <li>确认 <code>entry</code> 指向的 Lua 文件存在。</li>
-      <li>查看 <code>Logs/latest.log</code> 是否有报错。</li>
+      <li>确认目录�?<code>mods/&lt;mod_id&gt;/</code>。/li>
+      <li>确认根目录有 <code>mod.json</code> 且是合法�?JSON（可以用在线 JSON 校验工具检查）。/li>
+      <li>确认 <code>id</code> 字段不为空、不和其�?MOD 重复。/li>
+      <li>确认 <code>entry</code> 指向�?Lua 文件存在。/li>
+      <li>查看 <code>logs/latest.log</code> 是否有报错。/li>
     </ul>
 
-    <h2>数据在 <code>list_data</code> 里找不到</h2>
+    <h2>数据�?<code>list_data</code> 里找不到</h2>
     <pre><code>list_data items prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:
 data copper_age:copper_ore</code></pre>
-    <p>确认文件放在了正确的类型目录下（比如 <code>Data/items/</code> 不是 <code>Data/items</code> 作为文件），每个 JSON 都有唯一的 <code>id</code>，且 ID 的命名空间前缀和 <code>mod.json.id</code> 一致。</p>
+    <p>确认文件放在了正确的类型目录下（比如 <code>data/items/</code> 不是 <code>data/items</code> 作为文件），每个 JSON 都有唯一�?<code>id</code>，且 ID 的命名空间前缀�?<code>mod.json.id</code> 一致。/p>
 
     <h2>配方不能制作</h2>
     <ul>
-      <li>输入物品和输出物品的 ID 是否注册成功。</li>
-      <li>实体背包里有没有足够的输入物品，有没有空位。</li>
-      <li>配方是否声明了职业要求，实体的职业等级是否满足。</li>
-      <li>用 <code>inventory &lt;entity&gt;</code> 和 <code>data &lt;recipe_id&gt;</code> 在控制台查看实际状态。</li>
+      <li>输入物品和输出物品的 ID 是否注册成功。/li>
+      <li>实体背包里有没有足够的输入物品，有没有空位。/li>
+      <li>配方是否声明了职业要求，实体的职业等级是否满足。/li>
+      <li>�?<code>inventory &lt;entity&gt;</code> �?<code>data &lt;recipe_id&gt;</code> 在控制台查看实际状态。/li>
     </ul>
 
     <h2>Focus 没有触发</h2>
     <ul>
-      <li>确认文件在 <code>Data/focuses</code> 目录下。</li>
-      <li>确认 <code>conditions</code> 数组不为空。</li>
-      <li>用了 <code>lua</code> 条件的话，确认已经在 <code>on_load</code> 里通过 <code>engine.focus.register_condition</code> 注册。</li>
-      <li>要显示出来，还需要在 Lua 里用 <code>engine.focus.subscribe</code> 订阅。</li>
+      <li>确认文件�?<code>data/focuses</code> 目录下。/li>
+      <li>确认 <code>conditions</code> 数组不为空。/li>
+      <li>用了 <code>lua</code> 条件的话，确认已经在 <code>on_load</code> 里通过 <code>engine.focus.register_condition</code> 注册。/li>
+      <li>要显示出来，还需要在 Lua 里用 <code>engine.focus.subscribe</code> 订阅。/li>
     </ul>
 
     <h2>Lua 脚本没有执行</h2>
     <ul>
-      <li>入口脚本末尾是否有 <code>return M</code>。</li>
-      <li>生命周期函数名是否拼写正确：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</li>
-      <li>查看 <code>Logs/latest.log</code> 里是否有 Lua 报错。</li>
-      <li>如果用了 <code>require</code>，换为 <code>dofile</code>——<code>package</code> 库在 MOD 沙箱中未加载。</li>
+      <li>入口脚本末尾是否�?<code>return M</code>。/li>
+      <li>生命周期函数名是否拼写正确：<code>on_load</code>。code>on_world_init</code>。code>on_tick</code>。code>on_shutdown</code>。/li>
+      <li>查看 <code>logs/latest.log</code> 里是否有 Lua 报错。/li>
+      <li>如果用了 <code>require</code>，换一<code>dofile</code>—�?code>package</code> 库在 MOD 沙箱中未加载。/li>
     </ul>
 
     <h2>NPC 阵营实例生成失败</h2>
     <ul>
-      <li>确认阵营定义在 <code>Data/factions</code> 下。</li>
-      <li>用 <code>data type:factions</code> 确认定义已注册。</li>
-      <li>用 <code>list_name_pools</code> 确认引用的名称池存在。</li>
+      <li>确认阵营定义�?<code>data/factions</code> 下。/li>
+      <li>�?<code>data type:factions</code> 确认定义已注册。/li>
+      <li>�?<code>list_name_pools</code> 确认引用的名称池存在。/li>
     </ul>
 
     <h2><code>math.random</code> 报错</h2>
-    <p>这是有意为之。<code>math.random</code> 在脚本环境中被禁用了。改用 <code>engine.random.int(min, max)</code> 和 <code>engine.random.float()</code>。</p>
+    <p>这是有意为之。code>math.random</code> 在脚本环境中被禁用了。改�?<code>engine.random.int(min, max)</code> �?<code>engine.random.float()</code>。/p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

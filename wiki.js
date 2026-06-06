@@ -3,14 +3,14 @@ const WIKI_NAV = [
     title: "理解概念",
     links: [
       ["index", "总览", "index.html"],
-      ["mod-guide", "MOD 是怎样加载的", "mod-guide.html"],
+      ["mod-guide", "MOD 是怎样加载�?, "mod-guide.html"],
       ["mod-status", "当前能力边界", "mod-status.html"]
     ]
   },
   {
     title: "MOD开发基础",
     links: [
-      ["mod-quickstart", "从一个 MOD 开始", "mod-quickstart.html"],
+      ["mod-quickstart", "从一�?MOD 开�?, "mod-quickstart.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
       ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
@@ -22,19 +22,19 @@ const WIKI_NAV = [
   {
     title: "Lua 脚本",
     links: [
-      ["mod-lua-api", "Lua 怎么写", "mod-lua-api.html"],
+      ["mod-lua-api", "Lua 怎么�?, "mod-lua-api.html"],
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
-      ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]
+      ["mod-network-sync", "网络同步�?Mod 数据", "mod-network-sync.html"]
     ]
   },
   {
-    title: "调试和发布",
+    title: "调试和发�?,
     links: [
-      ["mod-console", "控制台命令", "mod-console.html"],
+      ["mod-console", "控制台命�?, "mod-console.html"],
       ["mod-troubleshooting", "常见问题", "mod-troubleshooting.html"],
-      ["mod-roadmap", "路线图", "mod-roadmap.html"],
+      ["mod-roadmap", "路线�?, "mod-roadmap.html"],
       ["mod-spec", "发布约定", "mod-spec.html"]
     ]
   }
