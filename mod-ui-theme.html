@@ -11,42 +11,36 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI CSS 主题</div></div>
   <div class="content">
     <h1>UI CSS 主题</h1>
-    <p class="subtitle">通过 CSS 文件自定义游戏 UI 的颜色、圆角、间距等样式，无需修改 C++ 代码或编写 Lua 脚本。将 <code>.css</code> 文件放到 <code>Themes/</code> 目录即可被游戏发现并使用。</p>
+    <p class="subtitle">通过 CSS 文件自定义游�?UI 的颜色、圆角、间距等样式，无需修改 C++ 代码或编�?Lua 脚本。将 <code>.css</code> 文件放到 <code>themes/</code> 目录即可被游戏发现并使用�?/p>
 
     <div class="callout info">
-      CSS 主题系统作用于 ImGui 渲染层，控制的是全局 UI 样式（颜色、圆角、间距等）。如果你需要 MOD 内部的自定义 UI 逻辑，请参考 <a href="mod-ui-api.html">UI 框架</a>。
-    </div>
+      CSS 主题系统作用�?ImGui 渲染层，控制的是全局 UI 样式（颜色、圆角、间距等）。如果你需�?MOD 内部的自定义 UI 逻辑，请参�?<a href="mod-ui-api.html">UI 框架</a>�?    </div>
 
-    <h2>快速开始</h2>
+    <h2>快速开�?/h2>
     <ol class="step-list">
-      <li><strong>创建 CSS 文件。</strong>在游戏根目录的 <code>Themes/</code> 文件夹中创建一个 <code>.css</code> 文件，例如 <code>Themes/my-theme.css</code>。</li>
-      <li><strong>编写样式规则。</strong>按照下文的属性表设置颜色和样式变量。</li>
-      <li><strong>在游戏中切换。</strong>打开 <strong>Settings → Interface → Theme</strong> 下拉框，选择你的主题名称。也可以用控制台命令 <code>theme &lt;name&gt;</code> 切换。</li>
-      <li><strong>调试。</strong>修改 CSS 后点击 Theme 旁的 <strong>Reload</strong> 按钮，或在控制台执行 <code>theme reload</code> 即时预览效果。</li>
+      <li><strong>创建 CSS 文件�?/strong>在游戏根目录�?<code>themes/</code> 文件夹中创建一�?<code>.css</code> 文件，例�?<code>themes/my-theme.css</code>�?/li>
+      <li><strong>编写样式规则�?/strong>按照下文的属性表设置颜色和样式变量�?/li>
+      <li><strong>在游戏中切换�?/strong>打开 <strong>Settings �?Interface �?Theme</strong> 下拉框，选择你的主题名称。也可以用控制台命令 <code>theme &lt;name&gt;</code> 切换�?/li>
+      <li><strong>调试�?/strong>修改 CSS 后点�?Theme 旁的 <strong>Reload</strong> 按钮，或在控制台执行 <code>theme reload</code> 即时预览效果�?/li>
     </ol>
 
     <h2>文件结构</h2>
     <pre><code>NewColony/
-├── Themes/                    ← 主题文件放这里
-│   ├── default-dark.css       ← 内置深色主题（绿色调）
-│   ├── warm-sand.css          ← 内置暖沙色亮色主题
-│   ├── deep-ocean.css         ← 内置深海蓝主题
-│   └── my-custom.css          ← 你的自定义主题
-├── Engine/
+├── themes/                    �?主题文件放这�?�?  ├── default-dark.css       �?内置深色主题（绿色调�?�?  ├── warm-sand.css          �?内置暖沙色亮色主�?�?  ├── deep-ocean.css         �?内置深海蓝主�?�?  └── my-custom.css          �?你的自定义主�?├── Engine/
 └── ...</code></pre>
 
-    <p>主题名称从文件名自动推导：<code>my-custom.css</code> → 显示为 <strong>My custom</strong>。连字符和下划线会被替换为空格，首字母大写。</p>
+    <p>主题名称从文件名自动推导�?code>my-custom.css</code> �?显示�?<strong>My custom</strong>。连字符和下划线会被替换为空格，首字母大写�?/p>
 
     <h2>CSS 语法</h2>
-    <p>主题 CSS 的写法和普通 CSS 类似，但有以下特点：</p>
+    <p>主题 CSS 的写法和普�?CSS 类似，但有以下特点：</p>
     <ul>
-      <li><strong>选择器仅作分组用途</strong>，不影响样式匹配。常用 <code>imgui</code> 和 <code>imgui-colors</code> 两个选择器分别放置样式变量和颜色。</li>
-      <li><strong>属性名</strong>对应 ImGui 的样式变量，不是标准 CSS 属性。</li>
-      <li><strong>支持注释</strong>：<code>/* ... */</code> 和 <code>// ...</code>（行尾注释）。</li>
-      <li><strong>不支持嵌套、媒体查询、伪类</strong>等高级 CSS 特性。</li>
+      <li><strong>选择器仅作分组用�?/strong>，不影响样式匹配。常�?<code>imgui</code> �?<code>imgui-colors</code> 两个选择器分别放置样式变量和颜色�?/li>
+      <li><strong>属性名</strong>对应 ImGui 的样式变量，不是标准 CSS 属性�?/li>
+      <li><strong>支持注释</strong>�?code>/* ... */</code> �?<code>// ...</code>（行尾注释）�?/li>
+      <li><strong>不支持嵌套、媒体查询、伪�?/strong>等高�?CSS 特性�?/li>
     </ul>
 
-    <h3>最小示例</h3>
+    <h3>最小示�?/h3>
     <pre><code>/* 一个只改颜色的极简主题 */
 imgui-colors {
     imgui-color-window-bg: #1a1a2e;
@@ -55,143 +49,142 @@ imgui-colors {
     imgui-color-text: #e0e0e0;
 }</code></pre>
 
-    <h2>颜色属性</h2>
-    <p>所有颜色属性使用 <code>imgui-color-</code> 前缀，写在任意选择器块内。颜色值支持以下格式：</p>
+    <h2>颜色属�?/h2>
+    <p>所有颜色属性使�?<code>imgui-color-</code> 前缀，写在任意选择器块内。颜色值支持以下格式：</p>
     <table>
       <thead><tr><th>格式</th><th>示例</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>#RGB</code></td><td><code>#f80</code></td><td>3 位十六进制</td></tr>
+        <tr><td><code>#RGB</code></td><td><code>#f80</code></td><td>3 位十六进�?/td></tr>
         <tr><td><code>#RRGGBB</code></td><td><code>#ff8800</code></td><td>6 位十六进制，不透明度为 100%</td></tr>
-        <tr><td><code>#RRGGBBAA</code></td><td><code>#ff8800cc</code></td><td>8 位十六进制，AA 为不透明度</td></tr>
-        <tr><td><code>rgb(R, G, B)</code></td><td><code>rgb(255, 136, 0)</code></td><td>0–255，不透明度为 100%</td></tr>
-        <tr><td><code>rgba(R, G, B, A)</code></td><td><code>rgba(255, 136, 0, 0.8)</code></td><td>A 范围 0.0–1.0</td></tr>
+        <tr><td><code>#RRGGBBAA</code></td><td><code>#ff8800cc</code></td><td>8 位十六进制，AA 为不透明�?/td></tr>
+        <tr><td><code>rgb(R, G, B)</code></td><td><code>rgb(255, 136, 0)</code></td><td>0�?55，不透明度为 100%</td></tr>
+        <tr><td><code>rgba(R, G, B, A)</code></td><td><code>rgba(255, 136, 0, 0.8)</code></td><td>A 范围 0.0�?.0</td></tr>
       </tbody>
     </table>
 
-    <h3>可用颜色属性一览</h3>
+    <h3>可用颜色属性一�?/h3>
     <table>
-      <thead><tr><th>属性</th><th>作用于</th></tr></thead>
+      <thead><tr><th>属�?/th><th>作用�?/th></tr></thead>
       <tbody>
-        <tr><td><code>imgui-color-text</code></td><td>普通文本</td></tr>
+        <tr><td><code>imgui-color-text</code></td><td>普通文�?/td></tr>
         <tr><td><code>imgui-color-text-disabled</code></td><td>禁用状态的文本</td></tr>
         <tr><td><code>imgui-color-text-selected-bg</code></td><td>文本选中背景</td></tr>
         <tr><td><code>imgui-color-window-bg</code></td><td>窗口背景</td></tr>
-        <tr><td><code>imgui-color-child-bg</code></td><td>子窗口/滚动区域背景</td></tr>
+        <tr><td><code>imgui-color-child-bg</code></td><td>子窗�?滚动区域背景</td></tr>
         <tr><td><code>imgui-color-popup-bg</code></td><td>弹出菜单/弹窗背景</td></tr>
-        <tr><td><code>imgui-color-menu-bar-bg</code></td><td>菜单栏背景</td></tr>
+        <tr><td><code>imgui-color-menu-bar-bg</code></td><td>菜单栏背�?/td></tr>
         <tr><td><code>imgui-color-border</code></td><td>边框</td></tr>
         <tr><td><code>imgui-color-border-shadow</code></td><td>边框阴影</td></tr>
-        <tr><td><code>imgui-color-frame-bg</code></td><td>输入框/滑条背景</td></tr>
-        <tr><td><code>imgui-color-frame-bg-hovered</code></td><td>输入框悬停背景</td></tr>
-        <tr><td><code>imgui-color-frame-bg-active</code></td><td>输入框激活背景</td></tr>
-        <tr><td><code>imgui-color-title-bg</code></td><td>标题栏背景</td></tr>
-        <tr><td><code>imgui-color-title-bg-active</code></td><td>活动标题栏背景</td></tr>
-        <tr><td><code>imgui-color-title-bg-collapsed</code></td><td>折叠标题栏背景</td></tr>
-        <tr><td><code>imgui-color-scrollbar-bg</code></td><td>滚动条轨道</td></tr>
-        <tr><td><code>imgui-color-scrollbar-grab</code></td><td>滚动条滑块</td></tr>
-        <tr><td><code>imgui-color-scrollbar-grab-hovered</code></td><td>滚动条滑块悬停</td></tr>
-        <tr><td><code>imgui-color-scrollbar-grab-active</code></td><td>滚动条滑块激活</td></tr>
-        <tr><td><code>imgui-color-check-mark</code></td><td>复选框勾选标记</td></tr>
+        <tr><td><code>imgui-color-frame-bg</code></td><td>输入�?滑条背景</td></tr>
+        <tr><td><code>imgui-color-frame-bg-hovered</code></td><td>输入框悬停背�?/td></tr>
+        <tr><td><code>imgui-color-frame-bg-active</code></td><td>输入框激活背�?/td></tr>
+        <tr><td><code>imgui-color-title-bg</code></td><td>标题栏背�?/td></tr>
+        <tr><td><code>imgui-color-title-bg-active</code></td><td>活动标题栏背�?/td></tr>
+        <tr><td><code>imgui-color-title-bg-collapsed</code></td><td>折叠标题栏背�?/td></tr>
+        <tr><td><code>imgui-color-scrollbar-bg</code></td><td>滚动条轨�?/td></tr>
+        <tr><td><code>imgui-color-scrollbar-grab</code></td><td>滚动条滑�?/td></tr>
+        <tr><td><code>imgui-color-scrollbar-grab-hovered</code></td><td>滚动条滑块悬�?/td></tr>
+        <tr><td><code>imgui-color-scrollbar-grab-active</code></td><td>滚动条滑块激�?/td></tr>
+        <tr><td><code>imgui-color-check-mark</code></td><td>复选框勾选标�?/td></tr>
         <tr><td><code>imgui-color-slider-grab</code></td><td>滑条手柄</td></tr>
-        <tr><td><code>imgui-color-slider-grab-active</code></td><td>滑条手柄激活</td></tr>
+        <tr><td><code>imgui-color-slider-grab-active</code></td><td>滑条手柄激�?/td></tr>
         <tr><td><code>imgui-color-button</code></td><td>按钮</td></tr>
         <tr><td><code>imgui-color-button-hovered</code></td><td>按钮悬停</td></tr>
-        <tr><td><code>imgui-color-button-active</code></td><td>按钮激活</td></tr>
-        <tr><td><code>imgui-color-header</code></td><td>折叠头/菜单项</td></tr>
-        <tr><td><code>imgui-color-header-hovered</code></td><td>折叠头悬停</td></tr>
-        <tr><td><code>imgui-color-header-active</code></td><td>折叠头激活</td></tr>
-        <tr><td><code>imgui-color-separator</code></td><td>分隔线</td></tr>
-        <tr><td><code>imgui-color-separator-hovered</code></td><td>分隔线悬停</td></tr>
-        <tr><td><code>imgui-color-separator-active</code></td><td>分隔线激活</td></tr>
+        <tr><td><code>imgui-color-button-active</code></td><td>按钮激�?/td></tr>
+        <tr><td><code>imgui-color-header</code></td><td>折叠�?菜单�?/td></tr>
+        <tr><td><code>imgui-color-header-hovered</code></td><td>折叠头悬�?/td></tr>
+        <tr><td><code>imgui-color-header-active</code></td><td>折叠头激�?/td></tr>
+        <tr><td><code>imgui-color-separator</code></td><td>分隔�?/td></tr>
+        <tr><td><code>imgui-color-separator-hovered</code></td><td>分隔线悬�?/td></tr>
+        <tr><td><code>imgui-color-separator-active</code></td><td>分隔线激�?/td></tr>
         <tr><td><code>imgui-color-resize-grip</code></td><td>窗口缩放手柄</td></tr>
         <tr><td><code>imgui-color-resize-grip-hovered</code></td><td>缩放手柄悬停</td></tr>
-        <tr><td><code>imgui-color-resize-grip-active</code></td><td>缩放手柄激活</td></tr>
-        <tr><td><code>imgui-color-tab</code></td><td>标签页</td></tr>
-        <tr><td><code>imgui-color-tab-hovered</code></td><td>标签页悬停</td></tr>
-        <tr><td><code>imgui-color-tab-active</code></td><td>标签页激活</td></tr>
-        <tr><td><code>imgui-color-table-header-bg</code></td><td>表格头背景</td></tr>
-        <tr><td><code>imgui-color-table-border-strong</code></td><td>表格粗边框</td></tr>
-        <tr><td><code>imgui-color-table-border-light</code></td><td>表格细边框</td></tr>
-        <tr><td><code>imgui-color-table-row-bg</code></td><td>表格行背景</td></tr>
-        <tr><td><code>imgui-color-table-row-bg-alt</code></td><td>表格交替行背景</td></tr>
-        <tr><td><code>imgui-color-modal-window-dim-bg</code></td><td>模态窗口遮罩</td></tr>
+        <tr><td><code>imgui-color-resize-grip-active</code></td><td>缩放手柄激�?/td></tr>
+        <tr><td><code>imgui-color-tab</code></td><td>标签�?/td></tr>
+        <tr><td><code>imgui-color-tab-hovered</code></td><td>标签页悬�?/td></tr>
+        <tr><td><code>imgui-color-tab-active</code></td><td>标签页激�?/td></tr>
+        <tr><td><code>imgui-color-table-header-bg</code></td><td>表格头背�?/td></tr>
+        <tr><td><code>imgui-color-table-border-strong</code></td><td>表格粗边�?/td></tr>
+        <tr><td><code>imgui-color-table-border-light</code></td><td>表格细边�?/td></tr>
+        <tr><td><code>imgui-color-table-row-bg</code></td><td>表格行背�?/td></tr>
+        <tr><td><code>imgui-color-table-row-bg-alt</code></td><td>表格交替行背�?/td></tr>
+        <tr><td><code>imgui-color-modal-window-dim-bg</code></td><td>模态窗口遮�?/td></tr>
         <tr><td><code>imgui-color-nav-highlight</code></td><td>导航高亮</td></tr>
-        <tr><td><code>imgui-color-plot-lines</code></td><td>折线图</td></tr>
-        <tr><td><code>imgui-color-plot-lines-hovered</code></td><td>折线图悬停</td></tr>
-        <tr><td><code>imgui-color-plot-histogram</code></td><td>直方图</td></tr>
-        <tr><td><code>imgui-color-plot-histogram-hovered</code></td><td>直方图悬停</td></tr>
+        <tr><td><code>imgui-color-plot-lines</code></td><td>折线�?/td></tr>
+        <tr><td><code>imgui-color-plot-lines-hovered</code></td><td>折线图悬�?/td></tr>
+        <tr><td><code>imgui-color-plot-histogram</code></td><td>直方�?/td></tr>
+        <tr><td><code>imgui-color-plot-histogram-hovered</code></td><td>直方图悬�?/td></tr>
       </tbody>
     </table>
 
-    <h2>样式属性</h2>
-    <p>样式属性控制 UI 的几何参数（圆角、间距、边框等），直接写属性名，不需要前缀。</p>
+    <h2>样式属�?/h2>
+    <p>样式属性控�?UI 的几何参数（圆角、间距、边框等），直接写属性名，不需要前缀�?/p>
 
     <h3>圆角</h3>
     <table>
-      <thead><tr><th>属性</th><th>默认值</th><th>说明</th></tr></thead>
+      <thead><tr><th>属�?/th><th>默认�?/th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>window-rounding</code></td><td><code>4.0</code></td><td>窗口圆角半径（像素）</td></tr>
-        <tr><td><code>child-rounding</code></td><td><code>4.0</code></td><td>子窗口圆角</td></tr>
+        <tr><td><code>child-rounding</code></td><td><code>4.0</code></td><td>子窗口圆�?/td></tr>
         <tr><td><code>popup-rounding</code></td><td><code>3.0</code></td><td>弹出窗口圆角</td></tr>
-        <tr><td><code>frame-rounding</code></td><td><code>3.0</code></td><td>输入框/滑条圆角</td></tr>
-        <tr><td><code>tab-rounding</code></td><td><code>3.0</code></td><td>标签页圆角</td></tr>
-        <tr><td><code>scrollbar-rounding</code></td><td><code>4.0</code></td><td>滚动条圆角</td></tr>
+        <tr><td><code>frame-rounding</code></td><td><code>3.0</code></td><td>输入�?滑条圆角</td></tr>
+        <tr><td><code>tab-rounding</code></td><td><code>3.0</code></td><td>标签页圆�?/td></tr>
+        <tr><td><code>scrollbar-rounding</code></td><td><code>4.0</code></td><td>滚动条圆�?/td></tr>
         <tr><td><code>grab-rounding</code></td><td><code>2.0</code></td><td>手柄圆角</td></tr>
       </tbody>
     </table>
 
     <h3>间距与内边距</h3>
     <table>
-      <thead><tr><th>属性</th><th>默认值</th><th>说明</th></tr></thead>
+      <thead><tr><th>属�?/th><th>默认�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>window-padding</code></td><td><code>12</code></td><td>窗口内边距（同时设置 X 和 Y）</td></tr>
-        <tr><td><code>window-padding-x</code></td><td>—</td><td>单独设置窗口水平内边距</td></tr>
-        <tr><td><code>window-padding-y</code></td><td>—</td><td>单独设置窗口垂直内边距</td></tr>
-        <tr><td><code>frame-padding</code></td><td><code>6</code></td><td>输入框/按钮内边距</td></tr>
-        <tr><td><code>frame-padding-x</code></td><td>—</td><td>单独设置输入框水平内边距</td></tr>
-        <tr><td><code>frame-padding-y</code></td><td>—</td><td>单独设置输入框垂直内边距</td></tr>
-        <tr><td><code>item-spacing</code></td><td><code>8</code></td><td>控件之间的间距</td></tr>
-        <tr><td><code>item-spacing-x</code></td><td>—</td><td>控件水平间距</td></tr>
-        <tr><td><code>item-spacing-y</code></td><td>—</td><td>控件垂直间距</td></tr>
+        <tr><td><code>window-padding</code></td><td><code>12</code></td><td>窗口内边距（同时设置 X �?Y�?/td></tr>
+        <tr><td><code>window-padding-x</code></td><td>�?/td><td>单独设置窗口水平内边�?/td></tr>
+        <tr><td><code>window-padding-y</code></td><td>�?/td><td>单独设置窗口垂直内边�?/td></tr>
+        <tr><td><code>frame-padding</code></td><td><code>6</code></td><td>输入�?按钮内边�?/td></tr>
+        <tr><td><code>frame-padding-x</code></td><td>�?/td><td>单独设置输入框水平内边距</td></tr>
+        <tr><td><code>frame-padding-y</code></td><td>�?/td><td>单独设置输入框垂直内边距</td></tr>
+        <tr><td><code>item-spacing</code></td><td><code>8</code></td><td>控件之间的间�?/td></tr>
+        <tr><td><code>item-spacing-x</code></td><td>�?/td><td>控件水平间距</td></tr>
+        <tr><td><code>item-spacing-y</code></td><td>�?/td><td>控件垂直间距</td></tr>
         <tr><td><code>item-inner-spacing</code></td><td><code>6</code></td><td>同一控件内元素间距（如标签和输入框）</td></tr>
-        <tr><td><code>item-inner-spacing-x</code></td><td>—</td><td>控件内水平间距</td></tr>
-        <tr><td><code>item-inner-spacing-y</code></td><td>—</td><td>控件内垂直间距</td></tr>
+        <tr><td><code>item-inner-spacing-x</code></td><td>�?/td><td>控件内水平间�?/td></tr>
+        <tr><td><code>item-inner-spacing-y</code></td><td>�?/td><td>控件内垂直间�?/td></tr>
       </tbody>
     </table>
 
     <h3>边框</h3>
     <table>
-      <thead><tr><th>属性</th><th>默认值</th><th>说明</th></tr></thead>
+      <thead><tr><th>属�?/th><th>默认�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>window-border-size</code></td><td><code>1.0</code></td><td>窗口边框宽度，设为 <code>0</code> 隐藏</td></tr>
-        <tr><td><code>child-border-size</code></td><td><code>1.0</code></td><td>子窗口边框</td></tr>
+        <tr><td><code>window-border-size</code></td><td><code>1.0</code></td><td>窗口边框宽度，设�?<code>0</code> 隐藏</td></tr>
+        <tr><td><code>child-border-size</code></td><td><code>1.0</code></td><td>子窗口边�?/td></tr>
         <tr><td><code>popup-border-size</code></td><td><code>1.0</code></td><td>弹出窗口边框</td></tr>
-        <tr><td><code>frame-border-size</code></td><td><code>0.0</code></td><td>输入框边框</td></tr>
-        <tr><td><code>tab-border-size</code></td><td><code>0.0</code></td><td>标签页边框</td></tr>
+        <tr><td><code>frame-border-size</code></td><td><code>0.0</code></td><td>输入框边�?/td></tr>
+        <tr><td><code>tab-border-size</code></td><td><code>0.0</code></td><td>标签页边�?/td></tr>
       </tbody>
     </table>
 
     <h3>全局参数</h3>
     <table>
-      <thead><tr><th>属性</th><th>默认值</th><th>说明</th></tr></thead>
+      <thead><tr><th>属�?/th><th>默认�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>alpha</code></td><td><code>1.0</code></td><td>全局不透明度，0.0–1.0</td></tr>
-        <tr><td><code>disabled-alpha</code></td><td><code>0.6</code></td><td>禁用控件的不透明度</td></tr>
-        <tr><td><code>scrollbar-size</code></td><td><code>14.0</code></td><td>滚动条宽度</td></tr>
-        <tr><td><code>grab-min-size</code></td><td><code>6.0</code></td><td>滑条手柄最小尺寸</td></tr>
+        <tr><td><code>alpha</code></td><td><code>1.0</code></td><td>全局不透明度，0.0�?.0</td></tr>
+        <tr><td><code>disabled-alpha</code></td><td><code>0.6</code></td><td>禁用控件的不透明�?/td></tr>
+        <tr><td><code>scrollbar-size</code></td><td><code>14.0</code></td><td>滚动条宽�?/td></tr>
+        <tr><td><code>grab-min-size</code></td><td><code>6.0</code></td><td>滑条手柄最小尺�?/td></tr>
         <tr><td><code>window-title-align-x</code></td><td><code>0.5</code></td><td>标题栏文字水平对齐（0=左，0.5=中，1=右）</td></tr>
-        <tr><td><code>window-title-align-y</code></td><td><code>0.5</code></td><td>标题栏文字垂直对齐</td></tr>
+        <tr><td><code>window-title-align-y</code></td><td><code>0.5</code></td><td>标题栏文字垂直对�?/td></tr>
         <tr><td><code>button-text-align-x</code></td><td><code>0.5</code></td><td>按钮文字水平对齐</td></tr>
         <tr><td><code>button-text-align-y</code></td><td><code>0.5</code></td><td>按钮文字垂直对齐</td></tr>
       </tbody>
     </table>
 
     <div class="callout warn">
-      间距和圆角属性的单位是<strong>逻辑像素</strong>，会受 UI Scale 设置缩放。值写纯数字即可，不需要加 <code>px</code> 后缀。
-    </div>
+      间距和圆角属性的单位�?strong>逻辑像素</strong>，会�?UI Scale 设置缩放。值写纯数字即可，不需要加 <code>px</code> 后缀�?    </div>
 
     <h2>完整主题示例</h2>
-    <p>以下是内置 <code>default-dark.css</code> 主题的完整内容，可作为自定义主题的参考模板：</p>
+    <p>以下是内�?<code>default-dark.css</code> 主题的完整内容，可作为自定义主题的参考模板：</p>
     <pre><code>/*
  * NewColony Default Dark Theme
  */
@@ -244,65 +237,64 @@ imgui-colors {
     imgui-color-tab-active: rgba(38, 62, 52, 1.0);
 }</code></pre>
 
-    <h2>控制台命令</h2>
-    <p>主题系统注册了以下控制台命令，方便开发时调试：</p>
+    <h2>控制台命�?/h2>
+    <p>主题系统注册了以下控制台命令，方便开发时调试�?/p>
     <table>
       <thead><tr><th>命令</th><th>权限</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>theme</code></td><td>Player</td><td>显示当前主题名称</td></tr>
         <tr><td><code>theme list</code></td><td>Player</td><td>列出所有可用主题，标记当前激活的</td></tr>
         <tr><td><code>theme &lt;name&gt;</code></td><td>Player</td><td>切换到指定名称的主题</td></tr>
-        <tr><td><code>theme default</code></td><td>Player</td><td>恢复为内置默认主题</td></tr>
-        <tr><td><code>theme reload</code></td><td>Player</td><td>重新加载当前主题文件（修改 CSS 后用）</td></tr>
-        <tr><td><code>load_theme &lt;path&gt;</code></td><td>Modder</td><td>从任意路径加载 CSS 主题文件</td></tr>
+        <tr><td><code>theme default</code></td><td>Player</td><td>恢复为内置默认主�?/td></tr>
+        <tr><td><code>theme reload</code></td><td>Player</td><td>重新加载当前主题文件（修�?CSS 后用�?/td></tr>
+        <tr><td><code>load_theme &lt;path&gt;</code></td><td>Modder</td><td>从任意路径加�?CSS 主题文件</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      <code>theme</code> 命令对所有玩家开放。<code>load_theme</code> 可以从 <code>Themes/</code> 以外的路径加载主题，仅限 Modder 权限，用于开发调试。
-    </div>
+      <code>theme</code> 命令对所有玩家开放�?code>load_theme</code> 可以�?<code>themes/</code> 以外的路径加载主题，仅限 Modder 权限，用于开发调试�?    </div>
 
-    <h2>在 Settings UI 中切换</h2>
+    <h2>�?Settings UI 中切�?/h2>
     <p>游戏内切换主题的最简单方式：</p>
     <ol class="step-list">
-      <li>打开 <strong>Settings</strong>（主菜单或暂停菜单）。</li>
-      <li>进入 <strong>Interface</strong> 页面。</li>
-      <li>找到 <strong>Theme</strong> 下拉框，选择想要的主题。</li>
-      <li>修改 CSS 文件后，点击下拉框旁的 <strong>Reload</strong> 按钮即时预览。</li>
+      <li>打开 <strong>Settings</strong>（主菜单或暂停菜单）�?/li>
+      <li>进入 <strong>Interface</strong> 页面�?/li>
+      <li>找到 <strong>Theme</strong> 下拉框，选择想要的主题�?/li>
+      <li>修改 CSS 文件后，点击下拉框旁�?<strong>Reload</strong> 按钮即时预览�?/li>
     </ol>
 
     <h2>设计原则</h2>
     <ul>
-      <li><strong>CSS 只控制样式，不控制布局。</strong>窗口位置、大小、层级等由引擎代码决定。</li>
-      <li><strong>热重载友好。</strong>修改 CSS 后 <code>theme reload</code> 即时生效，不需要重启游戏。</li>
-      <li><strong>不透明度是关键。</strong>游戏 UI 常需要半透明效果（HUD、小地图等），善用 <code>rgba()</code> 的 alpha 通道。</li>
-      <li><strong>内置默认主题总是可恢复。</strong>选 <code>Default</code> 即可回到引擎内置样式。</li>
+      <li><strong>CSS 只控制样式，不控制布局�?/strong>窗口位置、大小、层级等由引擎代码决定�?/li>
+      <li><strong>热重载友好�?/strong>修改 CSS �?<code>theme reload</code> 即时生效，不需要重启游戏�?/li>
+      <li><strong>不透明度是关键�?/strong>游戏 UI 常需要半透明效果（HUD、小地图等），善�?<code>rgba()</code> �?alpha 通道�?/li>
+      <li><strong>内置默认主题总是可恢复�?/strong>�?<code>Default</code> 即可回到引擎内置样式�?/li>
     </ul>
 
     <h2>常见问题</h2>
 
-    <h3>我的主题没有出现在下拉框里</h3>
+    <h3>我的主题没有出现在下拉框�?/h3>
     <ul>
-      <li>确认文件扩展名是 <code>.css</code>（不是 <code>.txt</code> 或 <code>.scss</code>）。</li>
-      <li>确认文件在 <code>Themes/</code> 目录下。</li>
-      <li>在控制台执行 <code>theme list</code> 查看被发现的文件。</li>
+      <li>确认文件扩展名是 <code>.css</code>（不�?<code>.txt</code> �?<code>.scss</code>）�?/li>
+      <li>确认文件�?<code>themes/</code> 目录下�?/li>
+      <li>在控制台执行 <code>theme list</code> 查看被发现的文件�?/li>
     </ul>
 
-    <h3>修改了 CSS 但没有变化</h3>
+    <h3>修改�?CSS 但没有变�?/h3>
     <ul>
-      <li>点击 <strong>Reload</strong> 按钮或执行 <code>theme reload</code>。</li>
-      <li>检查 CSS 语法——解析器遇到错误会跳过该规则并在日志中输出警告。</li>
-      <li>确认属性名拼写正确。例如颜色属性必须带 <code>imgui-color-</code> 前缀。</li>
+      <li>点击 <strong>Reload</strong> 按钮或执�?<code>theme reload</code>�?/li>
+      <li>检�?CSS 语法——解析器遇到错误会跳过该规则并在日志中输出警告�?/li>
+      <li>确认属性名拼写正确。例如颜色属性必须带 <code>imgui-color-</code> 前缀�?/li>
     </ul>
 
     <h3>部分窗口样式不受影响</h3>
-    <p>某些窗口（如小地图、HUD 叠加层）在代码中使用 <code>PushStyleColor/PopStyleColor</code> 覆盖了局部样式，这些硬编码覆盖优先于全局主题。如果你希望它们也跟随主题，可以在 CSS 中设置对应的颜色属性——引擎会在初始化时应用全局主题，之后各 UI 组件的局部覆盖仍然生效。</p>
+    <p>某些窗口（如小地图、HUD 叠加层）在代码中使用 <code>PushStyleColor/PopStyleColor</code> 覆盖了局部样式，这些硬编码覆盖优先于全局主题。如果你希望它们也跟随主题，可以�?CSS 中设置对应的颜色属性——引擎会在初始化时应用全局主题，之后各 UI 组件的局部覆盖仍然生效�?/p>
 
-    <h3>如何从 MOD 中附带主题？</h3>
-    <p>目前主题文件需要手动放到游戏根目录的 <code>Themes/</code> 文件夹中。MOD 目录中的 CSS 文件不会被自动发现。你可以：</p>
+    <h3>如何�?MOD 中附带主题？</h3>
+    <p>目前主题文件需要手动放到游戏根目录�?<code>themes/</code> 文件夹中。MOD 目录中的 CSS 文件不会被自动发现。你可以�?/p>
     <ul>
-      <li>在 MOD 的 README 中提示玩家将 CSS 文件复制到 <code>Themes/</code>。</li>
-      <li>用 Lua 脚本调用控制台命令 <code>load_theme</code> 加载 MOD 目录中的 CSS 文件。</li>
+      <li>�?MOD �?README 中提示玩家将 CSS 文件复制�?<code>themes/</code>�?/li>
+      <li>�?Lua 脚本调用控制台命�?<code>load_theme</code> 加载 MOD 目录中的 CSS 文件�?/li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

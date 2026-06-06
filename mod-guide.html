@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOD 是怎样加载的 · NewColony Wiki</title>
+  <title>MOD 是怎样加载�?· NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="mod-guide">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>MOD 是怎样加载的</div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>MOD 是怎样加载�?/div></div>
   <div class="content">
-    <h1>MOD 是怎样加载的</h1>
-    <p class="subtitle">一个 MOD 就是一套数据文件加一个可选的 Lua 脚本。游戏先找到 MOD、排序、注册数据，最后跑脚本。搞清楚这个过程，后面加物品、写配方、写 Lua 才知道每样东西在哪个阶段生效。</p>
+    <h1>MOD 是怎样加载�?/h1>
+    <p class="subtitle">一�?MOD 就是一套数据文件加一个可选的 Lua 脚本。游戏先找到 MOD、排序、注册数据，最后跑脚本。搞清楚这个过程，后面加物品、写配方、写 Lua 才知道每样东西在哪个阶段生效�?/p>
 
-    <h2>一个 MOD 至少需要什么</h2>
-    <p>游戏在 MOD 目录下找 <code>mod.json</code>。找到了就读取这个文件、检查依赖、排好加载顺序，然后递归扫描 <code>Data/</code> 下所有受支持的类型目录。入口脚本默认指向 <code>Scripts/bootstrap.lua</code>，也可以在 <code>mod.json</code> 的 <code>entry</code> 字段改成别的路径。</p>
-    <p>下面是一个典型 MOD 的目录结构。游戏会检查 <code>Data/</code> 下是否存在这些类型子目录，存在就走进去递归扫描 JSON 文件。</p>
-    <pre><code>Mods/my_mod/
+    <h2>一�?MOD 至少需要什�?/h2>
+    <p>游戏�?MOD 目录下找 <code>mod.json</code>。找到了就读取这个文件、检查依赖、排好加载顺序，然后递归扫描 <code>data/</code> 下所有受支持的类型目录。入口脚本默认指�?<code>scripts/bootstrap.lua</code>，也可以�?<code>mod.json</code> �?<code>entry</code> 字段改成别的路径�?/p>
+    <p>下面是一个典�?MOD 的目录结构。游戏会检�?<code>data/</code> 下是否存在这些类型子目录，存在就走进去递归扫描 JSON 文件�?/p>
+    <pre><code>mods/my_mod/
   mod.json
-  Scripts/
+  scripts/
     bootstrap.lua
-  Data/
+  data/
     items/
     blocks/
     entities/
@@ -35,34 +35,32 @@
     biomes/</code></pre>
 
     <h2>加载流程</h2>
-    <p>游戏启动时按下面五个阶段加载 MOD：</p>
+    <p>游戏启动时按下面五个阶段加载 MOD�?/p>
     <ol class="step-list">
-      <li><strong>发现 MOD。</strong>引擎扫描 <code>Mods/</code> 下的每个子目录，只要目录里有 <code>mod.json</code> 就认为是一个 MOD。读出来之后，检查 <code>id</code> 是否重复、JSON 格式是否合法。</li>
-      <li><strong>解析加载顺序。</strong>引擎按照 <code>dependencies</code>、<code>load_after</code>、<code>load_before</code> 三个字段计算最终顺序。循环依赖会直接报错，然后跳过出问题的 MOD。</li>
-      <li><strong>注册数据。</strong>引擎递归扫描 <code>Data/blocks</code>、<code>Data/entities</code>、<code>Data/recipes</code> 等所有受支持目录，把每条 JSON 记录放进数据注册表。注意，这时候 Lua 脚本还没执行——数据在脚本执行前就已经可用了。</li>
-      <li><strong>校验引用。</strong>配方里的输入输出、职业要求、文明开局物品、方块掉落里的引用 ID，都会被检查是否存在。如果有失效引用，引擎会报出明确的 MOD 名称和文件路径。</li>
-      <li><strong>执行入口脚本。</strong>所有数据注册完毕后，引擎按加载顺序执行每个 MOD 的入口脚本。脚本返回一个表，引擎会读取 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code> 这些函数。</li>
+      <li><strong>发现 MOD�?/strong>引擎扫描 <code>mods/</code> 下的每个子目录，只要目录里有 <code>mod.json</code> 就认为是一�?MOD。读出来之后，检�?<code>id</code> 是否重复、JSON 格式是否合法�?/li>
+      <li><strong>解析加载顺序�?/strong>引擎按照 <code>dependencies</code>�?code>load_after</code>�?code>load_before</code> 三个字段计算最终顺序。循环依赖会直接报错，然后跳过出问题�?MOD�?/li>
+      <li><strong>注册数据�?/strong>引擎递归扫描 <code>data/blocks</code>�?code>data/entities</code>�?code>data/recipes</code> 等所有受支持目录，把每条 JSON 记录放进数据注册表。注意，这时�?Lua 脚本还没执行——数据在脚本执行前就已经可用了�?/li>
+      <li><strong>校验引用�?/strong>配方里的输入输出、职业要求、文明开局物品、方块掉落里的引�?ID，都会被检查是否存在。如果有失效引用，引擎会报出明确�?MOD 名称和文件路径�?/li>
+      <li><strong>执行入口脚本�?/strong>所有数据注册完毕后，引擎按加载顺序执行每个 MOD 的入口脚本。脚本返回一个表，引擎会读取 <code>on_load</code>�?code>on_world_init</code>�?code>on_tick</code>�?code>on_shutdown</code> 这些函数�?/li>
     </ol>
 
     <h2>什么时候写 JSON，什么时候写 Lua</h2>
-    <p>能用 JSON 写的东西，都放在 <code>Data/</code> 下。包括物品、方块、配方、职业、文明、实体原型、Focus、NPC 阵营、名称池、动作（actions）和作物（crops）。Lua 只用来补充 JSON 做不到的事情：监听事件、注册 Focus 条件、定时执行逻辑、生成实体、操作地形。</p>
+    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。包括物品、方块、配方、职业、文明、实体原型、Focus、NPC 阵营、名称池、动作（actions）和作物（crops）。Lua 只用来补�?JSON 做不到的事情：监听事件、注�?Focus 条件、定时执行逻辑、生成实体、操作地形�?/p>
 
     <div class="callout warn">
-      不要在 Lua 里重新发明配方系统。新配方放在 <code>Data/recipes</code> 下。也不要在 <code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询。
-    </div>
+      不要�?Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要�?<code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询�?    </div>
 
     <h2>数据 ID 命名习惯</h2>
-    <p>公共数据的 ID 统一用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。这样做的好处是：其他 MOD 引用时一眼能看出数据来源，也不会和 core 或者其他 MOD 撞名。</p>
+    <p>公共数据�?ID 统一�?<code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例�?<code>copper_age:copper_ingot</code>。这样做的好处是：其�?MOD 引用时一眼能看出数据来源，也不会�?core 或者其�?MOD 撞名�?/p>
 
     <h2>核心数据 vs MOD 数据</h2>
-    <p>Game/Data/ 和 Examples/Mods/copper_age/Data/ 下的 JSON 是同一种格式，区别只在于 <code>id</code> 的前缀。Game/Data/ 里 core 内容的前缀是 <code>core:</code>，MOD 数据的前缀是 <code>&lt;mod_id&gt;:</code>。跨 MOD 引用时必须写完整的 <code>mod_id:name</code>。</p>
+    <p>mods/core/data/ �?Examples/mods/copper_age/data/ 下的 JSON 是同一种格式，区别只在�?<code>id</code> 的前缀。Game/data/ �?core 内容的前缀�?<code>core:</code>，MOD 数据的前缀�?<code>&lt;mod_id&gt;:</code>。跨 MOD 引用时必须写完整�?<code>mod_id:name</code>�?/p>
 
     <div class="callout info">
-      如果你在 MOD 里用 <code>dofile</code> 加载了其他 Lua 文件（如 worldgen 脚本），注意 <code>package</code> 库默认未加载，请用 <code>dofile</code> 代替 <code>require</code>。
-    </div>
+      如果你在 MOD 里用 <code>dofile</code> 加载了其�?Lua 文件（如 worldgen 脚本），注意 <code>package</code> 库默认未加载，请�?<code>dofile</code> 代替 <code>require</code>�?    </div>
 
-    <h2>下一步</h2>
-    <p>想马上动手做 MOD，继续看 <a href="mod-quickstart.html">从一个 MOD 开始</a>。已经理解目录结构了，直接看 <a href="mod-blockregistry.html">方块注册</a>。</p>
+    <h2>下一�?/h2>
+    <p>想马上动手做 MOD，继续看 <a href="mod-quickstart.html">从一�?MOD 开�?/a>。已经理解目录结构了，直接看 <a href="mod-blockregistry.html">方块注册</a>�?/p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

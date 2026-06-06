@@ -11,79 +11,77 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a></div></div>
   <div class="content">
     <h1>NewColony</h1>
-    <p class="subtitle">一款殖民地模拟游戏。你带领一群殖民者来到新的土地，从零开始建造一个能运转的家园。每个殖民者都有自己的名字、职业、技能和需求——饿了要找吃的，累了要休息，还需要和其他人交流。你的工作是给他们分配工作、规划生产线、应对各种事件，让他们活下去并且过得越来越好。游戏里的世界由一个个方块（体素）组成，地形可以挖掘和改造。</p>
+    <p class="subtitle">一款殖民地模拟游戏。你带领一群殖民者来到新的土地，从零开始建造一个能运转的家园。每个殖民者都有自己的名字、职业、技能和需求——饿了要找吃的，累了要休息，还需要和其他人交流。你的工作是给他们分配工作、规划生产线、应对各种事件，让他们活下去并且过得越来越好。游戏里的世界由一个个方块（体素）组成，地形可以挖掘和改造�?/p>
 
     <div class="callout info">
-      这份 Wiki 是写给 MOD 作者的。我们不会讲引擎内部怎么实现，只会告诉你"能配置什么、脚本能调用什么、出了问题怎么查"。C++ 内部类、临时调试流程和未列出的字段，都不要当作兼容承诺。
-    </div>
+      这份 Wiki 是写�?MOD 作者的。我们不会讲引擎内部怎么实现，只会告诉你"能配置什么、脚本能调用什么、出了问题怎么�?。C++ 内部类、临时调试流程和未列出的字段，都不要当作兼容承诺�?    </div>
 
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
-      <li><strong>先看概念。</strong>了解 MOD 是怎么被加载的，理解目录结构、加载顺序、数据注册和 Lua 生命周期。这样后面看到 <code>Data/items</code> 或 <code>on_world_init</code> 时不会混。</li>
-      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加物品、方块、实体、配方、职业、文明、Focus、NPC 阵营和名称池。能用 JSON 表达的内容优先写 JSON。</li>
-      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、Focus 条件和少量运行时逻辑，不是用来重建数据系统的。</li>
+      <li><strong>先看概念�?/strong>了解 MOD 是怎么被加载的，理解目录结构、加载顺序、数据注册和 Lua 生命周期。这样后面看�?<code>data/items</code> �?<code>on_world_init</code> 时不会混�?/li>
+      <li><strong>再注册新东西�?/strong>�?<code>mod.json</code> 开始，然后添加物品、方块、实体、配方、职业、文明、Focus、NPC 阵营和名称池。能�?JSON 表达的内容优先写 JSON�?/li>
+      <li><strong>最后写 Lua�?/strong>Lua 用来处理事件响应、定时器、Focus 条件和少量运行时逻辑，不是用来重建数据系统的�?/li>
     </ol>
 
     <h2>入口</h2>
     <div class="card-grid">
       <a href="mod-guide.html" class="card">
-        <h3>MOD 是怎样加载的</h3>
-        <p>理解目录结构、加载流程、数据注册和脚本生命周期。</p>
+        <h3>MOD 是怎样加载�?/h3>
+        <p>理解目录结构、加载流程、数据注册和脚本生命周期�?/p>
       </a>
       <a href="mod-quickstart.html" class="card">
-        <h3>从一个 MOD 开始</h3>
-        <p>从零做一个最小 MOD，让游戏能发现它、加载它、在控制台看到它。</p>
+        <h3>从一�?MOD 开�?/h3>
+        <p>从零做一个最�?MOD，让游戏能发现它、加载它、在控制台看到它�?/p>
       </a>
       <a href="mod-blockregistry.html" class="card">
         <h3>方块注册</h3>
-        <p>方块/物品的 JSON 格式、字段说明、ID 规则与验证命令。</p>
+        <p>方块/物品�?JSON 格式、字段说明、ID 规则与验证命令�?/p>
       </a>
       <a href="mod-lua-api.html" class="card">
-        <h3>Lua 怎么写</h3>
-        <p>生命周期、事件、定时器、Focus 以及完整示例。</p>
+        <h3>Lua 怎么�?/h3>
+        <p>生命周期、事件、定时器、Focus 以及完整示例�?/p>
       </a>
       <a href="mod-lua-api-reference.html" class="card">
         <h3>Lua API 速查</h3>
-        <p>可搜索的函数表，查参数、返回值和用法备注。</p>
+        <p>可搜索的函数表，查参数、返回值和用法备注�?/p>
       </a>
       <a href="mod-ui-api.html" class="card">
         <h3>UI 框架</h3>
-        <p>底边栏按钮、浮动提示、样式枚举和完整示例。</p>
+        <p>底边栏按钮、浮动提示、样式枚举和完整示例�?/p>
       </a>
       <a href="mod-ui-theme.html" class="card">
         <h3>UI CSS 主题</h3>
-        <p>用 CSS 文件自定义游戏 UI 的颜色、圆角和间距。</p>
+        <p>�?CSS 文件自定义游�?UI 的颜色、圆角和间距�?/p>
       </a>
       <a href="mod-console.html" class="card">
-        <h3>控制台命令</h3>
-        <p>用 <code>mods</code>、<code>list_data</code>、<code>spawn_proto</code> 验证 MOD。</p>
+        <h3>控制台命�?/h3>
+        <p>�?<code>mods</code>�?code>list_data</code>�?code>spawn_proto</code> 验证 MOD�?/p>
       </a>
       <a href="mod-network-sync.html" class="card">
-        <h3>网络同步与 Mod 数据</h3>
-        <p>主机-客户端架构、快照同步、Mod 数据交换、校验码和 Lua 网络编程指南。</p>
+        <h3>网络同步�?Mod 数据</h3>
+        <p>主机-客户端架构、快照同步、Mod 数据交换、校验码�?Lua 网络编程指南�?/p>
       </a>
     </div>
 
     <h2>当前能稳定使用的能力</h2>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
+      <thead><tr><th>能力</th><th>状�?/th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td>mod.json、依赖顺序、load_before 通配符和严格清单检查。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>用 <code>Data/</code> 注册 11 种类型：items、blocks、entities、recipes、professions、civilizations、focuses、factions、name_pools、actions、crops。此外 biomes 也被 core 脚本用于世界生成。</td></tr>
-        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本返回表，按需实现 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
-        <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td>用 <code>engine.events</code> 和 <code>engine.timers</code> 做轻量运行时逻辑。6 个内置事件。</td></tr>
-        <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>注册 faction/name_pool，模板命名，阵营实例，关系值管理。</td></tr>
-        <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>Host/Client TCP 同步、快照广播、客户端预测、延迟补偿、MOD 数据交换。</td></tr>
-        <tr><td>UI 框架</td><td><span class="badge partial">部分可用</span></td><td>底边栏槽位、浮动提示、窗口、CSS 主题自定义；API 已设计，C++ 渲染层实现中。</td></tr>
-        <tr><td>AI 与行为树</td><td><span class="badge partial">部分</span></td><td>基础需求、调度、寻路、行为树可运行；具体工作效果未完全闭环。</td></tr>
-        <tr><td>文明</td><td><span class="badge partial">部分</span></td><td>职业组织、开局配置和配方限制稳定；复杂规则仍在扩展。</td></tr>
-        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>版本化保存/加载框架可用；跨版本迁移和 MOD 自动解析未完成。</td></tr>
+        <tr><td>MOD 发现与加�?/td><td><span class="badge done">可用</span></td><td>mod.json、依赖顺序、load_before 通配符和严格清单检查�?/td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>�?<code>data/</code> 注册 11 种类型：items、blocks、entities、recipes、professions、civilizations、focuses、factions、name_pools、actions、crops。此�?biomes 也被 core 脚本用于世界生成�?/td></tr>
+        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本返回表，按需实现 <code>on_load</code>�?code>on_world_init</code>�?code>on_tick</code>�?code>on_shutdown</code>�?/td></tr>
+        <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td>�?<code>engine.events</code> �?<code>engine.timers</code> 做轻量运行时逻辑�? 个内置事件�?/td></tr>
+        <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>注册 faction/name_pool，模板命名，阵营实例，关系值管理�?/td></tr>
+        <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>Host/Client TCP 同步、快照广播、客户端预测、延迟补偿、MOD 数据交换�?/td></tr>
+        <tr><td>UI 框架</td><td><span class="badge partial">部分可用</span></td><td>底边栏槽位、浮动提示、窗口、CSS 主题自定义；API 已设计，C++ 渲染层实现中�?/td></tr>
+        <tr><td>AI 与行为树</td><td><span class="badge partial">部分</span></td><td>基础需求、调度、寻路、行为树可运行；具体工作效果未完全闭环�?/td></tr>
+        <tr><td>文明</td><td><span class="badge partial">部分</span></td><td>职业组织、开局配置和配方限制稳定；复杂规则仍在扩展�?/td></tr>
+        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>版本化保�?加载框架可用；跨版本迁移�?MOD 自动解析未完成�?/td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、Focus、NPC 阵营定义和少量 Lua 辅助逻辑。完整的能力清单见<a href="mod-status.html">当前能力状态</a>。示例工程在 <code>Examples/Mods/copper_age/</code>。
-    </div>
+      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、Focus、NPC 阵营定义和少�?Lua 辅助逻辑。完整的能力清单�?a href="mod-status.html">当前能力状�?/a>。示例工程在 <code>Examples/mods/copper_age/</code>�?    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
