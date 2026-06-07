@@ -79,6 +79,9 @@
       <li>监听区域创建/删除事件。</li>
     </ul>
 
+    <h2>挖掘指定</h2>
+    <p><code>core:mine</code> 是内置 3D 区域类型。底栏的挖掘按钮会进入 3D 拖拽指定模式；滚轮调整垂直范围，确认拖拽后会创建挖掘区域，并为选中的每个可挖实体方块向 WorkPool 发布一个 <code>mine</code> 工作。空气、水、岩浆、流体、植物材质和注册地物方块不会被加入挖掘任务。该工作使用 <code>core:mine</code> 方块动作，完成后会触发 <code>block:interacted</code> 并进入 CoreMod 挖掘系统，掉落来自方块 JSON 的 <code>drops</code> 字段。</p>
+
     <h2>文件放置规则</h2>
     <ul>
       <li>放在 <code>data/zones/</code> 下，支持子目录。</li>

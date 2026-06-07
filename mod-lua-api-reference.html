@@ -91,6 +91,7 @@
         <!-- Modding -->
         <tr class="api-row" data-api-row><td><code>engine.modding.get_data_json(id)</code></td><td><code>data id</code></td><td>string</td><td>返回注册表中的原始 JSON，未找到时返回空字符串。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.modding.list_by_type(type)</code></td><td><code>blocks</code> 等</td><td>table</td><td>列出指定数据类型的全部 ID。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.modding.get_block_info(hash)</code></td><td>integer</td><td>table</td><td>返回哈希方块 ID 的注册信息：<code>id</code>、<code>hash</code>、<code>material</code>、<code>has_item_block</code>、<code>mineable</code>，以及带 <code>id</code>/<code>hash</code> 的 <code>drops</code> 列表。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.modding.get_setting(mod, key, fallback)</code></td><td>string, string, any</td><td>any</td><td>读取配置，结合清单默认值和用户覆盖后的最终值。</td></tr>
 
         <!-- Crafting & Professions -->
@@ -106,6 +107,10 @@
         <tr class="api-row" data-api-row><td><code>engine.jobs.cancel(id)</code></td><td>job id</td><td>-</td><td>取消工作。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.jobs.is_valid(id)</code></td><td>job id</td><td>bool</td><td>检查工作是否仍在工作池中。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.jobs.total()</code></td><td>-</td><td>integer</td><td>返回工作池中活跃工作数量。</td></tr>
+
+        <!-- Zones -->
+        <tr class="api-row" data-api-row><td><code>engine.zone.designate_blocks()</code></td><td>-</td><td>table</td><td>Returns the current drag-designation block list. Each row contains <code>x</code>, <code>y</code>, <code>z</code>, <code>block_hash</code>, <code>block_id</code>, and <code>solid</code>.</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.zone.confirm_mine_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:mine</code> 3D designation, creates the mine zone, and posts one <code>mine</code> WorkPool job per solid block. Returns <code>{ ok, count }</code>.</td></tr>
 
         <!-- Events -->
         <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>
