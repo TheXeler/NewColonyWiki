@@ -23,11 +23,12 @@
     </ul>
 
     <h2>命名空间</h2>
-    <p>UI API 分为三个子命名空间：</p>
+    <p>UI API 分为四个子命名空间：</p>
     <table>
       <thead><tr><th>命名空间</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>engine.ui.bottom_bar</code></td><td>屏幕底部的常驻工具栏按钮、状态指示器</td></tr>
+        <tr><td><code>engine.ui.window</code></td><td>可移动/可关闭的窗口面板，支持表格和分页表格内容</td></tr>
         <tr><td><code>engine.ui.floating</code></td><td>浮动提示、屏幕消息、教程提示和告警</td></tr>
         <tr><td><code>engine.ui.style</code></td><td>样式枚举（severity 等）</td></tr>
       </tbody>
@@ -104,6 +105,43 @@
     <h3>批量清理</h3>
     <p><code>engine.ui.bottom_bar.clear(mod_id)</code> —— 清理指定 MOD 注册的所有底边栏槽位。留空时只允许 debug/dev 场景清理全部。</p>
     <pre><code>engine.ui.bottom_bar.clear("core")</code></pre>
+
+    <h2>窗口 API</h2>
+    <p><code>engine.ui.window.register(def)</code> 注册窗口，成功返回句柄。窗口的 <code>render(ctx)</code> 必须返回内容表；当前支持 <code>kind = "table"</code> 和 <code>kind = "tabs_table"</code>。</p>
+    <pre><code>local handle = engine.ui.window.register({
+    id = "core:craft_menu_window",
+    title = { key = "ui.core:craft_menu.window_title" },
+    size_hint = { w = 720, h = 460 },
+    position = { x = 72, y = 112 },
+    flags = { "movable", "closable", "resizable", "scrollable" },
+    render = function(ctx)
+        return {
+            kind = "tabs_table",
+            tabs = {
+                {
+                    id = "core:worker",
+                    label = { key = "professions.core:worker" },
+                    columns = { "产出", "输入", "配方", "等级" },
+                    rows = {
+                        { id = "core:craft_stick", columns = { "木棍 x4", "木板 x2", "core:craft_stick", "1" } }
+                    },
+                    reserve_footer = 46.0
+                }
+            },
+            buttons = {
+                {
+                    id = "craft",
+                    label = { key = "ui.core:craft_menu.craft_button" },
+                    tooltip = { key = "ui.core:craft_menu.craft_tooltip" },
+                    on_click = function(button) engine.log.info("clicked") end
+                }
+            }
+        }
+    end
+})</code></pre>
+
+    <p>表格行支持 <code>on_click(row)</code> 和 <code>on_double_click(row)</code>。按钮的 <code>label</code>、<code>tooltip</code>、窗口 <code>title</code>、分页 <code>label</code> 和单元格都可以直接传字符串、函数，或 <code>{ key = "category.id", params = {...} }</code> 翻译引用。</p>
+    <p><code>engine.ui.window.unregister(handle_or_id)</code> 注销窗口；<code>engine.ui.window.update(handle_or_id, patch)</code> 局部更新；<code>engine.ui.window.is_open(handle_or_id)</code> 查询打开状态；<code>engine.ui.window.clear(mod_id)</code> 清理指定 MOD 的窗口。</p>
 
     <h2>浮动提示 API</h2>
     <p>浮动提示用于短生命周期的世界提示、屏幕提示、教程提示和告警。支持屏幕坐标（固定位置）和世界坐标（跟随世界实体投影到屏幕）两种模式。</p>

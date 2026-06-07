@@ -96,9 +96,16 @@
         <!-- Crafting & Professions -->
         <tr class="api-row" data-api-row><td><code>engine.crafting.craft(entity, recipe)</code></td><td><code>entity id</code>, <code>data id</code></td><td>bool</td><td>成功时扣除输入、添加输出，并触发库存和配方事件。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.crafting.list_recipes()</code></td><td>-</td><td>table</td><td>列出已加载的配方 ID。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.crafting.get_recipe(recipe)</code></td><td><code>data id</code></td><td>table 或 nil</td><td>返回配方详情：<code>id</code>、<code>inputs</code>、<code>output</code>、可选 <code>profession</code> 和 <code>profession_level</code>。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.list()</code></td><td>-</td><td>table</td><td>列出已加载的职业 ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.can_assign(entity, profession)</code></td><td>entity, data id</td><td>bool</td><td>检查实体是否满足转职条件。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.assign(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>bool</td><td>分配职业，成功时触发 <code>profession:assigned</code>。</td></tr>
+
+        <!-- Jobs -->
+        <tr class="api-row" data-api-row><td><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code></td><td>string, hashed id, number, number, number, number?, integer?</td><td>job id</td><td>发布工作到工作池；<code>faction_id</code> 必填且不能为 0，AI 只领取同势力工作。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.jobs.cancel(id)</code></td><td>job id</td><td>-</td><td>取消工作。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.jobs.is_valid(id)</code></td><td>job id</td><td>bool</td><td>检查工作是否仍在工作池中。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.jobs.total()</code></td><td>-</td><td>integer</td><td>返回工作池中活跃工作数量。</td></tr>
 
         <!-- Events -->
         <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>
@@ -109,6 +116,7 @@
         <tr class="api-row" data-api-row><td><code>recipe:crafted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、recipe_id、output_item_id、output_item_key、output_count。</td></tr>
         <tr class="api-row" data-api-row><td><code>profession:assigned</code></td><td>事件</td><td>payload</td><td>字段：entity_id、profession_id、level。</td></tr>
         <tr class="api-row" data-api-row><td><code>block:interacted</code></td><td>事件</td><td>payload</td><td>字段：entity_id、x、y、z、action_type、action。</td></tr>
+        <tr class="api-row" data-api-row><td><code>job:completed</code></td><td>事件</td><td>payload</td><td>字段：instance_id、worker、type、category、faction_id、x、y、z、data、tick。</td></tr>
         <tr class="api-row" data-api-row><td><code>focus:chosen</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、choice_id、choice_action、tick。</td></tr>
         <tr class="api-row" data-api-row><td><code>focus:dismissed</code></td><td>事件</td><td>payload</td><td>字段：focus_id、instance_id、tick。</td></tr>
 
