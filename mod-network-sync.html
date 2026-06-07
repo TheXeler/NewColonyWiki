@@ -126,7 +126,7 @@ end</code></pre>
       <li><strong>影响游戏逻辑的 Mod 用 <code>"side": "both"</code>。</strong>纯客户端 Mod（UI 主题、音效包）应用 <code>"side": "client"</code>，这样它们不会影响校验码。</li>
       <li><strong>在主机上修改状态，客户端只发命令。</strong></li>
       <li><strong>数据文件保持确定性。</strong>不要在 Lua 中使用 <code>math.random</code>（已禁用），使用 <code>engine.random</code>。</li>
-      <li><strong>使用 <code>mod_list</code> 和 <code>export_mod_list</code> 命令调试。</strong>对比主机和客户端的 Mod 列表和校验码是否一致。</li>
+      <li><strong>使用 <code>mod_list</code> 和 <code>export_mod_list</code> 命令调试。</strong>对比主机和客户端的 Mod 列表和校验码是否一致。主菜单的 <strong>MOD 管理器</strong> 也会显示当前 ModList、校验码和加载顺序，并可导出 ModList JSON。</li>
     </ol>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
