@@ -33,6 +33,10 @@
         <tr><td><code>hardness</code></td><td>float</td><td>否</td><td>挖掘硬度，决定挖掘所需时间。</td></tr>
         <tr><td><code>drops</code></td><td>string[]</td><td>否</td><td>挖掘后掉落的物品 ID 列表，必须指向已注册的方块 ID。</td></tr>
         <tr><td><code>category</code></td><td>string</td><td>否</td><td>分类标签，如 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</td></tr>
+        <tr><td><code>material</code></td><td>string</td><td>否</td><td>材质类型，如 <code>rock</code>、<code>earth</code>、<code>wood</code>、<code>plant</code>、<code>metal</code>、<code>fluid</code>、<code>glass</code>。</td></tr>
+        <tr><td><code>food_value</code></td><td>int</td><td>否</td><td>食物饱腹值，正整数。仅 <code>category</code> 为 <code>food</code> 时有意义。</td></tr>
+        <tr><td><code>equip_slot</code></td><td>string</td><td>否</td><td>装备栏位，如 <code>chest</code>、<code>feet</code>。仅装备类物品使用。</td></tr>
+        <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>。设为 <code>false</code> 的方块不能被玩家持有。</td></tr>
       </tbody>
     </table>
 

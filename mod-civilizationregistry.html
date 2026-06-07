@@ -15,22 +15,45 @@
 
     <h2>JSON 格式</h2>
     <pre><code>{
-  "id": "copper_age:copper_clan",
-  "name": "Copper Clan",
-  "professions": ["copper_age:coppersmith"],
+  "id": "core:cave_civ",
+  "name": "Cave Civilization",
+  "leader": "core:stonemason",
+  "description": "A resilient civilization ...",
+  "professions": [
+    { "id": "core:miner", "count": 2 },
+    { "id": "core:blacksmith", "count": 1 }
+  ],
+  "recipe_modifiers": [
+    {
+      "profession": "core:stonemason",
+      "unlock": ["core:craft_stone_pickaxe", "core:build_stone_furnace"],
+      "extra_recipes": ["core:craft_torch", "core:build_anvil"]
+    },
+    {
+      "profession": "core:blacksmith",
+      "deny": ["core:craft_wooden_tools"],
+      "blocked_recipes": ["core:build_wooden_wall"]
+    }
+  ],
   "starting_options": [
     {
-      "id": "copper_age:starter",
-      "name": "Workshop Start",
+      "id": "default",
       "blocks": [
-        { "id": "copper_age:copper_ore", "count": 4 }
+        { "id": "core:stone_chunk", "count": 20 },
+        { "id": "core:torch", "count": 5 }
       ],
       "professions": [
-        { "id": "copper_age:coppersmith", "level": 1, "count": 1 }
+        { "id": "core:miner", "level": 1, "count": 2 },
+        { "id": "core:stonemason", "level": 2, "count": 1 }
       ]
     }
   ],
-  "recipe_modifiers": []
+  "starting_buildings": ["core:stone_furnace"],
+  "traits": ["mining", "stoneworking", "smithing"],
+  "bonuses": {
+    "mine_speed": 1.1,
+    "underground_vision": 1.2
+  }
 }</code></pre>
 
     <h2>字段说明</h2>

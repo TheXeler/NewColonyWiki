@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>群系注册</div></div>
   <div class="content">
     <h1>群系注册</h1>
-    <p class="subtitle">群系（Biome）通过 Lua 脚本调用 <code>engine.terrain.register_biome()</code> 注册。每个群系定义了地表方块、次地表方块、树木密度、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系。</p>
+    <p class="subtitle">群系（Biome）通过 Lua 脚本调用 <code>engine.terrain.register_biome()</code> 注册。每个群系定义了地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
 
     <h2>注册 API</h2>
     <pre><code>engine.terrain.register_biome({
@@ -20,12 +20,6 @@
     subsurface_block = 1,       -- 次地表方块 ID
     weight = 1,                 -- 群系选择权重，必须为正整数
     subsurface_depth = 2,       -- 次地表深度（层）
-    tree_density = 0.0,         -- 树木密度
-    tree_trunk_min = 0,         -- 树干最矮高度
-    tree_trunk_max = 0,         -- 树干最高高度
-    tree_leaves_radius = 0,     -- 树冠半径
-    trunk_block = 0,            -- 树干方块 ID
-    leaves_block = 0,           -- 树叶方块 ID
     has_caves = false,          -- 是否生成洞穴
     has_rivers = false,         -- 是否生成河流
     climate = {                 -- 偏好气候范围（0..1）
@@ -47,12 +41,6 @@
         <tr><td><code>subsurface_block</code></td><td>int</td><td>是</td><td>次地表方块 ID。地表和基岩之间的填充层。</td></tr>
         <tr><td><code>weight</code></td><td>int</td><td>否</td><td>群系选择权重，必须为正整数，默认 1。在气候匹配的候选群系中按权重随机选取。</td></tr>
         <tr><td><code>subsurface_depth</code></td><td>int</td><td>否</td><td>次地表深度（层数），默认 3。地表下方这么厚的层使用 <code>subsurface_block</code>。</td></tr>
-        <tr><td><code>tree_density</code></td><td>float</td><td>否</td><td>树木生成密度，默认 0。0 表示不生成树木，值越大树越多。</td></tr>
-        <tr><td><code>tree_trunk_min</code></td><td>int</td><td>否</td><td>树干最小高度，默认 4。</td></tr>
-        <tr><td><code>tree_trunk_max</code></td><td>int</td><td>否</td><td>树干最大高度，默认 6。</td></tr>
-        <tr><td><code>tree_leaves_radius</code></td><td>int</td><td>否</td><td>树冠叶子半径，默认 2。</td></tr>
-        <tr><td><code>trunk_block</code></td><td>int</td><td>否</td><td>树干方块 ID。0 表示不生成树干。</td></tr>
-        <tr><td><code>leaves_block</code></td><td>int</td><td>否</td><td>树叶方块 ID。0 表示不生成树叶。</td></tr>
         <tr><td><code>has_caves</code></td><td>bool</td><td>否</td><td>是否在此群系中生成洞穴，默认 true。</td></tr>
         <tr><td><code>has_rivers</code></td><td>bool</td><td>否</td><td>是否在此群系中生成河流，默认 true。</td></tr>
         <tr><td><code>climate</code></td><td>table</td><td>否</td><td>偏好气候范围。省略或部分省略的字段默认为 0.0~1.0（匹配任何气候）。</td></tr>
