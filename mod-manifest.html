@@ -55,8 +55,8 @@
     </table>
 
     <h2>玩家配置覆盖</h2>
-    <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>Config/ModSettings/</code> 目录下：</p>
-    <pre><code>Config/ModSettings/copper_age.json</code></pre>
+    <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>config/</code> 目录下：</p>
+    <pre><code>config/copper_age.json</code></pre>
     <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>
     <pre><code>local debug_logs = engine.modding.get_setting("copper_age", "enable_debug_logs", false)</code></pre>
 

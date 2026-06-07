@@ -54,7 +54,7 @@
     <p>公共数据的 ID 统一用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。这样做的好处是：其他 MOD 引用时一眼能看出数据来源，也不会和 core 或者其他 MOD 撞名。</p>
 
     <h2>核心数据 vs MOD 数据</h2>
-    <p><code>CoreMod/data/</code> 和 <code>Examples/mods/copper_age/data/</code> 下的 JSON 是同一种格式，区别只在于 <code>id</code> 的前缀。CoreMod 内容的前缀是 <code>core:</code>，MOD 数据的前缀是 <code>&lt;mod_id&gt;:</code>。跨 MOD 引用时必须写完整的 <code>mod_id:name</code>。</p>
+    <p><code>CoreMod/data/</code> 下的 JSON 是核心数据的标准格式。MOD 数据也使用相同的格式，区别只在于 <code>id</code> 的前缀。CoreMod 内容的前缀是 <code>core:</code>，MOD 数据的前缀是 <code>&lt;mod_id&gt;:</code>。跨 MOD 引用时必须写完整的 <code>mod_id:name</code>。</p>
 
     <div class="callout info">
       如果你在 MOD 里用 <code>dofile</code> 加载了其他 Lua 文件（如 worldgen 脚本），注意 <code>package</code> 库默认未加载，请用 <code>dofile</code> 代替 <code>require</code>。

@@ -28,8 +28,8 @@
     <ul>
       <li>MOD 清单解析会拒绝损坏的 <code>mod.json</code>、重复 MOD ID 和格式错误的依赖/排序字段。</li>
       <li>数据 ID 冲突时会同时报告冲突双方的 MOD 和来源路径。</li>
-      <li>提供可直接复制的 <code>Examples/mods/copper_age/</code> 示例模板。</li>
-      <li>示例覆盖方块、职业、文明开局、配方、焦点 和 Lua 入口脚本，并纳入自动化加载测试。</li>
+      <li>提供可直接参考的 <code>CoreMod/</code> 标准目录结构和数据模板。</li>
+      <li>示例覆盖方块、职业、文明开局、配方、焦点和 Lua 入口脚本，MOD 可按 <code>CoreMod/</code> 结构参照编写。</li>
       <li>文明数据会校验开局配置和配方规则字段，交叉引用失败时报告缺失目标。</li>
       <li>新增了定时器 <code>engine.timers</code>。</li>
       <li>新增了 6 个内置事件（<code>inventory:changed</code>、<code>recipe:crafted</code>、<code>profession:assigned</code>、<code>block:interacted</code>、<code>focus:chosen</code>、<code>focus:dismissed</code>）。</li>

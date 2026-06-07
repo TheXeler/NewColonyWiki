@@ -22,7 +22,7 @@
         "ore_spawn_rate": 1.0
     }
 }</code></pre>
-    <p>设置项支持字符串、数字和布尔值。玩家可以在 <code>Config/ModSettings/&lt;mod_id&gt;.json</code> 中覆盖默认值，覆盖值的类型必须和默认值一致。</p>
+    <p>设置项支持字符串、数字和布尔值。玩家可以在 <code>config/&lt;mod_id&gt;.json</code> 中覆盖默认值，覆盖值的类型必须和默认值一致。</p>
     <p>Lua 中读取设置：</p>
     <pre><code>local debug = engine.modding.get_setting("copper_age", "enable_debug_logs", false)
 local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</code></pre>

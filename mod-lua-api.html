@@ -226,7 +226,7 @@ engine.log.info("sample name: " .. name)</code></pre>
 end</code></pre>
 
     <h2>本地化</h2>
-    <p>如果需要翻译 UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放在 <code>Localization/</code>。</p>
+    <p>如果需要翻译 UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放在 <code>lang/</code>。</p>
     <pre><code>engine.locale.set_locale("zh_CN")
 local text = engine.locale.t("ui.menu.start")
 engine.log.info(engine.locale.get("ui", "menu.start"))</code></pre>
