@@ -37,7 +37,7 @@ return M</code></pre>
     <p>四个生命周期函数的用途：</p>
     <ul>
       <li><strong>on_load</strong> —— 适合订阅事件、注册 焦点 条件、读取配置。此时数据已注册完毕，但世界还没生成。</li>
-      <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore。此时地形 API 已可用。</li>
+      <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore/feature。此时地形 API 已可用。</li>
       <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
       <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
     </ul>
@@ -194,7 +194,7 @@ engine.events.subscribe("focus:chosen", function(evt)
 end)</code></pre>
 
     <h2>地形扩展</h2>
-    <p>地形 API 通常在 <code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome 和 ore 的方式，参考 <code>CoreMod/scripts/bootstrap.lua</code> 中的 <code>on_world_init</code> 即可。</p>
+    <p>地形 API 通常在 <code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome 和 ore 的方式；地物也可以通过 <code>data/features</code> 或 <code>engine.terrain.register_feature()</code> 注册。</p>
     <pre><code>function M.on_world_init()
   engine.terrain.register_ore({
     block = 12,

@@ -18,6 +18,7 @@
     id = "my_mod:wasteland",
     surface_block = 1,          -- 地表方块 ID
     subsurface_block = 1,       -- 次地表方块 ID
+    weight = 1,                 -- 群系选择权重，必须为正整数
     subsurface_depth = 2,       -- 次地表深度（层）
     tree_density = 0.0,         -- 树木密度
     tree_trunk_min = 0,         -- 树干最矮高度
@@ -36,6 +37,7 @@
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。遵循标准 ID 规则。</td></tr>
         <tr><td><code>surface_block</code></td><td>int</td><td>是</td><td>地表方块 ID。地形最顶层放置此方块。0 表示空气。</td></tr>
         <tr><td><code>subsurface_block</code></td><td>int</td><td>是</td><td>次地表方块 ID。地表和基岩之间的填充层。</td></tr>
+        <tr><td><code>weight</code></td><td>int</td><td>否</td><td>群系选择权重，必须为正整数，默认 1。值为 2 等价于在选择池中注册 2 次，约占总权重的 2 份。</td></tr>
         <tr><td><code>subsurface_depth</code></td><td>int</td><td>否</td><td>次地表深度（层数），默认 3。地表下方这么厚的层使用 <code>subsurface_block</code>。</td></tr>
         <tr><td><code>tree_density</code></td><td>float</td><td>否</td><td>树木生成密度，默认 0。0 表示不生成树木，值越大树越多。</td></tr>
         <tr><td><code>tree_trunk_min</code></td><td>int</td><td>否</td><td>树干最小高度，默认 4。</td></tr>
@@ -132,12 +134,12 @@
     <p>地形生成器使用确定性哈希算法为每个 chunk 选取群系：</p>
     <ol>
       <li>将世界种子（seed）和 chunk 坐标（cx, cz）输入 FNV-1a 变体哈希函数。</li>
-      <li>对哈希值取模，得到已注册群系列表中的索引。</li>
+      <li>累加所有群系的 <code>weight</code> 得到总权重，对哈希值取模后落入对应群系的权重区间。</li>
       <li>相同种子和坐标总是选择同一个群系——世界是确定性可复现的。</li>
     </ol>
 
     <div class="callout info">
-      因为选择算法是均匀取模，注册的群系越多，每种群系占的面积比例越小。如果想控制群系比例，可以通过注册多个相似群系（如多个不同变体的森林）来实现权重分配。
+      <code>weight</code> 默认值为 1，必须是正整数。某群系的目标占比约为 <code>该群系 weight / 所有群系 weight 总和</code>；例如权重为 2 的群系等价于在选择池中注册了 2 次。
     </div>
 
     <h2>自定义群系 Lua 模块</h2>

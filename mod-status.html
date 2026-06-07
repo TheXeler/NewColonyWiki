@@ -11,69 +11,100 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>能力状态</div></div>
   <div class="content">
     <h1>当前能力状态</h1>
-    <p class="subtitle">帮你判断哪些能力可以放心依赖，哪些还不行。列表基于当前代码实际状态。</p>
+    <p class="subtitle">帮助 MOD 作者判断哪些能力可以稳定依赖，哪些还处在接入、实验或未完成阶段。列表基于当前代码库的实际加载路径、系统初始化和 CoreMod 数据目录核对。</p>
 
-    <h2>可用</h2>
-    <p>以下能力已经在引擎中完整实现，MOD 可以放心依赖。</p>
+    <h2>可稳定依赖</h2>
+    <p>以下能力已经接入主流程，MOD 可以按公开文档使用。</p>
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>MOD 加载</td><td><span class="badge done">可用</span></td><td>mod.json、加载顺序、load_before 通配符、严格清单检查、MOD 设置覆盖</td></tr>
-        <tr><td>数据内容</td><td><span class="badge done">可用</span></td><td>13 种类型：方块、物品、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、作物、生物群系、建筑</td></tr>
-        <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、格式错误字段、跨引用校验均报告明确来源</td></tr>
-        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>on_load、on_world_init、on_tick、on_shutdown</td></tr>
-        <tr><td>Lua 事件</td><td><span class="badge done">可用</span></td><td>订阅/发布/取消订阅。6 个内置事件：inventory:changed、recipe:crafted、profession:assigned、block:interacted、focus:chosen、focus:dismissed</td></tr>
-        <tr><td>Lua 定时器</td><td><span class="badge done">可用</span></td><td>after/every/cancel/clear，按模拟 tick 执行</td></tr>
-        <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code>，使用 Xoshiro256** 确定性 RNG</td></tr>
-        <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业等级 1-5、转职物品、配方要求、前置技能、解锁配方</td></tr>
-        <tr><td>焦点 系统</td><td><span class="badge done">可用</span></td><td>玩家可见事件，支持 tick/entity_count/colonist_need/lua 条件和选项</td></tr>
-        <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>注册 faction/name_pool、{random_name} 模板命名，阵营实例，关系值管理</td></tr>
-        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>多语言加载、MOD 翻译合并、UI 翻译 API、Lua locale API、运行时热重载</td></tr>
-        <tr><td>ECS 系统</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 带代际。24 种标准组件</td></tr>
-        <tr><td>AI 需求模型</td><td><span class="badge done">可用</span></td><td>Hunger/Fatigue/Social 三维需求随时间变化，自动满足紧急需求</td></tr>
-        <tr><td>AI 任务调度</td><td><span class="badge done">可用</span></td><td>WorkPool 管理多类任务。7 类优先级 (1-7)、LoD 分帧调度</td></tr>
-        <tr><td>A* 寻路</td><td><span class="badge done">可用</span></td><td>基于体素地形的 8-connected A*、自动台阶跳跃</td></tr>
-        <tr><td>核心随机</td><td><span class="badge done">可用</span></td><td>Xoshiro256** 确定性 RNG，全平台可复现</td></tr>
-        <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令系统、客户端预测、延迟补偿、重连恢复、增量快照、MOD 数据交换</td></tr>
-        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>73 个命令：MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载等</td></tr>
+        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖排序、<code>load_before</code> 通配符、严格清单校验、用户设置覆盖和 MOD 翻译合并均已接入。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 14 类 JSON：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>biomes</code>、<code>zones</code>。</td></tr>
+        <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、无效字段、配方/职业/文明/作物/方块引用错误会报告明确来源。</td></tr>
+        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
+        <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持 <code>after</code>、<code>every</code>、<code>cancel</code>、<code>clear</code>。</td></tr>
+        <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code> 使用 Xoshiro256** 确定性 RNG。</td></tr>
+        <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业等级、转职方块、前置职业、配方输入输出、职业要求、文明配方限制和解锁均已从注册表初始化。</td></tr>
+        <tr><td>文明</td><td><span class="badge done">可用</span></td><td>文明定义、初始方块/职业、配方修正规则和 TechTree 入口已接入；当前 CoreMod 有 2 个文明。</td></tr>
+        <tr><td>焦点系统</td><td><span class="badge done">可用</span></td><td>玩家可见焦点事件支持 tick、实体数量、殖民者需求、Lua 条件和选项。</td></tr>
+        <tr><td>NPC 阵营与名称池</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、模板命名、阵营实例、关系值和外交动作已接入。</td></tr>
+        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。</td></tr>
+        <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 24 种标准组件可用。</td></tr>
+        <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令、客户端预测、延迟补偿、重连恢复、增量快照和 MOD 数据交换已实现。</td></tr>
+        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 75 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
       </tbody>
     </table>
 
     <h2>部分可用</h2>
-    <p>核心流程能跑通，但有一些功能点尚未完成。</p>
+    <p>这些系统已有核心代码或运行入口，但不应被 MOD 当作完全稳定承诺。</p>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>已实现</th><th>未实现</th></tr></thead>
+      <thead><tr><th>能力</th><th>状态</th><th>已实现</th><th>未完成或风险</th></tr></thead>
       <tbody>
         <tr>
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
-          <td>需求驱动、优先级任务分配、A* 寻路、NavAgent 路径跟随、LoD 更新、行为树 (Sequence/Selector/Decorator)、Blackboard 共享状态。7 种预制行为树、Action 系统、JobRegistry</td>
-          <td>任务实际效果(建造/挖矿/搬运的具体游戏逻辑)、社交/巡逻/紧急行为的完整玩法闭环</td>
+          <td>需求驱动、WorkPool、JobRegistry、ActionRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
+          <td>建造、挖矿、搬运、巡逻、社交和紧急行为的完整玩法闭环仍依赖脚本与系统进一步打通。</td>
         </tr>
         <tr>
-          <td>文明</td>
+          <td>作物与农业</td>
           <td><span class="badge partial">部分</span></td>
-          <td>职业组织、开局物品/职业配置、配方限制解锁。7 个核心文明、TechTree 科技树</td>
-          <td>文明间外交交互、AI 自动发展、复杂规则扩展</td>
+          <td><code>data/crops</code> 已由加载器校验和注册；CoreMod 有 8 个作物定义；Lua farming 系统能扫描种植区并生成任务。</td>
+          <td>作物定义到完整种植、成熟、收获、温度规则和 UI 反馈的通用闭环还没有完全数据驱动。</td>
+        </tr>
+        <tr>
+          <td>区域系统</td>
+          <td><span class="badge partial">部分</span></td>
+          <td>ZoneSystem、Lua <code>engine.zone</code>、矩形区域创建/查询/删除和 CoreMod 区域脚本已存在。</td>
+          <td><code>data/zones</code> 目前没有在 <code>load_mod_data</code> 中加载，因此 CoreMod 里的 4 个区域 JSON 还不是稳定注册能力。</td>
+        </tr>
+        <tr>
+          <td>建筑系统</td>
+          <td><span class="badge done">可用</span></td>
+          <td><code>data/buildings</code> 已作为标准 mod_data 加载、校验并由 BuildingSystem 读取；建筑材料和文明 <code>starting_buildings</code> 会做注册表交叉校验。</td>
+          <td>具体建造玩法闭环仍取决于 AI/脚本任务实现。</td>
+        </tr>
+        <tr>
+          <td>音频</td>
+          <td><span class="badge partial">部分</span></td>
+          <td>miniaudio 后端、SoundBank、CoreMod <code>data/audio/sounds.json</code>、Lua <code>engine.audio</code> 播放/停止/音量 API 已存在。</td>
+          <td>音频不是通用 <code>data/</code> 注册类型；当前只从 CoreMod 路径加载 sound bank，MOD 音频发布流程仍需完善。</td>
+        </tr>
+        <tr>
+          <td>UI 系统</td>
+          <td><span class="badge partial">部分</span></td>
+          <td>ImGui 控制台、主菜单、多人菜单、小地图、Lua UI、底栏、窗口、浮动提示、城镇信息、区域指定、建造菜单和 CSS 主题基础。</td>
+          <td>Lua UI 渲染层和通用控件契约仍在完善，不建议 MOD 依赖内部细节。</td>
         </tr>
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>保存/加载框架 (v2)、存档列表、原子写入、实体/阵营/Job/焦点 状态序列化、MOD 依赖追踪</td>
-          <td>跨版本向后兼容迁移、MOD 依赖自动解析策略、自定义组件序列化</td>
+          <td>v2 保存/加载框架、存档列表、原子写入、实体、阵营、Job、焦点状态和 MOD 依赖追踪。</td>
+          <td>跨版本向后兼容迁移、MOD 依赖自动解析策略和自定义组件序列化还未完成。</td>
+        </tr>
+        <tr>
+          <td>渲染与方块模型</td>
+          <td><span class="badge partial">实验</span></td>
+          <td>Vulkan 管线、Chunk 网格、纹理图集、BlockTextureRegistry 和多元素方块模型解析已实现。</td>
+          <td>渲染后端和复杂模型兼容性仍属于实验层，不作为 MOD API 稳定承诺。</td>
+        </tr>
+        <tr>
+          <td>体素地形与生物群系</td>
+          <td><span class="badge partial">部分</span></td>
+          <td><code>data/biomes</code> 已作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、树木参数和洞穴/河流开关。</td>
+          <td>世界生成整体仍属实验层，复杂装饰和脚本扩展契约还在收敛。</td>
         </tr>
       </tbody>
     </table>
 
-    <h2>实验性 / 早期阶段</h2>
-    <p>这些功能在开发环境中可以运行验证，但还不是稳定承诺级别。</p>
+    <h2>未完成或未接入</h2>
     <table>
-      <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
+      <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td>Vulkan 渲染器</td><td><span class="badge partial">实验</span></td><td>完整 Vulkan 管线、Chunk 网格、纹理图集、运行时 GLSL→SPIR-V；<strong>新增</strong>多元素方块模型渲染（Blockbench 模型支持，细粒度 UV 映射，90 度整数旋转）</td></tr>
-        <tr><td>体素地形</td><td><span class="badge partial">实验</span></td><td>Perlin 噪声地形、生物群落、洞穴、河流、矿脉、树木装饰；运行时区块生成</td></tr>
-        <tr><td>UI 系统</td><td><span class="badge partial">部分</span></td><td>ImGui 开发者控制台、主菜单/暂停菜单、多人联机菜单、小地图；Lua UI 框架（底边栏、浮动提示、窗口、城镇信息面板、区域指定、建造菜单）API 已设计并部分实现，渲染层仍在完善</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge partial">未完成</span></td><td>已有发布约定文档；缺少自动打包、版本兼容检查和发布校验工具</td></tr>
+        <tr><td><code>data/zones</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>ZoneSystem 会读取注册表中的 <code>zones</code>，但 ModLoader 当前未加载该目录。</td></tr>
+        <tr><td><code>data/audio</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>音频 sound bank 目前从 CoreMod 固定路径加载，还没有作为 MOD 数据类型参与注册表。</td></tr>
+        <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>TechTree 会查找 <code>techs</code>，但 ModLoader 当前未加载该类型。</td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge planned">未完成</span></td><td>已有约定文档，但缺少自动打包、版本兼容检查和发布校验工具。</td></tr>
       </tbody>
     </table>
 
@@ -81,12 +112,13 @@
     <table>
       <thead><tr><th>模块</th><th>文件数</th><th>核心类</th></tr></thead>
       <tbody>
-        <tr><td>Core</td><td>23</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler</td></tr>
+        <tr><td>Core</td><td>27</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
         <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 24 种标准组件</td></tr>
-        <tr><td>Simulation</td><td>24</td><td>TickManager, DeterministicRNG, RecipeSystem, ProfessionSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree</td></tr>
+        <tr><td>Simulation</td><td>24</td><td>TickManager, DeterministicRNG, RecipeSystem, ProfessionSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree, BuildingSystem, ZoneSystem</td></tr>
         <tr><td>AI</td><td>16</td><td>AISystem, WorkPool, JobRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
+        <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
         <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
-        <tr><td>Renderer</td><td>26</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, <strong>BlockModel</strong></td></tr>
+        <tr><td>Renderer</td><td>26</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>
         <tr><td>Scripting</td><td>3</td><td>ScriptEngine, LuaBindings</td></tr>
         <tr><td>Modding</td><td>10</td><td>ModLoader, ModRegistry, ModPreprocessor, EntityPrototypeFactory, DataId</td></tr>
         <tr><td>Voxel</td><td>6</td><td>TerrainGenerator, VoxelRaycast, PerlinNoise</td></tr>
@@ -94,14 +126,15 @@
         <tr><td>Camera</td><td>2</td><td>OrbitCamera</td></tr>
         <tr><td>Localization</td><td>2</td><td>LocalizationManager</td></tr>
         <tr><td>Save</td><td>2</td><td>SaveSystem</td></tr>
-        <tr><td>UI</td><td>14</td><td>DevConsole, LuaUi, MainMenu, Minimap, CssParser, ThemeLoader</td></tr>
+        <tr><td>UI</td><td>16</td><td>DevConsole, LuaUi, MainMenu, Minimap, CssParser, ThemeLoader</td></tr>
         <tr><td>WorldMap</td><td>2</td><td>WorldMap</td></tr>
       </tbody>
     </table>
 
     <h2>给 MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、焦点、NPC 阵营定义、确定性随机和少量 Lua 辅助逻辑。网络同步已升级为稳定可用（含客户端预测、延迟补偿、重连恢复、MOD 数据交换）。方块模型渲染已支持多元素 Blockbench 模型（如旗帜、灯笼、火把），MOD 可通过 JSON 模型文件定义复杂方块几何和细粒度纹理映射。AI 高级行为、UI 扩展和存档迁移仍未完成到稳定承诺级别，不建议 MOD 依赖其细节。公共文档只承诺上面"可用"区列出的能力。    </div>
+      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、生物群系、本地化和少量 Lua 辅助逻辑。音频仍未作为通用 MOD 数据类型接入；AI 高级行为、UI 扩展、存档迁移和 MOD 打包发布也不建议作为强依赖。
+    </div>
 
     <div class="footer">NewColony Wiki · 更新于 2026-06-06</div>
   </div>

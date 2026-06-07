@@ -20,7 +20,7 @@
       <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎支持 10 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>crops</code>。此外 <code>data/biomes</code> 下的 JSON 也被 core 脚本在 <code>on_world_init</code> 中使用。</li>
+      <li>当前引擎支持 14 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>biomes</code>、<code>zones</code>。</li>
     </ul>
 
     <h2>方块（blocks）</h2>
@@ -192,8 +192,8 @@
   "words": ["Copper", "Bronze", "Tin", "Verdigris"]
 }</code></pre>
 
-    <h2>动作（actions）与作物（crops）</h2>
-    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。<code>data/crops/</code> 定义作物的生长阶段和产出。它们的格式和上述类型类似，但更多依赖引擎内部系统解析。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
+    <h2>动作（actions）、地物（features）与作物（crops）</h2>
+    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。<code>data/features/</code> 定义地形装饰阶段生成的地物。<code>data/crops/</code> 定义作物的生长阶段和产出。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
 
     <h2>验证命令</h2>
     <p>在控制台中用这些命令确认数据注册成功：</p>

@@ -28,6 +28,7 @@ const WIKI_NAV = [
         children: [
           ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
           ["mod-biomeregistry", "群系注册", "mod-biomeregistry.html"],
+          ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
           ["mod-entityregistry", "实体注册", "mod-entityregistry.html"],
           ["mod-actionregistry", "动作注册", "mod-actionregistry.html"],
           ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],

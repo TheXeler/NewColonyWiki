@@ -19,7 +19,7 @@
 
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
-      <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（10 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
+      <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（14 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
       <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、作物和区域类型。能用 JSON 表达的内容优先写 JSON。</li>
       <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、焦点条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
@@ -29,7 +29,7 @@
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td>mod.json 清单、依赖顺序、load_before 通配符、严格清单检查、用户设置覆盖。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>通过 <code>data/</code> 注册 10 种类型：blocks、entities、recipes、professions、civilizations、focuses、factions、name_pools、crops、zones。还有 biomes 由脚本用于世界生成。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>通过 <code>data/</code> 注册 14 种类型：blocks、entities、recipes、professions、civilizations、focuses、factions、name_pools、actions、features、crops、buildings、biomes、zones。</td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本返回表，支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 和 <code>engine.timers</code>。10+ 内置事件，支持自定义。</td></tr>
         <tr><td>控制台系统</td><td><span class="badge done">可用</span></td><td>50+ 控制台命令，权限系统，别名，配置验证（doctor），快照和差异对比。</td></tr>

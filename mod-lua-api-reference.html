@@ -153,9 +153,12 @@
 
         <!-- Terrain -->
         <tr class="api-row" data-api-row><td><code>engine.terrain.height_at(x, z, cfg)</code></td><td>integer, integer, table?</td><td>integer</td><td>查询地形高度，可传配置表。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.register_biome(table)</code></td><td>table</td><td>-</td><td>注册 biome，常在 <code>on_world_init</code> 使用。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.register_biome(table)</code></td><td>table</td><td>-</td><td>注册 biome；可设置正整数 <code>weight</code> 控制选择占比，默认 1。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.list_biomes()</code></td><td>-</td><td>table</td><td>列出 biome ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.register_ore(table)</code></td><td>table</td><td>-</td><td>注册矿物分布：block、noise_scale、threshold、min_y、max_y。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.register_feature(table)</code></td><td>table</td><td>-</td><td>注册地表地物，字段见地物注册页面。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.list_features()</code></td><td>-</td><td>table</td><td>列出已注册地物 ID。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.find_feature(id)</code></td><td>string</td><td>table</td><td>返回地物定义；找不到时返回空表。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.select_biome(seed, cx, cz)</code></td><td>integer, integer, integer</td><td>table</td><td>返回选中的 biome 描述。</td></tr>
 
         <!-- Locale -->

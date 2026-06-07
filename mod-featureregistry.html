@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地物注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-featureregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地物注册</div></div>
+  <div class="content">
+    <h1>地物注册</h1>
+    <p class="subtitle">地物（Terrain Feature）是在地形装饰阶段放到地表上的小型方块装饰，例如石堆、灌木、遗迹碎片或可采集资源。地物可以通过 <code>data/features/</code> JSON 自动注册，也可以在 Lua 中调用 <code>engine.terrain.register_feature()</code> 注册。</p>
+
+    <h2>JSON 注册</h2>
+    <p>把地物定义放在 <code>data/features/</code> 下。加载器会递归扫描所有 <code>.json</code> 文件，在世界初始化时把它们注入地形生成器。</p>
+    <pre><code>{
+  "id": "my_mod:surface_stones",
+  "block": "core:stone_chunk",
+  "density": 1.5,
+  "min_spacing": 1,
+  "biomes": ["core:plains", "core:barren"]
+}</code></pre>
+
+    <h2>Lua 注册</h2>
+    <pre><code>engine.terrain.register_feature({
+    id = "my_mod:surface_stones",
+    block = "core:stone_chunk", -- 也可以传数字方块 ID
+    density = 1.5,
+    min_spacing = 1,
+    biomes = { "core:plains", "core:barren" },
+})</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式为 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。JSON 中省略前缀时会补当前 mod 前缀。</td></tr>
+        <tr><td><code>block</code></td><td>string 或 int</td><td>是</td><td>要放置的方块。推荐使用数据 ID 字符串，例如 <code>core:stone_chunk</code>；需要兼容旧世界生成常量时也可以使用数字。</td></tr>
+        <tr><td><code>density</code></td><td>float</td><td>是</td><td>每个 chunk 的尝试生成密度。实际尝试次数约为 <code>density * 6</code>，必须大于 0。</td></tr>
+        <tr><td><code>min_spacing</code></td><td>int</td><td>否</td><td>离 chunk 边缘的最小距离，默认 1。过大的值会被限制到安全范围。</td></tr>
+        <tr><td><code>biomes</code></td><td>string[]</td><td>否</td><td>允许生成的群系 ID 列表。省略或留空表示所有群系都可生成。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>生成规则</h2>
+    <ul>
+      <li>地物只会放在当前群系的地表方块上方。</li>
+      <li>目标位置上方必须在世界高度范围内。</li>
+      <li>如果配置了 <code>biomes</code>，当前 chunk 的群系 ID 必须在列表中。</li>
+      <li>同一个 <code>id</code> 再次注册会覆盖旧定义，方便 mod 在 Lua 中调整数据。</li>
+    </ul>
+
+    <h2>查询 API</h2>
+    <pre><code>local ids = engine.terrain.list_features()
+local feature = engine.terrain.find_feature("my_mod:surface_stones")
+engine.log.info("feature block = " .. tostring(feature.block))</code></pre>
+
+    <div class="callout info">
+      <code>data/features</code> 会在每次新世界启动时重新注册。Lua 的 <code>on_world_init</code> 可以继续追加或覆盖这些地物定义。
+    </div>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

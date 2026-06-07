@@ -47,7 +47,7 @@
   logs/                    —— 运行时输出或诊断日志（可选，不建议打包发布）</code></pre>
 
     <h2>自动注册的数据目录</h2>
-    <p>当前 C++ 加载器会递归扫描并注册下面 10 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
+    <p>当前 C++ 加载器会递归扫描并注册下面 14 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
     <ul>
       <li><code>data/blocks/</code></li>
       <li><code>data/entities/</code></li>
@@ -58,7 +58,11 @@
       <li><code>data/factions/</code></li>
       <li><code>data/name_pools/</code></li>
       <li><code>data/actions/</code></li>
+      <li><code>data/features/</code></li>
       <li><code>data/crops/</code></li>
+      <li><code>data/buildings/</code></li>
+      <li><code>data/biomes/</code></li>
+      <li><code>data/zones/</code></li>
     </ul>
 
     <h2>各目录说明</h2>
@@ -76,10 +80,11 @@
         <tr><td><code>data/factions/</code></td><td>否</td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池。</td></tr>
         <tr><td><code>data/name_pools/</code></td><td>否</td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材。<code>words</code> 字段为字符串数组。</td></tr>
         <tr><td><code>data/actions/</code></td><td>否</td><td>AI 可执行的原子动作定义（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code>）。</td></tr>
+        <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度/湿度范围和产出。</td></tr>
-        <tr><td><code>data/biomes/</code></td><td>否</td><td>生物群系数据或脚本辅助数据。当前核心群系主要由 <code>scripts/worldgen/</code> 下的 Lua 注册；这个目录不会被 <code>ModLoader</code> 自动注册为数据条目。</td></tr>
-        <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型查注册表，但当前 <code>ModLoader</code> 还没有自动扫描该目录。</td></tr>
-        <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型查注册表，但当前 <code>ModLoader</code> 还没有自动扫描该目录。</td></tr>
+        <tr><td><code>data/biomes/</code></td><td>否</td><td>生物群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
+        <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
+        <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/audio/</code></td><td>否</td><td>声音库 JSON。当前启动流程从 core 数据路径加载默认声音库；普通 MOD 音频扩展仍需要配合脚本或后续加载器支持。</td></tr>
         <tr><td><code>assets/</code></td><td>否</td><td>模型（.obj / .gltf）、纹理（.png）、着色器（.glsl）、音频文件等资源。</td></tr>
         <tr><td><code>config/</code></td><td>否</td><td>MOD 随附配置文件。CoreMod 使用该目录提供控制台权限、别名和按键配置。</td></tr>
@@ -99,7 +104,7 @@
     </ul>
 
     <div class="callout warn">
-      <strong>注意：</strong><code>data/buildings/</code>、<code>data/zones/</code> 和 <code>data/audio/</code> 已出现在 CoreMod 目录中，但按当前 <code>ModLoader::load_mod_data</code> 实现还不会作为通用 MOD 数据自动注册。给普通 MOD 使用这些目录前，应先确认对应系统的加载路径。
+      <strong>注意：</strong><code>data/audio/</code> 已出现在 CoreMod 目录中，但按当前 <code>ModLoader::load_mod_data</code> 实现还不会作为通用 MOD 数据自动注册。给普通 MOD 使用音频目录前，应先确认对应系统的加载路径。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
