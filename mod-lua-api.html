@@ -173,6 +173,13 @@ timer_id = engine.timers.every(100, function(tick)
   end
 end)</code></pre>
 
+    <h2>天气</h2>
+    <p>天气由世界 seed、世界地图气候和模拟 tick 确定性推进。MOD 可以读取当前天气，用于作物、事件、音效或 UI 展示。</p>
+    <pre><code>local weather = engine.weather.get()
+if weather.precipitating then
+  engine.log.info("weather: " .. weather.type .. " intensity=" .. tostring(weather.intensity))
+end</code></pre>
+
     <h2>确定性随机</h2>
     <p><code>math.random</code> 在脚本环境中会报错——这是有意为之，确保跨平台和跨存档确定性。需要脚本随机数时使用 <code>engine.random</code>，它会在引擎初始化、新世界和读档时用世界 seed 重置。</p>
     <pre><code>local roll = engine.random.int(1, 100)

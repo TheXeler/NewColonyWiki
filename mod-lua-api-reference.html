@@ -29,6 +29,9 @@
         <tr class="api-row" data-api-row><td><code>engine.log.error(msg)</code></td><td><code>string</code></td><td>-</td><td>写错误日志。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.time.tps</code></td><td>属性</td><td>number</td><td>模拟每秒 tick 数（20）。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.time.dt</code></td><td>属性</td><td>number</td><td>每 tick 的模拟时间间隔（0.05s）。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.weather.get()</code></td><td>-</td><td>table</td><td>返回当前天气：type、intensity、temperature、humidity、wind_x、wind_z、started_tick、next_transition_tick、precipitating。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.weather.get_type()</code></td><td>-</td><td>string</td><td>返回当前天气类型：clear、cloudy、rain、storm 或 snow。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.weather.is_precipitating()</code></td><td>-</td><td>bool</td><td>当前是否正在下雨、暴风雨或下雪。</td></tr>
 
         <!-- Random (Deterministic) -->
         <tr class="api-row" data-api-row><td><code>engine.random.seed(seed)</code></td><td>integer</td><td>-</td><td>重置 Lua 确定性随机流。引擎初始化、新世界和读档时会用世界 seed 自动调用。</td></tr>
