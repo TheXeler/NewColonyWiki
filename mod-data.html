@@ -71,7 +71,7 @@
 
     <h2>实体原型（entities）</h2>
     <p>实体原型用于 <code>spawn_proto</code> 控制台命令和 <code>engine.ecs.spawn_prototype</code>。放在 <code>data/entities/</code> 下。一个实体由多个组件拼成，每个组件描述一种能力或属性。</p>
-    <p>引擎内置了 17 种标准组件——你可以混搭它们来定义不同类型的实体：</p>
+    <p>引擎内置了多种标准组件——你可以混搭它们来定义不同类型的实体：</p>
     <table>
       <thead><tr><th>组件</th><th>描述</th></tr></thead>
       <tbody>
@@ -208,6 +208,30 @@ list_factions
 list_name_pools
 gen_name ${random_name}_guild 42
 spawn_proto copper_age:copper_worker</code></pre>
+
+    <h2>实体视觉组件</h2>
+    <p>实体原型可以声明 <code>Visual</code> 和 <code>Animation</code>。这两个组件用于客户端渲染，不改变职业、AI、背包等玩法数据。</p>
+    <table>
+      <thead><tr><th>组件</th><th>字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td><code>model</code> 支持 <code>box</code> 和 <code>biped</code>。贴图路径相对 <code>assets/</code>。</td></tr>
+        <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>当前为 biped 程序动画，按实体水平速度驱动行走摆动。</td></tr>
+      </tbody>
+    </table>
+    <pre><code>"Visual": {
+  "model": "biped",
+  "texture": "textures/entities/copper_worker.png",
+  "width": 0.45,
+  "height": 1.70,
+  "depth": 0.45
+},
+"Animation": {
+  "enabled": true,
+  "walk_speed": 6.0,
+  "walk_amplitude": 35.0,
+  "idle_bob": 0.015
+}</code></pre>
+    <p>如果实体贴图加载失败，引擎会使用 missing texture；这不会阻止实体模型和动画渲染。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

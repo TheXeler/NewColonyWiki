@@ -180,7 +180,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     </table>
 
     <div class="callout info">
-      一个动作可以绑定多个输入。例如可以同时绑定键盘和鼠标到同一个动作。修改键位文件后需要重启游戏才能生效。
+      一个动作可以绑定多个输入。例如可以同时绑定键盘和鼠标到同一个动作。键位绑定基于物理按键位置（scancode），因此无论键盘布局（QWERTY、AZERTY 等）或输入法状态如何，WASD 始终对应物理键位。可以在游戏内 <strong>Settings → Controls</strong> 页面直接点击按键进行重新绑定，修改会自动保存到配置文件；也可以手动编辑 JSON 文件。
     </div>
 
     <h2>config/ 目录放置</h2>

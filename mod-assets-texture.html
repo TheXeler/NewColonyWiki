@@ -55,6 +55,17 @@
     <p>引擎启动时自动扫描 <code>assets/textures/block/</code> 下的所有 PNG 文件，将它们拼入一张大的纹理图集。每个 16×16 的方块纹理占图集中的一个 tile。多元素模型的纹理按 <code>texture_size</code> 分割为多个 tile。</p>
     <p>MOD 不需要手动配置图集——只需把 PNG 放到正确目录，引擎会自动处理。</p>
 
+    <h2>实体贴图图集</h2>
+    <p>实体贴图由实体原型的 <code>components.Visual.texture</code> 引用。路径相对 MOD 的 <code>assets/</code> 目录，例如 <code>textures/entities/colonist.png</code>。</p>
+    <p>实体贴图在世界资源初始化时拼入同一张运行时纹理图集。PNG 宽高必须是 16 的倍数；如果路径不存在或尺寸不合法，实体会继续渲染，但使用 missing texture。</p>
+    <pre><code>"Visual": {
+  "model": "biped",
+  "texture": "textures/entities/colonist.png",
+  "width": 0.45,
+  "height": 1.70,
+  "depth": 0.45
+}</code></pre>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

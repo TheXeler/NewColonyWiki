@@ -29,7 +29,7 @@
         <tr><td>焦点系统</td><td><span class="badge done">可用</span></td><td>玩家可见焦点事件支持 tick、实体数量、殖民者需求、Lua 条件和选项。</td></tr>
         <tr><td>NPC 阵营与名称池</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、模板命名、阵营实例、关系值和外交动作已接入。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。</td></tr>
-        <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 24 种标准组件可用。</td></tr>
+        <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 26 种标准组件可用。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令、客户端预测、延迟补偿、重连恢复、增量快照和 MOD 数据交换已实现。</td></tr>
         <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 75 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
       </tbody>
@@ -44,25 +44,25 @@
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
           <td>需求驱动、WorkPool、JobRegistry、ActionRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
-          <td>建造、挖矿、搬运、巡逻、社交和紧急行为的完整玩法闭环仍依赖脚本与系统进一步打通。</td>
+          <td>挖矿、搬运入库、建造材料预留、施工推进和农业产出已接入 WorkPool/Lua 事件闭环；巡逻、社交和紧急行为仍需继续完善。</td>
         </tr>
         <tr>
           <td>作物与农业</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/crops</code> 已由加载器校验和注册；CoreMod 有 8 个作物定义；Lua farming 系统能扫描种植区并生成任务。</td>
-          <td>作物定义到完整种植、成熟、收获、温度规则和 UI 反馈的通用闭环还没有完全数据驱动。</td>
+          <td><code>data/crops</code> 已由加载器校验和注册；CoreMod 有 8 个作物定义；Lua farming 系统会读取 crop registry 生成耕地、播种、成熟和收获任务。</td>
+          <td>多作物产出已进入库存账本；温度、湿度和 UI 反馈仍待继续数据驱动。</td>
         </tr>
         <tr>
           <td>区域系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td>ZoneSystem、Lua <code>engine.zone</code>、矩形区域创建/查询/删除和 CoreMod 区域脚本已存在。</td>
-          <td><code>data/zones</code> 目前没有在 <code>load_mod_data</code> 中加载，因此 CoreMod 里的 4 个区域 JSON 还不是稳定注册能力。</td>
+          <td>ZoneSystem、Lua <code>engine.zone</code>、矩形/3D 区域创建、查询、删除和 CoreMod 区域脚本已存在；<code>data/zones</code> 已由 ModLoader 自动加载。</td>
+          <td>库存区已作为 CoreMod 账本物流入口使用；居住区高层行为仍较薄。</td>
         </tr>
         <tr>
           <td>建筑系统</td>
           <td><span class="badge done">可用</span></td>
           <td><code>data/buildings</code> 已作为标准 mod_data 加载、校验并由 BuildingSystem 读取；建筑材料和文明 <code>starting_buildings</code> 会做注册表交叉校验。</td>
-          <td>具体建造玩法闭环仍取决于 AI/脚本任务实现。</td>
+          <td>建造订单会等待库存材料，预留成功后发布施工任务并推进 BuildingSystem；多阶段施工表现仍是 Alpha 级实现。</td>
         </tr>
         <tr>
           <td>音频</td>
@@ -101,7 +101,6 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td><code>data/zones</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>ZoneSystem 会读取注册表中的 <code>zones</code>，但 ModLoader 当前未加载该目录。</td></tr>
         <tr><td><code>data/audio</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>音频 sound bank 目前从 CoreMod 固定路径加载，还没有作为 MOD 数据类型参与注册表。</td></tr>
         <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>TechTree 会查找 <code>techs</code>，但 ModLoader 当前未加载该类型。</td></tr>
         <tr><td>MOD 打包发布</td><td><span class="badge planned">未完成</span></td><td>已有约定文档，但缺少自动打包、版本兼容检查和发布校验工具。</td></tr>
@@ -113,7 +112,7 @@
       <thead><tr><th>模块</th><th>文件数</th><th>核心类</th></tr></thead>
       <tbody>
         <tr><td>Core</td><td>27</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
-        <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 24 种标准组件</td></tr>
+        <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 26 种标准组件</td></tr>
         <tr><td>Simulation</td><td>24</td><td>TickManager, DeterministicRNG, RecipeSystem, ProfessionSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree, BuildingSystem, ZoneSystem</td></tr>
         <tr><td>AI</td><td>16</td><td>AISystem, WorkPool, JobRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
         <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
