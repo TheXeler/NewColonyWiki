@@ -36,16 +36,19 @@
         <tr><td>Velocity</td><td>x, y, z</td></tr>
         <tr><td>Rotation</td><td>yaw, pitch</td></tr>
         <tr><td>Health</td><td>current, max</td></tr>
-        <tr><td>Inventory</td><td>所有 slot 的 item_id + count</td></tr>
-        <tr><td>Needs</td><td>hunger, fatigue, social</td></tr>
+        <tr><td>HeldItem</td><td>item_id, count</td></tr>
+        <tr><td>Equipment</td><td>MainHand, OffHand, Armor, Accessory (各含 item_id, count, two_handed)</td></tr>
+        <tr><td>Needs</td><td>hunger, fatigue</td></tr>
+        <tr><td>Mood</td><td>mood_value, broken_down, breakdown_timer, thought_count</td></tr>
         <tr><td>Profession</td><td>profession_id, level</td></tr>
-        <tr><td>Name</td><td>value</td></tr>
+        <tr><td>Name</td><td>data</td></tr>
         <tr><td>Scale</td><td>x, y, z</td></tr>
         <tr><td>AIState</td><td>behavior_tree_id, current_node, lod_level, busy, current_job_instance</td></tr>
         <tr><td>WorkerPriorityConfig</td><td>所有 category_priorities</td></tr>
         <tr><td>Civilization</td><td>civilization_id</td></tr>
         <tr><td>BlockInteractor</td><td>target_block(x,y,z), action_type</td></tr>
         <tr><td>NavAgent</td><td>路径数据（path_count, waypoints, target）</td></tr>
+        <tr><td>Stats</td><td>strength, dexterity, intelligence + 派生属性</td></tr>
         <tr><td>PrototypeRef</td><td>data（实体原型 ID）</td></tr>
       </tbody>
     </table>

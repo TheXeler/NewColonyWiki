@@ -115,7 +115,7 @@
 
     <h2>生长与收获流程</h2>
     <ol>
-      <li><strong>播种</strong>：殖民者在种植区域（zone type = <code>plant</code>）的空闲农田方块上放置种子方块。</li>
+      <li><strong>播种</strong>：殖民者在种植区域（zone type = <code>core:growing</code>）的空闲农田方块上放置种子方块。</li>
       <li><strong>生长</strong>：引擎按 tick 计时，每经过 <code>growth_stages[N].ticks</code> 个 tick 后推进到下一阶段。阶段推进时替换为对应 <code>block</code>。</li>
       <li><strong>成熟</strong>：最后一个阶段结束后，作物标记为可收获状态。</li>
       <li><strong>收获</strong>：殖民者执行收获动作（<code>core:harvest_crop</code>），触发 <code>block:interacted</code> 事件。Lua 脚本监听此事件，根据 <code>outputs</code> 生成产物物品。</li>

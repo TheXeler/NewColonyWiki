@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>音乐格式</div></div>
   <div class="content">
     <h1>音乐和音效格式</h1>
-    <p class="subtitle">音频文件放在 <code>assets/audio/</code> 下，通过 <code>sounds.json</code> 注册。引擎使用 miniaudio 后端，支持 WAV、MP3、FLAC 和 OGG 四种格式。</p>
+    <p class="subtitle">音频文件放在 <code>assets/audio/</code> 下，通过 <code>data/audio/sounds.json</code> 注册。引擎使用 miniaudio 后端，支持 WAV、MP3、FLAC 和 OGG 四种格式。</p>
 
     <h2>支持的格式</h2>
     <table>
@@ -38,8 +38,11 @@
       </tbody>
     </table>
 
-    <h2>目录结构</h2>
-    <pre><code>my_mod/
+<h2>目录结构</h2>
+<pre><code>my_mod/
+  data/
+    audio/
+      sounds.json             -- 音频注册清单
   assets/
     audio/
       music/
@@ -51,11 +54,10 @@
         ui_click.wav
       ambient/
         wind.ogg
-        birds.wav
-    sounds.json               -- 音频注册清单</code></pre>
+        birds.wav</code></pre>
 
     <h2>音频注册</h2>
-    <p>通过 <code>sounds.json</code> 注册音频文件：</p>
+    <p>通过 <code>data/audio/sounds.json</code> 注册音频文件：</p>
     <pre><code>{
     "sounds": [
         {

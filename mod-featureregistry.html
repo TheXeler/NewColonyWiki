@@ -37,12 +37,35 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式为 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。JSON 中省略前缀时会补当前 mod 前缀。</td></tr>
-        <tr><td><code>block</code></td><td>string 或 int</td><td>是</td><td>要放置的方块。推荐使用数据 ID 字符串，例如 <code>core:stone_chunk</code>；需要兼容旧世界生成常量时也可以使用数字。</td></tr>
+        <tr><td><code>type</code></td><td>string</td><td>否</td><td>地物类型。当前支持 <code>"tree"</code>（树木）和默认的通用类型。设为 <code>"tree"</code> 时使用树类型专用字段。</td></tr>
+        <tr><td><code>block</code></td><td>string 或 int</td><td>通用类型必填</td><td>要放置的方块。推荐使用数据 ID 字符串，例如 <code>core:stone_chunk</code>；需要兼容旧世界生成常量时也可以使用数字。</td></tr>
         <tr><td><code>density</code></td><td>float</td><td>是</td><td>每个 chunk 的尝试生成密度。实际尝试次数约为 <code>density * 6</code>，必须大于 0。</td></tr>
         <tr><td><code>min_spacing</code></td><td>int</td><td>否</td><td>离 chunk 边缘的最小距离，默认 1。过大的值会被限制到安全范围。</td></tr>
         <tr><td><code>biomes</code></td><td>string[]</td><td>否</td><td>允许生成的群系 ID 列表。省略或留空表示所有群系都可生成。</td></tr>
       </tbody>
     </table>
+
+    <h2>树类型地物</h2>
+    <p>当 <code>type</code> 设为 <code>"tree"</code> 时，推荐使用 <code>block</code> 指向一个单体树地物方块。CoreMod 的树木生成 <code>core:tree</code>，伐木时一次性移除整棵树并按该方块的 <code>drops</code> 产出原木。旧的 <code>trunk_block</code>/<code>leaves_block</code> 组合仍可被引擎读取，但不再是 CoreMod 默认树木表现。</p>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>type</code></td><td>string</td><td>是</td><td>必须为 <code>"tree"</code>。</td></tr>
+        <tr><td><code>block</code></td><td>string 或 int</td><td>推荐</td><td>单体树地物方块 ID，如 <code>"core:tree"</code>。</td></tr>
+        <tr><td><code>trunk_block</code></td><td>string 或 int</td><td>兼容</td><td>旧式树干方块 ID；仅在未提供 <code>block</code> 时使用。</td></tr>
+        <tr><td><code>leaves_block</code></td><td>string 或 int</td><td>兼容</td><td>旧式树叶方块 ID；仅在未提供 <code>block</code> 时使用。</td></tr>
+        <tr><td><code>trunk_height_min</code></td><td>int</td><td>否</td><td>旧式树干最小高度。</td></tr>
+        <tr><td><code>trunk_height_max</code></td><td>int</td><td>否</td><td>旧式树干最大高度。</td></tr>
+        <tr><td><code>leaves_radius</code></td><td>int</td><td>否</td><td>旧式树冠半径。</td></tr>
+      </tbody>
+    </table>
+    <pre><code>{
+  "id": "core:forest_tree",
+  "type": "tree",
+  "block": "core:tree",
+  "density": 2.0,
+  "biomes": ["core:forest"]
+}</code></pre>
 
     <h2>生成规则</h2>
     <ul>

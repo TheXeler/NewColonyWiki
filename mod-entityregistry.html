@@ -19,7 +19,7 @@
     "components": {
         "Position": { "x": 0, "y": 64, "z": 0 },
         "Velocity": { "x": 0, "y": 0, "z": 0 },
-        "Needs": { "hunger": 45.0, "fatigue": 15.0 },
+        "Needs": { "hunger": 50.0, "fatigue": 20.0 },
         "ColonistTag": {},
         "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
         "Profession": { "id": "my_mod:hunter", "level": 1 },
@@ -49,18 +49,18 @@
       <tbody>
         <tr><td><code>Position</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>世界坐标。</td></tr>
         <tr><td><code>Velocity</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>移动速度向量。</td></tr>
-        <tr><td><code>Rotation</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>旋转角度。</td></tr>
+        <tr><td><code>Rotation</code></td><td><code>yaw</code>, <code>pitch</code> (float)</td><td>朝向。yaw 为水平偏航，pitch 为俯仰。</td></tr>
         <tr><td><code>Scale</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>缩放。</td></tr>
         <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (float)</td><td>生命值。</td></tr>
-        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>需求值。hunger 越高越饿，fatigue 越高越累。AI 会根据需求自动寻求满足。</td></tr>
-        <tr><td><code>Mood</code></td><td><code>value</code> (float, 0~100)</td><td>心情值。</td></tr>
+        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>需求值。hunger 越高越饿，fatigue 越高越累。两项均随时间上升，AI 会根据需求自动寻求满足。</td></tr>
+        <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情值。JSON 中写 <code>"Mood": { "mood_value": 50.0 }</code>。</td></tr>
         <tr><td><code>ColonistTag</code></td><td>（无字段）</td><td>标记为殖民者。拥有此组件的实体参与殖民者相关的 AI 逻辑和统计。</td></tr>
         <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 状态。behavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率。</td></tr>
-        <tr><td><code>NavAgent</code></td><td><code>target_x</code>, <code>target_y</code>, <code>target_z</code> (int)</td><td>导航代理。携带寻路目标坐标。</td></tr>
+        <tr><td><code>NavAgent</code></td><td><code>target_x</code>, <code>target_y</code>, <code>target_z</code> (float)；运行时还有 <code>waypoints[]</code>、<code>path_count</code>、<code>current_index</code></td><td>导航代理。携带寻路目标坐标和路径数据。</td></tr>
         <tr><td><code>Profession</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
         <tr><td><code>BlockInteractor</code></td><td><code>target_block</code> (Vec3i), <code>action_type</code> (int)</td><td>方块交互器。action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
         <tr><td><code>HeldItem</code></td><td><code>item_id</code> (u32), <code>count</code> (u32)</td><td>手持物品。</td></tr>
-        <tr><td><code>Inventory</code></td><td>（由系统管理）</td><td>背包。</td></tr>
+        <tr><td><code>Inventory</code></td><td>（legacy，最多 32 格）</td><td>遗留多槽背包。当前实体原型以 <code>HeldItem</code> 为主；若 JSON 同时提供 <code>Inventory</code>（含 <code>slots</code> 数组），加载器会取第一个 slot 作为 HeldItem。</td></tr>
         <tr><td><code>Equipment</code></td><td>（由系统管理）</td><td>装备栏。</td></tr>
         <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>属性值。影响各种游戏计算。</td></tr>
         <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
@@ -73,16 +73,16 @@
     <table>
       <thead><tr><th>原型</th><th>ID</th><th>职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
       <tbody>
-        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0（通用）</td></tr>
+        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
         <tr><td>农民</td><td><code>core:farmer</code></td><td>farmer (Lv.1)</td><td>9 / 10 / 11</td><td>10</td></tr>
         <tr><td>矿工</td><td><code>core:miner</code></td><td>miner (Lv.1)</td><td>12 / 9 / 9</td><td>20</td></tr>
-        <tr><td>木匠</td><td><code>core:carpenter</code></td><td>carpenter (Lv.1)</td><td>10 / 11 / 9</td><td>—</td></tr>
-        <tr><td>伐木工</td><td><code>core:lumberjack</code></td><td>lumberjack (Lv.1)</td><td>12 / 10 / 8</td><td>—</td></tr>
-        <tr><td>石匠</td><td><code>core:stonemason</code></td><td>stonemason (Lv.1)</td><td>11 / 9 / 10</td><td>—</td></tr>
-        <tr><td>厨师</td><td><code>core:cook</code></td><td>cook (Lv.1)</td><td>8 / 10 / 12</td><td>—</td></tr>
-        <tr><td>铁匠</td><td><code>core:blacksmith</code></td><td>blacksmith (Lv.1)</td><td>13 / 9 / 8</td><td>—</td></tr>
-        <tr><td>陶工</td><td><code>core:potter</code></td><td>potter (Lv.1)</td><td>9 / 12 / 9</td><td>—</td></tr>
-        <tr><td>织工</td><td><code>core:weaver</code></td><td>weaver (Lv.1)</td><td>8 / 11 / 11</td><td>—</td></tr>
+        <tr><td>木匠</td><td><code>core:carpenter</code></td><td>carpenter (Lv.3)</td><td>11 / 10 / 11</td><td>1</td></tr>
+        <tr><td>伐木工</td><td><code>core:lumberjack</code></td><td>lumberjack (Lv.1)</td><td>12 / 10 / 8</td><td>1</td></tr>
+        <tr><td>石匠</td><td><code>core:stonemason</code></td><td>stonemason (Lv.3)</td><td>13 / 9 / 9</td><td>2</td></tr>
+        <tr><td>厨师</td><td><code>core:cook_entity</code></td><td>cook (Lv.2)</td><td>8 / 10 / 12</td><td>1</td></tr>
+        <tr><td>铁匠</td><td><code>core:blacksmith_entity</code></td><td>blacksmith (Lv.3)</td><td>14 / 9 / 10</td><td>1</td></tr>
+        <tr><td>陶工</td><td><code>core:potter_entity</code></td><td>potter (Lv.2)</td><td>9 / 11 / 11</td><td>1</td></tr>
+        <tr><td>织工</td><td><code>core:weaver_entity</code></td><td>weaver (Lv.2)</td><td>8 / 12 / 10</td><td>1</td></tr>
       </tbody>
     </table>
 
@@ -90,12 +90,12 @@
     <p>通用殖民者原型，全属性 10，使用通用行为树（ID 0）。作为文明开局的基础单位，后续可转职为其他职业。</p>
 
     <h3>职业原型</h3>
-    <p>各职业原型有针对性的属性分配：矿工和铁匠力量高（12~13），厨师和织工智力高（11~12），农民和木匠较均衡。行为树 ID 对应不同的 AI 行为模式。</p>
+    <p>各职业原型有针对性的属性分配：铁匠和石匠力量高（13~14），厨师和陶工智力高（11~12），农民较均衡。行为树 ID 对应不同的 AI 行为模式。注意部分实体 ID 带有 <code>_entity</code> 后缀。</p>
 
     <h2>生成实体</h2>
     <p>通过 Lua API 从原型生成实体：</p>
     <pre><code>-- 在指定位置生成一个矿工
-local id = engine.ecs.spawn_from_prototype("core:miner")
+local id = engine.ecs.spawn_prototype("core:miner")
 engine.ecs.set_position(id, 10, 70, 20)</code></pre>
     <p>或在控制台中：</p>
     <pre><code>spawn_proto core:miner          -- 在玩家附近生成一个矿工实体</code></pre>
@@ -112,7 +112,7 @@ data core:miner                  -- 查看单个原型的完整 JSON
 spawn_proto core:miner           -- 在世界中生成一个实例</code></pre>
 
     <h2>实体模型与动画</h2>
-    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为头、身体、双臂、双腿的分块模型。</p>
+    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为头、身体、双臂、双腿的分块模型。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
     <pre><code>"Visual": {
   "model": "biped",
   "texture": "textures/entities/colonist.png",

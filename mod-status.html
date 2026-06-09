@@ -67,8 +67,8 @@
         <tr>
           <td>音频</td>
           <td><span class="badge partial">部分</span></td>
-          <td>miniaudio 后端、SoundBank、CoreMod <code>data/audio/sounds.json</code>、Lua <code>engine.audio</code> 播放/停止/音量 API 已存在。</td>
-          <td>音频不是通用 <code>data/</code> 注册类型；当前只从 CoreMod 路径加载 sound bank，MOD 音频发布流程仍需完善。</td>
+          <td>miniaudio 后端、SoundBank、每个 active MOD 的 <code>data/audio/sounds.json</code>、Lua <code>engine.audio</code> 播放/停止/音量 API 已存在。</td>
+          <td>音频不是通用 <code>data/</code> 注册类型；sound bank 在启动时按 active MOD 顺序加载，音频文件路径相对各自 MOD 根目录解析。</td>
         </tr>
         <tr>
           <td>UI 系统</td>
@@ -101,7 +101,7 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td><code>data/audio</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>音频 sound bank 目前从 CoreMod 固定路径加载，还没有作为 MOD 数据类型参与注册表。</td></tr>
+        <tr><td><code>data/audio</code> 注册表接入</td><td><span class="badge planned">未接入</span></td><td>音频 sound bank 已按 active MOD 加载，但还没有作为 MOD 数据类型参与通用注册表。</td></tr>
         <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>TechTree 会查找 <code>techs</code>，但 ModLoader 当前未加载该类型。</td></tr>
         <tr><td>MOD 打包发布</td><td><span class="badge planned">未完成</span></td><td>已有约定文档，但缺少自动打包、版本兼容检查和发布校验工具。</td></tr>
       </tbody>

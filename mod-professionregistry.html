@@ -48,16 +48,16 @@
     <table>
       <thead><tr><th>职业 ID</th><th>显示名称</th><th>所需工具方块</th><th>前置职业</th></tr></thead>
       <tbody>
-        <tr><td><code>core:worker</code></td><td>Worker</td><td>—</td><td>—</td></tr>
-        <tr><td><code>core:blacksmith</code></td><td>Blacksmith</td><td>anvil_item</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:cook</code></td><td>Cook</td><td>cooking_pot</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:potter</code></td><td>Potter</td><td>potters_wheel</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:weaver</code></td><td>Weaver</td><td>loom</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:farmer</code></td><td>Farmer</td><td>hoe_item</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:miner</code></td><td>Miner</td><td>pickaxe_item</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:carpenter</code></td><td>Carpenter</td><td>workbench</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:lumberjack</code></td><td>Lumberjack</td><td>axe_item</td><td>core:worker Lv.1</td></tr>
-        <tr><td><code>core:stonemason</code></td><td>Stonemason</td><td>chisel_item</td><td>core:worker Lv.1</td></tr>
+        <tr><td><code>core:worker</code></td><td>Worker</td><td>worker_badge</td><td>—</td></tr>
+        <tr><td><code>core:farmer</code></td><td>Farmer</td><td>wooden_hoe</td><td>—</td></tr>
+        <tr><td><code>core:miner</code></td><td>Miner</td><td>stone_pickaxe</td><td>—</td></tr>
+        <tr><td><code>core:carpenter</code></td><td>Carpenter</td><td>workbench_item</td><td>—</td></tr>
+        <tr><td><code>core:lumberjack</code></td><td>Lumberjack</td><td>wooden_axe</td><td>—</td></tr>
+        <tr><td><code>core:stonemason</code></td><td>Stonemason</td><td>stone_furnace_item</td><td>—</td></tr>
+        <tr><td><code>core:cook</code></td><td>Cook</td><td>cooking_pot_item</td><td>—</td></tr>
+        <tr><td><code>core:blacksmith</code></td><td>Blacksmith</td><td>anvil_item</td><td>—</td></tr>
+        <tr><td><code>core:potter</code></td><td>Potter</td><td>pottery_bowl</td><td>—</td></tr>
+        <tr><td><code>core:weaver</code></td><td>Weaver</td><td>cloth</td><td>—</td></tr>
       </tbody>
     </table>
 
@@ -68,14 +68,13 @@
   "id": "core:farmer",
   "name": "Farmer",
   "max_level": 5,
-  "required_block": { "id": "core:hoe_item", "count": 1 },
-  "prerequisites": [{"id": "core:worker", "level": 1}],
+  "required_block": { "id": "core:wooden_hoe", "count": 1 },
+  "prerequisites": [],
   "unlocks_recipes": [
-    { "id": "core:plant_wheat", "level": 1 },
-    { "id": "core:harvest_crops", "level": 1 },
-    { "id": "core:plant_carrot", "level": 2 },
-    { "id": "core:plant_potato", "level": 3 },
-    { "id": "core:fertilize_crops", "level": 4 }
+    { "id": "core:wheat_seed_to_farmland", "level": 1 },
+    { "id": "core:plant_potato", "level": 1 },
+    { "id": "core:plant_corn", "level": 1 },
+    { "id": "core:mill_flour", "level": 2 }
   ]
 }</code></pre>
 
@@ -84,14 +83,11 @@
   "id": "core:miner",
   "name": "Miner",
   "max_level": 5,
-  "required_block": { "id": "core:pickaxe_item", "count": 1 },
-  "prerequisites": [{"id": "core:worker", "level": 1}],
+  "required_block": { "id": "core:stone_pickaxe", "count": 1 },
+  "prerequisites": [],
   "unlocks_recipes": [
-    { "id": "core:mine_stone", "level": 1 },
-    { "id": "core:mine_coal", "level": 2 },
-    { "id": "core:mine_iron", "level": 3 },
-    { "id": "core:mine_gold", "level": 4 },
-    { "id": "core:mine_diamond", "level": 5 }
+    { "id": "core:craft_stone_pickaxe", "level": 1 },
+    { "id": "core:craft_iron_pickaxe", "level": 2 }
   ]
 }</code></pre>
 
@@ -100,14 +96,25 @@
   "id": "core:carpenter",
   "name": "Carpenter",
   "max_level": 5,
-  "required_block": { "id": "core:workbench", "count": 1 },
-  "prerequisites": [{"id": "core:worker", "level": 1}],
+  "required_block": { "id": "core:workbench_item", "count": 1 },
+  "prerequisites": [],
   "unlocks_recipes": [
-    { "id": "core:craft_wooden_planks", "level": 1 },
-    { "id": "core:craft_wooden_stick", "level": 1 },
-    { "id": "core:craft_wooden_chest", "level": 2 },
-    { "id": "core:craft_wooden_door", "level": 3 },
-    { "id": "core:craft_furniture", "level": 4 }
+    { "id": "core:craft_wooden_axe", "level": 1 },
+    { "id": "core:craft_wooden_pickaxe", "level": 1 },
+    { "id": "core:craft_wooden_sword", "level": 1 },
+    { "id": "core:craft_wooden_hoe", "level": 1 },
+    { "id": "core:craft_wooden_shovel", "level": 1 },
+    { "id": "core:craft_wooden_fence", "level": 1 },
+    { "id": "core:craft_sign", "level": 1 },
+    { "id": "core:craft_banner", "level": 1 },
+    { "id": "core:craft_bow", "level": 2 },
+    { "id": "core:craft_arrow", "level": 2 },
+    { "id": "core:build_wooden_bed", "level": 2 },
+    { "id": "core:build_wooden_chair", "level": 2 },
+    { "id": "core:build_wooden_chest", "level": 2 },
+    { "id": "core:build_wooden_door", "level": 2 },
+    { "id": "core:build_wooden_table", "level": 2 },
+    { "id": "core:build_workbench", "level": 1 }
   ]
 }</code></pre>
 
@@ -116,14 +123,11 @@
   "id": "core:lumberjack",
   "name": "Lumberjack",
   "max_level": 5,
-  "required_block": { "id": "core:axe_item", "count": 1 },
-  "prerequisites": [{"id": "core:worker", "level": 1}],
+  "required_block": { "id": "core:wooden_axe", "count": 1 },
+  "prerequisites": [],
   "unlocks_recipes": [
-    { "id": "core:chop_oak_log", "level": 1 },
-    { "id": "core:chop_birch_log", "level": 2 },
-    { "id": "core:chop_jungle_log", "level": 3 },
-    { "id": "core:collect_sapling", "level": 2 },
-    { "id": "core:harvest_apple", "level": 4 }
+    { "id": "core:craft_stick", "level": 1 },
+    { "id": "core:craft_torch", "level": 1 }
   ]
 }</code></pre>
 
@@ -132,14 +136,21 @@
   "id": "core:stonemason",
   "name": "Stonemason",
   "max_level": 5,
-  "required_block": { "id": "core:chisel_item", "count": 1 },
-  "prerequisites": [{"id": "core:worker", "level": 1}],
+  "required_block": { "id": "core:stone_furnace_item", "count": 1 },
+  "prerequisites": [],
   "unlocks_recipes": [
-    { "id": "core:craft_stone_brick", "level": 1 },
-    { "id": "core:craft_stone_slab", "level": 2 },
-    { "id": "core:craft_stone_stairs", "level": 3 },
-    { "id": "core:craft_stone_wall", "level": 3 },
-    { "id": "core:craft_polished_stone", "level": 4 }
+    { "id": "core:cut_stone_brick", "level": 1 },
+    { "id": "core:craft_stone_axe", "level": 1 },
+    { "id": "core:craft_stone_sword", "level": 1 },
+    { "id": "core:craft_stone_hoe", "level": 1 },
+    { "id": "core:craft_stone_shovel", "level": 1 },
+    { "id": "core:build_stone_furnace", "level": 1 },
+    { "id": "core:build_stone_chair", "level": 2 },
+    { "id": "core:build_stone_chest", "level": 2 },
+    { "id": "core:build_stone_table", "level": 2 },
+    { "id": "core:build_stone_path", "level": 2 },
+    { "id": "core:build_stone_wall", "level": 3 },
+    { "id": "core:build_reinforced_stone", "level": 3 }
   ]
 }</code></pre>
 
@@ -158,9 +169,9 @@
     </ul>
 
     <h2>前置职业示例</h2>
-    <p>如果铁匠要求先成为工人，可以这样写：</p>
+    <p>当前 CoreMod 所有职业的 <code>prerequisites</code> 均为空数组（无条件可转职）。如果需要前置职业链，可以这样写：</p>
     <pre><code>{
-  "id": "core:blacksmith",
+  "id": "copper_age:coppersmith",
   "prerequisites": [{"id": "core:worker", "level": 1}],
   ...
 }</code></pre>

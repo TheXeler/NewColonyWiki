@@ -56,10 +56,10 @@
         <tr class="api-row" data-api-row><td><code>engine.ecs.get_scale(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ x, y, z }</code>。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.set_health(entity, current, max)</code></td><td>integer, integer</td><td>-</td><td>设置 Health 组件。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.get_health(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ current, max }</code>。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.set_needs(entity, hunger, fatigue, social)</code></td><td>number, number, number</td><td>-</td><td>设置殖民者的三项需求。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_needs(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ hunger, fatigue, social }</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.set_needs(entity, hunger, fatigue)</code></td><td>number, number</td><td>-</td><td>设置殖民者的两项需求。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_needs(entity)</code></td><td><code>entity id</code></td><td>table</td><td>返回 <code>{ hunger, fatigue }</code>。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.set_name(entity, name)</code></td><td><code>string</code></td><td>-</td><td>设置 Name 组件。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.ecs.get_name(entity)</code></td><td><code>entity id</code></td><td>string</td><td>没有 Name 时返回空字符串。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.ecs.get_name(entity)</code></td><td><code>entity id</code></td><td>string</td><td>没有 Name 时返回 nil。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.add_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>-</td><td>给实体加上殖民者标记。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.has_colonist_tag(entity)</code></td><td><code>entity id</code></td><td>bool</td><td>检查实体是否有殖民者标记。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.ecs.set_ai_state(entity, tree, lod)</code></td><td>integer, integer</td><td>-</td><td>设置 AIState，current_node 置为 0。</td></tr>
@@ -101,6 +101,7 @@
         <tr class="api-row" data-api-row><td><code>engine.crafting.craft(entity, recipe)</code></td><td><code>entity id</code>, <code>data id</code></td><td>bool</td><td>成功时扣除输入、添加输出，并触发库存和配方事件。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.crafting.list_recipes()</code></td><td>-</td><td>table</td><td>列出已加载的配方 ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.crafting.get_recipe(recipe)</code></td><td><code>data id</code></td><td>table 或 nil</td><td>返回配方详情：<code>id</code>、<code>inputs</code>、<code>output</code>、可选 <code>profession</code> 和 <code>profession_level</code>。</td></tr>
+        <tr class="api-row" data-api-row><td><code>systems.crafting.queue(entity, recipe, faction, x, y, z, duration)</code></td><td>entity, data id, hashed id, position, number?</td><td>table</td><td>CoreMod 辅助系统。优先从 stockpile 账本预留输入材料并发布 <code>craft</code> 工作，完成后将产物放入工人手中或存回账本；材料不足时返回 <code>{ ok=false, reason="missing_inputs" }</code>。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.list()</code></td><td>-</td><td>table</td><td>列出已加载的职业 ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.can_assign(entity, profession)</code></td><td>entity, data id</td><td>bool</td><td>检查实体是否满足转职条件。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.professions.assign(entity, profession, level)</code></td><td>entity, data id, integer?</td><td>bool</td><td>分配职业，成功时触发 <code>profession:assigned</code>。</td></tr>
@@ -114,6 +115,7 @@
         <!-- Zones -->
         <tr class="api-row" data-api-row><td><code>engine.zone.designate_blocks()</code></td><td>-</td><td>table</td><td>Returns the current drag-designation block list. Each row contains <code>x</code>, <code>y</code>, <code>z</code>, <code>block_hash</code>, <code>block_id</code>, and <code>solid</code>.</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.zone.confirm_mine_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:mine</code> 3D designation, creates the mine zone, and posts one <code>mine</code> WorkPool job per solid block. Returns <code>{ ok, count }</code>.</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.zone.confirm_chop_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:chop</code> 2D designation, creates the chop zone, and posts one <code>mine</code> WorkPool job per tree feature block matching <code>core:chop_wood</code>. Returns <code>{ ok, count }</code>.</td></tr>
 
         <!-- Events -->
         <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>

@@ -23,6 +23,11 @@
   "api_version": "0.1",
   "license": "MIT",
   "entry": "scripts/bootstrap.lua",
+  "lua": {
+    "permissions": {
+      "io": false
+    }
+  },
   "dependencies": [
     {"name": "core", "minVer": "0.1.0", "maxVer": "1.0.0"}
   ],
@@ -46,6 +51,7 @@
         <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。不写则不执行入口脚本（纯数据 MOD 合法）。</td></tr>
         <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
         <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
+        <tr><td><code>lua.permissions.io</code></td><td>否</td><td>声明该 MOD 的 Lua 脚本是否需要访问 Lua <code>io</code> 库。默认 <code>false</code>。玩家在主菜单 MOD 管理器中启用此类 MOD 时会看到确认提示。兼容旧写法 <code>lua.allow_io</code> 和顶层 <code>lua_allow_io</code>。</td></tr>
         <tr><td><code>dependencies</code></td><td>否</td><td>必须在这个 MOD 之前加载的其他 MOD。数组格式，每项包含 <code>name</code>（MOD ID）、可选的 <code>minVer</code> 和 <code>maxVer</code>（均为包含边界）。示例：<code>[{"name":"core", "minVer":"0.1.0", "maxVer":"1.0.0"}]</code>。</td></tr>
         <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>
@@ -55,6 +61,7 @@
     </table>
 
     <h2>玩家配置覆盖</h2>
+    <p>除 <code>core</code> 之外，所有 MOD 首次发现时都会硬编码为未启用。主菜单 MOD 管理器会写入同名配置文件中的 <code>enabled</code> 值；启用或禁用后需要重启使加载结果生效。</p>
     <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>config/</code> 目录下：</p>
     <pre><code>config/copper_age.json</code></pre>
     <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>

@@ -85,7 +85,7 @@
         <tr><td><code>data/biomes/</code></td><td>否</td><td>生物群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>
-        <tr><td><code>data/audio/</code></td><td>否</td><td>声音库 JSON。当前启动流程从 core 数据路径加载默认声音库；普通 MOD 音频扩展仍需要配合脚本或后续加载器支持。</td></tr>
+        <tr><td><code>data/audio/</code></td><td>否</td><td>声音库 JSON。启动时会从每个已启用 MOD 的 <code>data/audio/sounds.json</code> 加载声音定义，文件路径相对该 MOD 根目录解析。</td></tr>
         <tr><td><code>assets/</code></td><td>否</td><td>模型（.obj / .gltf）、纹理（.png）、着色器（.glsl）、音频文件等资源。</td></tr>
         <tr><td><code>config/</code></td><td>否</td><td>MOD 随附配置文件。CoreMod 使用该目录提供控制台权限、别名和按键配置。</td></tr>
         <tr><td><code>lang/</code></td><td>否</td><td>翻译文件目录，使用 UTF-8 JSON。当前仓库统一使用小写 <code>lang/</code>。</td></tr>
@@ -104,7 +104,7 @@
     </ul>
 
     <div class="callout warn">
-      <strong>注意：</strong><code>data/audio/</code> 已出现在 CoreMod 目录中，但按当前 <code>ModLoader::load_mod_data</code> 实现还不会作为通用 MOD 数据自动注册。给普通 MOD 使用音频目录前，应先确认对应系统的加载路径。
+      <strong>注意：</strong><code>data/audio/</code> 不参与通用数据注册表，但 <code>sounds.json</code> 会在启动时由音频系统按 active MOD 顺序加载。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

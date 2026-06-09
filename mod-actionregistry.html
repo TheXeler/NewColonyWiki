@@ -52,11 +52,11 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
-        <tr><td><code>base_type</code></td><td>string</td><td>是</td><td><code>"block_action"</code> 或 <code>"held_item_block_action"</code>。</td></tr>
+        <tr><td><code>base_type</code></td><td>string</td><td>是</td><td><code>"block_action"</code> 或 <code>"inventory_block_action"</code>。</td></tr>
         <tr><td><code>filter</code></td><td>string</td><td>否</td><td>Glob 过滤模式，决定动作匹配哪些方块/物品。默认 <code>"*"</code>（匹配全部）。</td></tr>
         <tr><td><code>action_type</code></td><td>int</td><td>方块动作必填</td><td>交互类型：<code>1</code> = 挖掘，<code>2</code> = 放置，<code>3</code> = 交互。仅 <code>block_action</code> 使用。</td></tr>
-        <tr><td><code>category</code></td><td>string</td><td>否</td><td>物品分类过滤，如 <code>"food"</code>、<code>"drink"</code>。仅 <code>held_item_block_action</code> 使用。省略时不做分类过滤。</td></tr>
-        <tr><td><code>consume</code></td><td>int</td><td>否</td><td>每次执行消耗的物品数量，默认 1。仅 <code>held_item_block_action</code> 使用。</td></tr>
+        <tr><td><code>category</code></td><td>string</td><td>否</td><td>物品分类过滤，如 <code>"food"</code>、<code>"drink"</code>。仅 <code>inventory_block_action</code> 使用。省略时不做分类过滤。</td></tr>
+        <tr><td><code>consume</code></td><td>int</td><td>否</td><td>每次执行消耗的物品数量，默认 1。仅 <code>inventory_block_action</code> 使用。</td></tr>
         <tr><td><code>duration</code></td><td>float</td><td>否</td><td>执行时长（秒）。方块动作默认 3.0，物品动作默认 2.0。</td></tr>
         <tr><td><code>needs</code></td><td>object</td><td>否</td><td>动作完成后的需求变化量。键为需求名称，值为变化值（正数=增加，负数=减少）。</td></tr>
         <tr><td><code>needs.hunger</code></td><td>float</td><td>否</td><td>饥饿值变化。正值增加饥饿（恶化），负值减少饥饿（恢复）。范围 0~100。</td></tr>
@@ -104,12 +104,12 @@
     </table>
 
     <h3>伐木 <code>core:chop_wood</code></h3>
-    <p>专门针对木头的挖掘动作，比通用挖掘稍快。</p>
+    <p>专门针对单体树地物的伐木动作，比通用挖掘稍快。</p>
     <table>
       <thead><tr><th>属性</th><th>值</th></tr></thead>
       <tbody>
         <tr><td>类型</td><td>方块动作（挖掘）</td></tr>
-        <tr><td>过滤</td><td><code>core:wood</code>（精确匹配）</td></tr>
+        <tr><td>过滤</td><td><code>core:tree</code>（精确匹配）</td></tr>
         <tr><td>时长</td><td>2.5 秒</td></tr>
         <tr><td>需求</td><td>疲劳 +1.5</td></tr>
       </tbody>

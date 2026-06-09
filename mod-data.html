@@ -80,8 +80,10 @@
         <tr><td><code>Rotation</code></td><td>朝向 (yaw, pitch)</td></tr>
         <tr><td><code>Scale</code></td><td>缩放比例 (x, y, z)</td></tr>
         <tr><td><code>Health</code></td><td>生命值 (current, max)</td></tr>
-        <tr><td><code>Needs</code></td><td>三项需求 (hunger, fatigue, social)</td></tr>
-        <tr><td><code>Inventory</code></td><td>背包（最多 20 个格子）</td></tr>
+        <tr><td><code>Needs</code></td><td>两项需求 (hunger, fatigue)</td></tr>
+        <tr><td><code>Mood</code></td><td>心情值 (mood_value, 0~100)</td></tr>
+        <tr><td><code>HeldItem</code></td><td>手持物品 (item_id, count)</td></tr>
+        <tr><td><code>Inventory</code></td><td>遗留多槽背包（最多 32 格）。原型加载时会取第一个 slot 作为 HeldItem。</td></tr>
         <tr><td><code>Equipment</code></td><td>装备栏（武器、护甲、手持物品）</td></tr>
         <tr><td><code>Profession</code></td><td>职业 ID 和等级 (1-5)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
@@ -102,7 +104,7 @@
     "Position": { "x": 0, "y": 64, "z": 0 },
     "Velocity": { "x": 0, "y": 0, "z": 0 },
     "Health": { "current": 100, "max": 100 },
-    "Needs": { "hunger": 40, "fatigue": 20, "social": 50 },
+    "Needs": { "hunger": 40, "fatigue": 20 },
     "ColonistTag": {},
     "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
     "Profession": { "id": "copper_age:coppersmith", "level": 1 },
@@ -121,7 +123,7 @@
   "profession": { "id": "copper_age:coppersmith", "level": 1 },
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
-    <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。</p>
+    <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。CoreMod 的制作菜单通过 <code>systems.crafting.queue</code> 下单：优先从 stockpile 账本预留输入材料，工作完成后把产物放入工人手中或存回账本；底层 <code>engine.crafting.craft</code> 仍是直接检查实体手持材料的低级接口。</p>
 
     <h2>职业（professions）</h2>
     <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。</p>
@@ -214,7 +216,7 @@ spawn_proto copper_age:copper_worker</code></pre>
     <table>
       <thead><tr><th>组件</th><th>字段</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td><code>model</code> 支持 <code>box</code> 和 <code>biped</code>。贴图路径相对 <code>assets/</code>。</td></tr>
+        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td><code>model</code> 支持 <code>box</code> 和 <code>biped</code>。贴图路径相对 <code>assets/</code>。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和 <code>_south/_east/_west/_north</code> 朝向贴图路径。</td></tr>
         <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>当前为 biped 程序动画，按实体水平速度驱动行走摆动。</td></tr>
       </tbody>
     </table>
