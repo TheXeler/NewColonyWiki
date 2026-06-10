@@ -37,6 +37,7 @@
         <tr><td><code>food_value</code></td><td>int</td><td>否</td><td>食物饱腹值，正整数。仅 <code>category</code> 为 <code>food</code> 时有意义。</td></tr>
         <tr><td><code>equip_slot</code></td><td>string</td><td>否</td><td>装备栏位，如 <code>chest</code>、<code>feet</code>。仅装备类物品使用。</td></tr>
         <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>。设为 <code>false</code> 的方块不能被玩家持有。</td></tr>
+        <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>是否为半透明方块，默认 <code>false</code>。半透明方块不会导致相邻方块的可见面剔除——面剔除时将其视为空气。适用于玻璃、树叶等需要透视效果的方块。</td></tr>
       </tbody>
     </table>
 

@@ -109,7 +109,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
       { "type": "key", "key": "ESCAPE" }
     ],
     "toggle_pause": [
-      { "type": "key", "key": "ESCAPE" }
+      { "type": "key", "key": "BACKSPACE" }
     ],
     "set_speed_1": [
       { "type": "key", "key": "1" }
@@ -125,6 +125,10 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     ],
     "toggle_debug_hud": [
       { "type": "key", "key": "F3" }
+    ],
+    "zone_operation_modifier": [
+      { "type": "key", "key": "LEFT_CONTROL" },
+      { "type": "key", "key": "RIGHT_CONTROL" }
     ]
   }
 }</code></pre>
@@ -170,12 +174,13 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
         <tr><td><code>camera_move_down</code></td><td>Left Shift</td><td>镜头降低</td></tr>
         <tr><td><code>select</code></td><td>鼠标左键</td><td>选择/交互</td></tr>
         <tr><td><code>deselect</code></td><td>Escape</td><td>取消选择</td></tr>
-        <tr><td><code>toggle_pause</code></td><td>Escape</td><td>暂停/继续</td></tr>
+        <tr><td><code>toggle_pause</code></td><td>Backspace</td><td>暂停/继续</td></tr>
         <tr><td><code>set_speed_1</code></td><td>1</td><td>游戏速度 1x</td></tr>
         <tr><td><code>set_speed_2</code></td><td>2</td><td>游戏速度 2x</td></tr>
         <tr><td><code>set_speed_3</code></td><td>3</td><td>游戏速度 3x</td></tr>
-        <tr><td><code>set_speed_4</code></td><td>4</td><td>游戏速度 4x</td></tr>
+        <tr><td><code>set_speed_4</code></td><td>4</td><td>最快速度</td></tr>
         <tr><td><code>toggle_debug_hud</code></td><td>F3</td><td>切换调试 HUD 显示</td></tr>
+        <tr><td><code>zone_operation_modifier</code></td><td>Ctrl</td><td>区域操作辅助键，按住并滚轮可调整 3D 区域高度</td></tr>
       </tbody>
     </table>
 

@@ -115,7 +115,7 @@
         <!-- Zones -->
         <tr class="api-row" data-api-row><td><code>engine.zone.designate_blocks()</code></td><td>-</td><td>table</td><td>Returns the current drag-designation block list. Each row contains <code>x</code>, <code>y</code>, <code>z</code>, <code>block_hash</code>, <code>block_id</code>, and <code>solid</code>.</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.zone.confirm_mine_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:mine</code> 3D designation, creates the mine zone, and posts one <code>mine</code> WorkPool job per solid block. Returns <code>{ ok, count }</code>.</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.zone.confirm_chop_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:chop</code> 2D designation, creates the chop zone, and posts one <code>mine</code> WorkPool job per tree feature block matching <code>core:chop_wood</code>. Returns <code>{ ok, count }</code>.</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.zone.confirm_chop_designate()</code></td><td>-</td><td>table</td><td>Confirms the active <code>core:chop</code> 2D designation, clears the designation without keeping a chop zone, and posts one <code>mine</code> WorkPool job per <code>core:tree</code> feature block matching <code>core:chop_wood</code>. Returns <code>{ ok, count }</code>.</td></tr>
 
         <!-- Events -->
         <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>

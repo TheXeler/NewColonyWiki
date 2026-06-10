@@ -88,6 +88,8 @@ end</code></pre>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
 local recipe_hash = engine.util.data_id_hash("core:craft_stick")
 local job_id = engine.jobs.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
+    <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
+    <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同势力 AI 重新领取。</p>
 
     <h2>事件</h2>
     <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
