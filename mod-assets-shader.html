@@ -79,12 +79,13 @@ void main() {
 }</code></pre>
 
     <h2>内置着色器</h2>
-    <p>CoreMod 提供了 3 组内置着色器：</p>
+    <p>CoreMod 提供了 4 组内置着色器：</p>
     <table>
       <thead><tr><th>着色器</th><th>文件</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td>方块渲染</td><td><code>block.vert</code> + <code>block.frag</code></td><td>体素方块的标准渲染管线。</td></tr>
         <tr><td>天空盒</td><td><code>skybox.vert</code> + <code>skybox.frag</code></td><td>天空盒渲染。不使用深度测试和深度写入。</td></tr>
+        <tr><td>GPU 调试几何</td><td><code>debug.vert</code> + <code>debug.frag</code></td><td>绘制带深度测试的调试线框和半透明调试面。</td></tr>
         <tr><td>调试三角形</td><td><code>triangle.vert</code> + <code>triangle.frag</code></td><td>基础三角形渲染，用于验证管线。</td></tr>
       </tbody>
     </table>

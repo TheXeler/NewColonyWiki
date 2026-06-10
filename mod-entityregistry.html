@@ -112,21 +112,21 @@ data core:miner                  -- 查看单个原型的完整 JSON
 spawn_proto core:miner           -- 在世界中生成一个实例</code></pre>
 
     <h2>实体模型与动画</h2>
-    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为头、身体、双臂、双腿的分块模型。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
+    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为石炉/摩尔庄园风格的 Q 版三头身模型——大头、小身体、浮动的手脚（手脚与身体之间有可见间隙）。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
     <pre><code>"Visual": {
   "model": "biped",
   "texture": "textures/entities/colonist.png",
-  "width": 0.45,
+  "width": 0.8,
   "height": 1.80,
-  "depth": 0.45
+  "depth": 0.8
 },
 "Animation": {
   "enabled": true,
-  "walk_speed": 6.0,
-  "walk_amplitude": 35.0,
+  "walk_speed": 8.0,
+  "walk_amplitude": 25.0,
   "idle_bob": 0.015
 }</code></pre>
-    <p><code>Animation</code> 当前支持 biped 的程序行走动画：实体有水平速度时摆臂摆腿，<code>walk_speed</code> 控制频率，<code>walk_amplitude</code> 控制角度。完整 MOD 写法见仓库根目录 <code>Entites Model.html</code>。</p>
+    <p><code>Animation</code> 当前支持 biped 的程序行走动画：实体有水平速度时浮动双脚和双手前后摆动，<code>walk_speed</code> 控制频率，<code>walk_amplitude</code> 控制角度。Biped 模型头:身腿比 1:1.5（头 40%、身体 35%、腿区 25%），头比身体宽，浮动手脚。完整 MOD 写法见仓库根目录 <code>Entites Model.html</code>。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
