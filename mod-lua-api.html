@@ -85,9 +85,12 @@ end</code></pre>
 
     <h2>工作池</h2>
     <p>发布工作时必须指定工作所属势力。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己势力一致的工作。</p>
+    <p>工作系统按两个概念拆分：<strong>WorkType</strong> 表示工作所属分类，用于优先级和管理界面分组；<strong>WorkAction</strong> 表示引擎硬定义的执行方式，例如方块交互、手持物品动作或纯等待推进。WorkType 需要先注册，之后才应出现在工作管理界面中；如果当前界面还没有显示对应入口，以注册表和调度行为为准。</p>
+    <p><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code> 中的 <code>type</code> 是工作池当前接受的工作类型字符串（如 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code>），调度时会映射到内部工作分类。<code>duration</code> 是无修正基础时长；<code>data</code> 是可选上下文，通常放动作 ID、配方 ID 或目标方块 ID 的哈希。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
 local recipe_hash = engine.util.data_id_hash("core:craft_stick")
 local job_id = engine.jobs.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
+    <p>当工作需要改变世界或实体状态时，推荐把 <code>data</code> 指向一个已注册动作。动作本身描述 WorkAction 的细节，例如 <code>block_action</code> 配合 <code>action_type</code> 执行挖掘、放置或交互；工作实例只负责进入工作池、被分配、计时和完成事件。</p>
     <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
     <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同势力 AI 重新领取。</p>
 
@@ -216,7 +219,8 @@ end)</code></pre>
     <p>地形 API 通常在 <code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome 和 ore 的方式；地物也可以通过 <code>data/features</code> 或 <code>engine.terrain.register_feature()</code> 注册。</p>
     <pre><code>function M.on_world_init()
   engine.terrain.register_ore({
-    block = 12,
+    block = "my_mod:copper_ore_chunk",
+    replace_block = "core:stone",
     noise_scale = 0.08,
     threshold = 0.55,
     min_y = 10,

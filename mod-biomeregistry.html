@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>群系注册</div></div>
   <div class="content">
     <h1>群系注册</h1>
-    <p class="subtitle">群系（Biome）通过 Lua 脚本调用 <code>engine.terrain.register_biome()</code> 注册。每个群系定义了地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
+    <p class="subtitle">群系（Biome）通过 Lua 脚本调用 <code>engine.terrain.register_biome()</code> 注册。每个群系定义了地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系；当气候范围存在缺口时，会选择气候距离最近的群系作为混合过渡。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
 
     <h2>注册 API</h2>
     <pre><code>engine.terrain.register_biome({
@@ -30,6 +30,14 @@
         elevation_min = 0.0,    -- 最低海拔偏好
         elevation_max = 1.0,    -- 最高海拔偏好
     },
+    vegetation = {              -- 群系整体植被概率场
+        density = 0.5,          -- 0 = 不长植被，1 = 最高密度
+        noise_weight = 0.35,
+        moisture_weight = 0.30,
+        temperature_weight = 0.25,
+        random_weight = 0.10,
+        noise_scale = 0.03125,  -- 1/32 block 尺度
+    },
 })</code></pre>
 
     <h2>字段说明</h2>
@@ -44,10 +52,12 @@
         <tr><td><code>has_caves</code></td><td>bool</td><td>否</td><td>是否在此群系中生成洞穴，默认 true。</td></tr>
         <tr><td><code>has_rivers</code></td><td>bool</td><td>否</td><td>是否在此群系中生成河流，默认 true。</td></tr>
         <tr><td><code>climate</code></td><td>table</td><td>否</td><td>偏好气候范围。省略或部分省略的字段默认为 0.0~1.0（匹配任何气候）。</td></tr>
+        <tr><td><code>vegetation</code></td><td>table</td><td>否</td><td>此群系整体植被概率场。最常调的是 <code>density</code>，用于控制该群系树木总体多少。</td></tr>
       </tbody>
     </table>
 
     <h3>气候子表字段</h3>
+    <p><strong>世界地图群系分配：</strong>创建或载入世界时，引擎会先生成世界地图，并把地图 chunk 直径限制为至少 <code>max(视距 * 2, 64)</code>。每个世界地图格子的群系 ID 会在此时固定，后续 chunk 生成只读取这个预计算结果，不再为每个 chunk 临时随机选择群系。</p>
     <p><code>climate</code> 表中的所有字段均为 <code>float</code>，取值范围 0..1。它们对应世界地图（WorldMap）中每个六边形格子的气候数据：</p>
     <table>
       <thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead>
@@ -61,8 +71,22 @@
       </tbody>
     </table>
 
+    <h3>植被子表字段</h3>
+    <p><code>vegetation</code> 控制当前群系整体植被概率场；具体树种是否适合某个温度由 <a href="mod-featureregistry.html">树类型地物</a> 的 <code>temperature_optimum</code> 和 <code>temperature_range</code> 控制。</p>
+    <table>
+      <thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>density</code></td><td>1.0</td><td>群系整体植被密度，范围 0..1。制作某个群系时，优先改这个值。</td></tr>
+        <tr><td><code>noise_weight</code></td><td>0.35</td><td>连续噪声斑块权重，越高越容易形成成片树林和稀疏区。</td></tr>
+        <tr><td><code>moisture_weight</code></td><td>0.30</td><td>湿度权重，越高越依赖世界地图湿度。</td></tr>
+        <tr><td><code>temperature_weight</code></td><td>0.25</td><td>树种温度适宜度权重。</td></tr>
+        <tr><td><code>random_weight</code></td><td>0.10</td><td>坐标随机扰动权重，用于打散过密区域。</td></tr>
+        <tr><td><code>noise_scale</code></td><td>0.03125</td><td>植被噪声采样尺度；0.03125 表示约 32 block 的变化尺度。</td></tr>
+      </tbody>
+    </table>
+
     <div class="callout info">
-      群系中的树木生成已由地物系统（<code>data/features/</code>）接管。群系注册时可通过 <code>biomes</code> 字段约束地物只出现在特定群系中。详见 <a href="mod-featureregistry.html">地物注册</a>。
+      群系中的树木种类由地物系统（<code>data/features/</code>）接管。群系负责整体植被密度和概率场，树类型地物负责具体树种、间距、相对密度和温度适宜度。
     </div>
 
     <h2>方块 ID 参考</h2>
@@ -147,10 +171,12 @@
     <h2>群系选择机制</h2>
     <p>地形生成器为每个 chunk 选择群系时，使用以下流程：</p>
     <ol>
-      <li>根据 chunk 坐标 (cx, cz) 在世界地图中查找最近的六边形格子，获取该格子的温度、湿度、海拔。</li>
+      <li>根据星球半径把 chunk 坐标 (cx, cz) 归一化到有限星球：东西方向按直径回绕；越过南极或北极后会折返到星球另一面，并让经度旋转半圈。</li>
+      <li>在世界地图六边形格子的经纬度气候场上做连续采样，获取温度、湿度、海拔；采样海拔同时会按方块列插值地移动地形基准高度，使相邻 chunk 之间有高低差过渡。</li>
       <li>在所有已注册群系中筛选气候匹配的候选集：温度、湿度、海拔均在群系的 <code>climate</code> 范围内。</li>
       <li>对候选集按 <code>weight</code> 加权随机选取（使用世界种子和 chunk 坐标的确定性哈希，保证可复现）。</li>
-      <li>如果没有群系匹配当前气候（例如 mod 定义的气候范围有缺口），回退到从所有群系中按权重选取。</li>
+      <li>如果没有群系精确匹配当前气候（例如 mod 定义的气候范围有缺口），选择气候距离最近的群系集合，再按 <code>weight</code> 选取。</li>
+      <li>水面高度由创建世界时的海平面选项决定。陆地群系的地表不会低于 <code>sea_level</code>；水域群系使用较低的海床/河床高度，并把床面以上的方块填充为水直到 <code>sea_level</code>，水块不会出现在 <code>sea_level</code> 以上。</li>
     </ol>
 
     <div class="callout info">

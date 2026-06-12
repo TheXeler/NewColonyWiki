@@ -20,7 +20,7 @@
       <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎支持 14 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>biomes</code>、<code>zones</code>。</li>
+      <li>当前引擎支持 16 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>zones</code>。</li>
     </ul>
 
     <h2>方块（blocks）</h2>
@@ -90,7 +90,7 @@
         <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤）</td></tr>
         <tr><td><code>AIState</code></td><td>AI 状态（行为树 ID, 当前节点, LoD 层级, busy 标志）</td></tr>
         <tr><td><code>NavAgent</code></td><td>导航代理（路径跟随）</td></tr>
-        <tr><td><code>WorkerPriorityConfig</code></td><td>工作优先级配置（5 类任务，1-7 级）</td></tr>
+        <tr><td><code>WorkerPriorityConfig</code></td><td>工作优先级配置（按 WorkType/工作分类设置，1-7 级）</td></tr>
         <tr><td><code>Civilization</code></td><td>所属文明 ID</td></tr>
         <tr><td><code>BlockInteractor</code></td><td>方块交互意图（挖掘/放置/交互）</td></tr>
         <tr><td><code>PrototypeRef</code></td><td>原型引用（记录实体的数据来源）</td></tr>
@@ -113,6 +113,18 @@
   }
 }</code></pre>
 
+    <h2>工作类型与动作</h2>
+    <p>工作系统使用 <strong>WorkType</strong> 和 <strong>WorkAction</strong> 两层概念，避免把“这是什么工作”和“它怎么执行”混在一起。</p>
+    <table>
+      <thead><tr><th>概念</th><th>来源</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>WorkType</code></td><td>工作注册表</td><td>表示工作所属分类或管理入口，例如建造、挖掘、搬运、制作、研究。WorkType 需要提前注册，之后用于工人优先级、筛选和工作管理界面显示。</td></tr>
+        <tr><td><code>WorkAction</code></td><td>引擎硬定义</td><td>表示执行工作的基本行动方式，例如与方块交互、消耗手持物品、等待计时或脚本处理。它决定 AI 完成工作时调用哪条底层执行路径。</td></tr>
+      </tbody>
+    </table>
+    <p>注册一个工作时，除了 WorkType 和 WorkAction，还可以带上工作名、是否隐藏、基础无修正时长、可进入条件、完成回调或其他调度参数。当前 CoreMod 常见做法是通过 <code>engine.jobs.post</code> 发布工作实例，并把动作、配方或目标数据哈希放进 <code>data</code> 字段；动作的详细数据放在 <code>data/actions/</code> 下。</p>
+    <p>需求驱动的吃饭、喝水、休息、睡眠属于隐藏工作，通常不出现在玩家工作管理里。玩家显式创建的建造、挖掘、搬运、制作、研究等工作才应该作为可管理的 WorkType 暴露。</p>
+
     <h2>配方（recipes）</h2>
     <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写了 <code>profession</code> 后，只有满足职业与等级要求的实体能制作。</p>
     <pre><code>{
@@ -124,6 +136,24 @@
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
     <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。CoreMod 的制作菜单通过 <code>systems.crafting.queue</code> 下单：优先从 stockpile 账本预留输入材料，工作完成后把产物放入工人手中或存回账本；底层 <code>engine.crafting.craft</code> 仍是直接检查实体手持材料的低级接口。</p>
+
+    <h2>建筑蓝图（buildings）</h2>
+    <p>建筑定义放在 <code>data/buildings/</code> 下。建造菜单列出这些建筑蓝图；施工完成后，<code>blueprint</code> 中声明的方块会按建筑原点偏移放入世界。蓝图支持单点 <code>pos</code>，也支持闭区间长方体 <code>from</code>/<code>to</code>。</p>
+    <pre><code>{
+  "id": "copper_age:wood_hut",
+  "name": "Wood Hut",
+  "size": [5, 5, 5],
+  "materials": [
+    { "item_id": "core:wood_plank", "count": 72 }
+  ],
+  "construction_ticks": 240,
+  "blueprint": [
+    { "from": [0, 0, 0], "to": [4, 0, 4], "block": "core:wood_floor" },
+    { "from": [0, 1, 0], "to": [4, 3, 0], "block": "core:wood" },
+    { "pos": [2, 1, 0], "block": "core:wooden_door" }
+  ]
+}</code></pre>
+    <p><code>materials[].item_id</code> 和 <code>blueprint[].block</code> 都必须引用已注册方块/物品；所有蓝图坐标都必须在 <code>size</code> 范围内。完整说明见 <a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
 
     <h2>职业（professions）</h2>
     <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。</p>
@@ -201,6 +231,7 @@
     <p>在控制台中用这些命令确认数据注册成功：</p>
     <pre><code>list_data blocks prefix=copper_age:
 list_data recipes prefix=copper_age:
+list_data buildings prefix=copper_age:
 list_data professions prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:

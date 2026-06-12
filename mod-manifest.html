@@ -35,6 +35,19 @@
   "load_before": [],
   "conflicts": [],
   "side": "both",
+  "ui": {
+    "images": {
+      "main_menu_background_001": "assets/ui/background001.png"
+    },
+    "image_pools": {
+      "main_menu_backgrounds": ["main_menu_background_001"]
+    },
+    "main_menu": {
+      "background_pool": "main_menu_backgrounds",
+      "selection": "first",
+      "background_tint": [0.0, 0.0, 0.0, 0.35]
+    }
+  },
   "settings": {
     "enable_debug_logs": false
   }
@@ -56,6 +69,7 @@
         <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>
         <tr><td><code>conflicts</code></td><td>否</td><td>和这些 MOD 同时存在时加载失败。</td></tr>
+        <tr><td><code>ui</code></td><td>否</td><td>客户端 UI 图片资源声明。支持 <code>images</code>、<code>image_pools</code> 和 <code>main_menu</code> 背景配置。详见 <a href="mod-assets-ui.html">UI 图片资源</a>。</td></tr>
         <tr><td><code>settings</code></td><td>否</td><td>默认配置。只支持字符串、数字和布尔值。</td></tr>
       </tbody>
     </table>

@@ -18,6 +18,7 @@ const WIKI_NAV = [
         title: "MOD素材",
         children: [
           ["mod-assets-texture", "纹理格式", "mod-assets-texture.html"],
+          ["mod-assets-ui", "UI 图片资源", "mod-assets-ui.html"],
           ["mod-assets-shader", "着色器格式", "mod-assets-shader.html"],
           ["mod-assets-model", "模型格式", "mod-assets-model.html"],
           ["mod-assets-audio", "音乐格式", "mod-assets-audio.html"]
@@ -34,6 +35,7 @@ const WIKI_NAV = [
           ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
           ["mod-reciperegistry", "配方注册", "mod-reciperegistry.html"],
           ["mod-cropregistry", "作物注册", "mod-cropregistry.html"],
+          ["mod-buildingregistry", "建筑蓝图注册", "mod-buildingregistry.html"],
           ["mod-zoneregistry", "区域注册", "mod-zoneregistry.html"],
           ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
           ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],

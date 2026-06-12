@@ -47,7 +47,7 @@
   logs/                    —— 运行时输出或诊断日志（可选，不建议打包发布）</code></pre>
 
     <h2>自动注册的数据目录</h2>
-    <p>当前 C++ 加载器会递归扫描并注册下面 14 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
+    <p>当前 C++ 加载器会递归扫描并注册下面 16 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
     <ul>
       <li><code>data/blocks/</code></li>
       <li><code>data/entities/</code></li>
@@ -59,8 +59,10 @@
       <li><code>data/name_pools/</code></li>
       <li><code>data/actions/</code></li>
       <li><code>data/features/</code></li>
+      <li><code>data/ores/</code></li>
       <li><code>data/crops/</code></li>
       <li><code>data/buildings/</code></li>
+      <li><code>data/terrain/</code></li>
       <li><code>data/biomes/</code></li>
       <li><code>data/zones/</code></li>
     </ul>
@@ -82,6 +84,8 @@
         <tr><td><code>data/actions/</code></td><td>否</td><td>AI 可执行的原子动作定义（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code>）。</td></tr>
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度/湿度范围和产出。</td></tr>
+        <tr><td><code>data/ores/</code></td><td>否</td><td>矿物分布数据。字段包括 <code>block</code>、<code>replace_block</code>、<code>noise_scale</code>、<code>threshold</code>、<code>min_y</code>、<code>max_y</code>。</td></tr>
+        <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水、河床方块和 <code>max_navigable_fluid_depth</code> 流体导航深度限制。</td></tr>
         <tr><td><code>data/biomes/</code></td><td>否</td><td>生物群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>

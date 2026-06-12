@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>建筑蓝图注册 | NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-buildingregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑蓝图注册</div></div>
+  <div class="content">
+    <h1>建筑蓝图注册</h1>
+    <p class="subtitle">建筑是 MOD 数据，放在 <code>data/buildings/</code> 下。建造菜单列出建筑蓝图，施工完成后按蓝图把方块放入世界。</p>
+
+    <h2>基础结构</h2>
+    <pre><code>{
+  "id": "my_mod:watch_hut",
+  "name": "Watch Hut",
+  "size": [5, 5, 5],
+  "materials": [
+    { "item_id": "core:wood_plank", "count": 72 },
+    { "item_id": "core:wooden_door", "count": 1 }
+  ],
+  "construction_ticks": 240,
+  "blueprint": [
+    { "from": [0, 0, 0], "to": [4, 0, 4], "block": "core:wood_floor" },
+    { "from": [0, 1, 0], "to": [4, 3, 0], "block": "core:wood" },
+    { "pos": [2, 1, 0], "block": "core:wooden_door" }
+  ]
+}</code></pre>
+
+    <h2>字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>建筑 ID。省略命名空间时会解析到当前 MOD。</td></tr>
+        <tr><td><code>name</code></td><td>建造菜单显示名称。</td></tr>
+        <tr><td><code>size</code></td><td>蓝图包围盒，格式为 <code>[x, y, z]</code>，每项必须为正整数。</td></tr>
+        <tr><td><code>materials</code></td><td>施工开始前需要从库存取出的材料列表，<code>item_id</code> 必须指向已注册方块/物品。</td></tr>
+        <tr><td><code>construction_ticks</code></td><td>施工耗时，20 tick 约等于 1 秒。</td></tr>
+        <tr><td><code>blueprint</code></td><td>可选的方块放置列表。没有蓝图的建筑仍可作为逻辑建筑存在。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>蓝图单元</h2>
+    <p><code>blueprint</code> 中每个元素都需要 <code>block</code>。可以用 <code>pos</code> 放置单个方块，也可以用 <code>from</code>/<code>to</code> 描述闭区间长方体。</p>
+    <pre><code>{ "pos": [2, 1, 0], "block": "core:wooden_door" }
+{ "from": [0, 0, 0], "to": [4, 0, 4], "block": "core:wood_floor" }</code></pre>
+    <p>所有坐标都是相对于建筑原点的偏移，必须落在 <code>size</code> 范围内。<code>block</code> 必须引用已注册的 <code>data/blocks/</code> 条目。</p>
+
+    <h2>内置示例</h2>
+    <p><code>CoreMod/data/buildings/matchbox_hut.json</code> 提供了一个木头火柴盒小屋示例，展示地板、墙体、屋顶和门的组合写法。</p>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

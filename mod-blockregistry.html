@@ -37,7 +37,8 @@
         <tr><td><code>food_value</code></td><td>int</td><td>否</td><td>食物饱腹值，正整数。仅 <code>category</code> 为 <code>food</code> 时有意义。</td></tr>
         <tr><td><code>equip_slot</code></td><td>string</td><td>否</td><td>装备栏位，如 <code>chest</code>、<code>feet</code>。仅装备类物品使用。</td></tr>
         <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>。设为 <code>false</code> 的方块不能被玩家持有。</td></tr>
-        <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>是否为半透明方块，默认 <code>false</code>。半透明方块不会导致相邻方块的可见面剔除——面剔除时将其视为空气。适用于玻璃、树叶等需要透视效果的方块。</td></tr>
+        <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块占用与遮挡分级：<code>opaque</code> 不透明，遮挡相邻面且不可通行；<code>translucent</code> 半透明，不遮挡相邻面但不可通行；<code>transparent</code> 透明，不遮挡相邻面且可通行。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。</td></tr>
+        <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>旧版半透明标记，默认 <code>false</code>。新内容优先使用 <code>block_class</code>；该字段仍会让方块不遮挡相邻可见面，但导航上仍不可通行。</td></tr>
       </tbody>
     </table>
 

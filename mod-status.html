@@ -19,7 +19,7 @@
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖排序、<code>load_before</code> 通配符、严格清单校验、用户设置覆盖和 MOD 翻译合并均已接入。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 14 类 JSON：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>biomes</code>、<code>zones</code>。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 16 类 JSON：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>zones</code>。</td></tr>
         <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、无效字段、配方/职业/文明/作物/方块引用错误会报告明确来源。</td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持 <code>after</code>、<code>every</code>、<code>cancel</code>、<code>clear</code>。</td></tr>
@@ -91,7 +91,7 @@
         <tr>
           <td>体素地形与生物群系</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/biomes</code> 已作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、树木参数和洞穴/河流开关。</td>
+          <td><code>data/biomes</code>、<code>data/ores</code>、<code>data/terrain</code> 已作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、地图颜色、矿物替换目标和默认地形方块。</td>
           <td>世界生成整体仍属实验层，复杂装饰和脚本扩展契约还在收敛。</td>
         </tr>
       </tbody>
