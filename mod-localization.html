@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>本地化与翻译文件 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-localization">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>本地化与翻译文件</div></div>
+  <div class="content">
+    <h1>本地化与翻译文件</h1>
+    <p class="subtitle">翻译文件放在 MOD 根目录的 <code>lang/</code> 下。文件名去掉 <code>.json</code> 后就是 locale ID，例如 <code>en-us</code>、<code>zh-cn</code>。</p>
+
+    <h2>文件结构</h2>
+    <p>每个 locale 文件必须是 UTF-8 JSON 对象。第一层是分类，第二层是 key 和文本。引擎用 <code>category.key</code> 作为完整翻译 key。</p>
+    <pre><code>{
+  "ui": {
+    "menu.start": "Start",
+    "menu.quit": "Quit"
+  },
+  "blocks": {
+    "my_mod:copper_ore": "Copper Ore"
+  }
+}</code></pre>
+
+    <p>对应的中文文件可以写成：</p>
+    <pre><code>{
+  "ui": {
+    "menu.start": "开始",
+    "menu.quit": "退出"
+  },
+  "blocks": {
+    "my_mod:copper_ore": "铜矿石"
+  }
+}</code></pre>
+
+    <h2>加载与合并</h2>
+    <ul>
+      <li>核心语言目录在引擎初始化时先加载；当前 CoreMod 提供 <code>en-us.json</code> 和 <code>zh-cn.json</code>。</li>
+      <li>每个已加载 MOD 的 <code>lang/</code> 会在 MOD 脚本加载完成后合并到同一个 <code>LocalizationManager</code>。</li>
+      <li><code>merge_mod_translations(mod_id, dir)</code> 不会自动给分类或 key 加命名空间；如果两个 MOD 写了相同 locale、category 和 key，后加载的 MOD 会覆盖前面的文本。</li>
+      <li><code>load_directory()</code> 只扫描 <code>lang/</code> 顶层的 <code>.json</code> 文件，不递归子目录。</li>
+      <li><code>set_locale(id)</code> 只会切换到已经加载的 locale；ID 应使用文件名里的小写形式，例如 <code>zh-cn</code>，不是 <code>zh_CN</code>。</li>
+    </ul>
+
+    <div class="callout warn">
+      MOD 入口脚本执行时，该 MOD 自己的 <code>lang/</code> 还没有完成合并。需要依赖 MOD 翻译内容的 UI 查询，建议放到 <code>on_world_init</code>、UI 打开时或更晚的运行时逻辑中。
+    </div>
+
+    <h2>查询规则</h2>
+    <p>翻译查询会先查当前 locale，再查 fallback chain，再查默认 <code>en-us</code>。仍然找不到时，引擎返回原 key 并写入缺失翻译日志。</p>
+    <pre><code>local current = engine.locale.current_locale()
+local start = engine.locale.translate("ui.menu.start")
+local same = engine.locale.translate_cat("ui", "menu.start")
+local resolved = engine.locale.resolve("blocks.my_mod:copper_ore")</code></pre>
+
+    <h2>Lua API</h2>
+    <table>
+      <thead><tr><th>函数</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.locale.translate(key)</code></td><td>按完整 key 查询，等价于按第一个 <code>.</code> 拆成分类和 key。</td></tr>
+        <tr><td><code>engine.locale.translate_cat(category, key)</code></td><td>按分类和 key 查询。</td></tr>
+        <tr><td><code>engine.locale.resolve(text)</code></td><td>只有文本里包含 <code>.</code> 时才尝试翻译，否则原样返回。</td></tr>
+        <tr><td><code>engine.locale.current_locale()</code></td><td>返回当前 locale ID。</td></tr>
+        <tr><td><code>engine.locale.set_locale(id)</code></td><td>切换当前 locale；无效 ID 会保留当前语言。</td></tr>
+        <tr><td><code>engine.locale.get_locale()</code></td><td>返回当前 locale ID。</td></tr>
+        <tr><td><code>engine.locale.get(category, key)</code></td><td>按分类和 key 查询。</td></tr>
+        <tr><td><code>engine.locale.t(key)</code></td><td>按完整 key 查询。</td></tr>
+        <tr><td><code>engine.locale.list_locales()</code></td><td>返回已加载 locale ID 列表。</td></tr>
+        <tr><td><code>engine.locale.reload()</code></td><td>重新加载核心语言目录和已记住的 MOD 语言目录。</td></tr>
+        <tr><td><code>engine.locale.load_locale(id, path)</code></td><td>从指定 JSON 文件加载或覆盖一个 locale。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>控制台命令</h2>
+    <p>运行时可以用控制台检查和切换语言：</p>
+    <ul>
+      <li><code>locale_list</code>：列出当前已加载 locale。</li>
+      <li><code>locale_set &lt;id&gt;</code>：切换当前语言。</li>
+      <li><code>locale_reload</code>：重新加载核心和 MOD 翻译文件。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

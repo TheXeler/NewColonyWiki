@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地形生成流程 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="engine-terraingeneration">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形生成流程</div></div>
+  <div class="content">
+    <h1>地形生成流程</h1>
+    <p class="subtitle">这篇文章是引擎层面的地形生成流程参考。MOD 作者通常只需要关心 <a href="mod-biomeregistry.html">群系注册</a> 与 <a href="mod-featureregistry.html">地物注册</a>；如果你想知道群系和地物是「在什么时候被使用」、或者想调试地形异常，请阅读本文。文中所述的内部结构（C++ 类名、阶段顺序）不是 API 兼容承诺，仅用于辅助理解。</p>
+
+    <div class="callout info">
+      本文记录 2026-06-14 修复后的实现。修复重点是消除气候采样的重复计算瓶颈；功能行为（地形外观、群系选择规则）没有变化。
+    </div>
+
+    <h2>总体架构</h2>
+    <p>地形生成分为两层：</p>
+    <ol>
+      <li><strong>行星级世界地图</strong>（<code>Engine/WorldMap/</code>）：在世界创建时一次性生成一张六边形网格地图，为每格打上 <em>海拔 / 温度 / 湿度 / 是否水域 / 群系 ID</em> 标签。这是「宏观气候场」。</li>
+      <li><strong>Chunk 体素生成</strong>（<code>Engine/Voxel/TerrainGenerator</code> + <code>Engine/ChunkManager</code>）：玩家走到哪里，就为对应的 16×16×256 chunk 实时生成方块。生成时从世界地图采样气候，再叠加生物群系的局部噪声。</li>
+    </ol>
+
+    <h2>第一层:世界地图</h2>
+    <h3>输入</h3>
+    <ul>
+      <li><code>world_seed</code>（u64 世界种子）</li>
+      <li><code>WorldMapConfig</code>：<code>planet_radius</code>（六边形格半径，默认 48）、<code>water_coverage</code>（目标水域占比，默认 0.58）、<code>solar_distance</code>（恒星距离，影响温度）</li>
+    </ul>
+    <h3>步骤</h3>
+    <ol>
+      <li><strong>铺六边形网格</strong>：在 <code>q,r,s</code> 立方坐标系上铺出半径 <code>planet_radius</code> 的六边形盘。每个 tile 的索引数量约 <code>1 + 3R(R+1)</code>，R=48 时约 7 千个 tile。</li>
+      <li><strong>计算海拔</strong>：用三组独立 Perlin 噪声叠加（broad / detail / ridge），公式：<code>elevation = clamp01(0.50 + broad*0.34 + detail*0.12 + ridge*0.20)</code>。</li>
+      <li><strong>计算温度</strong>：基于恒星距离（越近越热）和纬度（两极更冷），并叠加海拔降温：<code>temperature = clamp01(0.22 + solar_heat*0.72 - |latitude|*0.68 - elevation*0.16)</code>。</li>
+      <li><strong>计算湿度</strong>：Perlin 噪声主导，叠加雨影（高海拔背风面干旱）和极地干旱。</li>
+      <li><strong>确定海平面</strong>：把所有 tile 的海拔排序，取 <code>water_coverage</code> 分位数作为 <code>sea_level</code>。这样无论地形分布如何，水域占比都精确匹配设定。</li>
+      <li><strong>水域判定</strong>：<code>elevation ≤ sea_level</code> 即为水域 tile。</li>
+      <li><strong>群系分类</strong>：调用 <code>select_biome_for_climate</code>，对每个 tile 根据（温度，湿度，海拔）匹配群系，写入 <code>biome_id</code>。后续 chunk 生成时直接读取这个预计算结果。</li>
+    </ol>
+
+    <h2>第二层:Chunk 体素生成</h2>
+    <p>当玩家进入某个 chunk 的视距时，<code>ChunkManager</code> 异步生成该 chunk。完整流程如下：</p>
+
+    <h3>阶段 0:气候采样</h3>
+    <p>每个 chunk 进入生成流程时，先在世界地图上做一次气候采样（<code>WorldMap::sample_climate_for_chunk</code>）。采样逻辑：</p>
+    <ul>
+      <li>把 chunk 坐标 (cx, cz) 归一化到有限星球（<code>normalize_planet_chunk</code>，处理经度回绕和极地折返）</li>
+      <li>对所有世界地图 tile 做反距离加权平均：<code>weight = 1 / (dist_sq + 0.015)</code></li>
+      <li>输出当前 chunk 的 <code>temperature / moisture / elevation / water / biome_id</code></li>
+    </ul>
+    <div class="callout info">
+      <strong>性能优化（2026-06-14 修复）</strong>：气候采样结果是 chunk 局部常量，但旧实现对每列方块都会重新采样，造成每个 chunk 调用 <code>sample_climate_for_chunk</code> 上千次、每次遍历约 7 千个 tile。修复后 <code>ChunkManager::cached_climate_for_chunk</code> 用 <code>thread_local</code> 缓存每个 worker 线程最近一次采样的 chunk，使后续相同 chunk 的查询从 O(tiles) 降到 O(1)。
+    </div>
+
+    <h3>阶段 1:地形配置（<code>terrain_config_for_chunk</code>）</h3>
+    <p>根据气候生成 <code>TerrainConfig</code>：</p>
+    <ul>
+      <li>从 <code>data/terrain/default.json</code> 读取 <code>base_block / water_block / riverbed_block</code></li>
+      <li>把 <code>temperature / moisture</code> 注入 cfg，供装饰阶段使用</li>
+      <li>根据 <code>elevation - sea_level</code> 调整 <code>base_height</code>：海床降低、陆地抬升，钳制到 [36, WORLD_HEIGHT - 48]</li>
+      <li>水域或近岸降低 <code>amplitude</code>（让海岸线更平缓）</li>
+      <li><code>river.water_level = sea_level - 2</code></li>
+    </ul>
+
+    <h3>阶段 2:群系选择（<code>select_biome_for_chunk</code>）</h3>
+    <ol>
+      <li>优先使用气候采样返回的 <code>biome_id</code>（世界地图已分类）</li>
+      <li>找不到时调用 <code>select_biome_for_climate</code>：先找完全匹配气候范围的群系集合，按权重加权随机；若没有任何匹配，按"气候距离平方和"最小原则找最近候选</li>
+      <li>仍然失败则回退到纯权重随机的 <code>select_biome</code></li>
+    </ol>
+
+    <h3>阶段 3:地形 pipeline（<code>generate_terrain_for_chunk</code>）</h3>
+    <p>主体由 <code>TerrainGenerator::generate_chunk</code> 完成，但 <code>ChunkManager</code> 在外层加了一层「海岸线平滑」逻辑：</p>
+    <ol>
+      <li><strong>双线性高度混合</strong>：先用 <code>generate_biome_height_map</code>（SIMD 4 路 fbm 噪声）计算生物群系局部高度图，再用 <code>base_height_at</code> 把 <code>cfg.base_height</code> 替换为世界地图的双线性插值高度。这样相邻 chunk 之间的高低差异是平滑的，而不是突变。
+        <div class="callout info">
+          <strong>性能优化（2026-06-14 修复）</strong>：<code>base_height_at</code> 对每列方块都要求 4 个角 chunk 的基础高度。旧实现每个角 chunk 都重新采样气候，相当于 1 个 chunk 生成触发 256 × 4 = 1024 次气候采样。修复后 <code>terrain_base_height_for_block</code> 用 <code>thread_local</code> 的 4 角 cache，第一次调用预计算 4 个角的高度，后续 255 次调用只做纯插值，气候采样次数从 ~1024 降到 4。
+        </div>
+      </li>
+      <li><strong>海岸带处理</strong>：对每列判定距 chunk 边的距离。
+        <ul>
+          <li>内部区（距边 ≥ 4 块）：按生物群系规则钳制高度（水域钳到 <code>max_water_surface_y</code>，陆地钳到 <code>sea_level</code>）</li>
+          <li>边缘带（距边 &lt; 4 块）：不钳制，让自然插值高度决定海陆，避免邻接 chunk 在边缘出现悬崖</li>
+        </ul>
+      </li>
+      <li><strong>方块填充</strong>：按高度图分层填充 bedrock / subsurface / surface；水下列在 surface 上方填 water。</li>
+      <li><strong>地下矿石</strong>（<code>generate_underground</code> → <code>place_ores</code>）：用 <code>m_cave_noise</code> 的 3D Perlin 在指定 y 区间内把 <code>replace_block</code> 替换为矿石方块。矿石定义在 <code>data/ores/</code>。</li>
+    </ol>
+
+    <h3>阶段 4:大型特性（<code>generate_large_features_and_decorations</code>）</h3>
+    <p>在已经填好基础方块的 chunk 上叠加四类特性，顺序敏感：</p>
+    <ol>
+      <li><strong>山脉抬升</strong>（<code>raise_mountains</code>，仅陆地群系）：用 <code>m_noise</code> 的 2D Perlin，<code>noise > threshold</code> 时按 <code>(noise - threshold) / (1 - threshold)</code> 抬升地表，并叠加 <code>shore_fade</code> 让海岸附近不抬升。</li>
+      <li><strong>洞穴挖掘</strong>（<code>carve_caves</code>，<code>biome.has_caves</code> 时）：以 chunk 网格为锚点（每个 anchor 4×4 半径），用确定性哈希决定是否生成洞穴系统。生成时挖出椭球隧道，并向外延伸分支隧道。锚点机制保证相邻 chunk 挖出的洞穴能无缝衔接。</li>
+      <li><strong>河流刻蚀</strong>（<code>carve_rivers</code>，<code>biome.has_rivers</code> 时）：用 <code>m_river_noise</code> 的 2D Perlin，在 <code>|noise| < threshold</code> 的窄带内挖出河道，并填充 water 到 <code>water_level</code>。河床底部铺 <code>riverbed_block</code>。</li>
+      <li><strong>地表装饰</strong>（<code>decorate_chunk</code>）：遍历已注册的 <code>TerrainFeature</code>，按群系白名单过滤。对每列计算植被概率场：
+        <ul>
+          <li>树木类：综合 <code>vegetation.density</code>、噪声权重、湿度权重、温度适宜度（基于 <code>temperature_optimum</code> 和 <code>temperature_range</code>）和坐标随机权重，决定是否放置树。放置时按 <code>trunk_block + leaves_block</code> 或单体 <code>block</code> 绘制。</li>
+          <li>单方块特性（石堆、灌木、遗迹碎片等）：按 <code>density * 6</code> 次随机尝试放置。</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2>噪声分层</h2>
+    <p><code>TerrainGenerator</code> 持有三组独立 Perlin 噪声（不同种子偏移），保证用途互不干扰：</p>
+    <table>
+      <thead><tr><th>成员</th><th>种子偏移</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>m_noise</code></td><td>无（直接用 world_seed）</td><td>地表高度图、山脉抬升、装饰概率场</td></tr>
+        <tr><td><code>m_cave_noise</code></td><td>0xA5A5... 异或</td><td>矿石分布</td></tr>
+        <tr><td><code>m_river_noise</code></td><td>0x5A5A... 异或</td><td>河流路径</td></tr>
+      </tbody>
+    </table>
+
+    <h2>关键常量</h2>
+    <p>定义在 <code>Engine/Voxel/TerrainGenerator.hpp</code> 和 <code>Engine/Core/Types.hpp</code>：</p>
+    <table>
+      <thead><tr><th>常量</th><th>值</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>CHUNK_SIZE</code></td><td>16</td><td>chunk 水平边长</td></tr>
+        <tr><td><code>WORLD_HEIGHT</code></td><td>256</td><td>世界竖直高度</td></tr>
+        <tr><td><code>DEFAULT_TERRAIN_SEA_LEVEL</code></td><td>70</td><td>默认海平面</td></tr>
+        <tr><td><code>MIN_TERRAIN_SEA_LEVEL</code></td><td>24</td><td>最低海平面</td></tr>
+      </tbody>
+    </table>
+
+    <h2>性能特征</h2>
+    <table>
+      <thead><tr><th>操作</th><th>复杂度</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>世界地图生成</td><td>O(R²)</td><td>R=48 时约 7K tile，一次性生成</td></tr>
+        <tr><td>气候采样（单次）</td><td>O(tiles)</td><td>反距离加权平均遍历所有 tile</td></tr>
+        <tr><td>气候采样（缓存命中）</td><td>O(1)</td><td>thread_local cache，同 chunk 内 0 开销</td></tr>
+        <tr><td>地表高度图</td><td>O(CHUNK_SIZE² / 4 × octaves)</td><td>SIMD 4 路并行处理 4 列</td></tr>
+        <tr><td>洞穴挖掘</td><td>O(anchor² × tunnel_length)</td><td>每 chunk 受 9×9 = 81 个 anchor 影响</td></tr>
+        <tr><td>河流刻蚀</td><td>O(CHUNK_SIZE² × WORLD_HEIGHT)（最坏）</td><td>实际只对命中阈值的列扫描</td></tr>
+      </tbody>
+    </table>
+
+    <h2>已知的未来改进</h2>
+    <ul>
+      <li><strong>极地折返处双线性高度异常</strong>：<code>base_height_at</code> 用四个角 chunk 的气候做双线性插值，在极地折返附近可能产生高度异常。考虑改用球面插值或对极地区域使用最近邻。该项影响面小（极地仅占星球一小部分），优先级低。</li>
+    </ul>
+
+    <div class="callout info">
+      <strong>历史改进（2026-06-14 已完成）</strong>
+      <ul>
+        <li>气候采样 thread_local 缓存：单 chunk 生成气候采样次数从 ~1024 降到 4。</li>
+        <li><code>terrain_base_height_for_block</code> 4-corner thread_local cache：插值查询从 O(tiles) 降到 O(1)。</li>
+        <li><code>carve_caves</code> 入口高度加入 biome 钳制，与 <code>generate_biome_height_map</code> 对齐。</li>
+        <li><code>place_tree_feature</code> 按 <code>leaves_radius</code> 限制 trunk 位置，避免树冠跨 chunk 截断。</li>
+        <li><code>BiomeDescriptor</code> 移除 6 个 <code>tree_*</code> 死字段，相关 JSON/Lua 解析同步清理。</li>
+        <li>删除死代码 <code>WorldMap::find_nearest_tile_for_chunk</code>。</li>
+      </ul>
+      详见仓库根目录 <code>TERRAIN_PIPELINE_AUDIT.md</code>。
+    </div>
+
+    <h2>调试技巧</h2>
+    <ul>
+      <li>控制台输入 <code>engine.terrain.list_biomes()</code> 列出所有已注册群系</li>
+      <li>日志中若出现 <code>[Worldgen] no biome match for chunk=...</code>，说明气候值落在所有群系 climate 范围之外，<code>select_biome_for_climate</code> 用最近邻回退了。检查 mod 注册的群系 climate 范围是否有缺口。</li>
+      <li>启动加 <code>--DEBUG</code> 参数可看到 <code>[WorldMap]</code> 和 <code>[Chunks]</code> 日志，了解世界地图大小和 chunk 生成状况。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

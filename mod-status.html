@@ -28,10 +28,10 @@
         <tr><td>文明</td><td><span class="badge done">可用</span></td><td>文明定义、初始方块/职业、配方修正规则和 TechTree 入口已接入；当前 CoreMod 有 2 个文明。</td></tr>
         <tr><td>焦点系统</td><td><span class="badge done">可用</span></td><td>玩家可见焦点事件支持 tick、实体数量、殖民者需求、Lua 条件和选项。</td></tr>
         <tr><td>NPC 阵营与名称池</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、模板命名、阵营实例、关系值和外交动作已接入。</td></tr>
-        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。</td></tr>
+        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 26 种标准组件可用。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令、客户端预测、延迟补偿、重连恢复、增量快照和 MOD 数据交换已实现。</td></tr>
-        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 75 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
+        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 76 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
       </tbody>
     </table>
 
@@ -44,7 +44,7 @@
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
           <td>需求驱动、WorkPool、JobRegistry、ActionRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
-          <td>挖矿、搬运入库、建造材料预留、施工推进和农业产出已接入 WorkPool/Lua 事件闭环；巡逻、社交和紧急行为仍需继续完善。</td>
+          <td>挖矿、搬运入库、建造材料预留、施工推进和农业产出已接入 WorkPool/Lua 事件闭环；<code>inventory_block_action</code> 与运行时 <code>held_item_block_action</code> 名称不一致，导致 CoreMod 进食/饮水动作未进入 ActionRegistry；巡逻、社交和紧急行为仍需继续完善。</td>
         </tr>
         <tr>
           <td>作物与农业</td>
@@ -67,20 +67,20 @@
         <tr>
           <td>音频</td>
           <td><span class="badge partial">部分</span></td>
-          <td>miniaudio 后端、SoundBank、每个 active MOD 的 <code>data/audio/sounds.json</code>、Lua <code>engine.audio</code> 播放/停止/音量 API 已存在。</td>
-          <td>音频不是通用 <code>data/</code> 注册类型；sound bank 在启动时按 active MOD 顺序加载，音频文件路径相对各自 MOD 根目录解析。</td>
+          <td>miniaudio 后端、SoundBank、核心 <code>data/audio/sounds.json</code>、Lua <code>engine.audio</code> 播放/停止/音量 API 已存在。</td>
+          <td>音频不是通用 <code>data/</code> 注册类型；当前启动流程只加载核心 sound bank，每个 MOD 自动加载自己的 <code>data/audio/sounds.json</code> 仍未接入。</td>
         </tr>
         <tr>
           <td>UI 系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td>ImGui 控制台、主菜单、多人菜单、小地图、Lua UI、底栏、窗口、浮动提示、城镇信息、区域指定、建造菜单和 CSS 主题基础。</td>
-          <td>Lua UI 渲染层和通用控件契约仍在完善，不建议 MOD 依赖内部细节。</td>
+          <td>ImGui 控制台、主菜单、多人菜单、小地图、Lua UI 底栏/窗口/屏幕浮动提示、城镇信息、区域指定、建造菜单、主菜单背景资源和 CSS 主题基础。</td>
+          <td>Lua UI 世界坐标投影、通用控件 DSL 和可访问性仍在完善；主题文件只自动扫描运行目录 <code>themes/</code>，MOD 内 CSS 不会自动发现。</td>
         </tr>
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>v2 保存/加载框架、存档列表、原子写入、实体、阵营、Job、焦点状态和 MOD 依赖追踪。</td>
-          <td>跨版本向后兼容迁移、MOD 依赖自动解析策略和自定义组件序列化还未完成。</td>
+          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、阵营、Job、焦点状态和 MOD 差异诊断。详见<a href="engine-save-system.html">存档系统状态</a>。</td>
+          <td>方块改动、建筑/区域实例、跨版本迁移、MOD 依赖自动解析策略和自定义组件序列化还未完成。</td>
         </tr>
         <tr>
           <td>渲染与方块模型</td>
@@ -101,8 +101,9 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td><code>data/audio</code> 注册表接入</td><td><span class="badge planned">未接入</span></td><td>音频 sound bank 已按 active MOD 加载，但还没有作为 MOD 数据类型参与通用注册表。</td></tr>
+        <tr><td><code>data/audio</code> 注册表接入</td><td><span class="badge planned">未接入</span></td><td>当前只加载核心 sound bank；每个 active MOD 的 sound bank 自动发现和通用注册表接入都未完成。</td></tr>
         <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge planned">未接入</span></td><td>TechTree 会查找 <code>techs</code>，但 ModLoader 当前未加载该类型。</td></tr>
+        <tr><td>HeldItem 动作注册</td><td><span class="badge planned">未闭环</span></td><td>数据校验接受 <code>inventory_block_action</code>，ActionRegistry 却检查旧名 <code>held_item_block_action</code>；CoreMod 的进食和饮水动作不会装入运行时 held-item 动作表。</td></tr>
         <tr><td>MOD 打包发布</td><td><span class="badge planned">未完成</span></td><td>已有约定文档，但缺少自动打包、版本兼容检查和发布校验工具。</td></tr>
       </tbody>
     </table>
@@ -125,14 +126,14 @@
         <tr><td>Camera</td><td>2</td><td>OrbitCamera</td></tr>
         <tr><td>Localization</td><td>2</td><td>LocalizationManager</td></tr>
         <tr><td>Save</td><td>2</td><td>SaveSystem</td></tr>
-        <tr><td>UI</td><td>16</td><td>DevConsole, LuaUi, MainMenu, Minimap, CssParser, ThemeLoader</td></tr>
+        <tr><td>UI</td><td>16</td><td>DevConsole, LuaUi, MainMenu, Minimap, CssParser, UiTheme</td></tr>
         <tr><td>WorldMap</td><td>2</td><td>WorldMap</td></tr>
       </tbody>
     </table>
 
     <h2>给 MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、生物群系、本地化和少量 Lua 辅助逻辑。音频仍未作为通用 MOD 数据类型接入；AI 高级行为、UI 扩展、存档迁移和 MOD 打包发布也不建议作为强依赖。
+      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、生物群系、本地化和少量 Lua 辅助逻辑。音频仍未作为通用 MOD 数据类型接入；AI 高级行为、UI 扩展、长期存档兼容和 MOD 打包发布也不建议作为强依赖。
     </div>
 
     <h2>AI Dispatch Notes</h2>

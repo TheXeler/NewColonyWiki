@@ -55,6 +55,10 @@
       配方中的所有 ID（材料、产出、职业）在加载时会进行交叉引用校验。引用不存在的方块或职业会导致加载报错并跳过该配方。
     </div>
 
+    <div class="callout warn">
+      <code>RecipeSystem::craft</code> 的直接 C++/Lua 制作路径当前只读取实体的单个 <code>HeldItem</code> 槽。多输入配方只有在每个输入都是同一种方块、且手持数量足够时才可能通过；输入为不同方块时会失败。CoreMod 制作菜单另有 stockpile 账本预留与产出回写流程，不等同于这个直接制作接口。
+    </div>
+
     <h2>配方分类</h2>
     <p>CoreMod 中配方按用途大致分为以下几类：</p>
     <table>
@@ -109,7 +113,7 @@
     </ul>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认配方注册：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认配方注册：</p>
     <pre><code>list_data recipes                       -- 列出所有已注册的配方
 list_data recipes mod=core:             -- 列出 core 前缀的配方
 data core:bake_bread                    -- 查看单个配方的完整 JSON

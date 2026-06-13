@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>音乐格式</div></div>
   <div class="content">
     <h1>音乐和音效格式</h1>
-    <p class="subtitle">音频文件放在 <code>assets/audio/</code> 下，通过 <code>data/audio/sounds.json</code> 注册。引擎使用 miniaudio 后端，支持 WAV、MP3、FLAC 和 OGG 四种格式。</p>
+    <p class="subtitle">音频文件放在 <code>assets/audio/</code> 下，通过 sound bank JSON 注册。引擎使用 miniaudio 后端，支持 WAV、MP3、FLAC 和 OGG 四种格式。</p>
 
     <h2>支持的格式</h2>
     <table>
@@ -25,7 +25,7 @@
     </table>
 
     <div class="callout info">
-      音频后端使用 miniaudio 库，自动检测文件格式。MOD 作者无需关心解码细节——只要扩展名正确，引擎就能加载。
+      音频后端使用 miniaudio 库，自动检测文件格式。只要文件路径能被 sound bank 解析，后端会按内容解码。
     </div>
 
     <h2>音频分类</h2>
@@ -57,7 +57,7 @@
         birds.wav</code></pre>
 
     <h2>音频注册</h2>
-    <p>通过 <code>data/audio/sounds.json</code> 注册音频文件：</p>
+    <p>sound bank JSON 使用 <code>sounds</code> 数组注册音频文件：</p>
     <pre><code>{
     "sounds": [
         {
@@ -99,18 +99,29 @@
       </tbody>
     </table>
 
+    <h2>当前加载边界</h2>
+    <p>当前启动流程只会调用一次 <code>AudioSystem::load_sound_bank</code>，路径是运行目录下的 <code>data/audio/sounds.json</code>（CoreMod 被复制到运行目录后的核心 sound bank）。<code>data/audio</code> 不进入通用 ModLoader 注册表，也不会自动扫描每个 active MOD 的 <code>data/audio/sounds.json</code>。</p>
+    <p>这意味着内容型 MOD 可以参考本页格式准备音频资源，但“每个 MOD 自动加载自己的 sound bank”还不是当前稳定功能。要让自定义音频真正可播，需要后续接入音频加载流程或由引擎显式调用 <code>load_sound_bank</code>。</p>
+
     <h2>Lua 播放接口</h2>
     <pre><code>-- 播放音效
-engine.audio.play("my_mod:pickaxe_hit")
+local handle = engine.audio.play("sfx_button_click")
 
 -- 指定音量和循环
-engine.audio.play("my_mod:title_theme", 0.7, true)
+local music = engine.audio.play("bgm_main_menu", 0.7, true)
 
 -- 3D 空间音频（音效从指定世界坐标发出）
-engine.audio.play_3d("my_mod:explosion", x, y, z, 0.8)
+engine.audio.play_3d("sfx_block_place", x, y, z, 0.8)
 
--- 停止所有音乐
-engine.audio.stop_music()</code></pre>
+-- 停止单个播放实例或停止全部
+engine.audio.stop(handle)
+engine.audio.stop_all()
+
+-- 音量控制
+engine.audio.set_master_volume(0.8)
+engine.audio.set_music_volume(0.65)
+engine.audio.set_effects_volume(0.75)
+engine.audio.set_ambient_volume(0.55)</code></pre>
 
     <h2>格式选择建议</h2>
     <ul>
@@ -119,6 +130,10 @@ engine.audio.stop_music()</code></pre>
       <li><strong>环境循环音</strong>：使用 OGG 或 WAV。需要循环的音频确保首尾能平滑衔接。</li>
       <li><strong>高品质需求</strong>：使用 FLAC。音质最好但文件最大，仅在必要时使用。</li>
     </ul>
+
+    <div class="callout warn">
+      <code>engine.audio.play</code> 和 <code>play_3d</code> 只能播放已经注册到 SoundBank 的 ID。未知 ID 会记录警告并返回无效句柄 <code>0</code>。
+    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

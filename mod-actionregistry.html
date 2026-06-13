@@ -17,6 +17,10 @@
       动作不是配方，也不是工作分类。配方定义"输入 A + B → 输出 C"的合成关系；WorkType 定义工作属于哪个管理分类；WorkAction 定义"殖民者对某个方块或物品做什么，耗时多久，消耗多少体力/饥饿"的执行关系。动作由 AI 系统在调度时匹配和执行，不需要 Lua 脚本手动调用。
     </div>
 
+    <div class="callout warn">
+      当前实现有一个需要修复的边界：<code>ModLoader</code> 校验和 CoreMod 数据使用 <code>inventory_block_action</code>，但 <code>ActionRegistry</code> 的运行时装载分支仍检查旧名 <code>held_item_block_action</code>。因此 <code>core:eat_food</code> 和 <code>core:drink</code> 会进入通用数据注册表，但不会作为 HeldItem 动作进入 <code>ActionRegistry</code> 执行路径；下面的物品动作格式是当前数据契约，不代表运行时闭环已经完成。
+    </div>
+
     <h2>与 WorkType / WorkAction 的关系</h2>
     <p>工作实例进入 WorkPool 时会带有工作类型、所属势力、位置、基础时长和可选 <code>data</code>。工作类型负责分组、优先级和管理界面展示；动作负责完成时的实际效果。一个 WorkType 可以复用多个动作，例如“挖掘”工作可以执行 <code>core:mine</code>，也可以执行 <code>core:chop_wood</code>；它们都走方块交互 WorkAction，但目标过滤、时长和需求变化不同。</p>
     <p>WorkAction 的基础种类由引擎硬性定义，MOD 通过本页的 JSON 注册具体动作参数。当前动作数据里的 <code>base_type</code> 对应执行路径，<code>action_type</code> 对应方块交互的基本类型。</p>
@@ -93,7 +97,7 @@
     </table>
 
     <h2>内置动作</h2>
-    <p>CoreMod 注册了 6 个内置动作：</p>
+    <p>CoreMod 数据定义了 6 个内置动作；其中 4 个 <code>block_action</code> 当前会进入 <code>ActionRegistry</code> 的方块动作表，2 个 <code>inventory_block_action</code> 受上方实现缺口影响，暂不能作为已闭环的运行时动作处理。</p>
 
     <h3>挖掘 <code>core:mine</code></h3>
     <p>通用挖掘动作，匹配所有 <code>core:</code> 前缀的方块。</p>
@@ -189,7 +193,7 @@
     </div>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认动作注册：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认动作注册：</p>
     <pre><code>list_data actions              -- 列出所有已注册的动作
 list_data actions mod=core:    -- 列出 core 前缀的动作
 data core:mine                 -- 查看单个动作的完整 JSON</code></pre>

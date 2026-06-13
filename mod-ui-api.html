@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI 框架</div></div>
   <div class="content">
     <h1>UI 框架</h1>
-    <p class="subtitle">通过 Lua 注册底边栏按钮、浮动提示和样式，不需要直接操作 ImGui。引擎统一调度渲染，Lua 只负责声明和回调。</p>
+    <p class="subtitle">通过 Lua 注册底边栏按钮、窗口和浮动提示，不需要直接操作 ImGui。引擎统一调度渲染，Lua 只负责声明、内容表和回调。</p>
 
     <h2>设计思路</h2>
     <ul>
@@ -83,7 +83,7 @@
       <tbody>
         <tr><td><code>kind</code></td><td>string</td><td>否</td><td><code>"button"</code></td><td><code>"button"</code>、<code>"toggle"</code>、<code>"label"</code>、<code>"meter"</code></td></tr>
         <tr><td><code>label</code></td><td>string / function</td><td>否</td><td><code>""</code></td><td>显示文本</td></tr>
-        <tr><td><code>icon</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>图标 ID；初版可只显示文本</td></tr>
+        <tr><td><code>icon</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>保留字段；当前底边栏渲染只显示文本、角标和热键。</td></tr>
         <tr><td><code>hotkey</code></td><td>string</td><td>否</td><td><code>nil</code></td><td>仅作 UI 提示显示；实际输入走输入系统</td></tr>
         <tr><td><code>value</code></td><td>number / function</td><td>meter 必填</td><td><code>nil</code></td><td>meter 当前值，范围 0..1</td></tr>
         <tr><td><code>active</code></td><td>boolean / function</td><td>toggle 推荐</td><td><code>false</code></td><td>toggle 是否处于激活状态</td></tr>
@@ -140,11 +140,11 @@
     end
 })</code></pre>
 
-    <p>表格行支持 <code>on_click(row)</code> 和 <code>on_double_click(row)</code>。按钮的 <code>label</code>、<code>tooltip</code>、窗口 <code>title</code>、分页 <code>label</code> 和单元格都可以直接传字符串、函数，或 <code>{ key = "category.id", params = {...} }</code> 翻译引用。</p>
+    <p>表格行支持 <code>on_click(row)</code> 和 <code>on_double_click(row)</code>。按钮支持 <code>label</code>、<code>tooltip</code>、<code>enabled</code> 和 <code>on_click(button)</code>。按钮的 <code>label</code>、<code>tooltip</code>、窗口 <code>title</code>、分页 <code>label</code> 和单元格都可以直接传字符串、函数，或 <code>{ key = "category.id", params = {...} }</code> 翻译引用。</p>
     <p><code>engine.ui.window.unregister(handle_or_id)</code> 注销窗口；<code>engine.ui.window.update(handle_or_id, patch)</code> 局部更新；<code>engine.ui.window.is_open(handle_or_id)</code> 查询打开状态；<code>engine.ui.window.clear(mod_id)</code> 清理指定 MOD 的窗口。</p>
 
     <h2>浮动提示 API</h2>
-    <p>浮动提示用于短生命周期的世界提示、屏幕提示、教程提示和告警。支持屏幕坐标（固定位置）和世界坐标（跟随世界实体投影到屏幕）两种模式。</p>
+    <p>浮动提示用于短生命周期的屏幕提示、教程提示和告警。当前稳定模式是 <code>mode = "screen"</code>；<code>mode = "world"</code> 字段已预留，但 <code>LuaUi.cpp</code> 还没有做世界坐标投影，只会把提示放到屏幕中心附近并应用偏移。</p>
 
     <h3>注册常驻锚点</h3>
     <p><code>engine.ui.floating.register_anchor(def)</code> —— 注册可重复使用的浮动提示锚点，适合常驻的实体状态提示、选中对象提示。</p>
@@ -169,12 +169,12 @@
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>mode</code></td><td>string</td><td>否</td><td><code>"screen"</code></td><td><code>"screen"</code> 或 <code>"world"</code></td></tr>
+        <tr><td><code>mode</code></td><td>string</td><td>否</td><td><code>"screen"</code></td><td><code>"screen"</code> 可稳定使用；<code>"world"</code> 当前是占位定位。</td></tr>
         <tr><td><code>x</code></td><td>number / function</td><td>screen 必填</td><td><code>0</code></td><td>屏幕 X</td></tr>
         <tr><td><code>y</code></td><td>number / function</td><td>screen 必填</td><td><code>0</code></td><td>屏幕 Y</td></tr>
-        <tr><td><code>world_x</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 X</td></tr>
-        <tr><td><code>world_y</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 Y</td></tr>
-        <tr><td><code>world_z</code></td><td>number / function</td><td>world 必填</td><td><code>0</code></td><td>世界 Z</td></tr>
+        <tr><td><code>world_x</code></td><td>number / function</td><td>否</td><td><code>0</code></td><td>预留世界 X；当前渲染尚未使用。</td></tr>
+        <tr><td><code>world_y</code></td><td>number / function</td><td>否</td><td><code>0</code></td><td>预留世界 Y；当前渲染尚未使用。</td></tr>
+        <tr><td><code>world_z</code></td><td>number / function</td><td>否</td><td><code>0</code></td><td>预留世界 Z；当前渲染尚未使用。</td></tr>
         <tr><td><code>offset_x</code></td><td>number</td><td>否</td><td><code>0</code></td><td>屏幕偏移 X</td></tr>
         <tr><td><code>offset_y</code></td><td>number</td><td>否</td><td><code>0</code></td><td>屏幕偏移 Y</td></tr>
         <tr><td><code>ttl_ticks</code></td><td>integer</td><td>否</td><td><code>0</code></td><td><code>0</code> 表示常驻，正数表示自动过期 tick 数</td></tr>
@@ -190,9 +190,7 @@
     icon = "warning",
     severity = "warning",   -- info | success | warning | error
     progress = 0.35,        -- 可选，0..1 进度条
-    actions = {             -- 可选，初版可先不实现按钮
-        { id = "open_jobs", label = "查看工作" }
-    }
+    tooltip = "打开库存区查看详情" -- 可选
 }</code></pre>
 
     <h3>显示一次性提示</h3>
@@ -220,7 +218,7 @@
     <pre><code>engine.ui.floating.dismiss("core:first_colonist_tip")</code></pre>
 
     <h2>样式枚举</h2>
-    <p>初版只提供有限的 severity 枚举，不要在 Lua 中直接操作 ImGui 样式栈。</p>
+    <p>Lua UI 只提供有限的 severity 枚举，不要在 Lua 中直接操作 ImGui 样式栈。全局颜色和几何样式见 <a href="mod-ui-theme.html">UI CSS 主题</a>。</p>
     <pre><code>engine.ui.style.severity = {
     info = "info",
     success = "success",
@@ -312,28 +310,15 @@ end
 
 return M</code></pre>
 
-    <h2>C++ 实现备注</h2>
-    <p>这部分面向引擎开发者，MOD 作者通常不需要关心。</p>
-    <ul>
-      <li>建议新增模块 <code>Engine/UI/LuaUi.hpp</code> 和 <code>Engine/UI/LuaUi.cpp</code>。</li>
-      <li>Lua 函数字段保存为 <code>sol::object</code> 或 <code>sol::protected_function</code>，每帧求值时必须使用 protected call。</li>
-      <li>句柄由 UI 系统统一分配，使用递增 <code>u64</code>。</li>
-      <li>以 <code>id -> handle</code> 建索引，重复注册同一 <code>id</code> 时替换旧项。</li>
-      <li>渲染排序：按 <code>priority</code> 降序，同优先级按注册顺序升序。</li>
-      <li><code>clear(mod_id)</code> 删除指定 MOD 的所有注册项。</li>
-      <li>初版只渲染文本按钮、文本角标和普通 tooltip；图标字段先保留。</li>
-    </ul>
-
-    <h2>验收标准</h2>
+    <h2>当前边界</h2>
     <table>
-      <thead><tr><th>检查项</th><th>说明</th></tr></thead>
+      <thead><tr><th>能力</th><th>当前状态</th></tr></thead>
       <tbody>
-        <tr><td>注册底边栏按钮</td><td>通过 <code>register_slot</code> 添加按钮并可点击</td></tr>
-        <tr><td>创建浮动提示</td><td>通过 <code>floating.show</code> 创建有 TTL 的屏幕提示</td></tr>
-        <tr><td>中文文本显示</td><td>中文文本从 Lua 传入并正确渲染</td></tr>
-        <tr><td>去重</td><td>重复注册相同 <code>id</code> 不产生重复 UI</td></tr>
-        <tr><td>错误隔离</td><td>Lua 回调报错只记录日志，不导致崩溃</td></tr>
-        <tr><td>热重载清理</td><td>MOD 热重载后调用 <code>clear(mod_id)</code> 可清除旧 UI</td></tr>
+        <tr><td>底边栏</td><td>支持 button、toggle、label、meter；图标字段保留但不绘制图标。</td></tr>
+        <tr><td>窗口内容</td><td>支持 <code>table</code> 和 <code>tabs_table</code>；没有通用任意控件 DSL。</td></tr>
+        <tr><td>浮动提示</td><td>屏幕坐标可用；世界坐标字段尚未投影到真实屏幕位置。</td></tr>
+        <tr><td>翻译引用</td><td>字符串字段可用 <code>{ key = "...", params = {...} }</code>，参数会递归解析，循环引用会记录警告并保留占位符。</td></tr>
+        <tr><td>错误隔离</td><td>Lua 字段函数、render、按钮和行回调使用 protected call，失败时记录日志并回退或跳过当前内容。</td></tr>
       </tbody>
     </table>
 

@@ -32,7 +32,7 @@
       <li>示例覆盖方块、职业、文明开局、配方、焦点和 Lua 入口脚本，MOD 可按 <code>CoreMod/</code> 结构参照编写。</li>
       <li>文明数据会校验开局配置和配方规则字段，交叉引用失败时报告缺失目标。</li>
       <li>新增了定时器 <code>engine.timers</code>。</li>
-      <li>新增了 6 个内置事件（<code>inventory:changed</code>、<code>recipe:crafted</code>、<code>profession:assigned</code>、<code>block:interacted</code>、<code>focus:chosen</code>、<code>focus:dismissed</code>）。</li>
+      <li>新增了 7 个内置事件（<code>inventory:changed</code>、<code>recipe:crafted</code>、<code>profession:assigned</code>、<code>block:interacted</code>、<code>job:completed</code>、<code>focus:chosen</code>、<code>focus:dismissed</code>）。</li>
       <li>新增了 <code>data/factions</code>、<code>data/name_pools</code> 和 <code>engine.factions</code> 阵营系统。</li>
       <li>新增了 <code>data/actions</code>、<code>data/crops</code> 数据类型。</li>
       <li>补充了 <code>engine.network</code>、<code>engine.terrain</code>、<code>engine.locale</code> 的完整绑定和文档。</li>
@@ -41,9 +41,10 @@
 
     <h2>近期方向</h2>
     <ul>
-      <li>扩展更多内置事件，减少内置 MOD 对轮询脚本的依赖。</li>
-      <li>补齐内置事件的触发时机、载荷字段和 Lua 示例。</li>
-      <li>为 <code>list_data</code> 直接支持 factions/name_pools 类型过滤。</li>
+      <li>修复 <code>inventory_block_action</code> 与运行时 <code>held_item_block_action</code> 名称不一致的问题，让进食/饮水动作进入 ActionRegistry 闭环。</li>
+      <li>梳理 Craft 工作完成路径，避免 C++ 直接制作和 CoreMod stockpile 队列对同一工作重复产出。</li>
+      <li>补齐 <code>data/audio</code>、<code>data/techs</code> 的公开注册或明确保持为专用系统输入。</li>
+      <li>补齐存档中的 chunk overrides、建筑实例、区域实例和 MOD 自定义运行时状态。</li>
     </ul>
 
     <h2>中期方向</h2>

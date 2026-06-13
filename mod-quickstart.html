@@ -56,7 +56,7 @@
 }</code></pre>
 
     <h2>3. 写入口脚本</h2>
-    <p>入口脚本返回一个表。最少需要 <code>on_load</code>，让 MOD 加载时有东西执行。</p>
+    <p>入口脚本文件必须存在，并返回一个表。纯数据 MOD 可以只写 <code>return {}</code>；调试时建议加一个 <code>on_load</code> 日志，方便确认脚本确实执行了。</p>
     <pre><code>local M = {}
 
 function M.on_load()
@@ -77,7 +77,7 @@ return M</code></pre>
 }</code></pre>
 
     <h2>5. 启动后检查</h2>
-    <p>打开控制台（按 <code>~</code>），按下面顺序确认每一步都正常。这是调试 MOD 的标准流程。</p>
+    <p>非 core MOD 首次发现时默认未启用，需要先在主菜单 MOD 管理器启用并重启；也可以确认 <code>config/copper_age.json</code> 里的 <code>enabled</code> 为 <code>true</code>。进入游戏后打开控制台（按物理 Grave/反引号键），按下面顺序确认每一步都正常。这是调试 MOD 的标准流程。</p>
     <pre><code>mods
 list_data blocks prefix=copper_age:
 data copper_age:copper_ore</code></pre>

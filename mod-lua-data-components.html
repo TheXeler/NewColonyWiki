@@ -44,7 +44,7 @@ end</code></pre>
     <p>空路径、连续点号或末尾点号都是无效路径，例如 <code>quest..stage</code> 和 <code>quest.</code>。</p>
 
     <h2>支持的值</h2>
-    <p>建议使用确定、轻量的 Lua 值：<code>nil</code>、布尔、数字、字符串和表。表会作为 compound 使用，也可以直接写入子表。</p>
+    <p>建议使用确定、轻量的 Lua 值：<code>nil</code>、布尔、数字、字符串和表。表会作为 compound 使用，也可以直接写入子表。实现层不会阻止函数或 userdata 被写入，但这些值不适合长期状态，也不会进入存档。</p>
     <pre><code>engine.data.set(entity, "npc.reputation", 12)
 engine.data.set(entity, "npc.tags", {
   hostile = false,
@@ -65,7 +65,7 @@ end</code></pre>
         <tr><td><code>engine.data.set(entity, path, value)</code></td><td>写入路径上的值。成功返回 <code>true</code>。</td></tr>
         <tr><td><code>engine.data.get(entity, path, fallback)</code></td><td>读取路径上的值。不存在时返回 <code>fallback</code>，没有 fallback 时返回 <code>nil</code>。</td></tr>
         <tr><td><code>engine.data.remove(entity, path)</code></td><td>删除路径上的值。路径存在并被删除时返回 <code>true</code>。</td></tr>
-        <tr><td><code>engine.data.type(entity, path)</code></td><td>返回 <code>nil</code>、<code>boolean</code>、<code>number</code>、<code>string</code> 或 <code>compound</code>。</td></tr>
+        <tr><td><code>engine.data.type(entity, path)</code></td><td>返回 Lua 类型名：常见值为 <code>nil</code>、<code>boolean</code>、<code>number</code>、<code>string</code>、<code>compound</code>；如果脚本写入函数或 userdata，也会返回对应类型名。</td></tr>
         <tr><td><code>engine.data.get_all(entity)</code></td><td>返回整个 compound；实体没有数据组件时返回 <code>nil</code>。</td></tr>
         <tr><td><code>engine.data.clear(entity)</code></td><td>移除整个数据组件。</td></tr>
       </tbody>

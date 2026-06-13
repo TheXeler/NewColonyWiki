@@ -18,7 +18,7 @@
       <li>确认目录是 <code>mods/&lt;mod_id&gt;/</code>。</li>
       <li>确认根目录有 <code>mod.json</code> 且是合法的 JSON（可以用在线 JSON 校验工具检查）。</li>
       <li>确认 <code>id</code> 字段不为空、不和其他 MOD 重复。</li>
-      <li>确认 <code>entry</code> 指向的 Lua 文件存在。</li>
+      <li>确认 <code>entry</code> 指向的 Lua 文件存在；没有写 <code>entry</code> 时默认要求 <code>scripts/bootstrap.lua</code> 存在，所以纯数据 MOD 也需要放一个最小入口脚本。</li>
       <li>查看 <code>logs/latest.log</code> 是否有报错。</li>
     </ul>
 
@@ -34,15 +34,20 @@ data copper_age:copper_ore</code></pre>
       <li>输入物品和输出物品的 ID 是否注册成功。</li>
       <li>stockpile 账本或实体手持物里有没有足够的输入物品，实体手中有没有输出空间。</li>
       <li>配方是否声明了职业要求，实体的职业等级是否满足。</li>
+      <li><code>engine.crafting.craft</code> 只检查实体当前单个 <code>HeldItem</code>；多输入制作通常应走 CoreMod 的 <code>systems.crafting.queue</code> stockpile 队列。</li>
+      <li>Craft 工作完成时 C++ 会先尝试直接制作，然后 Lua 才收到 <code>job:completed</code>。如果工人手持输入物且队列也预留了 stockpile 材料，要检查是否发生双路径产出。</li>
       <li>用 <code>inventory &lt;entity&gt;</code> 和 <code>data &lt;recipe_id&gt;</code> 在控制台查看实际状态。</li>
     </ul>
+
+    <h2>进食或饮水动作没有执行</h2>
+    <p>当前数据校验接受 <code>inventory_block_action</code>，CoreMod 的吃饭/喝水动作也使用这个类型；但运行时 ActionRegistry 仍检查旧名 <code>held_item_block_action</code>。因此动作会出现在通用数据注册里，但不会进入 held-item 动作执行表。这是当前实现缺口，不是 MOD JSON 写法错误。</p>
 
     <h2>焦点 没有触发</h2>
     <ul>
       <li>确认文件在 <code>data/focuses</code> 目录下。</li>
       <li>确认 <code>conditions</code> 数组不为空。</li>
       <li>用了 <code>lua</code> 条件的话，确认已经在 <code>on_load</code> 里通过 <code>engine.focus.register_condition</code> 注册。</li>
-      <li>要显示出来，还需要在 Lua 里用 <code>engine.focus.subscribe</code> 订阅。</li>
+      <li><code>engine.focus.subscribe</code> 只负责把触发通知交给 Lua 脚本；是否显示给玩家还取决于当前 UI/焦点系统是否消费该焦点。</li>
     </ul>
 
     <h2>Lua 脚本没有执行</h2>

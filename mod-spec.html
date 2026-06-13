@@ -17,7 +17,7 @@
     <ul>
       <li>每个 MOD 使用独立目录，目录名建议和 MOD ID 一致。</li>
       <li>根目录必须包含 <code>mod.json</code>。</li>
-      <li>入口脚本建议放在 <code>scripts/bootstrap.lua</code>。</li>
+      <li>入口脚本文件必须存在；未在 <code>mod.json</code> 中指定 <code>entry</code> 时，默认使用 <code>scripts/bootstrap.lua</code>。</li>
       <li>数据文件放在 <code>data/</code> 下的类型目录中。</li>
       <li>如果有 README，放在 MOD 根目录。</li>
     </ul>

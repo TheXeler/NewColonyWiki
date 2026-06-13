@@ -11,44 +11,46 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>群系注册</div></div>
   <div class="content">
     <h1>群系注册</h1>
-    <p class="subtitle">群系（Biome）通过 Lua 脚本调用 <code>engine.terrain.register_biome()</code> 注册。每个群系定义了地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系；当气候范围存在缺口时，会选择气候距离最近的群系作为混合过渡。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
+    <p class="subtitle">群系（Biome）推荐放在 <code>data/biomes/</code> 下用 JSON 注册；加载器会把它们作为 <code>biomes</code> 数据类型交给地形系统。每个群系定义地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系；当气候范围存在缺口时，会选择气候距离最近的群系作为混合过渡。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
 
-    <h2>注册 API</h2>
-    <pre><code>engine.terrain.register_biome({
-    id = "my_mod:wasteland",
-    surface_block = 1,          -- 地表方块 ID
-    subsurface_block = 1,       -- 次地表方块 ID
-    weight = 1,                 -- 群系选择权重，必须为正整数
-    subsurface_depth = 2,       -- 次地表深度（层）
-    has_caves = false,          -- 是否生成洞穴
-    has_rivers = false,         -- 是否生成河流
-    climate = {                 -- 偏好气候范围（0..1）
-        temperature_min = 0.0,  -- 最低温度偏好
-        temperature_max = 1.0,  -- 最高温度偏好
-        moisture_min = 0.0,     -- 最低湿度偏好
-        moisture_max = 1.0,     -- 最高湿度偏好
-        elevation_min = 0.0,    -- 最低海拔偏好
-        elevation_max = 1.0,    -- 最高海拔偏好
-    },
-    vegetation = {              -- 群系整体植被概率场
-        density = 0.5,          -- 0 = 不长植被，1 = 最高密度
-        noise_weight = 0.35,
-        moisture_weight = 0.30,
-        temperature_weight = 0.25,
-        random_weight = 0.10,
-        noise_scale = 0.03125,  -- 1/32 block 尺度
-    },
-})</code></pre>
+    <h2>JSON 示例</h2>
+    <p>把文件放在 <code>data/biomes/wasteland.json</code>：</p>
+    <pre><code>{
+  "id": "my_mod:wasteland",
+  "surface_block": "my_mod:cracked_soil",
+  "subsurface_block": "core:stone",
+  "weight": 1,
+  "subsurface_depth": 2,
+  "has_caves": false,
+  "has_rivers": false,
+  "climate": {
+    "temperature_min": 0.60,
+    "temperature_max": 1.00,
+    "moisture_min": 0.00,
+    "moisture_max": 0.25,
+    "elevation_min": 0.40,
+    "elevation_max": 0.90
+  },
+  "vegetation": {
+    "density": 0.05,
+    "noise_weight": 0.35,
+    "moisture_weight": 0.30,
+    "temperature_weight": 0.25,
+    "random_weight": 0.10,
+    "noise_scale": 0.03125
+  }
+}</code></pre>
 
     <h2>字段说明</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。遵循标准 ID 规则。</td></tr>
-        <tr><td><code>surface_block</code></td><td>int</td><td>是</td><td>地表方块 ID。地形最顶层放置此方块。0 表示空气。</td></tr>
-        <tr><td><code>subsurface_block</code></td><td>int</td><td>是</td><td>次地表方块 ID。地表和基岩之间的填充层。</td></tr>
+        <tr><td><code>surface_block</code></td><td>string</td><td>是</td><td>地表方块数据 ID。地形最顶层放置此方块。</td></tr>
+        <tr><td><code>subsurface_block</code></td><td>string</td><td>是</td><td>次地表方块数据 ID。地表和基岩之间的填充层。</td></tr>
         <tr><td><code>weight</code></td><td>int</td><td>否</td><td>群系选择权重，必须为正整数，默认 1。在气候匹配的候选群系中按权重随机选取。</td></tr>
         <tr><td><code>subsurface_depth</code></td><td>int</td><td>否</td><td>次地表深度（层数），默认 3。地表下方这么厚的层使用 <code>subsurface_block</code>。</td></tr>
+        <tr><td><code>map_color</code></td><td>string</td><td>否</td><td>保留字段。CoreMod 数据中可见该字段，但当前小地图颜色由地表/次地表方块推导，尚未把 <code>map_color</code> 作为稳定控制入口。</td></tr>
         <tr><td><code>has_caves</code></td><td>bool</td><td>否</td><td>是否在此群系中生成洞穴，默认 true。</td></tr>
         <tr><td><code>has_rivers</code></td><td>bool</td><td>否</td><td>是否在此群系中生成河流，默认 true。</td></tr>
         <tr><td><code>climate</code></td><td>table</td><td>否</td><td>偏好气候范围。省略或部分省略的字段默认为 0.0~1.0（匹配任何气候）。</td></tr>
@@ -107,56 +109,49 @@
     <p>在 Lua 脚本中通过 <code>require("worldgen.blocks")</code> 引用这些常量。</p>
 
     <h2>内置群系</h2>
-    <p>CoreMod 注册了 6 个内置群系，定义在 <code>scripts/worldgen/biome_registry.lua</code> 中：</p>
+    <p>CoreMod 内置 15 个群系，定义在 <code>data/biomes/</code> 下的 JSON 文件中（由 C++ <code>TerrainGenerator</code> 在加载时直接读取，<code>scripts/worldgen/biome_registry.lua</code> 仅作 legacy 入口日志）。它们按「温度 × 湿度」3×3 气候矩阵加上水域和海拔特化组织：</p>
     <table>
       <thead><tr><th>群系</th><th>ID</th><th>地表</th><th>次地表</th><th>温度</th><th>湿度</th><th>海拔</th><th>洞穴</th><th>河流</th></tr></thead>
       <tbody>
-        <tr><td>平原</td><td><code>core:plains</code></td><td>草地</td><td>泥土（3层）</td><td>0.28–0.66</td><td>0.22–0.48</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
-        <tr><td>森林</td><td><code>core:forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.28–1.0</td><td>0.48–1.0</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
-        <tr><td>荒地</td><td><code>core:barren</code></td><td>石头</td><td>石头（1层）</td><td>0.0–0.50</td><td>0.0–0.30</td><td>0.0–1.0</td><td>是</td><td>是</td></tr>
-        <tr><td>沼泽</td><td><code>core:swamp</code></td><td>泥土</td><td>泥土（4层）</td><td>0.35–1.0</td><td>0.55–1.0</td><td>0.0–0.55</td><td>是</td><td>是</td></tr>
-        <tr><td>海洋</td><td><code>core:ocean</code></td><td>水</td><td>粘土（4层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.50</td><td>否</td><td>否</td></tr>
+        <tr><td>海洋</td><td><code>core:ocean</code></td><td>水</td><td>粘土（4层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.35</td><td>否</td><td>否</td></tr>
+        <tr><td>浅海</td><td><code>core:ocean_shallow</code></td><td>水</td><td>粘土（3层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.35–0.50</td><td>否</td><td>否</td></tr>
+        <tr><td>海滩</td><td><code>core:beach</code></td><td>沙</td><td>沙（2层）</td><td>0.20–1.0</td><td>0.0–1.0</td><td>0.50–0.58</td><td>否</td><td>否</td></tr>
         <tr><td>河流</td><td><code>core:river</code></td><td>水</td><td>粘土（2层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.55</td><td>否</td><td>否</td></tr>
+        <tr><td>冻原</td><td><code>core:tundra</code></td><td>泥土</td><td>泥土（3层）</td><td>0.0–0.20</td><td>0.0–0.40</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
+        <tr><td>针叶林</td><td><code>core:taiga</code></td><td>草地</td><td>泥土（3层）</td><td>0.15–0.40</td><td>0.30–0.65</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
+        <tr><td>雪林</td><td><code>core:snow_forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.05–0.25</td><td>0.55–1.0</td><td>0.0–0.75</td><td>是</td><td>是</td></tr>
+        <tr><td>干草原</td><td><code>core:steppe</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.60</td><td>0.0–0.25</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
+        <tr><td>平原</td><td><code>core:plains</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.25–0.60</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
+        <tr><td>森林</td><td><code>core:forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.60–1.0</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
+        <tr><td>沙漠</td><td><code>core:desert</code></td><td>沙</td><td>石头（2层）</td><td>0.60–1.0</td><td>0.0–0.20</td><td>0.0–1.0</td><td>否</td><td>否</td></tr>
+        <tr><td>稀树草原</td><td><code>core:savanna</code></td><td>草地</td><td>泥土（3层）</td><td>0.60–1.0</td><td>0.20–0.50</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
+        <tr><td>丛林</td><td><code>core:jungle</code></td><td>草地</td><td>泥土（4层）</td><td>0.60–1.0</td><td>0.50–1.0</td><td>0.0–0.70</td><td>是</td><td>是</td></tr>
+        <tr><td>沼泽</td><td><code>core:swamp</code></td><td>泥土</td><td>泥土（4层）</td><td>0.35–1.0</td><td>0.55–1.0</td><td>0.0–0.45</td><td>否</td><td>是</td></tr>
+        <tr><td>高山</td><td><code>core:mountains</code></td><td>石头</td><td>石头（1层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.85–1.0</td><td>是</td><td>否</td></tr>
       </tbody>
     </table>
 
-    <h3>平原 <code>core:plains</code></h3>
-    <p>温和的草原群系，偏好中等温度和中低湿度。地表为草地，下方是泥土层。适合殖民者定居和农业开垦。</p>
-    <ul>
-      <li>地表：草地，次地表：泥土（3 层）</li>
-      <li>偏好温度 0.28–0.66，湿度 0.22–0.48</li>
-      <li>稀疏树木（通过 feature 注册）</li>
-    </ul>
-
-    <h3>森林 <code>core:forest</code></h3>
-    <p>密集的林地群系，偏好温暖潮湿的气候。树木高大且数量众多，提供丰富的木材资源。</p>
-    <ul>
-      <li>地表：草地，次地表：泥土（3 层）</li>
-      <li>偏好温度 0.28–1.0，湿度 0.48–1.0</li>
-      <li>树木密度 5.0，树高 5~7，树冠半径 2</li>
-    </ul>
-
-    <h3>荒地 <code>core:barren</code></h3>
-    <p>裸露的岩石地表，偏好寒冷干燥的气候。没有植被。资源匮乏但矿石暴露在表面，方便采集。</p>
-    <ul>
-      <li>地表：石头，次地表：石头（1 层）</li>
-      <li>偏好温度 0.0–0.50，湿度 0.0–0.30</li>
-      <li>无树木、无植被</li>
-    </ul>
-
-    <h3>沼泽 <code>core:swamp</code></h3>
-    <p>泥泞的低洼群系，偏好温暖潮湿且低海拔的环境。树木矮小稀疏。泥土层较深，适合挖掘粘土。</p>
-    <ul>
-      <li>地表：泥土，次地表：泥土（4 层）</li>
-      <li>偏好温度 0.35–1.0，湿度 0.55–1.0，海拔 0.0–0.55</li>
-      <li>树木密度 2.0，树高 3~4，树冠半径 1</li>
-    </ul>
-
     <h3>海洋 <code>core:ocean</code></h3>
-    <p>大面积深水区域，匹配低海拔的格子。底部覆盖粘土层。不适合定居或建造。海洋群系不会生成洞穴和河流。</p>
+    <p>大面积深水区域，匹配最低海拔的格子。底部覆盖粘土层。不生成洞穴和河流。</p>
     <ul>
       <li>地表：水，次地表：粘土（4 层）</li>
-      <li>海拔偏好 0.0–0.50</li>
+      <li>海拔偏好 0.0–0.35</li>
+      <li>无树木、无洞穴、无河流</li>
+    </ul>
+
+    <h3>浅海 <code>core:ocean_shallow</code></h3>
+    <p>靠近陆地的浅水带，作为深海与海滩之间的过渡。底部仍为粘土。同样不生成洞穴和河流。</p>
+    <ul>
+      <li>地表：水，次地表：粘土（3 层）</li>
+      <li>海拔偏好 0.35–0.50</li>
+      <li>无树木、无洞穴、无河流</li>
+    </ul>
+
+    <h3>海滩 <code>core:beach</code></h3>
+    <p>沿着海岸线的沙带，作为水域与陆地之间的过渡。在温暖至炎热的纬度才会形成。</p>
+    <ul>
+      <li>地表：沙，次地表：沙（2 层）</li>
+      <li>偏好温度 0.20–1.0，海拔 0.50–0.58</li>
       <li>无树木、无洞穴、无河流</li>
     </ul>
 
@@ -166,6 +161,94 @@
       <li>地表：水，次地表：粘土（2 层）</li>
       <li>海拔偏好 0.0–0.55</li>
       <li>无树木、无洞穴、无河流</li>
+    </ul>
+
+    <h3>冻原 <code>core:tundra</code></h3>
+    <p>寒冷干燥的极地平原，地表为裸露的冻土。几乎没有植被，但偶尔有零星灌木。是寒冷带中最干旱的生态位。</p>
+    <ul>
+      <li>地表：泥土，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.0–0.20，湿度 0.0–0.40，海拔 0.0–0.65</li>
+      <li>植被密度极低</li>
+    </ul>
+
+    <h3>针叶林 <code>core:taiga</code></h3>
+    <p>寒冷带的中湿度群系，地表为草地，下方是泥土。松树密集，是寒带主要的木材产区。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.15–0.40，湿度 0.30–0.65</li>
+      <li>植被密度中等</li>
+    </ul>
+
+    <h3>雪林 <code>core:snow_forest</code></h3>
+    <p>寒冷带最潮湿的群系，茂密的针叶林覆盖在积雪之上。比起针叶林更冷更湿，是寒带雨林生态。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.05–0.25，湿度 0.55–1.0，海拔 0.0–0.75</li>
+      <li>植被密度 0.45</li>
+    </ul>
+
+    <h3>干草原 <code>core:steppe</code></h3>
+    <p>温暖带最干旱的群系，大片干燥的草地，偶有零星灌木。过渡到沙漠的湿润版本。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.30–0.60，湿度 0.0–0.25，海拔 0.0–0.65</li>
+      <li>植被密度 0.10</li>
+    </ul>
+
+    <h3>平原 <code>core:plains</code></h3>
+    <p>温和的草原群系，偏好中等温度和中等湿度。地表为草地，下方是泥土层。适合殖民者定居和农业开垦。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.30–0.65，湿度 0.25–0.60</li>
+      <li>稀疏树木（通过 feature 注册）</li>
+    </ul>
+
+    <h3>森林 <code>core:forest</code></h3>
+    <p>温带潮湿群系，树木高大且数量众多，提供丰富的木材资源。是温带的主要林区。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.30–0.65，湿度 0.60–1.0</li>
+      <li>植被密度 0.85</li>
+    </ul>
+
+    <h3>沙漠 <code>core:desert</code></h3>
+    <p>炎热干燥的沙海，地表覆盖沙层，下方是石头。完全没有植被。温度极高。</p>
+    <ul>
+      <li>地表：沙，次地表：石头（2 层）</li>
+      <li>偏好温度 0.60–1.0，湿度 0.0–0.20</li>
+      <li>无树木、无洞穴、无河流</li>
+    </ul>
+
+    <h3>稀树草原 <code>core:savanna</code></h3>
+    <p>热带中湿度群系，草地夹杂零星的金合欢状树木。是沙漠和丛林之间的过渡生态。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（3 层）</li>
+      <li>偏好温度 0.60–1.0，湿度 0.20–0.50，海拔 0.0–0.65</li>
+      <li>植被密度 0.20</li>
+    </ul>
+
+    <h3>丛林 <code>core:jungle</code></h3>
+    <p>炎热潮湿的热带雨林，植被极其茂密，树木高大交错。是木材和生物资源最丰富的群系。</p>
+    <ul>
+      <li>地表：草地，次地表：泥土（4 层）</li>
+      <li>偏好温度 0.60–1.0，湿度 0.50–1.0，海拔 0.0–0.70</li>
+      <li>植被密度 0.95</li>
+    </ul>
+
+    <h3>沼泽 <code>core:swamp</code></h3>
+    <p>泥泞的低洼群系，偏好温暖潮湿且低海拔的环境。树木矮小稀疏。泥土层较深，适合挖掘粘土。</p>
+    <ul>
+      <li>地表：泥土，次地表：泥土（4 层）</li>
+      <li>偏好温度 0.35–1.0，湿度 0.55–1.0，海拔 0.0–0.45</li>
+      <li>植被密度 0.65</li>
+    </ul>
+
+    <h3>高山 <code>core:mountains</code></h3>
+    <p>海拔最高的山地区域，地表裸露岩石，植被稀疏。不生成河流（山脊上无水道）。覆盖任何温度带的高海拔格子。</p>
+    <ul>
+      <li>地表：石头，次地表：石头（1 层）</li>
+      <li>海拔偏好 0.85–1.0</li>
+      <li>植被密度 0.05，无河流</li>
     </ul>
 
     <h2>群系选择机制</h2>
@@ -187,24 +270,36 @@
       省略 <code>climate</code> 表的群系默认范围为 0.0–1.0（匹配任何气候），因此向后兼容：旧 mod 注册的群系仍然会出现在所有位置。
     </div>
 
-    <h2>自定义群系 Lua 模块</h2>
-    <p>除了调用 <code>engine.terrain.register_biome()</code> 注册 C++ 端数据，你还可以创建独立的 Lua 群系模块来定义 <code>decorate()</code> 函数。CoreMod 的做法是：</p>
-    <ol>
-      <li>在 <code>scripts/worldgen/biomes/</code> 下创建 Lua 文件，返回一个包含 <code>id</code>、<code>surface_block</code>、<code>subsurface_block</code> 和 <code>decorate(data, surface_y, rng)</code> 的表。</li>
-      <li>在 <code>biome_registry.lua</code> 中 require 并加入 <code>_biomes</code> 列表。</li>
-    </ol>
-    <p><code>decorate()</code> 函数签名：</p>
-    <pre><code>function MyBiome.decorate(data, surface_y, rng)
-    -- data: chunk 方块数据数组（一维）
-    -- surface_y: 地表 Y 坐标
-    -- rng: Xoshiro256 随机数生成器
-    --   rng:next_int(min, max) 返回 [min, max] 范围内的随机整数
-    -- 返回值: 放置的装饰物数量
-    return 0
-end</code></pre>
+    <div class="callout info">
+      想了解群系在完整地形生成 pipeline 中的位置（世界地图采样、高度混合、洞穴河流装饰等阶段），见 <a href="engine-terraingeneration.html">地形生成流程</a>。
+    </div>
+
+    <h2>Lua 注册入口</h2>
+    <p><code>engine.terrain.register_biome(table)</code> 仍然存在，主要用于兼容旧脚本或运行时实验。内容型 MOD 不建议把群系只写在 Lua 里，因为 JSON 会参与 ModLoader 的格式校验、重复 ID 检查和跨引用诊断。</p>
+    <pre><code>engine.terrain.register_biome({
+    id = "my_mod:wasteland",
+    surface_block = 1,          -- 数字方块 ID；JSON 中推荐写字符串数据 ID
+    subsurface_block = 1,
+    weight = 1,
+    subsurface_depth = 2,
+    has_caves = false,
+    has_rivers = false,
+    climate = {
+        temperature_min = 0.60,
+        temperature_max = 1.00,
+        moisture_min = 0.00,
+        moisture_max = 0.25,
+        elevation_min = 0.40,
+        elevation_max = 0.90,
+    },
+})</code></pre>
+
+    <div class="callout warn">
+      <code>scripts/worldgen/biome_registry.lua</code> 现在只是 legacy 兼容入口和日志提示；CoreMod 的运行时群系来自 <code>data/biomes/</code>，地物来自 <code>data/features/</code>。
+    </div>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认群系注册成功：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认群系注册成功：</p>
     <pre><code>engine.terrain.list_biomes()   -- 返回所有已注册群系 ID 列表</code></pre>
     <p>或在 Lua 脚本中调用：</p>
     <pre><code>local biomes = engine.terrain.list_biomes()

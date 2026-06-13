@@ -62,14 +62,20 @@
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>文明显示名称。</td></tr>
-        <tr><td><code>professions</code></td><td>string[]</td><td>否</td><td>该文明可用的职业 ID 列表，指向 <code>data/professions/</code> 下的职业。</td></tr>
+        <tr><td><code>professions</code></td><td>string[] 或 object[]</td><td>否</td><td>该文明可用的职业 ID 列表，指向 <code>data/professions/</code> 下的职业。对象形式只读取 <code>id</code>；CoreMod 中的 <code>count</code> 会被交叉引用校验允许，但不会存入 <code>CivilizationDef.professions</code>。</td></tr>
         <tr><td><code>starting_options</code></td><td>object[]</td><td>否</td><td>开局选项。每项包含 <code>id</code>、可选的 <code>name</code>、<code>blocks</code>（初始方块及数量）和 <code>professions</code>（初始殖民者职业、等级和数量）。</td></tr>
         <tr><td><code>recipe_modifiers</code></td><td>object[]</td><td>否</td><td>配方规则修改。每项包含 <code>profession</code>（职业 ID）以及 <code>deny</code>、<code>blocked_recipes</code>、<code>unlock</code>、<code>extra_recipes</code> 中的一个或多个，用于微调配方可制造性。</td></tr>
+        <tr><td><code>starting_buildings</code></td><td>string[] 或 object[]</td><td>否</td><td>加载器会交叉校验建筑 ID，但 <code>CivilizationSystem</code> 当前不保存这个字段，开局建筑实例生成尚未接入。</td></tr>
+        <tr><td><code>leader</code> / <code>description</code> / <code>traits</code> / <code>bonuses</code></td><td>mixed</td><td>否</td><td>CoreMod 数据中存在，当前 <code>CivilizationSystem</code> 不读取；可作为原始 mod_data 供脚本或未来系统使用。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
       文明系统定义了游戏的初始条件和玩法风格。<code>professions</code> 决定可选职业，<code>starting_options</code> 决定初始资源和人手，<code>recipe_modifiers</code> 提供配方层面的差异化控制。
+    </div>
+
+    <div class="callout warn">
+      当前 C++ 系统会保存文明 ID、名称、职业 ID、配方规则和 starting_options；<code>starting_buildings</code> 只做引用校验，<code>leader</code>、<code>description</code>、<code>traits</code>、<code>bonuses</code> 不进入 <code>CivilizationDef</code>。这些字段不应被当作已闭环的运行时机制。
     </div>
 
     <h2>ID 规则</h2>
@@ -87,7 +93,7 @@
     </ul>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认文明注册成功：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认文明注册成功：</p>
     <pre><code>mods                                  —— 确认 MOD 已加载
 list_data civilizations               —— 列出所有已注册文明
 data copper_age:copper_clan            —— 查看单个文明的完整 JSON</code></pre>

@@ -14,7 +14,7 @@
     <p class="subtitle">清单文件告诉游戏：我是谁、从哪启动、依赖谁、默认配置是什么。</p>
 
     <h2>推荐模板</h2>
-    <p>下面是一个完整的 <code>mod.json</code> 模板，可以直接复制。不需要的字段删掉就行——除了 <code>id</code>，其他都不是必填。</p>
+    <p>下面是一个完整的 <code>mod.json</code> 模板，可以直接复制。不需要的字段删掉就行。当前加载器只有 <code>id</code> 必填，但如果不写 <code>entry</code>，引擎仍会按默认值查找 <code>scripts/bootstrap.lua</code>。</p>
     <pre><code>{
   "id": "copper_age",
   "name": "Copper Age",
@@ -49,7 +49,12 @@
     }
   },
   "settings": {
-    "enable_debug_logs": false
+    "enable_debug_logs": false,
+    "ore_spawn_rate": {
+      "value": 1.0,
+      "label_key": "ui.copper_age:settings.ore_spawn_rate",
+      "description_key": "ui.copper_age:settings.ore_spawn_rate.description"
+    }
   }
 }</code></pre>
 
@@ -60,8 +65,10 @@
         <tr><td><code>id</code></td><td>是</td><td>MOD 的唯一标识。建议用小写英文、数字和下划线，比如 <code>copper_age</code>。内容数据再用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。</td></tr>
         <tr><td><code>name</code></td><td>否</td><td>显示名称。不写就用 <code>id</code> 代替。</td></tr>
         <tr><td><code>version</code></td><td>否</td><td>MOD 版本号，建议用语义化版本。不写默认为 <code>0.0.0</code>。</td></tr>
-        <tr><td><code>api_version</code></td><td>否</td><td>期望的公共 MOD API 版本。当前示例用 <code>0.1</code>。引擎会比对兼容性，不兼容时给出警告。</td></tr>
-        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。不写则不执行入口脚本（纯数据 MOD 合法）。</td></tr>
+        <tr><td><code>name_key</code></td><td>否</td><td>显示名称的本地化 key；主菜单和 MOD 管理 UI 可用它代替硬编码名称。</td></tr>
+        <tr><td><code>description_key</code></td><td>否</td><td>描述文本的本地化 key。</td></tr>
+        <tr><td><code>api_version</code></td><td>否</td><td>期望的公共 MOD API 版本。当前公共 API 为 <code>0.1</code>；请求版本必须同主版本且不高于当前版本，否则 <code>mod.json</code> 解析失败。</td></tr>
+        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。默认 <code>scripts/bootstrap.lua</code>；当前加载流程会要求入口文件存在，纯数据 MOD 也应提供一个返回空表的入口脚本，或显式把 <code>entry</code> 指向存在的空脚本。</td></tr>
         <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
         <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
         <tr><td><code>lua.permissions.io</code></td><td>否</td><td>声明该 MOD 的 Lua 脚本是否需要访问 Lua <code>io</code> 库。默认 <code>false</code>。玩家在主菜单 MOD 管理器中启用此类 MOD 时会看到确认提示。兼容旧写法 <code>lua.allow_io</code> 和顶层 <code>lua_allow_io</code>。</td></tr>
@@ -70,19 +77,27 @@
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>
         <tr><td><code>conflicts</code></td><td>否</td><td>和这些 MOD 同时存在时加载失败。</td></tr>
         <tr><td><code>ui</code></td><td>否</td><td>客户端 UI 图片资源声明。支持 <code>images</code>、<code>image_pools</code> 和 <code>main_menu</code> 背景配置。详见 <a href="mod-assets-ui.html">UI 图片资源</a>。</td></tr>
-        <tr><td><code>settings</code></td><td>否</td><td>默认配置。只支持字符串、数字和布尔值。</td></tr>
+        <tr><td><code>settings</code></td><td>否</td><td>默认配置。支持直接写字符串、数字、布尔值，也支持 <code>{"value": ..., "label_key": "...", "description_key": "..."}</code> 对象格式。保留项 <code>enabled</code> 必须是布尔值。</td></tr>
       </tbody>
     </table>
 
     <h2>玩家配置覆盖</h2>
-    <p>除 <code>core</code> 之外，所有 MOD 首次发现时都会硬编码为未启用。主菜单 MOD 管理器会写入同名配置文件中的 <code>enabled</code> 值；启用或禁用后需要重启使加载结果生效。</p>
+    <p>加载器会自动确保每个 MOD 都有 <code>enabled</code> 设置。<code>core</code> 永远启用；其他 MOD 首次发现时默认为未启用。主菜单 MOD 管理器会写入同名配置文件中的 <code>enabled</code> 值；启用或禁用后需要重启使加载结果生效。</p>
     <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>config/</code> 目录下：</p>
     <pre><code>config/copper_age.json</code></pre>
     <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>
     <pre><code>local debug_logs = engine.modding.get_setting("copper_age", "enable_debug_logs", false)</code></pre>
 
+    <div class="callout info">
+      覆盖文件也使用与 <code>settings</code> 相同的解析规则，可以直接写 <code>"ore_spawn_rate": 1.25</code>，也可以写带 <code>value</code> 的对象。未知 key 会被忽略；类型不匹配会导致加载失败。
+    </div>
+
     <div class="callout warn">
       <code>dependencies</code> 决定能否加载，<code>load_after</code> 只是排序建议。你的数据引用了另一个 MOD 的方块或职业时，应该写 <code>dependencies</code>，不能只靠 <code>load_after</code>。
+    </div>
+
+    <div class="callout warn">
+      当前没有“无入口脚本”的纯数据 MOD 路径。即使所有内容都在 JSON 里，也要保留一个存在的入口脚本，例如 <code>scripts/bootstrap.lua</code> 写 <code>return {}</code>。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

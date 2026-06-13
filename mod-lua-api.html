@@ -72,8 +72,8 @@ local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
     <h2>合成和职业</h2>
     <p>配方和职业本体写在 JSON 里，Lua 只负责触发或响应结果。</p>
     <pre><code>local ok = engine.professions.assign(id, "core:worker", 1)
-if ok and engine.crafting.craft(id, "core:wood_saw") then
-  engine.log.info("crafted wood planks")
+if ok and engine.crafting.craft(id, "core:craft_stick") then
+  engine.log.info("crafted sticks")
 end
 
 for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
@@ -82,16 +82,19 @@ for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
     engine.log.info("recipe: " .. recipe.id .. " -> " .. recipe.output.id)
   end
 end</code></pre>
+    <p><code>engine.crafting.craft</code> 是低级直接制作接口，只检查实体当前单个 <code>HeldItem</code> 是否满足输入。CoreMod 的菜单制作走 <code>systems.crafting.queue</code>，会从 stockpile 账本预留材料并在 <code>job:completed</code> 后发放产物。</p>
 
     <h2>工作池</h2>
     <p>发布工作时必须指定工作所属势力。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己势力一致的工作。</p>
-    <p>工作系统按两个概念拆分：<strong>WorkType</strong> 表示工作所属分类，用于优先级和管理界面分组；<strong>WorkAction</strong> 表示引擎硬定义的执行方式，例如方块交互、手持物品动作或纯等待推进。WorkType 需要先注册，之后才应出现在工作管理界面中；如果当前界面还没有显示对应入口，以注册表和调度行为为准。</p>
-    <p><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code> 中的 <code>type</code> 是工作池当前接受的工作类型字符串（如 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code>），调度时会映射到内部工作分类。<code>duration</code> 是无修正基础时长；<code>data</code> 是可选上下文，通常放动作 ID、配方 ID 或目标方块 ID 的哈希。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
+    <p>工作系统内部有 JobType、JobCategory 和 WorkAction，但当前 Lua 只公开发布工作实例的入口，没有公开的工作类型注册 API。</p>
+    <p><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code> 中的 <code>type</code> 当前只识别 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code> 五个字符串；未知字符串会落回 Build。<code>duration</code> 是无修正基础时长；<code>data</code> 是可选上下文，通常放动作 ID、配方 ID 或目标方块 ID 的哈希。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
 local recipe_hash = engine.util.data_id_hash("core:craft_stick")
 local job_id = engine.jobs.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
     <p>当工作需要改变世界或实体状态时，推荐把 <code>data</code> 指向一个已注册动作。动作本身描述 WorkAction 的细节，例如 <code>block_action</code> 配合 <code>action_type</code> 执行挖掘、放置或交互；工作实例只负责进入工作池、被分配、计时和完成事件。</p>
+    <p>Craft 工作完成时，引擎会先尝试用 <code>data</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>job:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
     <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
+    <p>Pathfinding failures are logged as errors; the AI no longer creates an in-place fallback job when a navigation target cannot be reached.</p>
     <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同势力 AI 重新领取。</p>
 
     <h2>事件</h2>
@@ -120,29 +123,27 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
     <p>也可以用 <code>engine.events.emit("name", payload)</code> 发送自定义 Lua 事件。</p>
 
     <h2>装备系统</h2>
-    <p>CoreMod 在 <code>on_load</code> 阶段注册了三个装备栏位：<code>weapon</code>（武器）、<code>armor</code>（护甲）、<code>held_item</code>（手持物品）。栏位通过 Lua API 注册，不使用 JSON 数据注册表。</p>
-    <pre><code>-- 注册一个新栏位（通常在 on_load 中调用）
-engine.equipment.register_slot("weapon")
+    <p>装备组件使用固定槽位：<code>MainHand</code>、<code>OffHand</code>、<code>Armor</code>、<code>Accessory</code>。当前没有 Lua API 用来注册新装备槽；如果只是给 UI 增加按钮，使用 <code>engine.ui.bottom_bar.register_slot</code>。</p>
+    <pre><code>local item_hash = engine.util.data_id_hash("core:wooden_sword")
 
--- 将物品装备到栏位（item_id 为 data ID 的哈希值）
-engine.equipment.equip(entity_id, "held_item", item_hash, 1)
+-- 将物品装备到固定槽位
+engine.equipment.equip(entity_id, "MainHand", item_hash, 1)
+
+-- 双手物品只能装备到 MainHand，会占用 OffHand
+engine.equipment.equip(entity_id, "MainHand", item_hash, 1, true)
 
 -- 从栏位卸下
-engine.equipment.unequip(entity_id, "held_item")
+local removed = engine.equipment.unequip(entity_id, "MainHand")
+engine.log.info("removed item: " .. tostring(removed.item_id))
 
 -- 查询实体所有栏位
 local eq = engine.equipment.get_equipment(entity_id)
-engine.log.info("weapon: " .. tostring(eq.weapon.item_id))
+engine.log.info("main hand: " .. tostring(eq.MainHand.item_id))
 
 -- 查询单个栏位
-local held = engine.equipment.get_slot(entity_id, "held_item")
+local held = engine.equipment.get_slot(entity_id, "MainHand")
 if held.item_id ~= 0 then
-  engine.log.info("holding item: " .. tostring(held.item_id))
-end
-
--- 检查栏位是否已注册
-if engine.equipment.has_slot("weapon") then
-  engine.log.info("weapon slot exists")
+  engine.log.info("equipped item: " .. tostring(held.item_id))
 end</code></pre>
     <p>物品 ID 使用 <code>engine.util.data_id_hash("core:wooden_sword")</code> 格式的 FNV-1a 哈希值。</p>
 
@@ -249,10 +250,11 @@ engine.log.info("sample name: " .. name)</code></pre>
 end</code></pre>
 
     <h2>本地化</h2>
-    <p>如果需要翻译 UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放在 <code>lang/</code>。</p>
-    <pre><code>engine.locale.set_locale("zh_CN")
-local text = engine.locale.t("ui.menu.start")
-engine.log.info(engine.locale.get("ui", "menu.start"))</code></pre>
+    <p>如果需要翻译 UI 文本，可以用 <code>engine.locale</code> 相关 API。翻译文件放在 <code>lang/</code>，locale ID 使用 <code>en-us</code>、<code>zh-cn</code> 这样的文件名形式。详情见 <a href="mod-localization.html">本地化与翻译</a>。</p>
+    <pre><code>engine.locale.set_locale("zh-cn")
+local locale = engine.locale.current_locale()
+local text = engine.locale.translate("ui.menu.start")
+engine.log.info(locale .. ": " .. engine.locale.translate_cat("ui", "menu.start"))</code></pre>
 
     <div class="callout info">
       需要查函数签名时看 <a href="mod-lua-api-reference.html">Lua API 速查</a>。那一页有搜索框，适合用 <code>focus</code>、<code>inventory</code>、<code>terrain</code> 之类关键词快速过滤。

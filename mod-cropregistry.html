@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>作物注册</div></div>
   <div class="content">
     <h1>作物注册</h1>
-    <p class="subtitle">作物（Crop）定义在 <code>data/crops/</code> 下，以 JSON 描述。每份作物定义了所需的农田类型、生长阶段、温度范围和收获产物。殖民者在种植区域中播种后，引擎根据作物配置自动推进生长阶段。</p>
+    <p class="subtitle">作物（Crop）定义在 <code>data/crops/</code> 下，以 JSON 描述。每份作物定义了所需的农田类型、生长阶段、温度范围和收获产物。当前 CoreMod 的农业脚本读取作物数据后负责播种、成熟计时和收获产出。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
@@ -37,10 +37,10 @@
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。建议以 <code>_crop_data</code> 结尾以便区分。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。</td></tr>
         <tr><td><code>farmland_type</code></td><td>string</td><td>是</td><td>所需农田方块的完整 ID。必须指向已注册的方块。常见值：<code>core:farmland</code>（旱地）、<code>core:paddy</code>（水田）。</td></tr>
-        <tr><td><code>growth_stages</code></td><td>array</td><td>是</td><td>生长阶段数组，至少 1 个阶段。每个阶段包含 <code>ticks</code> 和 <code>block</code>。阶段按顺序推进，最后一个阶段结束后作物成熟可收获。</td></tr>
+        <tr><td><code>growth_stages</code></td><td>array</td><td>是</td><td>生长阶段数组，至少 1 个阶段。每个阶段包含 <code>ticks</code> 和可选 <code>block</code>。Lua 信息接口会把各阶段 ticks 加总为 <code>growth_ticks</code>，并把第一个带 <code>block</code> 的阶段作为当前 CoreMod 播种方块。</td></tr>
         <tr><td><code>growth_stages[].ticks</code></td><td>int</td><td>是</td><td>本阶段持续的游戏 tick 数（1 tick = 50ms，即 20 TPS）。例如 1200 ticks = 60 秒真实时间。</td></tr>
         <tr><td><code>growth_stages[].block</code></td><td>string</td><td>否</td><td>本阶段显示的方块 ID。必须指向已注册的方块。省略时保持上一阶段的方块不变。</td></tr>
-        <tr><td><code>temperature</code></td><td>object</td><td>是</td><td>适宜温度范围。包含 <code>min</code> 和 <code>max</code> 两个浮点数（单位：度）。</td></tr>
+        <tr><td><code>temperature</code></td><td>object</td><td>是</td><td>适宜温度范围。包含 <code>min</code> 和 <code>max</code> 两个浮点数（单位：度）。当前加载器校验该字段；CoreMod 农业脚本尚未按温度动态修正生长。</td></tr>
         <tr><td><code>temperature.min</code></td><td>float</td><td>是</td><td>最低适宜温度。必须 ≤ <code>max</code>。</td></tr>
         <tr><td><code>temperature.max</code></td><td>float</td><td>是</td><td>最高适宜温度。</td></tr>
         <tr><td><code>outputs</code></td><td>array</td><td>是</td><td>收获产物列表，至少 1 个。每个产物包含 <code>id</code> 和 <code>count</code>。</td></tr>
@@ -65,7 +65,7 @@
     <p>MOD 可以注册新的农田方块，只要在方块的 JSON 中正确定义，然后在作物的 <code>farmland_type</code> 中引用即可。</p>
 
     <h2>交叉引用校验</h2>
-    <p>引擎在加载作物时会自动进行以下校验：</p>
+    <p>加载器在加载作物时会自动进行以下校验：</p>
     <ul>
       <li><code>farmland_type</code> 必须指向已注册的方块。</li>
       <li><code>growth_stages[].block</code>（如果填写）必须指向已注册的方块。</li>
@@ -116,13 +116,13 @@
     <h2>生长与收获流程</h2>
     <ol>
       <li><strong>播种</strong>：殖民者在种植区域（zone type = <code>core:growing</code>）的空闲农田方块上放置种子方块。</li>
-      <li><strong>生长</strong>：引擎按 tick 计时，每经过 <code>growth_stages[N].ticks</code> 个 tick 后推进到下一阶段。阶段推进时替换为对应 <code>block</code>。</li>
-      <li><strong>成熟</strong>：最后一个阶段结束后，作物标记为可收获状态。</li>
-      <li><strong>收获</strong>：殖民者执行收获动作（<code>core:harvest_crop</code>），触发 <code>block:interacted</code> 事件。Lua 脚本监听此事件，根据 <code>outputs</code> 生成产物物品。</li>
+      <li><strong>生长</strong>：CoreMod 的 <code>systems.farming</code> 按 tick 计时，把各阶段 <code>ticks</code> 加总作为成熟时间，并按季节做简单倍率修正；当前不会逐阶段替换为不同 <code>block</code>。</li>
+      <li><strong>成熟</strong>：到达成熟 tick 后，脚本发布收获工作。</li>
+      <li><strong>收获</strong>：收获工作完成后，脚本移除作物方块，并根据 <code>outputs</code> 把产物放到工人手中或 stockpile 账本。</li>
     </ol>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认作物注册：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认作物注册：</p>
     <pre><code>list_data crops                 -- 列出所有已注册的作物
 data core:wheat_crop_data       -- 查看单个作物的完整 JSON</code></pre>
 

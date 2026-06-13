@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>着色器格式</div></div>
   <div class="content">
     <h1>着色器格式</h1>
-    <p class="subtitle">着色器源码放在 <code>assets/shaders/</code> 下，使用 GLSL 编写。引擎启动时通过 glslangValidator 自动编译为 Vulkan SPIR-V 字节码。</p>
+    <p class="subtitle">着色器源码放在 <code>assets/shaders/</code> 下，使用 GLSL 编写。启动预处理阶段会通过打包的 glslangValidator 编译为 Vulkan SPIR-V 字节码。</p>
 
     <h2>支持的格式</h2>
     <table>
@@ -19,32 +19,33 @@
       <tbody>
         <tr><td>顶点着色器</td><td><code>.vert</code></td><td>GLSL 4.50 顶点着色器源码。</td></tr>
         <tr><td>片段着色器</td><td><code>.frag</code></td><td>GLSL 4.50 片段着色器源码。</td></tr>
-        <tr><td>计算着色器</td><td><code>.comp</code></td><td>GLSL 4.50 计算着色器源码。</td></tr>
-        <tr><td>几何着色器</td><td><code>.geom</code></td><td>GLSL 4.50 几何着色器源码。</td></tr>
-        <tr><td>曲面控制着色器</td><td><code>.tesc</code></td><td>细分控制着色器。</td></tr>
-        <tr><td>曲面求值着色器</td><td><code>.tese</code></td><td>细分求值着色器。</td></tr>
+        <tr><td>计算着色器</td><td><code>.comp</code></td><td>会被预处理编译；当前主渲染管线没有通用 MOD 计算管线接入。</td></tr>
+        <tr><td>几何着色器</td><td><code>.geom</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载几何阶段。</td></tr>
+        <tr><td>曲面控制着色器</td><td><code>.tesc</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载细分阶段。</td></tr>
+        <tr><td>曲面求值着色器</td><td><code>.tese</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载细分阶段。</td></tr>
       </tbody>
     </table>
 
     <h2>编译流程</h2>
-    <p>引擎在启动时使用 <strong>glslangValidator</strong> 将 GLSL 源码编译为 Vulkan SPIR-V 字节码（<code>.spv</code>）。编译后的文件缓存在构建目录中，源码未修改时跳过编译。</p>
+    <p>引擎在启动时使用运行目录下的 <strong>tools/glslang/glslangValidator</strong> 将 GLSL 源码编译为 Vulkan SPIR-V 字节码（<code>.spv</code>）。编译后的文件缓存在 <code>generate/&lt;mod_id&gt;/shaders/</code> 中，源码未修改时跳过编译。</p>
     <pre><code>assets/shaders/block.vert     -- 源码（MOD 提供）
     ↓ glslangValidator（启动时自动执行）
-build/bin/block.vert.spv      -- 编译产物（自动生成）</code></pre>
+generate/core/shaders/block.vert.spv
+                              -- 编译产物（自动生成）</code></pre>
 
     <div class="callout info">
-      着色器文件必须使用 <code>.vert</code>、<code>.frag</code> 等标准扩展名。引擎按扩展名识别着色器类型。不支持预编译的 <code>.spv</code> 文件——源码必须在启动时可被 glslangValidator 编译。
+      着色器文件必须使用 <code>.vert</code>、<code>.frag</code>、<code>.comp</code>、<code>.geom</code>、<code>.tesc</code> 或 <code>.tese</code> 扩展名。引擎按扩展名识别源码类型。不支持把预编译 <code>.spv</code> 当作 MOD 源文件提交。
     </div>
 
     <h2>着色器版本</h2>
     <p>使用 <code>#version 450</code> 或更高版本。渲染后端为 Vulkan，不支持 <code>#version 330</code> 等 OpenGL 版本。</p>
 
-    <h2>引擎绑定点</h2>
+    <h2>方块管线绑定点</h2>
     <table>
       <thead><tr><th>绑定</th><th>类型</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>binding = 0</code></td><td>UBO</td><td>视图/投影矩阵（<code>view</code>, <code>projection</code>）</td></tr>
-        <tr><td><code>binding = 1</code></td><td>sampler2D</td><td>纹理图集采样器</td></tr>
+        <tr><td><code>binding = 0</code></td><td>UBO</td><td>主 UniformBufferObject；具体字段需与内置 shader 和 C++ UBO 保持一致。</td></tr>
+        <tr><td><code>binding = 1</code></td><td>sampler2D</td><td>方块/实体运行时纹理图集采样器。</td></tr>
       </tbody>
     </table>
 
@@ -79,16 +80,24 @@ void main() {
 }</code></pre>
 
     <h2>内置着色器</h2>
-    <p>CoreMod 提供了 4 组内置着色器：</p>
+    <p>CoreMod 提供多组内置着色器。当前主渲染和后处理代码按固定文件名加载这些 <code>.spv</code>：</p>
     <table>
       <thead><tr><th>着色器</th><th>文件</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td>方块渲染</td><td><code>block.vert</code> + <code>block.frag</code></td><td>体素方块的标准渲染管线。</td></tr>
         <tr><td>天空盒</td><td><code>skybox.vert</code> + <code>skybox.frag</code></td><td>天空盒渲染。不使用深度测试和深度写入。</td></tr>
         <tr><td>GPU 调试几何</td><td><code>debug.vert</code> + <code>debug.frag</code></td><td>绘制带深度测试的调试线框和半透明调试面。</td></tr>
-        <tr><td>调试三角形</td><td><code>triangle.vert</code> + <code>triangle.frag</code></td><td>基础三角形渲染，用于验证管线。</td></tr>
+        <tr><td>SSAO</td><td><code>ssao.vert</code> + <code>ssao.frag</code></td><td>屏幕空间环境光遮蔽。</td></tr>
+        <tr><td>SSAO 模糊</td><td><code>ssao_blur.vert</code> + <code>ssao_blur.frag</code></td><td>AO 结果模糊。</td></tr>
+        <tr><td>体积光遮罩</td><td><code>volumetric_light_mask.vert</code> + <code>volumetric_light_mask.frag</code></td><td>生成体积光遮罩。</td></tr>
+        <tr><td>体积光模糊</td><td><code>volumetric_light_blur.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
+        <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
       </tbody>
     </table>
+
+    <div class="callout warn">
+      目前没有公开的“新增自定义渲染管线”MOD API。MOD 可以提供会被预处理的 shader 源码，但只有被 C++ 渲染代码按固定名称引用的 shader 会实际进入管线。
+    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

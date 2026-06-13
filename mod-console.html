@@ -11,15 +11,36 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>调试控制台</div></div>
   <div class="content">
     <h1>MOD 调试控制台</h1>
-    <p class="subtitle">控制台是你调试 MOD 最重要的工具。按 <code>~</code> 键打开；焦点在控制台时按 <code>Esc</code> 关闭。</p>
+    <p class="subtitle">控制台是你调试 MOD 最重要的工具。按键盘左上角的物理 Grave/反引号键打开；焦点在控制台时按 <code>Esc</code> 关闭。</p>
 
     <div class="callout info">如果控制台没反应，先看 <code>logs/latest.log</code>。即使控制台不可见，日志通常还是会写到 <code>logs/</code> 目录。</div>
+
+    <h2>帮助和补全</h2>
+    <p>控制台输入框支持命令历史、Tab 补全和简要用法提示。常用帮助命令：</p>
+    <pre><code>help                  -- 分页列出命令
+help 2 20             -- 查看第 2 页，每页 20 条
+help list_data        -- 查看单条命令用法
+help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
+
+    <p>当前内置别名会在读取 <code>console_aliases.json</code> 前注册：</p>
+    <table>
+      <thead><tr><th>别名</th><th>目标命令</th></tr></thead>
+      <tbody>
+        <tr><td><code>lsd</code></td><td><code>list_data</code></td></tr>
+        <tr><td><code>lr</code></td><td><code>list_recipes</code></td></tr>
+        <tr><td><code>lp</code></td><td><code>list_protos</code></td></tr>
+        <tr><td><code>inv</code></td><td><code>inventory</code></td></tr>
+        <tr><td><code>ms</code></td><td><code>mod_settings</code></td></tr>
+        <tr><td><code>ems</code></td><td><code>export_mod_settings</code></td></tr>
+      </tbody>
+    </table>
 
     <h2>常用命令</h2>
     <table>
       <thead><tr><th>命令</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表。</td></tr>
+        <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
         <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值。</td></tr>
         <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 blocks、entities、recipes、professions、civilizations、focuses；不写 type 时会列出全部类型。</td></tr>
         <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code> 和 <code>data type:name_pools</code> 可查看阵营和名称池。</td></tr>
@@ -40,6 +61,8 @@
         <tr><td><code>mod_list</code> / <code>export_mod_list</code></td><td>列出/导出 MOD 列表及校验码（调试网络 MOD 一致性）。</td></tr>
         <tr><td><code>lua &lt;code&gt;</code></td><td>直接执行一段 Lua 代码。</td></tr>
         <tr><td><code>echo &lt;lua_expression&gt;</code></td><td>执行 Lua 表达式并输出返回值。</td></tr>
+        <tr><td><code>locale_list</code> / <code>locale_set &lt;id&gt;</code> / <code>locale_reload</code></td><td>查看、切换和重载本地化资源。</td></tr>
+        <tr><td><code>theme [list|reload|default|name]</code> / <code>load_theme &lt;path&gt;</code></td><td>管理 UI CSS 主题。</td></tr>
         <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档。</td></tr>
         <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体。</td></tr>
         <tr><td><code>list_civs</code></td><td>查看文明系统状态。</td></tr>
@@ -60,7 +83,7 @@
     </ol>
 
     <h2>说明</h2>
-    <p><code>doctor_*</code>、<code>archive_*</code>、<code>snapshot_*</code> 这些命令主要给引擎维护者用。普通 MOD 作者一般不需要关心它们。</p>
+    <p><code>doctor_*</code>、<code>diff_*snapshot*</code>、<code>*doctor_archives*</code> 这些命令主要给引擎维护者用。普通 MOD 作者一般不需要关心它们。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>配置文件</div></div>
   <div class="content">
     <h1>配置文件</h1>
-    <p class="subtitle">游戏使用三类配置文件：MOD 设置（<code>mod.json</code> 中的 <code>settings</code>）、控制台配置（权限和别名）、键位绑定。MOD 可以通过 <code>config/</code> 目录提供默认的控制台配置和键位覆盖。</p>
+    <p class="subtitle">游戏使用三类配置文件：MOD 设置（<code>mod.json</code> 中的 <code>settings</code>）、核心控制台配置（权限和别名）、核心键位绑定。当前控制台配置和键位绑定只从运行目录的 <code>mods/core/config/</code> 读取，第三方 MOD 的 <code>config/</code> 不会自动合并。</p>
 
     <h2>MOD 设置</h2>
     <p>在 <code>mod.json</code> 的 <code>settings</code> 字段中声明默认值：</p>
@@ -29,7 +29,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     <p>第三个参数是 fallback 值，防止旧配置缺字段时出错。详见 <a href="mod-manifest.html">mod.json</a>。</p>
 
     <h2>控制台权限</h2>
-    <p>文件：<code>config/console_permissions.json</code></p>
+    <p>文件：<code>mods/core/config/console_permissions.json</code></p>
     <p>控制哪些控制台命令在什么权限等级下可用。</p>
     <pre><code>{
     "access_level": "developer",
@@ -57,22 +57,22 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
         "spawn_proto": "developer"
     }
 }</code></pre>
-    <p>未在 <code>command_permissions</code> 中列出的命令使用 <code>access_level</code> 的全局默认值。</p>
+    <p>未在 <code>command_permissions</code> 中列出的命令保留代码注册的默认权限；<code>access_level</code> 表示当前控制台会话拥有的权限等级，不是所有命令的默认权限。</p>
 
     <h2>控制台别名</h2>
-    <p>文件：<code>config/console_aliases.json</code></p>
-    <p>为常用命令序列创建快捷别名。</p>
+    <p>文件：<code>mods/core/config/console_aliases.json</code></p>
+    <p>为常用命令名创建快捷别名。别名目标必须是已经注册的命令名，不能包含参数或命令序列。</p>
     <pre><code>{
     "aliases": {
-        "test_copper": "spawn_proto core:copper_ingot 5",
-        "reset": "clear && mods"
+        "ld": "list_data",
+        "proto": "spawn_proto"
     }
 }</code></pre>
-    <p>在控制台中输入别名等同于输入其展开后的完整命令。别名不能递归引用其他别名。</p>
+    <p>在控制台中输入别名等同于输入其目标命令，别名后面的参数会继续传给目标命令，例如 <code>ld blocks prefix=core:</code> 会执行 <code>list_data blocks prefix=core:</code>。加载别名前会注册内置别名：<code>lsd</code>、<code>lr</code>、<code>lp</code>、<code>inv</code>、<code>ms</code>、<code>ems</code>。</p>
 
     <h2>键位绑定</h2>
-    <p>文件：<code>config/keybindings.json</code></p>
-    <p>自定义游戏的操作键位。CoreMod 提供了默认绑定，MOD 可以提供自己的 <code>config/keybindings.json</code> 来覆盖。</p>
+    <p>文件：<code>mods/core/config/keybindings.json</code></p>
+    <p>自定义游戏的操作键位。当前启动流程只读取 CoreMod 的键位文件；如果该文件缺失或无法解析，引擎会回退到 C++ 内置默认绑定。</p>
     <pre><code>{
   "bindings": {
     "camera_orbit": [
@@ -189,23 +189,27 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     </div>
 
     <h2>config/ 目录放置</h2>
-    <p>MOD 的配置文件放在 <code>config/</code> 目录下：</p>
+    <p>CoreMod 的运行配置文件放在 <code>config/</code> 目录下：</p>
     <pre><code>my_mod/
   mod.json
   config/
     console_permissions.json    （可选）
     console_aliases.json        （可选）
     keybindings.json            （可选）</code></pre>
-    <p>只有 CoreMod 的配置文件会在启动时自动加载。第三方 MOD 如果需要自定义配置，建议在 Lua 入口脚本中读取和解析。</p>
+    <p>只有 CoreMod 的这些配置文件会在启动时自动加载。第三方 MOD 如果需要自定义运行配置，应使用 <code>mod.json</code> 的 <code>settings</code> 和玩家覆盖文件；不要期望自己的 <code>config/console_aliases.json</code>、<code>config/console_permissions.json</code> 或 <code>config/keybindings.json</code> 被自动合并。</p>
 
     <h2>验证和重载命令</h2>
-    <p>在控制台（按 <code>~</code>）中管理配置：</p>
+    <p>在控制台中管理配置：</p>
     <pre><code>reload_config permissions         -- 重载控制台权限
 reload_config aliases             -- 重载控制台别名
 reload_config all                 -- 重载全部配置
 validate_config permissions       -- 校验权限配置
 validate_config aliases           -- 校验别名配置
 mod_settings                      -- 查看所有 MOD 设置</code></pre>
+
+    <div class="callout warn">
+      <code>validate_config aliases</code> 只检查 JSON 结构和非空目标；真正应用别名时，如果目标不是已注册命令，控制台会忽略该别名并写入警告日志。
+    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

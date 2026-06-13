@@ -3,6 +3,7 @@ const WIKI_NAV = [
     title: "理解概念",
     links: [
       ["index", "总览", "index.html"],
+      ["project-completion", "项目完成度审计", "project-completion.html"],
       ["mod-guide", "MOD 是怎样加载的", "mod-guide.html"],
       ["mod-status", "当前能力边界", "mod-status.html"]
     ]
@@ -14,6 +15,7 @@ const WIKI_NAV = [
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
       ["mod-configfiles", "配置文件", "mod-configfiles.html"],
+      ["mod-localization", "本地化与翻译", "mod-localization.html"],
       {
         title: "MOD素材",
         children: [
@@ -40,6 +42,13 @@ const WIKI_NAV = [
           ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
           ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
           ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"]
+        ]
+      },
+      {
+        title: "引擎参考",
+        children: [
+          ["engine-terraingeneration", "地形生成流程", "engine-terraingeneration.html"],
+          ["engine-save-system", "存档系统状态", "engine-save-system.html"]
         ]
       }
     ]

@@ -69,9 +69,11 @@
         <tr><td>BuildBlock</td><td>x, y, z, block_id</td><td>放置方块</td></tr>
         <tr><td>MineBlock</td><td>x, y, z</td><td>挖掘方块</td></tr>
         <tr><td>AssignProfession</td><td>entity_id, profession_id, level</td><td>分配职业</td></tr>
-        <tr><td>GiveItem</td><td>entity_id, item_id, count</td><td>给予物品</td></tr>
+        <tr><td>GiveBlock</td><td>entity_id, block_id, count</td><td>给予方块物品</td></tr>
+        <tr><td>PostJob</td><td>job_type, faction_id, x, y, z, duration, data</td><td>发布工作到主机 WorkPool</td></tr>
       </tbody>
     </table>
+    <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>
     <p>每条命令携带一个递增的序列号。主机收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
 
     <h2>握手流程</h2>
@@ -82,7 +84,7 @@
       <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向主机请求这些记录。</li>
       <li><strong>Host → Records</strong>：主机发送请求的 Mod 数据原始 JSON。</li>
     </ol>
-    <p>握手完成后，客户端进入正常快照接收循环。</p>
+    <p>握手完成后，客户端进入正常快照接收循环。收到 <code>Records</code> 后，客户端会用 reload 语义写入本地 Mod 注册表，并刷新实体原型、配方、职业、地形数据、建筑、区域和渲染世界资源等由注册表派生的运行时缓存。</p>
 
     <h2>Mod 列表与校验码</h2>
     <h3>side 字段</h3>

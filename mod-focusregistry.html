@@ -93,18 +93,15 @@
     </div>
 
     <h2>Lua 条件函数</h2>
-    <p>使用 <code>lua</code> 类型的条件时，需要在 Lua 脚本中注册对应的条件函数。函数签名：</p>
+    <p>使用 <code>lua</code> 类型的条件时，需要在 Lua 脚本中注册对应的条件函数。回调收到一个上下文表，包含 <code>condition</code>、<code>focus_id</code> 和 <code>tick</code>：</p>
     <pre><code>-- 返回 true 表示条件满足
-function faction_relation_daily_8_up(focus_id, tick)
-  -- 自定义逻辑
+engine.focus.register_condition("core:faction_relation_daily_8_up", function(ctx)
+  -- ctx.condition, ctx.focus_id, ctx.tick
   return true
-end
-
--- 在 bootstrap.lua 中注册
-focus_conditions["core:faction_relation_daily_8_up"] = faction_relation_daily_8_up</code></pre>
+end)</code></pre>
 
     <h2>验证命令</h2>
-    <p>在控制台（按 <code>~</code>）中确认焦点注册成功：</p>
+    <p>在控制台（按物理 Grave/反引号键）中确认焦点注册成功：</p>
     <pre><code>mods                            —— 确认 MOD 已加载
 list_data focuses               —— 列出所有已注册焦点
 data core:first_colonist        —— 查看单个焦点的完整 JSON</code></pre>
