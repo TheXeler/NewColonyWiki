@@ -184,6 +184,8 @@
         <tr class="api-row" data-api-row><td><code>engine.zone.confirm_chop_designate()</code></td><td>-</td><td>table</td><td>确认 <code>core:chop</code> 二维指定，为匹配 <code>core:chop_wood</code> 的树木方块发布 mine 工作；返回 <code>{ ok, count }</code>。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.zone.set_drag_active(active)</code></td><td>bool</td><td>-</td><td>传 false 时取消当前区域拖拽指定。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.zone.is_drag_active()</code></td><td>-</td><td>bool</td><td>当前是否处于区域拖拽指定状态。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.zone.set_setting(instance_id, key, value)</code></td><td>integer, string, string|bool|number|nil</td><td>bool</td><td>写入区域实例的 settings 键值对（值会被转成字符串）；传 nil 删除该键。失败返回 false。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.zone.get_setting(instance_id, key, fallback)</code></td><td>integer, string, any</td><td>string|any</td><td>读取区域实例的 settings 键；不存在时返回 fallback 或 nil。返回值始终是字符串。</td></tr>
 
         <!-- Events -->
         <tr class="api-row" data-api-row><td><code>engine.events.subscribe(name, fn, priority)</code></td><td>string, function, integer?</td><td>handler id</td><td>priority 越大越早执行。</td></tr>
@@ -244,6 +246,7 @@
 
         <!-- Terrain -->
         <tr class="api-row" data-api-row><td><code>engine.terrain.height_at(x, z, cfg)</code></td><td>integer, integer, table?</td><td>integer</td><td>查询地形高度，可传配置表。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.standable_y_at(x, z)</code></td><td>integer, integer</td><td>integer</td><td>查询实体脚部可站立的实际 Y，基于已生成/可生成区块数据。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.register_biome(table)</code></td><td>table</td><td>-</td><td>注册 biome；可设置正整数 <code>weight</code> 控制选择占比，默认 1。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.list_biomes()</code></td><td>-</td><td>table</td><td>列出 biome ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.register_ore(table)</code></td><td>table</td><td>-</td><td>注册矿物分布：block、replace_block、noise_scale、threshold、min_y、max_y。推荐使用 <code>data/ores/</code>。</td></tr>
@@ -263,6 +266,7 @@
         <tr class="api-row" data-api-row><td><code>engine.locale.translate(key)</code></td><td>string</td><td>string</td><td>当前 LocalizationManager 绑定的完整 key 翻译接口。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.locale.translate_cat(category, key)</code></td><td>string, string</td><td>string</td><td>当前 LocalizationManager 绑定的分类翻译接口。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.locale.resolve(text)</code></td><td>string</td><td>string</td><td>解析可包含本地化引用的文本。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.locale.resolve_template(text)</code></td><td>string</td><td>string</td><td>把字符串中所有 <code>${category.key}</code> 占位符替换为对应翻译，其余字符原样保留。用于区域默认名等需要随界面语言变动的持久化文本。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.locale.current_locale()</code></td><td>-</td><td>string</td><td>当前语言 ID。</td></tr>
 
         <!-- Equipment -->

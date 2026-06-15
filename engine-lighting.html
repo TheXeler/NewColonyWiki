@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>引擎光照 - NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="engine-lighting">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>引擎光照</div></div>
+  <div class="content">
+    <h1>引擎光照</h1>
+    <p class="subtitle">体素光照会在区块网格构建时根据区块数据生成。</p>
+
+    <h2>运行时规则</h2>
+    <ul>
+      <li>天空光和方块光使用 0 到 15 的 4 位光照等级。</li>
+      <li>透明和半透明方块可以透光；不透明方块会阻挡光照。</li>
+      <li>网格生成会在目标区块周围计算一个临时的 3x3 区块光照网格，因此边界面会采样新生成的邻近光照。</li>
+      <li>区块网格化会采样可见面前方可透光单元格的光照值，并将其乘以逐顶点环境光遮蔽。</li>
+      <li>影响发光或透光性的变更，会将 15 个方块光照半径触及的每个区块标记为需要重建。</li>
+    </ul>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

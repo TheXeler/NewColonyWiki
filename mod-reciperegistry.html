@@ -39,8 +39,9 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
-        <tr><td><code>inputs</code></td><td>array</td><td>是</td><td>输入材料列表。至少 1 项。每个材料包含 <code>id</code> 和 <code>count</code>。</td></tr>
-        <tr><td><code>inputs[].id</code></td><td>string</td><td>是</td><td>材料方块的完整 ID。必须指向已注册的方块。</td></tr>
+        <tr><td><code>inputs</code></td><td>array</td><td>是</td><td>输入材料列表。至少 1 项。每个材料包含 <code>id</code> 或 <code>tag</code>（二选一）和 <code>count</code>。</td></tr>
+        <tr><td><code>inputs[].id</code></td><td>string</td><td>否</td><td>材料方块的完整 ID。必须指向已注册的方块。与 <code>tag</code> 互斥：必须二选一。</td></tr>
+        <tr><td><code>inputs[].tag</code></td><td>string</td><td>否</td><td>材料 tag（矿物词典）。匹配所有声明了该 tag 的方块（参见 <a href="mod-tagregistry.html">Tag 注册</a>）。与 <code>id</code> 互斥。</td></tr>
         <tr><td><code>inputs[].count</code></td><td>int</td><td>是</td><td>材料数量，必须 ≥ 1。</td></tr>
         <tr><td><code>output</code></td><td>object</td><td>是</td><td>产出物品。包含 <code>id</code> 和 <code>count</code>。</td></tr>
         <tr><td><code>output.id</code></td><td>string</td><td>是</td><td>产出方块的完整 ID。必须指向已注册的方块。</td></tr>
@@ -102,11 +103,22 @@
     "output": { "id": "core:farmland", "count": 1 }
 }</code></pre>
 
+    <h3>使用 tag 输入 <code>core:compress_ingot</code></h3>
+    <p>材料写成 <code>tag</code> 替代 <code>id</code>，匹配所有声明该 tag 的方块。这里 2 个任意金属锭 → 1 个铁锭：</p>
+    <pre><code>{
+    "inputs": [
+        { "tag": "c:ingots", "count": 2 }
+    ],
+    "output": { "id": "core:iron_ingot", "count": 1 }
+}</code></pre>
+    <p>tag 必须在 <code>data/tags/*.json</code> 或 block JSON 的 <code>tags</code> 字段中声明过；具体写法见 <a href="mod-tagregistry.html">Tag 注册</a>。</p>
+
     <h2>交叉引用校验</h2>
     <p>引擎在加载配方时会校验：</p>
     <ul>
-      <li><code>inputs[].id</code> 必须指向已注册的方块。</li>
-      <li><code>output.id</code> 必须指向已注册的方块。</li>
+      <li><code>inputs[].id</code> 必须指向已注册的方块；<code>inputs[].tag</code> 必须非空字符串（tag 字典在 RecipeSystem 初始化时构建，不在此处校验存在性）。</li>
+      <li><code>inputs[]</code> 必须明确写 <code>id</code> 或 <code>tag</code> 中的一项，两者都缺或都写都会报错。</li>
+      <li><code>output.id</code> 必须指向已注册的方块。<code>output</code> 不允许使用 tag。</li>
       <li><code>profession.id</code>（如果填写）必须指向已注册的职业。</li>
       <li><code>profession.level</code>（如果填写）必须在 1~5 范围内。</li>
       <li>引用不存在的 ID 会导致加载报错。</li>

@@ -26,7 +26,7 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
-        <tr><td><code>name_key</code></td><td>string</td><td>否</td><td>本地化 key，例如 <code>zones.my_mod:workshop</code>。UI 可优先用它查翻译；没有翻译时回退到 <code>name</code>。</td></tr>
+        <tr><td><code>name_key</code></td><td>string</td><td>否</td><td>本地化 key，例如 <code>zones.my_mod:workshop</code>。新建区域实例的默认名称会用 <code>${name_key}</code> 模板形式存储，UI 渲染时实时按当前界面语言解析，所以切换语言后已存在的区域名称也会跟着变。未填则按 <code>zones.&lt;id&gt;</code> 合成回退 key。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。省略时使用 <code>id</code> 作为名称。</td></tr>
         <tr><td><code>color</code></td><td>string</td><td>否</td><td>区域在地面上显示的颜色，使用十六进制颜色值（如 <code>"#FF5500"</code>）。省略时不显示高亮。</td></tr>
         <tr><td><code>shape</code></td><td>string</td><td>否</td><td>区域维度：<code>"2d"</code>（地面平面）或 <code>"3d"</code>（包含垂直范围）。默认 <code>"2d"</code>。</td></tr>
@@ -57,7 +57,8 @@
     <p>点击储存区打开区域面板时，面板会显示当前仓储账本中的区域内物品一览，包括物品 ID、数量和内部哈希 ID。</p>
 
     <h3>种植区 <code>core:growing</code></h3>
-    <p>殖民者会在种植区内的空农田方块上播种。配合作物定义和配方（如 <code>wheat_seed_to_farmland</code>）实现完整的种植流程。</p>
+    <p>殖民者会在种植区内的空农田方块上播种。配合作物定义和配方（如 <code>wheat_seed_to_farmland</code>）实现完整的种植流程。引擎自带的 farming 系统会扫描每个种植区：发现下方是草/泥土就发布 till 工作把它们翻成农田；发现农田上空为空就发布 plant 工作播种；作物成熟后殖民者会自动收获。</p>
+    <p>打开种植区的区域设置窗口后，玩家可以通过 <strong>Crop</strong> 下拉框锁定该区域种植的作物。该选项存储在区域实例的 <code>settings["crop_id"]</code> 字段，值为作物数据 ID（如 <code>core:wheat_crop_data</code>）。未设置时为休耕：殖民者会翻地，但不会自动播种。</p>
 
     <h3>居住区 <code>core:home</code></h3>
     <p>定义殖民者的居住范围。殖民者在休息时会优先前往居住区内的床位。居住区也影响殖民者的心情和归属感。</p>
@@ -66,14 +67,17 @@
     <p>区域类型是定义，区域实例是运行时数据。每个区域实例包含：</p>
     <ul>
       <li><strong>类型</strong>：引用某个区域类型定义。</li>
-      <li><strong>名称</strong>：玩家可以给每个区域实例起名字。</li>
+      <li><strong>名称</strong>：玩家可以给每个区域实例起名字。默认名称形如 <code>${zones.core:growing} #1</code> 的模板字符串——<code>${...}</code> 是本地化占位符，UI 显示时按当前界面语言解析为对应翻译（中文界面下渲染为"种植区 #1"，英文界面下渲染为"Growing Zone #1"）。直接编辑名称会把整段文本视为字面值，不再解析占位符。</li>
       <li><strong>形状</strong>：矩形（通过拖拽指定两角）或任意形状（通过逐个添加方块）。</li>
       <li><strong>方块集合</strong>：区域内包含的所有方块坐标。</li>
       <li><strong>设置</strong>：键值对形式的区域特定配置。</li>
     </ul>
 
-    <p>玩家拖拽指定 2D 区域时，区域实例保存的是被选中地面方块上方的可用空间层，并且固定为 1 格高。例如在 <code>Y=70</code> 的方块上拖拽，区域坐标会落在 <code>Y=71</code>。指定过程中可右键取消。脚本通过 <code>engine.zone.create_rect</code> 创建区域时仍使用传入的显式坐标。</p>
-    <p>拖拽预览会显示完整的矩形选区；确认创建或发布指令时才会按区域类型过滤不可用格子：储存区要求区域格为空且下方有方块支撑；种植区要求区域格为空且下方是土、草或农田。脚本可以调用 <code>engine.zone.remove_cell(x, y, z)</code> 删除区域中的单个格子，例如地面方块被挖掉时删除其上方的 2D 区域格。</p>
+    <h3>${} 模板语法</h3>
+    <p>引擎使用 <code>${category.key}</code> 作为通用的本地化占位符。<code>LocalizationManager::resolve_template(text)</code> 会扫描字符串中所有 <code>${...}</code> 段，把其中内容当作点号分隔的 qualified key 交给翻译表（与 <code>locale.t("zones.core:growing")</code> 等价），其余字符原样保留。Lua 端可通过 <code>engine.locale.resolve_template(text)</code> 调用同一逻辑。</p>
+
+    <p>玩家拖拽指定 2D 区域时，区域实例保存的是被选中地面方块上方的可用空间层，并且固定为 1 格高。例如在 <code>Y=70</code> 的方块上拖拽，区域坐标会落在 <code>Y=71</code>。指定过程中可按 Esc 取消。脚本通过 <code>engine.zone.create_rect</code> 创建区域时仍使用传入的显式坐标。</p>
+    <p>拖拽预览和确认创建都会按区域类型过滤不可用格子：储存区要求区域格为空且下方有方块支撑；种植区要求区域格为空且下方是土、草或农田。脚本可以调用 <code>engine.zone.remove_cell(x, y, z)</code> 删除区域中的单个格子，例如地面方块被挖掉时删除其上方的 2D 区域格。</p>
 
     <h2>Lua 集成</h2>
     <p>Lua 脚本可以通过 ECS 和事件系统与区域交互：</p>
@@ -84,13 +88,14 @@
     </ul>
 
     <h2>挖掘指定</h2>
-    <p><code>core:mine</code> 是内置 3D 区域类型。底栏的挖掘按钮会进入 3D 拖拽指定模式；默认指定 1 格高，按住区域操作辅助键（默认 Ctrl）并滚轮可向上增加垂直范围但不会低于起始层，右键可取消当前指定。未按住辅助键时滚轮仍用于镜头缩放。确认拖拽后会创建挖掘区域，并为选中的每个可挖实体方块向 WorkPool 发布一个 <code>mine</code> 工作。空气、水、岩浆、流体、植物材质和注册地物方块不会被加入挖掘任务。该工作使用 <code>core:mine</code> 方块动作，完成后会触发 <code>block:interacted</code> 并进入 CoreMod 挖掘系统，掉落来自方块 JSON 的 <code>drops</code> 字段。</p>
+    <p><code>core:mine</code> 是内置 3D 区域类型。底栏的挖掘按钮会进入 3D 拖拽指定模式；默认指定 1 格高，按住区域操作辅助键（默认 Ctrl）并滚轮可向上增加垂直范围但不会低于起始层，Esc 可取消当前指定。未按住辅助键时滚轮仍用于镜头缩放。确认拖拽后会创建挖掘区域，并为选中的每个可挖实体方块向 WorkPool 发布一个 <code>mine</code> 工作。空气、水、岩浆、流体、植物材质和注册地物方块不会被加入挖掘任务。该工作使用 <code>core:mine</code> 方块动作，完成后会触发 <code>block:interacted</code> 并进入 CoreMod 挖掘系统，掉落来自方块 JSON 的 <code>drops</code> 字段。</p>
 
     <h3>挖掘区域透明化</h3>
     <p>挖掘区域内的方块默认渲染为透明，使玩家可以看到区域内部的方块布局。区域周围会显示淡蓝色（75% 透明度）的 3D 边框标记。在区域设置窗口中可以通过 "Transparent Blocks"（方块透明）复选框切换此行为——取消勾选后区域内的方块恢复为不透明渲染。该设置通过区域实例的 <code>settings["transparent"]</code> 字段存储（值为 <code>"true"</code> 或 <code>"false"</code>）。</p>
 
     <h2>伐木指定</h2>
-    <p><code>core:chop</code> 是内置 2D 指定类型。底栏的伐木按钮会进入地面拖拽指定模式，右键可取消当前指定；确认拖拽后不会保留伐木区域本身，而是为选中的每个匹配 <code>core:chop_wood</code> 方块动作的 <code>core:tree</code> 单体树地物向 WorkPool 发布一个挖掘工作。该工作完成后触发 <code>block:interacted</code>，由 CoreMod 的挖掘/采集系统移除整棵树，按 <code>core:tree</code> 的 <code>drops</code> 产出木材，并发出 <code>block:chopped</code>。</p>
+    <p><code>core:chop</code> 是内置 2D 指定类型。底栏的伐木按钮会进入地面拖拽指定模式，Esc 可取消当前指定；确认拖拽后不会保留伐木区域本身，而是为选中的每个匹配 <code>core:chop_wood</code> 方块动作的 <code>core:tree</code> 单体树地物向 WorkPool 发布一个挖掘工作。该工作完成后触发 <code>block:interacted</code>，由 CoreMod 的挖掘/采集系统移除整棵树，按 <code>core:tree</code> 的 <code>drops</code> 产出木材，并发出 <code>block:chopped</code>。</p>
+    <p>拖拽选区格子的验证规则：格子本身必须是 <code>core:tree</code> 树木或空气，且正下方（<code>y-1</code>）必须是非空气、非流体的实心支撑方块——这意味着选区不能跨越空中浮空区域或水面/熔岩面，只能贴着地面框选。空气格子通过验证后不会创建砍伐工作（仍由 <code>is_choppable_block</code> 过滤），便于玩家直接框选一片混杂树木与空地的区域。</p>
 
     <h2>文件放置规则</h2>
     <ul>

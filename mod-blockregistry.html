@@ -42,8 +42,28 @@
         <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>。设为 <code>false</code> 时 Lua <code>get_block_info</code> 不暴露 drops；加载器会警告这些 drops 将被忽略。</td></tr>
         <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块占用与遮挡分级：<code>opaque</code> 不透明，遮挡相邻面且不可通行；<code>translucent</code> 半透明，不遮挡相邻面但不可通行；<code>transparent</code> 透明，不遮挡相邻面且可通行。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。</td></tr>
         <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>旧版半透明标记，默认 <code>false</code>。新内容优先使用 <code>block_class</code>；该字段仍会让方块不遮挡相邻可见面，但导航上仍不可通行。</td></tr>
+        <tr><td><code>random_tick</code></td><td>object</td><td>否</td><td>Minecraft 风格的随机方块刻规则。引擎每 tick 在每个加载的 chunk 里随机采样若干个方块，被采中的方块若声明了 <code>random_tick</code> 就按概率执行转化。详见下方"随机方块刻"小节。</td></tr>
       </tbody>
     </table>
+
+    <h2>随机方块刻</h2>
+    <p><code>random_tick</code> 对象支持以下字段：</p>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>action</code></td><td>string</td><td>是</td><td>规则类型：<code>decay_unless_in_zone</code>（不在指定 zone 内时退化）或 <code>spread_from_neighbor</code>（周围一圈一格高度差内有指定方块时扩散）。</td></tr>
+        <tr><td><code>to</code></td><td>data id</td><td>是</td><td>转化目标方块 ID。</td></tr>
+        <tr><td><code>probability_permille</code></td><td>int</td><td>是</td><td>每次被采样命中时触发的概率，单位千分比（0~1000）。</td></tr>
+        <tr><td><code>zone</code></td><td>data id</td><td><code>decay_unless_in_zone</code> 必填</td><td>豁免退化的 zone type id；方块只要位于该类型的任一实例内就不退化。</td></tr>
+        <tr><td><code>require_air_above</code></td><td>bool</td><td>否</td><td><code>decay_unless_in_zone</code> 专用。设为 <code>true</code> 时，只有当正上方是空气才允许退化（用于让耕地上面有作物时不退化）。</td></tr>
+        <tr><td><code>neighbor</code></td><td>data id</td><td><code>spread_from_neighbor</code> 必填</td><td>扩散源方块 ID；周围一圈（4 个水平邻居）的一格高度差范围内出现此方块就允许扩散。正上正下不参与扩散。</td></tr>
+      </tbody>
+    </table>
+    <p>CoreMod 内置两条规则：</p>
+    <ul>
+      <li><code>core:farmland</code> 在自身正上方一格不属于 <code>core:growing</code> 区域、且正上方为空气时，按 100/1000 的概率退化为 <code>core:dirt</code>。这模拟了 Minecraft 中无人维护的耕地逐渐干裂变回泥土。判定时探测上方一格是因为 growing 区域 2D 模式下圈的是作物层，而 farmland 实际位于其下方一格。</li>
+      <li><code>core:dirt</code> 在 4 个水平邻居（同层或上下各一层）中出现 <code>core:grass</code> 时，按 300/1000 的概率扩散为 <code>core:grass</code>。</li>
+    </ul>
 
     <div class="callout info">
       方块和物品是同一个概念。放在背包里就是物品，放在世界里就是方块。<code>stack_size</code> 控制了物品形态下的堆叠行为，<code>hardness</code> 和 <code>drops</code> 控制方块形态下的交互行为；CoreMod 的挖矿脚本会按 <code>drops</code> 的字符串或对象配置发放产物。

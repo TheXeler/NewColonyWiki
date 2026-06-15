@@ -10,6 +10,9 @@
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形生成流程</div></div>
   <div class="content">
+    <div class="callout info">
+      <strong>Runtime boundary wrap (2026-06-14):</strong> <code>wrap_position_in_place</code> reports whether a finite-planet wrap crossed a pole. East/west wraps only translate positions; polar wraps also rotate the orbit camera yaw by 180 degrees and reset chunk streaming state so the new side is scheduled immediately.
+    </div>
     <h1>地形生成流程</h1>
     <p class="subtitle">这篇文章是引擎层面的地形生成流程参考。MOD 作者通常只需要关心 <a href="mod-biomeregistry.html">群系注册</a> 与 <a href="mod-featureregistry.html">地物注册</a>；如果你想知道群系和地物是「在什么时候被使用」、或者想调试地形异常，请阅读本文。文中所述的内部结构（C++ 类名、阶段顺序）不是 API 兼容承诺，仅用于辅助理解。</p>
 

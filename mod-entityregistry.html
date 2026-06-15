@@ -11,14 +11,14 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>实体注册</div></div>
   <div class="content">
     <h1>实体注册</h1>
-    <p class="subtitle">实体原型（Entity Prototype）定义在 <code>data/entities/</code> 下，以 JSON 描述。每个实体原型通过组件拼装定义一类实体的初始状态——殖民者、农民、矿工等都是不同的实体原型。引擎在运行时根据原型创建实体实例。</p>
+    <p class="subtitle">实体原型（Entity Prototype）定义在 <code>data/entities/</code> 下，浠?JSON 描述。每个实体原鍨嬮€氳繃组件拼装定义涓€类实体的初始鐘舵€佲€斺€旀畺姘戣€呫€佸啘姘戙€佺熆工等都是不同的实体原鍨嬨€傚紩擎在运行时根据原型创建实体实渚嬨€</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
     "id": "my_mod:hunter",
     "components": {
         "Position": { "x": 0, "y": 64, "z": 0 },
-        "Velocity": { "x": 0, "y": 0, "z": 0 },
+        "Speed": { "x": 0, "y": 0, "z": 0 },
         "Needs": { "hunger": 50.0, "fatigue": 20.0 },
         "ColonistTag": {},
         "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
@@ -34,56 +34,74 @@
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
-        <tr><td><code>components</code></td><td>object</td><td>是</td><td>组件表。键为组件名，值为组件初始数据。必须是一个非空对象。</td></tr>
+        <tr><td><code>id</code></td><td>string</td><td>鏄</td><td>唯一标识，格寮?<code>&lt;mod_id&gt;:&lt;name&gt;</code>銆</td></tr>
+        <tr><td><code>components</code></td><td>object</td><td>鏄</td><td>组件琛ㄣ€傞敭为组件名锛屽€间负组件初始数据。必须是涓€个非空对璞°€</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      实体原型的核心是组件拼装——你不需要写代码，只需在 JSON 中声明"这个实体有哪些组件、初始值是什么"。引擎根据组件列表创建 ECS 实体并填充数据。
+      实体原型的核心是组件拼装鈥斺€斾綘不需要写代码，只闇€鍦?JSON 中声鏄?这个实体有哪些组浠躲€佸垵濮嬪€兼槸浠€涔?。引擎根据组件列表创寤?ECS 实体并填充数鎹€?
     </div>
 
     <h2>可用组件</h2>
     <table>
-      <thead><tr><th>组件名</th><th>字段</th><th>说明</th></tr></thead>
+      <thead><tr><th>组件鍚</th><th>字段</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>Position</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>世界坐标。</td></tr>
-        <tr><td><code>Velocity</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>移动速度向量。</td></tr>
-        <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (integer)</td><td>生命值；未声明时会根据 <code>Stats.max_hp</code> 推导。</td></tr>
-        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>需求值。hunger 越高越饿，fatigue 越高越累。两项均随时间上升，AI 会根据需求自动寻求满足。</td></tr>
-        <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情值。JSON 中写 <code>"Mood": { "mood_value": 50.0 }</code>。</td></tr>
-        <tr><td><code>ColonistTag</code></td><td>（无字段）</td><td>标记为殖民者。拥有此组件的实体参与殖民者相关的 AI 逻辑和统计。</td></tr>
-        <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 状态。behavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率。</td></tr>
-        <tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代理。</td></tr>
-        <tr><td><code>Velocity</code> runtime</td><td><code>fall_distance</code>, <code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状态。实体会受重力影响，下落超过 4 格后受伤；在水中忽略摔落伤害，并会受流体推动。</td></tr>
-        <tr><td><code>Profession</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
-        <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
-        <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品。<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为空。</td></tr>
-        <tr><td><code>Inventory</code></td><td>（legacy，最多 32 格）</td><td>遗留多槽背包。当前实体原型以 <code>HeldItem</code> 为主；若 JSON 只提供 <code>Inventory</code>（含 <code>slots</code> 数组），加载器会取第一个 slot 作为 HeldItem。</td></tr>
-        <tr><td><code>Equipment</code></td><td><code>MainHand</code>, <code>OffHand</code>, <code>Armor</code>, <code>Accessory</code></td><td>固定装备栏。每个槽可写 <code>{"id": "core:tool", "count": 1}</code>；空对象表示有装备组件但初始为空。</td></tr>
-        <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>属性值。影响各种游戏计算。</td></tr>
-        <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
-        <tr><td><code>PrototypeRef</code></td><td>自动生成</td><td>引用创建该实例的原型 ID。实体原型 JSON 不需要声明。</td></tr>
-        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>实体外观。未声明时使用默认 box 外观；<code>model: "biped"</code> 会自动生成默认头部视觉。</td></tr>
-        <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>biped 程序动画参数。</td></tr>
-        <tr><td><code>Head</code></td><td><code>center_x</code>, <code>center_y</code>, <code>center_z</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>头部视觉盒，用于看向 InterestPoint。可覆盖 biped 自动生成的头部。</td></tr>
+        <tr><td><code>Position</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>世界坐标銆</td></tr>
+        <tr><td><code>Speed</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>移动速度向量銆</td></tr>
+        <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (integer)</td><td>生命值；未声明时会根鎹?<code>Stats.max_hp</code> 推导銆</td></tr>
+        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>闇€姹傚€笺€俬unger 越高越饿，fatigue 越高越累。两项均随时间上升，AI 会根据需求自动寻求满瓒炽€</td></tr>
+        <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情鍊笺€侸SON 中写 <code>"Mood": { "mood_value": 50.0 }</code>銆</td></tr>
+        <tr><td><code>ColonistTag</code></td><td>（无字段锛</td><td>标记为殖姘戣€呫€傛嫢有此组件的实体参与殖姘戣€呯浉关的 AI 逻辑和统璁°€</td></tr>
+        <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 鐘舵€併€俠ehavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率銆</td></tr>
+        <tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代鐞嗐€</td></tr>
+        <tr><td><code>Speed</code> runtime</td><td><code>fall_distance</code>, <code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状鎬併€傚疄体会受重力影响，下落超过 4 格后受伤；在水中忽略摔落伤害，并会受流体推动銆</td></tr>
+        <tr><td><code>Profession</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业銆</td></tr>
+        <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互銆</td></tr>
+        <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品銆<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为绌恒€</td></tr>
+        <tr><td><code>Inventory</code></td><td>（legacy，最澶?32 格）</td><td>遗留多槽背包。当前实体原型以 <code>HeldItem</code> 为主；若 JSON 只提渚?<code>Inventory</code>（含 <code>slots</code> 数组），加载器会取第涓€涓?slot 作为 HeldItem銆</td></tr>
+        <tr><td><code>Equipment</code></td><td><code>MainHand</code>, <code>OffHand</code>, <code>Armor</code>, <code>Accessory</code></td><td>固定装备鏍忋€傛瘡个槽可写 <code>{"id": "core:tool", "count": 1}</code>；空对象表示有装备组件但初始为空銆</td></tr>
+        <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>基础属性。加载、生成、读档或通过 Lua 修改基础属性后会重新计算派生属性；导航实体会使用派生移动速度。</td></tr>
+        <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称銆</td></tr>
+        <tr><td><code>PrototypeRef</code></td><td>自动生成</td><td>引用创建该实例的原型 ID。实体原鍨?JSON 不需要声鏄庛€</td></tr>
+        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>实体外观。未声明时使用默璁?box 外观锛<code>model: "biped"</code> 会自动生成默认头部视瑙夈€</td></tr>
+        <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>biped 程序动画参数銆</td></tr>
+        <tr><td><code>Head</code></td><td><code>center_x</code>, <code>center_y</code>, <code>center_z</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>头部视觉盒，用于看向 InterestPoint。可覆盖 biped 自动生成的头閮ㄣ€</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      <code>Rotation</code> 和 <code>Scale</code> 是运行时 ECS/Lua 可用组件，但当前实体原型解析器不会从 JSON 中读取它们。需要旋转或缩放时，可在 Lua 里调用 <code>engine.ecs.set_rotation</code> 或 <code>engine.ecs.set_scale</code>。
-    </div>
+      <code>Rotation</code> 鍜?<code>Scale</code> 是运行时 ECS/Lua 可用组件，但当前实体原型解析器不会从 JSON 中读取它浠€傞渶要旋转或缩放时，可在 Lua 里调鐢?<code>engine.ecs.set_rotation</code> 鎴?<code>engine.ecs.set_scale</code>銆?    </div>
+
+    <h2>基础属性与派生属性</h2>
+    <p><code>Stats</code> 只在实体原型 JSON 中声明三项基础属性：<code>strength</code>、<code>dexterity</code> 和 <code>intelligence</code>。运行时会由 <code>Stats.recompute()</code> 推导其他属性。</p>
+    <table>
+      <thead><tr><th>基础属性</th><th>派生属性</th><th>公式</th><th>当前影响</th></tr></thead>
+      <tbody>
+        <tr><td><code>strength</code></td><td><code>max_hp</code></td><td><code>50 + strength * 5</code></td><td>未显式声明 <code>Health</code> 时用于生成初始最大生命。</td></tr>
+        <tr><td><code>strength</code></td><td><code>mining_speed</code></td><td><code>0.5 + strength * 0.05</code></td><td>预留给挖掘效率。</td></tr>
+        <tr><td><code>strength</code></td><td><code>carry_move_speed</code></td><td><code>0.5 + strength * 0.05</code></td><td>带有 <code>HeldItem</code> 且正在手持物品的 <code>NavAgent</code> 使用该倍率移动。</td></tr>
+        <tr><td><code>strength</code></td><td><code>melee_damage</code></td><td><code>1 + strength * 0.3</code></td><td>预留给近战伤害。</td></tr>
+        <tr><td><code>dexterity</code></td><td><code>move_speed</code></td><td><code>1 + dexterity * 0.04</code></td><td>空手 <code>NavAgent</code> 使用该倍率移动；不要求实体是殖民者。</td></tr>
+        <tr><td><code>dexterity</code></td><td><code>dodge_rate</code></td><td><code>min(dexterity * 0.01, 0.5)</code></td><td>预留给闪避。</td></tr>
+        <tr><td><code>dexterity</code></td><td><code>ranged_damage</code></td><td><code>1 + dexterity * 0.3</code></td><td>预留给远程伤害。</td></tr>
+        <tr><td><code>intelligence</code></td><td><code>work_speed</code></td><td><code>0.5 + intelligence * 0.05</code></td><td>预留给通用工作效率。</td></tr>
+        <tr><td><code>intelligence</code></td><td><code>work_success_rate</code></td><td><code>min(0.5 + intelligence * 0.02, 1)</code></td><td>预留给工作成功率。</td></tr>
+        <tr><td><code>intelligence</code></td><td><code>spell_damage</code></td><td><code>1 + intelligence * 0.4</code></td><td>预留给法术伤害。</td></tr>
+      </tbody>
+    </table>
+    <p>没有 <code>Stats</code> 的导航实体默认速度为 <code>0</code>，不会获得隐含移动速度。拥有 <code>Stats</code> 的实体空手时直接使用 <code>move_speed</code> 作为导航速度；如果正在手持物品，则改用 <code>carry_move_speed</code>。</p>
 
     <h2>内置实体原型</h2>
-    <p>CoreMod 注册了 10 个实体原型：</p>
+    <p>CoreMod 注册浜?10 个实体原型：</p>
     <table>
-      <thead><tr><th>原型</th><th>ID</th><th>职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
+      <thead><tr><th>原型</th><th>ID</th><th>职业</th><th>力量/敏捷/智力</th><th>行为鏍</th></tr></thead>
       <tbody>
-        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
+        <tr><td>殖民鑰</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
         <tr><td>农民</td><td><code>core:farmer</code></td><td>farmer (Lv.1)</td><td>9 / 10 / 11</td><td>10</td></tr>
         <tr><td>矿工</td><td><code>core:miner</code></td><td>miner (Lv.1)</td><td>12 / 9 / 9</td><td>20</td></tr>
         <tr><td>木匠</td><td><code>core:carpenter</code></td><td>carpenter (Lv.3)</td><td>11 / 10 / 11</td><td>1</td></tr>
-        <tr><td>伐木工</td><td><code>core:lumberjack</code></td><td>lumberjack (Lv.1)</td><td>12 / 10 / 8</td><td>1</td></tr>
+        <tr><td>伐木宸</td><td><code>core:lumberjack</code></td><td>lumberjack (Lv.1)</td><td>12 / 10 / 8</td><td>1</td></tr>
         <tr><td>石匠</td><td><code>core:stonemason</code></td><td>stonemason (Lv.3)</td><td>13 / 9 / 9</td><td>2</td></tr>
         <tr><td>厨师</td><td><code>core:cook_entity</code></td><td>cook (Lv.2)</td><td>8 / 10 / 12</td><td>1</td></tr>
         <tr><td>铁匠</td><td><code>core:blacksmith_entity</code></td><td>blacksmith (Lv.3)</td><td>14 / 9 / 10</td><td>1</td></tr>
@@ -92,42 +110,42 @@
       </tbody>
     </table>
 
-    <h3>殖民者 <code>core:colonist</code></h3>
-    <p>通用殖民者原型，全属性 10，使用通用行为树（ID 0）。作为文明开局的基础单位，后续可转职为其他职业。</p>
+    <h3>殖民鑰?<code>core:colonist</code></h3>
+    <p>通用殖民者原型，全属鎬?10，使鐢ㄩ€氱敤行为树（ID 0锛夈€備綔为文明开灞€的基纭€单位，后续可转职为其他职涓氥€</p>
 
     <h3>职业原型</h3>
-    <p>各职业原型有针对性的属性分配：铁匠和石匠力量高（13~14），厨师和陶工智力高（11~12），农民较均衡。行为树 ID 对应不同的 AI 行为模式。注意部分实体 ID 带有 <code>_entity</code> 后缀。</p>
+    <p>各职业原型有针对性的灞炴€у垎配：铁匠和石匠力量高锛?3~14），厨师和陶工智力高锛?1~12），农民较均琛°€傝为树 ID 对应不同鐨?AI 行为模式。注意部分实浣?ID 带有 <code>_entity</code> 后缀銆</p>
 
     <h2>生成实体</h2>
     <p>通过 Lua API 从原型生成实体：</p>
-    <pre><code>-- 在指定位置生成一个矿工
+    <pre><code>-- 在指定位置生成一个矿宸?
 local id = engine.ecs.spawn_prototype("core:miner")
 engine.ecs.set_position(id, 10, 70, 20)</code></pre>
-    <p>或在控制台中：</p>
-    <pre><code>spawn_proto core:miner          -- 在玩家附近生成一个矿工实体</code></pre>
+    <p>或在控制台中锛</p>
+    <pre><code>spawn_proto core:miner          -- 在玩家附近生成一个矿工实浣</code></pre>
 
-    <h2>生成时自动补齐</h2>
+    <h2>生成时自动补榻</h2>
     <ul>
-      <li>生成实体总会写入 <code>PrototypeRef</code>，值为原型 ID。</li>
-      <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业 <code>core:worker</code>（如果 JSON 没有声明 <code>Profession</code>）。</li>
-      <li>声明 <code>Needs</code> 但未声明 <code>Mood</code> 时，会自动添加默认 <code>Mood</code>。</li>
-      <li>声明 <code>Stats</code> 时会重新计算派生属性；未声明 <code>Health</code> 时，生命值会用派生 <code>max_hp</code>。</li>
-      <li><code>Inventory</code> 是兼容旧数据的入口，只读取 <code>slots</code> 的第一个槽并转换为 <code>HeldItem</code>；如果同时存在 <code>HeldItem</code>，<code>Inventory</code> 会被忽略。</li>
+      <li>生成实体总会写入 <code>PrototypeRef</code>锛屽€间负原型 ID銆</li>
+      <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>銆<code>NavAgent</code>銆<code>BlockInteractor</code> 和默认职涓?<code>core:worker</code>（如鏋?JSON 没有声明 <code>Profession</code>锛夈€</li>
+      <li>声明 <code>Needs</code> 但未声明 <code>Mood</code> 时，会自动添加默璁?<code>Mood</code>銆</li>
+      <li>声明 <code>Stats</code> 时会重新计算派生灞炴€э紱未声鏄?<code>Health</code> 时，生命值会用派鐢?<code>max_hp</code>銆</li>
+      <li><code>Inventory</code> 是兼容旧数据的入口，只读鍙?<code>slots</code> 的第涓€个槽并转换为 <code>HeldItem</code>；如果同时存鍦?<code>HeldItem</code>锛<code>Inventory</code> 会被忽略銆</li>
     </ul>
 
     <h2>文件放置规则</h2>
     <ul>
-      <li>放在 <code>data/entities/</code> 下，支持子目录。</li>
-      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
+      <li>放在 <code>data/entities/</code> 下，支持子目褰曘€</li>
+      <li>文件名随意，引擎只关蹇?JSON 内的 <code>id</code> 字段銆</li>
     </ul>
 
     <h2>验证命令</h2>
-    <pre><code>list_data entities               -- 列出所有已注册的实体原型
-data core:miner                  -- 查看单个原型的完整 JSON
-spawn_proto core:miner           -- 在世界中生成一个实例</code></pre>
+    <pre><code>list_data entities               -- 列出鎵€有已注册的实体原鍨?
+data core:miner                  -- 查看单个原型的完鏁?JSON
+spawn_proto core:miner           -- 在世界中生成涓€个实渚</code></pre>
 
-    <h2>实体模型与动画</h2>
-    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为石炉/摩尔庄园风格的 Q 版三头身模型——大头、小身体、浮动的手脚（脚与身体之间保留较小间隙，整体控制在实体高度内）。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
+    <h2>实体模型与动鐢</h2>
+    <p>实体渲染鐢?<code>Visual</code> 鍜?<code>Animation</code> 组件驱动。没有声鏄?<code>Visual</code> 的原型仍会使用默璁?<code>box</code> 外观；声鏄?<code>model: "biped"</code> 后会渲染为石鐐?摩尔庄园风格鐨?Q 版三头身模型鈥斺€斿ぇ澶淬€佸皬身体、浮动的手脚（脚与身体之间保留较小间隙，整体控制在实体高度内锛夈€俁imWorld/RimColony pawn 语义鐢?RimColonyCompact 鐨?Lua converter 转换成普閫?NewColony 实体视觉数据；converter 可解鏋?RimWorld 风格 <code>texPath</code> 和朝向贴图路寰勩€</p>
     <pre><code>"Visual": {
   "model": "biped",
   "texture": "textures/entities/colonist.png",
@@ -141,9 +159,9 @@ spawn_proto core:miner           -- 在世界中生成一个实例</code></pre>
   "walk_amplitude": 25.0,
   "idle_bob": 0.015
 }</code></pre>
-    <p><code>Animation</code> 当前支持 biped 的程序行走动画：实体有水平速度时双脚和双手前后摆动，<code>walk_speed</code> 控制频率，<code>walk_amplitude</code> 控制角度。Biped 模型头部约占实体高度 40%，身体约占 35%，脚底贴地，脚与身体之间使用紧凑间隙以适配 1.8 格实体高度。模型资源写法见 <a href="mod-assets-model.html">模型资源</a>。</p>
-    <p>带有 <code>Head</code> 的实体会跟踪运行时 <code>InterestPoint</code>；没有 active interest point 时，头部使用身体朝向。方块交互会把 interest point 设置到被交互方块中心。</p>
-    <p>任意实体都可以通过 <code>Head</code> 组件加入这个行为。使用 <code>center_x</code>、<code>center_y</code>、<code>center_z</code>、<code>width</code>、<code>height</code> 和 <code>depth</code> 描述模型局部空间中的头部盒。</p>
+    <p><code>Animation</code> 当前支持 biped 的程序行走动画：实体有水骞抽€熷害时双脚和双手前后摆动锛<code>walk_speed</code> 控制频率锛<code>walk_amplitude</code> 控制角度。Biped 模型头部约占实体高度 40%，身体约鍗?35%，脚底贴地，脚与身体之间使用紧凑间隙浠ラ€傞厤 1.8 格实体高搴︺€傛ā型资源写法见 <a href="mod-assets-model.html">模型资源</a>銆</p>
+    <p>带有 <code>Head</code> 的实体会跟踪运行鏃?<code>InterestPoint</code>；没鏈<active interest point 时，头部使用身体朝向。方块交互会鎶?interest point 设置到被交互方块中心銆</p>
+    <p>任意实体都可浠ラ€氳繃 <code>Head</code> 组件加入这个行为。使鐢?<code>center_x</code>銆<code>center_y</code>銆<code>center_z</code>銆<code>width</code>銆<code>height</code> 鍜?<code>depth</code> 描述模型灞€部空间中的头部盒銆</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
