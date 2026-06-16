@@ -90,6 +90,15 @@
     <ol>
       <li><strong>双线性高度混合</strong>：先用 <code>generate_biome_height_map</code>（SIMD 4 路 fbm 噪声）计算生物群系局部高度图，再用 <code>base_height_at</code> 把 <code>cfg.base_height</code> 替换为世界地图的双线性插值高度。这样相邻 chunk 之间的高低差异是平滑的，而不是突变。
         <div class="callout info">
+          <strong>multi-noise per-column 高度（Phase 4）</strong>：高度图计算分三步。
+          <ol>
+            <li>先用 chunk 主导群系跑一次 <code>generate_biome_height_map</code> 拿到 chunk 级 fbm 高度骨架。</li>
+            <li>对每列查 per-column 群系，按群系的 <code>height.amplitude_scale</code>（噪声幅度倍率）和 <code>height.offset</code>（最终抬升）重新计算 surface_y。这样山地气候 column 在草原 chunk 内也能真的高起来，而不是被压平到草原高度。</li>
+            <li>3×3 box-blur 平滑。没有这一步的话，相邻 column 之间会因 <code>amplitude_scale</code> 或 <code>offset</code> 突变出现单格高的台阶。</li>
+          </ol>
+          MOD 不写 <code>height</code> 块时默认 <code>offset=0, amplitude_scale=1.0</code>，保持旧的 chunk-dominant-only 行为。
+        </div>
+        <div class="callout info">
           <strong>性能优化（2026-06-14 修复）</strong>：<code>base_height_at</code> 对每列方块都要求 4 个角 chunk 的基础高度。旧实现每个角 chunk 都重新采样气候，相当于 1 个 chunk 生成触发 256 × 4 = 1024 次气候采样。修复后 <code>terrain_base_height_for_block</code> 用 <code>thread_local</code> 的 4 角 cache，第一次调用预计算 4 个角的高度，后续 255 次调用只做纯插值，气候采样次数从 ~1024 降到 4。
         </div>
       </li>
@@ -159,7 +168,6 @@
     <ul>
       <li><strong>极地折返处双线性高度异常</strong>：<code>base_height_at</code> 用四个角 chunk 的气候做双线性插值，在极地折返附近可能产生高度异常。考虑改用球面插值或对极地区域使用最近邻。该项影响面小（极地仅占星球一小部分），优先级低。</li>
       <li><strong>per-column 装饰</strong>：当前 <code>decorate_chunk</code>（树木、灌木、河流、洞穴）仍按 chunk 主导群系工作。如果要让 chunk 边界处的装饰也按 column 群系分布（比如草原 chunk 内的小片沙漠不长树），需要把装饰阶段改成 per-column 群系评估。改动面较大，留作可选增强。</li>
-      <li><strong>高度参数 per-column 混合</strong>：当前高度图用 chunk 主导群系算（保证相邻 chunk 边界不出现悬崖）。如果想进一步让高山群系的 column 真的比平原 column 高，需要在 per-column 群系边界处对 amplitude 做加权混合，避免单 column 突变产生 1 块高的台阶。</li>
     </ul>
 
     <div class="callout info">
@@ -168,6 +176,7 @@
         <li>群系选择从 hash 加权随机改为纯气候距离最近邻，相同气候必然映射到相同群系，相邻 column 不会因随机噪声被分到不同群系。</li>
         <li>气候采样新增 block 级扰动（<code>sample_climate_for_block</code>），让气候在 chunk 内连续漂移，是 chunk 内多群系的物理基础。</li>
         <li><code>generate_terrain_for_chunk</code> 新增 <code>column_biome_at</code> 参数，<code>surface</code> / <code>subsurface</code> 方块按 per-column 群系决定，同一 chunk 内可呈现多种群系表层。</li>
+        <li>per-column 高度（Phase 4）：群系可选 <code>height</code> 块声明 <code>offset</code> 和 <code>amplitude_scale</code>，让山地气候 column 在草原 chunk 内也能真的高起来；3×3 box-blur 平滑过渡，MOD 不写 <code>height</code> 块则保持旧行为。</li>
         <li>消除了"草原/深海交错"问题：相邻 chunk 同气候 → 同群系；chunk 内气候漂移 → 颜料晕染式过渡。</li>
       </ul>
     </div>

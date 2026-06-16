@@ -54,6 +54,7 @@
         <tr><td><code>has_caves</code></td><td>bool</td><td>否</td><td>是否在此群系中生成洞穴，默认 true。</td></tr>
         <tr><td><code>has_rivers</code></td><td>bool</td><td>否</td><td>是否在此群系中生成河流，默认 true。</td></tr>
         <tr><td><code>climate</code></td><td>table</td><td>否</td><td>偏好气候范围。省略或部分省略的字段默认为 0.0~1.0（匹配任何气候）。</td></tr>
+        <tr><td><code>height</code></td><td>table</td><td>否</td><td>per-column 高度配置。让山地气候 column 在草原 chunk 内也能真的高起来，而不是被压平到 chunk 主导群系的高度。省略时默认 <code>offset=0, amplitude_scale=1.0</code>，保持旧版本行为。</td></tr>
         <tr><td><code>vegetation</code></td><td>table</td><td>否</td><td>此群系整体植被概率场。最常调的是 <code>density</code>，用于控制该群系树木总体多少。</td></tr>
       </tbody>
     </table>
@@ -89,6 +90,22 @@
 
     <div class="callout info">
       群系中的树木种类由地物系统（<code>data/features/</code>）接管。群系负责整体植被密度和概率场，树类型地物负责具体树种、间距、相对密度和温度适宜度。
+    </div>
+
+    <h3>高度子表字段</h3>
+    <p>multi-noise 模型下，同一 chunk 内不同 column 可能落到不同群系（"颜料晕染"过渡）。如果不写 <code>height</code> 块，所有 column 共享 chunk 主导群系算出来的高度图——山地气候 column 也会和草原 column 一样平。写 <code>height</code> 块后，每列按自己群系的高度参数独立计算 surface_y，山才会真的高起来、平原才会真的平。</p>
+    <table>
+      <thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>offset</code></td><td>0</td><td>高度抬升（块数）。最终 surface_y 会加上这个值。范围 [-64, 64]，可以是整数或浮点数（浮点会四舍五入）。例如山地群系用 +18 让整体地形抬升 18 块。</td></tr>
+        <tr><td><code>amplitude_scale</code></td><td>1.0</td><td>噪声幅度倍率。chunk 级 fbm 噪声的输出乘以这个倍率。&gt;1 让地形更崎岖，&lt;1 让地形更平。范围 [0.0, 4.0]。例如平原用 0.5 让起伏减半，山地用 2.4 让起伏放大。</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <strong>过渡平滑</strong>：引擎在 per-column 高度计算后会做 3×3 box-blur，避免相邻 column 因 <code>offset</code> 或 <code>amplitude_scale</code> 突变出现单格高的台阶。MOD 作者无需关心这点，但要意识到山地群系的 <code>offset</code> 不会"瞬间"生效——边界处会有 2~3 列的过渡带。
+    </div>
+    <div class="callout info">
+      <strong>海岸兼容</strong>：水域群系（<code>surface_block</code> 是水方块）的 <code>offset</code> 应为负数让海床低于海平面。CoreMod 的 <code>ocean</code> 群系用 <code>offset=-8, amplitude_scale=0.3</code>。引擎在 chunk 内部区会额外把水域 column 钳制到 <code>max_water_surface_y</code> 以下，所以即使 <code>offset</code> 设得不够低也不会露出干涸海床。
     </div>
 
     <h2>方块 ID 参考</h2>
