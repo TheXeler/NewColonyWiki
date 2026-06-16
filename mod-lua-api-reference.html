@@ -253,7 +253,7 @@
         <tr class="api-row" data-api-row><td><code>engine.terrain.register_feature(table)</code></td><td>table</td><td>-</td><td>注册地表地物，字段见地物注册页面。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.list_features()</code></td><td>-</td><td>table</td><td>列出已注册地物 ID。</td></tr>
         <tr class="api-row" data-api-row><td><code>engine.terrain.find_feature(id)</code></td><td>string</td><td>table</td><td>返回地物定义；找不到时返回空表。</td></tr>
-        <tr class="api-row" data-api-row><td><code>engine.terrain.select_biome(seed, cx, cz)</code></td><td>integer, integer, integer</td><td>table</td><td>返回选中的 biome 描述；当前世界 seed 会读取世界地图上已固定的群系，其它 seed 使用确定性选择；气候不精确匹配时会选择距离最近的群系。</td></tr>
+        <tr class="api-row" data-api-row><td><code>engine.terrain.select_biome(seed, cx, cz)</code></td><td>integer, integer, integer</td><td>table</td><td>返回选中的 biome 描述；当前世界 seed 会读取世界地图上已固定的群系（chunk 主导群系），其它 seed 走 multi-noise 气候空间最近邻选择；注意此 API 返回的是 chunk 主导群系，chunk 内不同 column 的实际群系可能因 block 级气候扰动而不同。</td></tr>
 
         <!-- Locale -->
         <tr class="api-row" data-api-row><td><code>engine.locale.set_locale(id)</code></td><td>string</td><td>-</td><td>切换当前语言；ID 使用已加载语言文件名，例如 <code>zh-cn</code>。</td></tr>

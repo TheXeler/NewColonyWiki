@@ -92,6 +92,7 @@ void main() {
         <tr><td>体积光遮罩</td><td><code>volumetric_light_mask.vert</code> + <code>volumetric_light_mask.frag</code></td><td>生成体积光遮罩。</td></tr>
         <tr><td>体积光模糊</td><td><code>volumetric_light_blur.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
         <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
+        <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，供后续 compute frustum/occlusion culling 使用。</td></tr>
       </tbody>
     </table>
 

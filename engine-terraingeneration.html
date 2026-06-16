@@ -35,7 +35,7 @@
     </ul>
     <h3>步骤</h3>
     <ol>
-      <li><strong>铺六边形网格</strong>：在 <code>q,r,s</code> 立方坐标系上铺出半径 <code>planet_radius</code> 的六边形盘。每个 tile 的索引数量约 <code>1 + 3R(R+1)</code>，R=48 时约 7 千个 tile。</li>
+      <li><strong>铺六边形网格</strong>：在 <code>q,r,s</code> 立方坐标系上铺出半径 <code>planet_radius</code> 的六边形盘。每个 tile 的索引数量约 <code>1 + 3R(R+1)</code>，R=48 时约 7 千个 tile。盘子在 hex-pixel 空间呈 2:1 比例（宽 2R、高 R），匹配等距矩形投影的拟真地球展开图；<code>r</code> 方向的 hex-pixel 间距是 <code>q</code> 方向的一半。</li>
       <li><strong>计算海拔</strong>：用三组独立 Perlin 噪声叠加（broad / detail / ridge），公式：<code>elevation = clamp01(0.50 + broad*0.34 + detail*0.12 + ridge*0.20)</code>。</li>
       <li><strong>计算温度</strong>：基于恒星距离（越近越热）和纬度（两极更冷），并叠加海拔降温：<code>temperature = clamp01(0.22 + solar_heat*0.72 - |latitude|*0.68 - elevation*0.16)</code>。</li>
       <li><strong>计算湿度</strong>：Perlin 噪声主导，叠加雨影（高海拔背风面干旱）和极地干旱。</li>
@@ -47,15 +47,23 @@
     <h2>第二层:Chunk 体素生成</h2>
     <p>当玩家进入某个 chunk 的视距时，<code>ChunkManager</code> 异步生成该 chunk。完整流程如下：</p>
 
-    <h3>阶段 0:气候采样</h3>
-    <p>每个 chunk 进入生成流程时，先在世界地图上做一次气候采样（<code>WorldMap::sample_climate_for_chunk</code>）。采样逻辑：</p>
+    <h3>阶段 0:气候采样（chunk 级宏观 + block 级扰动）</h3>
+    <p>气候采样分两层，共同构成 multi-noise 气候空间的物理基础：</p>
     <ul>
-      <li>把 chunk 坐标 (cx, cz) 归一化到有限星球（<code>normalize_planet_chunk</code>，处理经度回绕和极地折返）</li>
-      <li>对所有世界地图 tile 做反距离加权平均：<code>weight = 1 / (dist_sq + 0.015)</code></li>
-      <li>输出当前 chunk 的 <code>temperature / moisture / elevation / water / biome_id</code></li>
+      <li><strong>chunk 级宏观骨架</strong>（<code>WorldMap::sample_climate_for_chunk</code>）：
+        <ul>
+          <li>把 chunk 坐标 (cx, cz) 归一化到有限星球（<code>normalize_planet_chunk</code>，处理经度回绕和极地折返）</li>
+          <li>对所有世界地图 tile 做反距离加权平均：<code>weight = 1 / (dist_sq + 0.015)</code></li>
+          <li>输出当前 chunk 的 <code>temperature / moisture / elevation / water / biome_id</code></li>
+        </ul>
+      </li>
+      <li><strong>block 级扰动</strong>（<code>WorldMap::sample_climate_for_block</code>）：在 chunk 级 climate 上叠加两个独立的中频 Perlin 扰动场（温度、湿度）。扰动周期约 48 块边长，幅度约 0.14。这让气候在 chunk 内连续漂移，是后续 per-column 群系选择能够"在同一 chunk 内出现多种群系"的来源。海拔不做 block 级扰动，避免海岸线逐块抖动。</li>
     </ul>
     <div class="callout info">
       <strong>性能优化（2026-06-14 修复）</strong>：气候采样结果是 chunk 局部常量，但旧实现对每列方块都会重新采样，造成每个 chunk 调用 <code>sample_climate_for_chunk</code> 上千次、每次遍历约 7 千个 tile。修复后 <code>ChunkManager::cached_climate_for_chunk</code> 用 <code>thread_local</code> 缓存每个 worker 线程最近一次采样的 chunk，使后续相同 chunk 的查询从 O(tiles) 降到 O(1)。
+    </div>
+    <div class="callout info">
+      <strong>block 级扰动设计</strong>：<code>sample_climate_for_block</code> 不重复 IDW，而是复用 chunk 缓存的宏观气候，仅在末尾追加两次 Perlin 查询。per-column 调用的开销近似为两次 Perlin 噪声查询，不会随世界地图 tile 数量增长。
     </div>
 
     <h3>阶段 1:地形配置（<code>terrain_config_for_chunk</code>）</h3>
@@ -68,12 +76,14 @@
       <li><code>river.water_level = sea_level - 2</code></li>
     </ul>
 
-    <h3>阶段 2:群系选择（<code>select_biome_for_chunk</code>）</h3>
-    <ol>
-      <li>优先使用气候采样返回的 <code>biome_id</code>（世界地图已分类）</li>
-      <li>找不到时调用 <code>select_biome_for_climate</code>：先找完全匹配气候范围的群系集合，按权重加权随机；若没有任何匹配，按"气候距离平方和"最小原则找最近候选</li>
-      <li>仍然失败则回退到纯权重随机的 <code>select_biome</code></li>
-    </ol>
+    <h3>阶段 2:群系选择（multi-noise 气候空间）</h3>
+    <p>群系选择遵循 Minecraft 1.18+ 的 multi-noise 模型：群系不是 chunk 大小的离散格子，而是从连续气候场里"涌现"出来的连续区域——相邻 column 气候相同则群系必然相同，气候跨越群系 climate range 边界处就是天然的过渡带。</p>
+    <p>两个查询入口：</p>
+    <ul>
+      <li><strong>chunk 主导群系</strong>（<code>select_biome_for_chunk</code>）：返回单一群系，用于高度图、装饰、UI/minimap 等需要 chunk 级一致性的场合。优先用世界地图 tile 的 <code>biome_id</code>，找不到时走 <code>select_biome_for_climate</code>，仍失败回退到 <code>select_biome</code>。</li>
+      <li><strong>per-column 群系</strong>（<code>column_biome_lookup</code> → <code>sample_climate_for_block</code> → <code>select_biome_for_climate</code>）：每个 column 独立采样气候，独立选择群系。同一 chunk 内不同 column 可落到不同群系，这是"颜料晕染"过渡的来源。</li>
+    </ul>
+    <p><code>select_biome_for_climate</code> 核心算法是<strong>纯气候距离最近邻</strong>：在 (温度, 湿度, 海拔) 三维空间里找最近的群系 climate range。完全落在某群系 range 内 → distance = 0；否则按"超出 range 边界的距离平方和"比较。同距离时取注册顺序最早的（确定性 tie-break）。<strong>不再有 hash 加权随机</strong>——这是相邻 column 不会因随机噪声被分到不同群系的关键，也是消除"草原/深海交错"问题的核心改动。</p>
 
     <h3>阶段 3:地形 pipeline（<code>generate_terrain_for_chunk</code>）</h3>
     <p>主体由 <code>TerrainGenerator::generate_chunk</code> 完成，但 <code>ChunkManager</code> 在外层加了一层「海岸线平滑」逻辑：</p>
@@ -89,7 +99,7 @@
           <li>边缘带（距边 &lt; 4 块）：不钳制，让自然插值高度决定海陆，避免邻接 chunk 在边缘出现悬崖</li>
         </ul>
       </li>
-      <li><strong>方块填充</strong>：按高度图分层填充 bedrock / subsurface / surface；水下列在 surface 上方填 water。</li>
+      <li><strong>方块填充（per-column 群系）</strong>：高度图仍是 chunk 级（用 chunk 主导群系算，避免相邻 chunk 边界出现悬崖），但 <code>surface</code> / <code>subsurface</code> 方块和 <code>subsurface_depth</code> 按 per-column 群系决定。例如草原 chunk 中某个 column 落到了沙漠气候，那一列的表层就是沙子而不是草；紧邻 column 若仍属于草原气候则仍是草。这是 multi-noise 在视觉上最显著的一步——chunk 内可以同时呈现多种群系的表层材质，过渡处呈现"颜料晕染"而不是硬切换。装饰阶段（树木、灌木、河流、洞穴）仍按 chunk 主导群系工作，per-column 装饰是后续可选增强。</li>
       <li><strong>地下矿石</strong>（<code>generate_underground</code> → <code>place_ores</code>）：用 <code>m_cave_noise</code> 的 3D Perlin 在指定 y 区间内把 <code>replace_block</code> 替换为矿石方块。矿石定义在 <code>data/ores/</code>。</li>
     </ol>
 
@@ -136,7 +146,9 @@
       <tbody>
         <tr><td>世界地图生成</td><td>O(R²)</td><td>R=48 时约 7K tile，一次性生成</td></tr>
         <tr><td>气候采样（单次）</td><td>O(tiles)</td><td>反距离加权平均遍历所有 tile</td></tr>
-        <tr><td>气候采样（缓存命中）</td><td>O(1)</td><td>thread_local cache，同 chunk 内 0 开销</td></tr>
+        <tr><td>气候采样（chunk 级缓存命中）</td><td>O(1)</td><td>thread_local cache，同 chunk 内 0 开销</td></tr>
+        <tr><td>气候采样（block 级）</td><td>O(1) + 2 次 Perlin 查询</td><td>复用 chunk 级缓存 + 中频扰动，per-column 调用廉价</td></tr>
+        <tr><td>per-column 群系查询</td><td>O(biomes)</td><td>线性扫描 climate range 找最近邻，单 chunk 256 column × 群系数</td></tr>
         <tr><td>地表高度图</td><td>O(CHUNK_SIZE² / 4 × octaves)</td><td>SIMD 4 路并行处理 4 列</td></tr>
         <tr><td>洞穴挖掘</td><td>O(anchor² × tunnel_length)</td><td>每 chunk 受 9×9 = 81 个 anchor 影响</td></tr>
         <tr><td>河流刻蚀</td><td>O(CHUNK_SIZE² × WORLD_HEIGHT)（最坏）</td><td>实际只对命中阈值的列扫描</td></tr>
@@ -146,7 +158,19 @@
     <h2>已知的未来改进</h2>
     <ul>
       <li><strong>极地折返处双线性高度异常</strong>：<code>base_height_at</code> 用四个角 chunk 的气候做双线性插值，在极地折返附近可能产生高度异常。考虑改用球面插值或对极地区域使用最近邻。该项影响面小（极地仅占星球一小部分），优先级低。</li>
+      <li><strong>per-column 装饰</strong>：当前 <code>decorate_chunk</code>（树木、灌木、河流、洞穴）仍按 chunk 主导群系工作。如果要让 chunk 边界处的装饰也按 column 群系分布（比如草原 chunk 内的小片沙漠不长树），需要把装饰阶段改成 per-column 群系评估。改动面较大，留作可选增强。</li>
+      <li><strong>高度参数 per-column 混合</strong>：当前高度图用 chunk 主导群系算（保证相邻 chunk 边界不出现悬崖）。如果想进一步让高山群系的 column 真的比平原 column 高，需要在 per-column 群系边界处对 amplitude 做加权混合，避免单 column 突变产生 1 块高的台阶。</li>
     </ul>
+
+    <div class="callout info">
+      <strong>multi-noise / 气候空间迁移</strong>
+      <ul>
+        <li>群系选择从 hash 加权随机改为纯气候距离最近邻，相同气候必然映射到相同群系，相邻 column 不会因随机噪声被分到不同群系。</li>
+        <li>气候采样新增 block 级扰动（<code>sample_climate_for_block</code>），让气候在 chunk 内连续漂移，是 chunk 内多群系的物理基础。</li>
+        <li><code>generate_terrain_for_chunk</code> 新增 <code>column_biome_at</code> 参数，<code>surface</code> / <code>subsurface</code> 方块按 per-column 群系决定，同一 chunk 内可呈现多种群系表层。</li>
+        <li>消除了"草原/深海交错"问题：相邻 chunk 同气候 → 同群系；chunk 内气候漂移 → 颜料晕染式过渡。</li>
+      </ul>
+    </div>
 
     <div class="callout info">
       <strong>历史改进（2026-06-14 已完成）</strong>
@@ -164,7 +188,8 @@
     <h2>调试技巧</h2>
     <ul>
       <li>控制台输入 <code>engine.terrain.list_biomes()</code> 列出所有已注册群系</li>
-      <li>日志中若出现 <code>[Worldgen] no biome match for chunk=...</code>，说明气候值落在所有群系 climate 范围之外，<code>select_biome_for_climate</code> 用最近邻回退了。检查 mod 注册的群系 climate 范围是否有缺口。</li>
+      <li>日志中若出现 <code>[Worldgen] no biome match for chunk=...</code>，说明气候采样返回 <code>valid=false</code>（通常是世界地图尚未生成或归一化失败），<code>select_biome_for_chunk</code> 走到了 <code>select_biome</code> 兜底分支。检查世界地图是否已通过 <code>WorldMapGenerator::generate</code> 正常生成。注意：multi-noise 改造后 <code>select_biome_for_climate</code> 是纯最近邻，总会返回候选，不会再因"climate range 缺口"打印该 warning。</li>
+      <li>调试 column 级群系分布：用 <code>engine.terrain.select_biome</code> 在 Lua 控制台查询某个 chunk 的主导群系，或在生成器中临时调高 <code>sample_climate_for_block</code> 的扰动幅度（<code>PERTURB_AMP</code>）观察 chunk 内多群系变化是否如预期。</li>
       <li>启动加 <code>--DEBUG</code> 参数可看到 <code>[WorldMap]</code> 和 <code>[Chunks]</code> 日志，了解世界地图大小和 chunk 生成状况。</li>
     </ul>
 
