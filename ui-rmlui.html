@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>游戏内 RmlUI · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="ui-rmlui">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>游戏内 RmlUI</div></div>
+  <div class="content">
+    <h1>游戏内 RmlUI</h1>
+    <p class="subtitle">游戏内 UI 的目标主路线是 <strong>RmlUI</strong>（HTML/CSS 风格、进程内渲染、合成进 Vulkan 画面）。本页记录它的依赖状态、资源入口、stub/真 backend 边界，以及把真 RmlUI 库接入构建的步骤。宿主层（<code>RmlUiHost</code> / <code>RmlUiRuntime</code> / <code>RmlUiBridge</code>）的接口与数据通道契约见 <a href="mod-ui-api.html#rml-ui-host">UI 框架 · 游戏内 RmlUI 宿主层</a>。</p>
+
+    <div class="callout info">
+      引擎不再启动本地 HTTP server，不再以外部浏览器作为 UI 验收路径（<code>ExternalBrowser</code> / <code>WebServer</code> 已删除）。旧即时模式 UI 依赖也已从代码、构建和 vcpkg 依赖中移除。
+    </div>
+
+    <h2>当前状态（一句话）</h2>
+    <p>默认构建使用 <strong>Null stub</strong>（<code>NullRmlUiRuntime</code>），宿主层生命周期、数据桥、命令通道全部接好，但<strong>不渲染任何文档</strong>。<code>vcpkg.json</code> 已正式声明 <code>rmlui</code> 依赖；默认 <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 只是不编译真 backend。打开 <code>NEWCOLONY_ENABLE_RMLUI=ON</code> 后，真 backend 会链接 <code>RmlUi::RmlUi</code>，使用最小 Vulkan <code>RenderInterface</code> 在游戏窗口内绘制 <code>main.rml</code>，并通过 <code>RmlUiBridge</code> 暴露通用数据模型与命令事件入口。</p>
+
+    <h2>三层结构</h2>
+    <table>
+      <thead><tr><th>组件</th><th>文件</th><th>职责</th></tr></thead>
+      <tbody>
+        <tr><td><code>RmlUiHost</code></td><td><code>Engine/UI/RmlUiHost.{hpp,cpp}</code></td><td>引擎唯一集成点；持有后端与桥，暴露生命周期、输入、数据推送与命令消费。</td></tr>
+        <tr><td><code>RmlUiRuntime</code></td><td><code>Engine/UI/RmlUiRuntime.{hpp,cpp}</code></td><td>RmlUI backend 抽象接口 + <code>NullRmlUiRuntime</code> stub + <code>make_rml_ui_runtime()</code> 工厂（按构建宏分支）。</td></tr>
+        <tr><td><code>RealRmlUiRuntime</code></td><td><code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code></td><td>真 RmlUI backend，<strong>仅在 <code>NEWCOLONY_ENABLE_RMLUI=ON</code> 时编译</strong>；负责生命周期、主文档加载、输入、原始通道绑定、命令事件与最小 Vulkan <code>RenderInterface</code>。</td></tr>
+        <tr><td><code>RmlUiPanelRegistry</code></td><td><code>Engine/UI/RmlUiPanelRegistry.{hpp,cpp}</code></td><td>真 backend 的副文档注册表；集中声明并尽力加载 <code>debug_input.rml</code>、<code>hud.rml</code>、<code>build_panel.rml</code>、<code>research.rml</code>、<code>crafting.rml</code>、<code>colonists.rml</code>、<code>minimap_zone.rml</code>、<code>pause_menu.rml</code>、<code>dev_console.rml</code>，挂载输入验证页调试监听器与 DevConsole 的 form submit/close 监听器，并在每帧把控制台可见时的键盘焦点送进输入框。</td></tr>
+        <tr><td><code>RmlUiDataViews</code></td><td><code>Engine/UI/RmlUiDataViews.{hpp,cpp}</code></td><td>面板 typed/derived view 边界；集中注册与刷新 HUD 的 <code>hud_*</code> 字段、Build Panel 的 <code>build_defs_list</code> / <code>construction_active_list</code> / <code>command_result_view</code>，Research 面板的 <code>research_nodes</code> / <code>current_research_view</code>，Crafting 面板的 <code>crafting_recipes_list</code> / <code>craft_result_view</code>，Colonist 面板的 <code>colonists_list</code> / <code>selected_colonist_view</code>，Minimap/Zone 的 <code>minimap_status</code> / <code>zone_mode</code> / <code>available_zone_tools</code>，DevConsole 的 <code>console_visible</code> / <code>console_history</code> / <code>console_prompt</code>，以及 UI phase 派生的 <code>main_menu_visible</code> / <code>playing_visible</code> / <code>pause_visible</code> / <code>pause_menu_visible</code> / <code>settings_visible</code> 与 <code>settings_rows</code>。</td></tr>
+        <tr><td><code>RmlUiBridge</code></td><td><code>Engine/UI/RmlUiBridge.{hpp,cpp}</code></td><td>C++ ↔ 文档层双向数据/事件通道（快照 + 命令队列），与具体 backend 无关。</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="panel-runtime-boundaries">面板 runtime 边界</h2>
+    <p>新增 RML 面板时，资源注册和 typed view 不再直接堆进 <code>RmlUiRealRuntime.cpp</code>。副加载文档（入口 <code>main.rml</code> 之外的面板/验证页）统一登记在 <code>RmlUiPanelRegistry.cpp</code> 的注册表中，保持“缺失不致命、主文档照常渲染”的加载语义。面板需要的结构化 DataModel 字段统一放在 <code>RmlUiDataViews.{hpp,cpp}</code>：在 <code>register_bindings()</code> 注册 struct/array/bind，在 <code>refresh()</code> 从原始 JSON 通道派生 typed view，并只 dirty 变更字段。</p>
+    <p><code>RmlUiRealRuntime.cpp</code> 仍保留稳定底座：创建 <code>nc</code> DataModel、绑定十二个原始 JSON 通道、缓存引擎推送的 UI 控制变量、处理通用 <code>data-command</code> / <code>data-action</code> click 事件、驱动 RmlUI 生命周期与 Vulkan 渲染。后续面板不得替换原始通道名契约；typed view 只能作为面板专用的附加绑定。</p>
+
+    <h2>资源入口</h2>
+    <p>RmlUI 文档根为 <code>&lt;core_assets&gt;/ui/rml</code>（<code>Engine::init()</code> 时传入 <code>RmlUiHost::init()</code>）。RML/RCSS 文档放在该目录下：</p>
+<pre><code>CoreMod/assets/ui/
+└── rml/
+    ├── main.rml           # 入口文档（RmlUiHost 默认加载 main.rml）
+    ├── main.rcss          # main.rml 链接的 RCSS 样式
+    ├── main.ttf           # 项目内置 RmlUI 字体（Noto Sans Regular）
+    ├── FONT_SOURCE.md     # 字体来源与分发许可说明
+    ├── NotoSans-OFL.txt   # SIL Open Font License 1.1
+    ├── hud.rml            # 只读游戏 HUD / Resource Bar MVP（仅真 backend 副加载）
+    ├── hud.rcss           # HUD 样式
+    ├── build_panel.rml    # 建造面板 MVP（仅真 backend 副加载）
+    ├── build_panel.rcss   # 建造面板样式
+    ├── research.rml       # 科技研究面板 MVP（仅真 backend 副加载）
+    ├── research.rcss      # 科技研究面板样式
+    ├── crafting.rml       # 制造面板 MVP（仅真 backend 副加载）
+    ├── crafting.rcss      # 制造面板样式
+    ├── colonists.rml      # 殖民者 / 职业面板 MVP（仅真 backend 副加载）
+    ├── colonists.rcss     # 殖民者面板样式
+    ├── pause_menu.rml     # Pause / Settings MVP（仅真 backend 副加载）
+    ├── pause_menu.rcss    # Pause / Settings 样式
+    ├── debug_input.rml    # 输入验证面板（仅 ON 时由真 backend 副加载）
+    └── debug_input.rcss   # 验证面板样式</code></pre>
+    <p><code>main.rml</code> 是<strong>最小游戏内 UI 占位</strong>（顶部状态条），不是浏览器网页布局。真 backend 由 <code>RealRmlUiRuntime::load_document("main.rml")</code> 加载；Null stub 下 <code>load_document</code> 返回 false（预期行为），但会记录请求的文档名与资源根用于诊断。</p>
+    <div class="callout info">
+      字体：<code>RealRmlUiRuntime::init()</code> 优先加载 <code>&lt;doc_root&gt;/main.ttf</code>。CoreMod 当前内置 Noto Sans Regular（Google / Noto Fonts 项目，SIL Open Font License 1.1；来源见 <code>CoreMod/assets/ui/rml/FONT_SOURCE.md</code>，许可见 <code>NotoSans-OFL.txt</code>），并随 staging 进入 <code>build/bin/mods/core/assets/ui/rml/main.ttf</code>。Windows 下的 <code>C:/Windows/Fonts/arial.ttf</code> 只作为项目字体缺失或损坏时的开发机兜底；缺字体不会导致启动失败。
+    </div>
+    <div class="callout warn">
+      <strong>字体家族名和字体样式必须精确匹配。</strong>RML 样式表的 <code>font-family</code> 要写成单一家族名 <code>Noto Sans</code>，不要带 CSS 风格的 <code>, sans-serif</code> 回退列表。RmlUI 会把整串值（含逗号和空格）当成一个家族名去查找，命中不了 <code>LoadFontFace</code> 注册的「Noto Sans」，结果文档里所有字形都不绘制，只剩没有文字的彩色矩形——主菜单不可见的根因之一就是这个。CoreMod 当前只加载 Noto Sans Regular，因此样式也应保持正体；不要在 RML/RCSS 中使用 <code>font-style: italic</code>，除非同时引入来源和许可清楚的斜体字形并在 backend 中加载。
+    </div>
+    <div class="callout info">
+      <strong>dev 构建自动 staging：</strong>可执行文件按自身所在目录解析 core mod（<code>EnginePaths::defaults()</code> 令 <code>base_dir = executable_dir()</code>，故 core 路径为 <code>build/bin/mods/core</code>）。<code>cmake --build build</code> 通过 <code>stage_core_mod</code> 这个 ALL 自定义目标，把整个 <code>CoreMod/</code>（Lua/data/assets/config/lang + <code>mod.json</code>）自动同步到该目录，每次构建都刷新（<code>file(COPY)</code> 增量，未改动文件不重写）。因此 <code>main.rml</code>/<code>main.rcss</code> 与 <code>assets/shaders/rmlui.vert</code>/<code>rmlui.frag</code> 总会出现在运行时目录，无需手动复制。同步复用 <code>cmake/CopyDirectoryExcludingGit.cmake.in</code>（与 wiki staging 同源）。
+    </div>
+
+    <h2 id="backend-select">backend 选择</h2>
+    <p><code>make_rml_ui_runtime()</code> 工厂按以下顺序选择 backend：</p>
+    <table>
+      <thead><tr><th>条件</th><th>返回</th></tr></thead>
+      <tbody>
+        <tr><td><code>NC_UI_BACKEND=null</code></td><td><code>NullRmlUiRuntime</code>（即使真 backend 已编译也强制 stub，便于无头/自动化运行）。</td></tr>
+        <tr><td>已定义 <code>NEWCOLONY_HAVE_RMLUI</code>（即 <code>NEWCOLONY_ENABLE_RMLUI=ON</code>）</td><td><code>RealRmlUiRuntime</code>（<code>backend_name()=="rml-real"</code>，<code>is_real_backend()==true</code>）。</td></tr>
+        <tr><td>默认构建（上述都不满足）</td><td><code>NullRmlUiRuntime</code> stub（<code>backend_name()=="rml"</code>，<code>is_real_backend()==false</code>）。</td></tr>
+      </tbody>
+    </table>
+    <p>Fallback：真 backend 的 <code>init()</code> 失败时，<code>RmlUiHost::init()</code> 会 <code>shutdown</code> 它并用 <code>make_null_rml_ui_runtime()</code> 替换，宿主层照常运行，游戏绝不因缺依赖崩溃。</p>
+
+    <h2 id="enable-real-rmlui">接入真 RmlUI backend</h2>
+    <p><code>vcpkg.json</code> 已包含 <code>rmlui</code> 端口依赖（v6.1，默认 feature <code>freetype</code>，CMake 目标 <code>RmlUi::RmlUi</code>）。默认构建仍保持 <code>NEWCOLONY_ENABLE_RMLUI=OFF</code>，因此 <code>RmlUiRealRuntime.cpp</code> 不进编译图，运行时走 null backend。启用真 backend：</p>
+    <ol>
+      <li>configure 时打开 option：<code>cmake -B build -DNEWCOLONY_ENABLE_RMLUI=ON</code>（或在 CMake GUI 勾选）。第一次配置会让 vcpkg 安装/复用 <code>rmlui[core,freetype]</code> 及其依赖。</li>
+      <li>构建：<code>cmake --build build</code>。该 option 会 <code>find_package(RmlUi CONFIG)</code>、把 <code>UI/RmlUiRealRuntime.cpp</code> 加入编译、链接 <code>RmlUi::RmlUi</code>，并定义 <code>NEWCOLONY_HAVE_RMLUI=1</code> 让工厂返回真 backend。</li>
+    </ol>
+<pre><code># vcpkg.json 片段
+{
+  "dependencies": [
+    ...
+    "rmlui"
+  ]
+}</code></pre>
+    <p>option 默认 <strong>OFF</strong>；OFF 时 <code>RmlUiRealRuntime.cpp</code> 不进编译图，默认构建路径仍走 null stub。</p>
+    <div class="callout info">
+      <strong>验证状态：</strong><code>RealRmlUiRuntime.cpp</code> 已适配 RmlUi 6.1 的 <code>RenderInterface</code> 签名（<code>CompiledGeometryHandle</code>、<code>Span</code>、<code>Rectanglei</code>、<code>GenerateTexture</code> 返回 texture handle）。本机已验证 <code>cmake -B build -DNEWCOLONY_ENABLE_RMLUI=ON</code> 与 <code>cmake --build build</code> 通过；<code>NEWCOLONY_ENABLE_RMLUI=OFF</code> configure/build 也通过。短启动验证显示 real backend 初始化为 <code>rml-real</code>，并成功加载 <code>main.rml</code>。
+    </div>
+
+    <h2 id="in-world-data-validation">进入世界真实数据验证</h2>
+    <p>2026-07-07 本机使用 <code>build-rmlui-on</code>（<code>NEWCOLONY_ENABLE_RMLUI=ON</code>，Debug，Ninja，<code>NewColony.exe --DEBUG</code>）从 RmlUI 主菜单点击 <code>New Game</code>，日志确认 <code>core:menu.new_game</code>、<code>start_new_world</code> 与 <code>World started</code> 连通，随后 <code>ui_phase='playing'</code>，主菜单隐藏，游戏内副文档显示。同步验证 <code>build-rmlui-off</code> 构建通过；本轮未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
+    <table>
+      <thead><tr><th>面板</th><th>进入世界后的数据状态</th></tr></thead>
+      <tbody>
+        <tr><td>HUD</td><td><code>world_info</code> 真实刷新，日期为 year 1 / day 1 / 春，时间从 <code>00:00</code> 推进到 <code>00:03</code>；<code>resource_snapshot</code> 当前为 <code>rows=0</code>，表示初始世界没有已储存资源，按明确空态显示。</td></tr>
+        <tr><td>Build Panel</td><td><code>build_defs rows=12</code>，真实建筑定义已进入 typed view；<code>construction_active rows=0</code>，显示空态。缺料、locked、can_order 继续由行状态派生显示。</td></tr>
+        <tr><td>Colonist / Profession</td><td><code>colonist_list rows=1</code>，有真实殖民者数据；本轮日志状态为 <code>selected=no</code>，选择按钮路径保留为 <code>core:colonists.select</code>。</td></tr>
+        <tr><td>Research</td><td><code>tech_tree nodes=5</code>，真实科技节点已显示；当前 <code>current=no</code>，start 按钮状态由节点 locked / can_start 字段控制。</td></tr>
+        <tr><td>Crafting</td><td><code>craft_recipes rows=94</code>，真实配方已显示；材料与缺料文本由配方输入和 <code>resource_snapshot</code> 派生，当前资源为空时按缺料提示处理。</td></tr>
+        <tr><td>Minimap / Zone</td><td>小地图仍是明确占位：当前稳定通道没有地图纹理/相机 footprint 数据；<code>available_zone_tools rows=2</code>，zone 工具来自真实 orders 通道。</td></tr>
+        <tr><td>Pause / Settings</td><td>文档在 playing 阶段加载，Escape / Resume / Settings / Quit Game 仍走既有 <code>ui_phase</code> 与 pause 命令路径；本轮未扩展设置功能。</td></tr>
+        <tr><td>DevConsole</td><td><code>dev_console.rml</code> 在 playing 阶段显示文档；输入、submit 和 history row 继续走 RmlUI form listener 与 <code>DevConsole</code>，本轮未新增命令。</td></tr>
+      </tbody>
+    </table>
+    <p>本轮小修包括：Lua UI 数据桥兼容 C++ userdata/vector-like 列表，避免进入世界后 <code>ipairs</code> 枚举失败；Build/Research 的 <code>command_result</code> 视图按目标命令过滤，避免其它按钮结果串面板；RmlUI typed view 增加低噪声行数诊断；Vulkan RmlUI backend 延迟销毁已释放的 compiled geometry，避免 <code>data-rml</code> 动态刷新释放旧 buffer 时触发 <code>vkDestroyBuffer ... currently in use</code> validation。</p>
+    <p>本轮最新日志未见 <code>UI snapshot failed</code>、missing font、Lua error、VUID 或 Vulkan validation error。资源快照为空、活跃施工为空、未选中殖民者均是当前世界初始状态下的有效空态，不作为 RmlUI 刷新失败。</p>
+    <p><strong>初始资源快照语义：</strong><code>resource_snapshot</code> 来自 <code>CoreMod/scripts/ui/data_bridge.lua</code>，先读取 <code>systems.hauling.snapshot()</code> 的 stockpile 账本，再合并殖民者 <code>HeldItem</code> 中非零数量的手持物。CoreMod 的 <code>systems.resources.summary()</code> 仍是经济系统入口，语义是 stockpile 账本快照；RmlUI HUD 通道在此基础上额外显示临时手持资源。新世界只创建一个初始殖民者，殖民者带空 <code>HeldItem</code> 组件但没有初始 <code>item_id/count</code>；初始地图上的木、石、矿等仍是地形方块，不进入库存账本；stockpile 区域也不会自动创建。因此刚进入世界时 <code>resource_snapshot rows=0</code> 是有效设计空态，HUD 显示 “No stored resources” 而不是错误或加载中。</p>
+
+    <h2 id="data-binding">数据模型与命令事件</h2>
+    <p><code>RealRmlUiRuntime</code> 在 RmlUI context 上创建名为 <code>nc</code> 的 <code>DataModel</code>。当前通用层把十二个稳定通道全部绑定为 JSON 字符串变量：<code>world_info</code>、<code>resource_snapshot</code>、<code>colonist_list</code>、<code>event_list</code>、<code>tech_tree</code>、<code>view_modes</code>、<code>orders_kinds</code>、<code>build_defs</code>、<code>craft_recipes</code>、<code>combat_state</code>、<code>construction_active</code>、<code>command_result</code>。每帧 update 前，runtime 从 <code>RmlUiBridge::latest_snapshot(channel)</code> 读取最新值；缺通道或空字符串会暴露为 <code>null</code>，不会让文档层崩溃。变量变化时调用 <code>DataModelHandle::DirtyVariable(channel)</code>，由 RmlUI 在后续 <code>Context::Update()</code> 中刷新绑定。</p>
+    <p>RML 文档使用 <code>data-model="nc"</code> 后可直接绑定这些变量，例如 <code>{{world_info}}</code> 或 <code>{{resource_snapshot}}</code>。通用层始终保留原始 JSON 字符串绑定；特定 RML 面板可以在 <code>RmlUiDataViews</code> 内叠加最小 typed/derived view，但不得替换十二个通道名契约。<code>command_result</code> 也是同一个数据模型变量，由 <code>Engine::dispatch_rml_ui_command()</code> 写入桥后进入文档层。</p>
+    <p><strong>列表绑定约定：</strong>当前 RML 静态文档不直接在循环体内写 <code>data-for</code> 别名字段（例如 <code>{{def.id}}</code>、<code>data-attr-data-param-id="def.id"</code>）。RmlUI 6.1 的当前 Windows/vcpkg runtime 在启动加载阶段会把这些循环体当作普通静态元素解析，导致别名变量解析诊断。列表仍由 <code>RmlUiDataViews</code> 的 typed views 维护；C++ 从 typed rows 生成已转义的 RML 片段，暴露为 <code>*_rml</code> 字符串（如 <code>build_defs_rml</code>、<code>research_nodes_rml</code>、<code>console_history_rml</code>），RML 文档用 <code>data-rml="..."</code> 挂载。空数组输出空字符串，仍由 <code>*.size == 0</code> 的静态空态控制；未知状态只作为普通文本写入；按钮行写最终 <code>data-command</code> 与 <code>data-param-*</code> 属性，继续走同一个 context 级命令监听器。</p>
+    <p>除十二个业务通道外，runtime 还缓存一组<strong>UI 控制变量</strong>（与业务通道分开维护，不参与和 ScriptEngine/Lua 的数据契约）。当前有 <code>ui_phase</code>（取值 <code>"menu"</code> / <code>"playing"</code> / <code>"pause"</code> / <code>"settings"</code>），由引擎每帧按世界、暂停菜单和设置 shell 状态推入桥；<code>RmlUiDataViews</code> 将它暴露为 typed binding，并派生 <code>main_menu_visible</code>、<code>playing_visible</code>、<code>pause_visible</code>（pause 或 settings 都为真，控制遮罩背景）、<code>pause_menu_visible</code>（仅 pause 为真，控制按钮列表本身）、<code>settings_visible</code>（仅 settings 为真）与 <code>settings_rows</code>。RML 文档使用这些布尔派生变量做 <code>data-if</code>，避免依赖字符串表达式兼容性。</p>
+    <p>文档到引擎的通用命令入口是 context 级 <code>click</code> 监听。监听器从事件目标向父级查找 <code>data-command</code> 或 <code>data-action</code>，找到后向 <code>RmlUiBridge::enqueue_command({target, payload})</code> 入队。payload 规则：若元素带 <code>data-payload</code>，其内容作为 JSON 字符串原样入队；否则把所有 <code>data-param-*</code> 属性打包成简单 JSON 对象，例如 <code>data-param-id="x"</code> 会产生 <code>{"id":"x"}</code>。<code>onclick</code> 属性也作为 target fallback 读取，便于迁移旧写法；推荐新 RML 使用 <code>data-command</code>。</p>
+
+    <h2 id="pause-settings">Pause / Settings MVP</h2>
+    <p><code>pause_menu.rml</code> 是当前最小暂停与设置入口。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载 <code>pause_menu.rml</code>；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档。</p>
+    <p>引擎继续使用既有 <code>MainMenuState::pause_visible</code> 与 <code>TickManager::set_paused()</code>。游戏中按 Escape 会打开/关闭暂停菜单；暂停菜单可见时，普通游戏快捷键和相机更新不会继续处理。RmlUI 按钮使用引擎拥有命令：<code>core:pause.resume</code> 取消暂停并返回游戏，<code>core:pause.settings</code> 保持暂停并切到设置 shell，<code>core:pause.quit_game</code> 调用 <code>request_exit()</code>。当前不提供 Quit to Menu，因为返回主菜单生命周期还没有明确的可复用流程。</p>
+    <p>Pause / Settings typed view 由 <code>RmlUiDataViews</code> 提供：<code>ui_phase</code>、<code>pause_visible</code>、<code>pause_menu_visible</code> 和 <code>settings_rows</code>。文档布局上 <code>#pause-overlay</code>（暗色遮罩）在 pause 和 settings 阶段都显示；<code>#pause-menu</code>（Resume/Settings/Quit Game 按钮列表）只在 <code>pause_menu_visible</code> 为真时进入布局，<code>#settings-shell</code> 只在 <code>settings_visible</code> 为真时进入布局，两者互斥，避免设置阶段按钮列表与设置 shell 同屏重叠。设置 shell 只显示安全占位状态行：当前语言（来自 <code>world_info.locale</code> 派生的 <code>hud_locale</code>）和 UI backend（当前真 backend 为 <code>rml-real</code>）。音量、图形和控制项不会在这里写配置，直到对应配置入口有明确 RmlUI 路径。</p>
+    <div class="callout info">
+      <strong>互斥派生变量的由来。</strong>先前 <code>#pause-menu</code> 与 <code>#settings-shell</code> 都用 <code>pause_visible</code> / <code>settings_visible</code> 控制，而 <code>pause_visible</code> 在 settings 阶段也为真，结果两块同尺寸的绝对定位面板在设置阶段同屏重叠绘制。新增只在该相位为真的 <code>pause_menu_visible</code>，让按钮列表与设置 shell 互斥：<code>#pause-menu</code> 改用 <code>data-if="pause_menu_visible"</code>，遮罩继续用 <code>pause_visible</code>。这是 RML/typed-view 层的小修，不改动 Escape 路径或暂停状态机。
+    </div>
+
+    <h2 id="minimap-zone">Minimap / Zone MVP</h2>
+    <p><code>minimap_zone.rml</code> 与 <code>minimap_zone.rcss</code> 是当前最小小地图 / 区域入口。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析该面板数据。</p>
+    <p>面板新增三个派生绑定：<code>minimap_status</code>、<code>zone_mode</code>、<code>available_zone_tools</code>。<code>minimap_status</code> 从 <code>world_info</code> 派生日期文本，从 <code>view_modes</code> 派生当前视图模式，从 <code>construction_active</code> 派生活跃施工计数；因为当前十二个稳定通道里没有 minimap 纹理、camera footprint 或 world-map tile 数据，<code>has_map=false</code>，地图框明确显示占位状态。<code>available_zone_tools</code> 从 <code>orders_kinds</code> 派生按钮行，当前主要覆盖已有的 mine/chop designation 工具。</p>
+    <p>区域按钮由 <code>zone_tools_rml</code> 生成，使用现有 RML 命令入口 <code>data-command="core:orders.start"</code> 与最终 <code>data-param-id="..."</code>。Lua 命令桥会规范化到 <code>order.start</code>，并调用既有 <code>engine.zone.start_designate(zone_id)</code> 进入世界拖拽指定流程。<code>zone_mode</code> 从 <code>command_result</code> 观察 <code>core:orders.start</code> / <code>order.start</code> / <code>order.mine</code> / <code>order.gather</code> 的最近结果，只显示 idle/designation/unavailable 状态；由于 <code>command_result</code> 不保留 payload，当前不会可靠显示刚启动的具体 zone type。</p>
+    <p>后续若要显示真实小地图，需要新增 engine-level RmlUI 数据源，例如 minimap tile/texture snapshot、相机范围、玩家/选择位置和已存在 zone instance 列表。若要覆盖 stockpile/growing 等通用区域类型，也需要把 <code>engine.zone.list_types()</code> 或等价只读快照接入稳定通道或新增专门 zone channel。</p>
+
+    <h2 id="build-panel">Build Panel MVP</h2>
+    <p><code>build_panel.rml</code> 是当前最小 RmlUI 建造面板。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载 <code>build_panel.rml</code> 到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析建造面板数据。</p>
+    <p>面板保留原始 <code>build_defs</code>、<code>construction_active</code>、<code>command_result</code> JSON 字符串通道，同时新增三个只服务建造面板的派生绑定：<code>build_defs_list</code>、<code>construction_active_list</code>、<code>command_result_view</code>。<code>build_defs_list</code> 行包含 <code>{ id, label, status, size, materials, missing, can_order }</code>，会兼容读取材料字段 <code>cost</code> / <code>materials</code> / <code>ingredients</code> / <code>inputs</code>，缺料字段 <code>missing</code> / <code>missing_materials</code> / <code>unavailable</code>。<code>construction_active_list</code> 行包含 <code>{ def_id, status, position, missing }</code>。<code>command_result_view</code> 包含 <code>{ present, ok, target, status, reason }</code>，用于显示最近一次命令结果。</p>
+    <p>每个建造行由 <code>build_defs_rml</code> 生成，按钮使用 <code>data-command="core:build.begin"</code> 与最终 <code>data-param-id="..."</code>。点击后 RmlUI 命令监听器会生成 payload <code>{"id":"..."}</code> 并入队；无 <code>x/y/z</code> 时进入现有 placement 流程。缺料状态（<code>status="missing_materials"</code>）只显示等待材料提示，不禁用按钮；只有 <code>can_order=false</code> 或 <code>status</code> 为 <code>blocked</code> / <code>locked</code> / <code>disabled</code> 时按钮禁用。<code>command_result.status="waiting_materials"</code> 按等待/提示显示，不当作失败；<code>ok=false</code> 时显示 <code>reason</code>。</p>
+
+    <h2 id="research-panel">Research Panel MVP</h2>
+    <p><code>research.rml</code> 是当前最小 RmlUI 科技研究面板，样式在 <code>research.rcss</code>。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析研究面板数据。</p>
+    <p>面板保留原始 <code>tech_tree</code> 与 <code>command_result</code> JSON 字符串通道，同时新增研究面板派生绑定：<code>research_nodes</code> 和 <code>current_research_view</code>。<code>research_nodes</code> 行包含 <code>{ id, label, category, status, cost, progress, unlocks_text, prerequisites_text, can_start }</code>，从 Lua 数据桥产出的分类树（分类对象 + <code>nodes</code>）扁平化得到。状态会把 <code>researched</code> / <code>in_progress</code> 等后端命名规范化为 <code>completed</code> / <code>researching</code>，并保留 <code>locked</code> / <code>available</code>。<code>current_research_view</code> 包含 <code>{ present, id, label, progress }</code>，指向当前 <code>researching</code> 节点（若存在）。</p>
+    <p>每个研究行由 <code>research_nodes_rml</code> 生成，按钮使用 <code>data-command="core:research.start"</code> 与最终 <code>data-param-id="..."</code>。点击后通用 RML 命令监听器生成 payload <code>{"id":"..."}</code> 并入队；Lua 命令桥的 <code>research.start</code> 接受 <code>id</code> / <code>tech_id</code> / <code>tech</code> / <code>nodeId</code>。只有 <code>status="available"</code> 时按钮启用。最近一次命令结果复用 <code>command_result_view</code>：<code>ok=false</code> 显示 <code>reason</code>，成功则显示 <code>stored</code> / <code>started</code> / <code>completed</code> 等后端状态；未知状态只作为文本展示，不参与崩溃性分支。</p>
+
+    <h2 id="crafting-panel">Crafting Panel MVP</h2>
+    <p><code>crafting.rml</code> 是当前最小 RmlUI 制造面板，样式在 <code>crafting.rcss</code>。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析制造面板数据。</p>
+    <p>面板保留原始 <code>craft_recipes</code>、<code>resource_snapshot</code>、<code>command_result</code> JSON 字符串通道，同时新增制造面板派生绑定：<code>crafting_recipes_list</code> 和 <code>craft_result_view</code>。Lua 数据桥当前产出的 <code>craft_recipes</code> 是数组行 <code>{ id, label, inputs, output, level, can_craft, locked_by, status }</code>，其中 <code>inputs</code> 与 <code>output</code> 是已格式化文本；<code>resource_snapshot</code> 是数组行 <code>{ id, label, amount, capacity }</code>。<code>RmlUiDataViews</code> 将其派生成 <code>{ id, label, output, recipe_materials_text, recipe_missing_text, status, locked_by, can_craft }</code>，并用 <code>resource_snapshot.amount</code> 计算只读缺料提示。该缺料提示只服务显示，不改变 Lua <code>systems.crafting.queue</code> 的 stockpile/held-item 判定。</p>
+    <p>每个制造行由 <code>crafting_recipes_rml</code> 生成，按钮使用 <code>data-command="core:craft.queue"</code> 与最终 <code>data-param-id="..."</code>。点击后通用 RML 命令监听器生成 payload <code>{"id":"..."}</code> 并入队；Lua 命令桥按既有 <code>payload.recipe_id or payload.recipe or payload.id</code> 读取配方 ID。<code>can_craft=false</code> 或 <code>status</code> 为 <code>blocked</code> / <code>locked</code> / <code>disabled</code> 时按钮禁用；缺材料状态显示为提示。<code>craft_result_view</code> 复用 <code>command_result</code> 的 <code>{ present, ok, target, status, reason }</code>，<code>waiting_materials</code> / <code>missing</code> 以等待/提示色显示，<code>ok=false</code> 时显示 <code>reason</code>。</p>
+
+    <h2 id="colonists-panel">Colonist / Profession Panel MVP</h2>
+    <p><code>colonists.rml</code> 是当前最小 RmlUI 殖民者 / 职业面板。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析面板数据。</p>
+    <p>面板保留原始 <code>colonist_list</code> 与 <code>command_result</code> JSON 字符串通道，同时新增两个只服务殖民者面板的派生绑定：<code>colonists_list</code> 和 <code>selected_colonist_view</code>。<code>colonists_list</code> 行包含 <code>{ id, entity, name, status, profession, role, health, selected }</code>，来源兼容数组或 <code>{ rows }</code> 包装；职业优先读取 <code>profession_label</code>，再 fallback 到 <code>profession_name</code> / <code>profession</code> / <code>profession_id</code>；状态优先读取任务/状态字段，缺失时以 mood 或 <code>idle</code> 兜底；生命从 <code>combat_attrs.health</code> / <code>health_max</code> 或 <code>health.current</code> / <code>max</code> 派生。Lua 数据桥给 <code>colonist_list</code> 行追加向后兼容的 <code>selected</code> 字段，来自 <code>engine.selection.selected_entity()</code>，用于生成 <code>selected_colonist_view</code>。</p>
+    <p>每个殖民者行由 <code>colonists_rml</code> 生成，使用 <code>data-command="core:colonists.select"</code> 与最终 <code>data-param-entity="..."</code>。点击后通用 RML 命令监听器生成 payload <code>{"entity":"..."}</code> 并入队；Lua 命令桥按既有 <code>payload.entity_id or payload.entity or payload.id</code> 读取实体，转成整数后调用绑定 <code>engine.selection.select_entity</code>。面板会显示最近 <code>command_result_view</code> 中 target 为 <code>core:colonists.select</code> 的状态；失败时显示 <code>reason</code>。</p>
+    <div class="callout info">
+      <strong>选择实体参数类型修正。</strong><code>engine.selection.select_entity</code> 在 <code>LuaBindings.cpp</code> 绑定为 <code>u64</code>，但 RML 按钮的 <code>data-param-entity</code> 在线上永远是字符串（payload <code>{"entity":"7"}</code>）。Lua 数据桥的 <code>colonist.select</code> 现在用 <code>tonumber(payload.entity_id or payload.entity or payload.id) or 0</code> 先转成整数再调用绑定，同时兼容文档示例里的数字写法 <code>{"id":7}</code>。<code>colonist.change_class</code> 有同样的 <code>u64</code> 实体形参，一并做 <code>tonumber</code>。
+    </div>
+
+    <h2 id="hud-resource-bar">HUD / Resource Bar MVP</h2>
+    <p><code>hud.rml</code> 是当前最小只读 HUD。真 backend 加载 <code>main.rml</code> 后由 <code>RmlUiPanelRegistry</code> 尽力副加载 <code>hud.rml</code> 到同一个 RmlUI context；文件缺失或解析失败不影响主文档。Null stub / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 不加载文档、不解析 HUD 数据。</p>
+    <p>HUD 不发送命令，不含 <code>data-command</code>，也不改变 gameplay。它只消费 <code>nc</code> 数据模型中的派生字段：<code>hud_day</code>、<code>hud_year</code>、<code>hud_season</code>、<code>hud_time</code>、<code>hud_backend</code>、<code>hud_resource_count</code>、<code>hud_resources</code> 与用于挂载资源行的 <code>hud_resources_rml</code>。其中 <code>hud_resources</code> 是 <code>{ label, amount }</code> 结构数组，当前最多展示前 16 行资源，<code>hud_resource_count</code> 仍保留原始资源总数。</p>
+    <table>
+      <thead><tr><th>HUD 字段</th><th>来源通道</th><th>转换规则</th></tr></thead>
+      <tbody>
+        <tr><td><code>hud_day</code> / <code>hud_year</code></td><td><code>world_info</code></td><td>读取 JSON 中的 <code>day</code>、<code>year</code> 整数字段。</td></tr>
+        <tr><td><code>hud_season</code></td><td><code>world_info</code></td><td>优先从 <code>season_key</code>（如 <code>core:season.spring</code>）取后缀并首字母大写；缺失时按 <code>season</code> 序号 fallback。</td></tr>
+        <tr><td><code>hud_time</code></td><td><code>world_info</code></td><td>读取 <code>tick_of_day</code>，按 <code>DAY_TICKS_PER_DAY=86400</code> 格式化为 24 小时 <code>HH:MM</code>。</td></tr>
+        <tr><td><code>hud_resources</code></td><td><code>resource_snapshot</code></td><td>读取数组项的 <code>label</code>（缺失则用 <code>id</code>）与 <code>amount</code>。</td></tr>
+      </tbody>
+    </table>
+    <p>当前限制：通用业务通道仍以原始 JSON 字符串暴露；HUD 只在 <code>RmlUiDataViews</code> 内对 <code>world_info</code> 与 <code>resource_snapshot</code> 做最小 typed/derived 转换。解析是容错的：字段缺失或类型不匹配时保留默认值或已有值，避免 HUD 因单个字段异常消失。</p>
+
+    <h2 id="main-menu">主菜单（Main Menu MVP）</h2>
+    <p>主菜单是最小可用的开始/退出入口，直接画在 <code>main.rml</code> 内（不开新文档、不依赖已移除的即时模式 UI 或浏览器）。面板包在一个 <code>&lt;div data-if="main_menu_visible"&gt;</code> 里：引擎进入世界后 <code>ui_phase</code> 变为 <code>"playing"</code>，<code>main_menu_visible</code> 变为 false，面板自动从文档布局中移除；回到主菜单（世界卸载）后又自动出现，无需额外开关。面板使用明确 <code>px</code> 单位和绝对定位，保证 RmlUI hit-test 的可点击几何与屏幕位置一致。面板提供两个按钮和一行小型状态文本：</p>
+    <table>
+      <thead><tr><th>按钮</th><th>data-command</th><th>引擎侧动作</th></tr></thead>
+      <tbody>
+        <tr><td>New Game</td><td><code>core:menu.new_game</code></td><td>置 <code>start_world_pending</code>（种子缺省时随机一个），主循环随后调用现有 <code>Engine::start_new_world()</code> 流程生成世界；<code>ui_phase</code> 下一帧切到 <code>"playing"</code>，主菜单自动隐藏。</td></tr>
+        <tr><td>Quit</td><td><code>core:menu.quit</code></td><td>调用现有 <code>Engine::request_exit()</code>，主循环退出。</td></tr>
+      </tbody>
+    </table>
+    <p>这两个 target 是<strong>引擎级命令</strong>，在 <code>Engine::dispatch_rml_ui_command()</code> 顶部拦截、直接驱动生命周期，<strong>不</strong>转发给 Lua UI 命令处理器，也不会写 <code>command_result</code>。它们与既有宿主命令 <code>core:rmlui.reload</code>、smoke 命令 <code>core:rmlui.debug_ping</code> 不冲突。<code>main.rml</code> 顶部状态条与 <code>core:rmlui.debug_ping</code> 按钮作为 smoke 绑定保留，不随菜单显隐。</p>
+    <div class="callout info">
+      <strong>可见性是 UI 行为，不是开始游戏的判定条件。</strong>世界是否在运行始终由 <code>m_world_active</code> 决定；<code>ui_phase</code> 只是把同一事实镜像给文档，让面板显隐。若点击 New Game 后世界生成出现的问题，属于既有世界生成流程，与 RmlUI 无关。
+    </div>
+    <div class="callout info">
+      <strong>主菜单不可见的两个根因（已修复）。</strong>其一，RmlUI 的字体匹配把样式表里的 <code>font-family: "Noto Sans", sans-serif</code> 当成单个家族名「Noto Sans , sans-serif」去查找，永远命中不了 <code>LoadFontFace</code> 注册的「Noto Sans」，于是文档里所有字形都不绘制——窗口上只剩没有文字的彩色按钮块（深灰 Quit、蓝色 New Game），主菜单因此看不出形状，只被当成两根色条。把全部 RML 样式表的字体声明改成单一家族名 <code>font-family: Noto Sans</code> 后，标题「New Colony」、状态行与「New Game / Quit」按钮文字都恢复。其二，字形虽然画出来了，但整张 UI 是上下颠倒的：RmlUI 给的是屏幕像素坐标（原点在左上、纵向向下），而 <code>rmlui.vert</code> 里纵向分量沿用了 OpenGL 的翻转写法，在 Vulkan 视口（同样原点在左上、纵向向下、视口高度为正）里等于多翻了一次，于是 topbar 落到窗口底部、主菜单面板跑到下方、字形头朝下。把顶点纵向分量改成与 Vulkan 视口一致的直接映射后，topbar 回到顶部，主菜单回到左上 <code>top:60px left:32px</code> 的位置，文字方向正常。这一层翻转此前被字体缺失掩盖，文字一旦恢复才显出来。
+    </div>
+    <div class="callout info">
+      <strong>New Game 真人端到端复验。</strong>ON 构建启动后主菜单可见、文字正向；用注入点击命中「New Game」按钮，日志依次出现 <code>[RmlUi] command 'core:menu.new_game' payload={}</code>、<code>[RmlUi] main menu: New Game requested</code>、<code>[World] start_new_world(...)</code> 与 <code>[World] World started</code>，随后 <code>ui_phase</code> 由 <code>menu</code> 切到 <code>playing</code>、<code>main_menu_visible</code> 变为 0，主菜单按预期隐藏。本轮没有再出现 <code>integer value will be misrepresented in lua</code>，世界成功启动；Lua seed 修复点暂未触发新阻断，留待世界内进一步观察。
+    </div>
+    <div class="callout info">
+      <strong>副面板空态字体约束（已修复）。</strong>建造/制造/研究/殖民者/小地图等副面板的空态占位文本曾使用 <code>font-style: italic</code>，但 CoreMod 当前只加载 Noto Sans Regular，RmlUI 找不到「Noto Sans [italic]」时会逐元素告警且不绘制这些文本。空态文字只是弱化提示，现已统一改回正体，通过颜色区分层级，避免新增字体资源和运行时告警。
+    </div>
+    <div class="callout info">
+      <strong>可见性诊断。</strong><code>RealRmlUiRuntime</code> 在每次文档加载后会输出一行 <code>[RmlUi][vis]</code>，报告 <code>#main-menu</code> 是否在布局中、它的偏移尺寸与按钮尺寸；<code>RmlUiDataViews</code> 在 <code>ui_phase</code> 每次变化时输出一行派生结果（<code>main_menu_visible/playing/pause/settings</code>）；<code>render()</code> 首帧会输出一行确认主文档可见与渲染尺寸。这些都是低噪声、只在加载或相位变化时各一行，便于以后主菜单再次回归时从 <code>latest.log</code> 直接定位是「面板没进布局」「没被绘制」还是「相位派生错」。
+    </div>
+
+    <h2 id="dev-console">开发者控制台（DevConsole MVP）</h2>
+    <p>开发者控制台的可见 UI 已迁移到 RmlUI：<code>CoreMod/assets/ui/rml/dev_console.rml</code> 与 <code>dev_console.rcss</code> 作为副文档由 <code>RmlUiPanelRegistry</code> 加载，显示条件是 typed view <code>console_visible</code>。按 <code>~</code> 仍复用原有输入入口 <code>DevConsole::open()</code>，不会恢复 ImGui 或外部浏览器路径。</p>
+    <p>数据绑定由 <code>RmlUiDataViews</code> 提供：<code>console_prompt</code> 显示当前访问级别提示符，<code>console_history</code> 暴露最近提交的命令文本，<code>console_history_rml</code> 挂载历史行，<code>console_last_result</code> 暴露最近一次提交状态，<code>console_visible</code> 控制面板是否进入布局。输入框在 RML <code>form</code> 内，Enter 或 Run 按钮触发 <code>submit</code>，由 <code>RmlUiPanelRegistry</code> 的事件监听器读取输入值并调用 <code>DevConsole::submit_command()</code>，再走既有 <code>execute_command()</code>、权限、别名和命令 handler 路径。</p>
+    <p>开盖即聚焦：按 <code>~</code> 调用 <code>DevConsole::open()</code> 置可见后，<code>RmlUiPanelRegistry::update_console_focus()</code> 在 <code>RealRmlUiRuntime::update()</code> 每帧 <code>Context::Update()</code> 之后检测到 <code>console_visible</code> 由假变真，把键盘焦点送进 <code>#dev-console-input</code>，并输出一行 <code>[RmlUi][console] focused #dev-console-input on console open</code>。控制台关闭时重置该标志，下次开盖重新聚焦。RmlUI 不会为「先隐藏加载、再 Show」的文档自动处理 HTML <code>autofocus</code>，因此这一步必须由面板注册表显式驱动；没有它，玩家按 <code>~</code> 后还需先用鼠标点输入框才能打字，Enter 提交也因输入框无焦点而不触发 form submit。</p>
+    <p>Escape 行为沿用 RmlUI 焦点规则：控制台输入框聚焦时 Engine 先调用 <code>RmlUiHost::clear_focus()</code>，不误触暂停/建造取消等游戏层操作；未聚焦但控制台可见时，现有 <code>DevConsole::close()</code> 分支关闭控制台。Null backend 下不加载文档，<code>~</code> 只改变保留的控制台状态，不产生可见 RmlUI。</p>
+    <div class="callout info">
+      <strong>本轮 Pause / Settings / DevConsole 实操验证。</strong>ON 构建（<code>build-rmlui-on</code>，<code>NEWCOLONY_ENABLE_RMLUI=ON</code>）与 OFF 构建（<code>build-rmlui-off</code>）<code>cmake --build</code> 均通过；未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。ON 构建 <code>NewColony.exe --DEBUG</code> 启动后，日志确认 real backend 初始化、项目字体 <code>main.ttf</code> 加载、<code>main.rml</code> 及全部副文档（含 <code>pause_menu.rml</code>、<code>dev_console.rml</code>）加载；新增的 <code>pause_menu_visible</code> 数据模型绑定注册成功（<code>[RmlUi][vis] ui_phase='menu' ... pause_menu=0</code>），无 binding 失败、无 Vulkan validation error、无 Lua error，主菜单截图确认「New Colony / phase: menu / New Game / Quit」正常渲染。从主菜单进入世界后日志确认 <code>World started</code>、<code>ui_phase='playing'</code>。
+    </div>
+    <div class="callout warn">
+      <strong>键盘 / 鼠标交互未自动化复验。</strong>该运行环境下向运行中的游戏窗口注入键盘 / 鼠标（<code>SendKeys</code>、<code>keybd_event</code>、<code>PostMessage WM_KEYDOWN</code>、<code>SendInput</code>）均未触发 Escape 暂停或 <code>~</code> 开盖的相位变化（与既有「RmlUI 合成点击无响应」记录一致，根因是后台启动窗口拿不到真实键盘焦点）。因此 Pause/Settings 按钮、Escape 开合、<code>~</code> 开盖、DevConsole 输入与 history row 的端到端点击 / 按键回路本轮未取得自动化证据，留待干净桌面环境真人复验。本轮以代码审查 + 日志 + 双构建验证这三条可靠信号定位并修复了两个确定问题：DevConsole 开盖不自动聚焦输入框（<code>m_focus_input_next_frame</code> 在渲染迁移到 RmlUI 后变成死代码），以及 Pause 菜单与 Settings shell 在 settings 阶段同屏重叠。
+    </div>
+
+    <h2 id="render-gap">渲染路径（RenderInterface）</h2>
+    <p>RmlUI 通过 <code>Rml::RenderInterface</code> 把文档几何交给宿主渲染后端。真 backend 当前实现了最小 Vulkan path：RmlUI compiled geometry 上传到 host-visible VMA 顶点/索引缓冲，纹理通过 <code>VulkanTexture</code> 上传并绑定 descriptor，支持 scissor，<code>RealRmlUiRuntime::render(VkCommandBuffer)</code> 会在 renderer UI callback 中调用 <code>context-&gt;Render()</code> 并录制 draw call。</p>
+    <p>接入点：</p>
+    <ul>
+      <li><code>Renderer::add_ui_render_callback()</code> 维护 UI draw 回调链；旧 debug/UI overlay 已禁用，RmlUI 是唯一目标 UI 渲染路径。</li>
+      <li><code>Engine.cpp</code> 在 RmlUI host 初始化后追加 <code>m_rml_ui_host.render(cmd)</code>，不启动浏览器、不走 HTTP/WebServer。</li>
+      <li><code>CoreMod/assets/shaders/rmlui.vert</code> / <code>rmlui.frag</code> 由现有 MOD shader 预处理生成 SPIR-V。</li>
+    </ul>
+    <p>当前限制：这是最小占位 UI 渲染路径，不包含复杂 effect、clip mask、render-to-texture、图片文件加载或业务面板。文本优先使用随 CoreMod staging 的 <code>main.ttf</code>；如果项目字体缺失或损坏且平台 fallback 不存在，矩形仍可渲染但文字不会显示。</p>
+    <p><strong>顶点坐标约定：</strong>RmlUI 供应的顶点是屏幕像素坐标（原点在左上、纵向向下），<code>rmlui.vert</code> 用 push constant 里的视口尺寸把它映射到 Vulkan 裁剪空间。Vulkan 视口同样原点在左上、纵向向下且高度为正，因此纵向分量必须用直接映射（像素 / 视口 × 2 − 1）；若误用 OpenGL 的翻转写法，整张 UI 会上下颠倒——topbar 落到窗口底部、主菜单跑到下方、字形头朝下。</p>
+
+    <h2 id="input-routing">输入路由与焦点捕获</h2>
+    <p><code>InputManager</code> 是 GLFW 输入入口。初始化 RmlUI host 后，Engine 会把 <code>RmlUiHost</code> 指针交给 <code>InputManager</code>；每个 GLFW 回调先注入 RmlUI，再保留现有游戏输入状态，游戏侧随后通过 <code>ui_wants_mouse()</code> / <code>ui_wants_keyboard()</code> 决定是否处理相机、选择、建造和快捷键。</p>
+    <table>
+      <thead><tr><th>GLFW 事件</th><th>RmlUI 调用</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>cursor position</td><td><code>Context::ProcessMouseMove(x, y, modifiers)</code></td><td>窗口坐标直接传入 RmlUI context。</td></tr>
+        <tr><td>mouse button</td><td><code>ProcessMouseButtonDown/Up(button, modifiers)</code></td><td>GLFW left/right/middle button index 与 RmlUI button index 对齐；按钮回调会即时读取 <code>glfwGetCursorPos()</code>，避免使用过期的 cached cursor position 点击到旧坐标。</td></tr>
+        <tr><td>scroll</td><td><code>ProcessMouseWheel(Vector2f(dx, dy), modifiers)</code></td><td>保留 GLFW 的水平/垂直滚轮 delta。</td></tr>
+        <tr><td>key press/release/repeat</td><td><code>ProcessKeyDown/Up(key_identifier, modifiers)</code></td><td>按键通过 GLFW key 映射到 <code>Rml::Input::KeyIdentifier</code>。</td></tr>
+        <tr><td>char</td><td><code>ProcessTextInput(codepoint)</code></td><td>用于文本输入；控制台反引号打开逻辑会吞掉对应字符，避免误输入。</td></tr>
+      </tbody>
+    </table>
+    <p>Key 映射覆盖字母、数字、F1-F24、Escape/Enter/Tab/Backspace/Space、方向键、Home/End/Page、Insert/Delete、锁定键、左右 Shift/Ctrl/Alt/Super、数字小键盘和常用 US 符号键。Modifier 由 GLFW <code>mods</code> 与当前按键状态合并，映射到 RmlUI 的 Ctrl/Shift/Alt/Meta/CapsLock/NumLock 位；窗口启用 <code>GLFW_LOCK_KEY_MODS</code> 以便 GLFW 在支持的平台上提供 CapsLock/NumLock 状态。</p>
+    <p>捕获规则：当 RmlUI 正在鼠标交互，或光标 hover 在非 <code>rml/body</code> 文档元素上时，<code>wants_mouse=true</code>，游戏不处理鼠标点击、拖拽和滚轮驱动的选择/相机逻辑；当 RmlUI 有焦点元素时，<code>wants_keyboard=true</code>，游戏不处理文本输入和冲突快捷键。按 <code>Escape</code> 时，如果 RmlUI 当前持有键盘焦点，Engine 优先调用 <code>RmlUiHost::clear_focus()</code>，不触发暂停菜单/取消建造等游戏动作。Null backend 下所有输入安全忽略，<code>wants_mouse</code> 和 <code>wants_keyboard</code> 始终为 false。</p>
+
+    <h2 id="debug-input-page">输入验证页（debug_input）</h2>
+    <p>为了实测上述输入路由是否真的端到端打通，CoreMod 提供一个最小交互验证面板 <code>debug_input.rml</code>（样式见 <code>debug_input.rcss</code>）。它<strong>不是业务面板</strong>，只在真 backend（<code>NEWCOLONY_ENABLE_RMLUI=ON</code>）下出现，用于验证 hover / click / 文本输入 / scroll / 焦点 / Escape blur。</p>
+    <p><code>RealRmlUiRuntime::load_document()</code> 在加载主文档 <code>main.rml</code> 之后，会让 <code>RmlUiPanelRegistry</code> <strong>尽力副加载</strong> <code>debug_input.rml</code> 到同一个 context。RmlUI 天然支持单 context 多文档叠加，因此验证面板与主文档同帧渲染。文件缺失或解析失败属于非致命错误：日志里会出现 <code>[RmlUi] debug_input.rml not available at '...'</code>，主文档照常渲染。Null stub 不触发这条路径。</p>
+    <p>验证面板包含三类控件，并在加载后由 <code>RmlUiPanelRegistry</code> 挂上 <code>DebugInputEventListener</code>（一个 <code>Rml::EventListener</code>），把事件以单行 <code>[RmlUi][debug]</code> 形式写入 <code>build/bin/logs/latest.log</code>：</p>
+    <table>
+      <thead><tr><th>验证项</th><th>操作</th><th>日志/可见信号</th></tr></thead>
+      <tbody>
+        <tr><td>hover</td><td>光标悬停按钮/输入框/滚动项</td><td>RCSS <code>:hover</code> 配色变化（视觉；不记日志以防每帧刷屏）</td></tr>
+        <tr><td>click</td><td>点击 <code>#debug-btn-click</code></td><td><code>[RmlUi][debug] event='click' id='debug-btn-click'</code></td></tr>
+        <tr><td>focus / blur</td><td>点击 <code>#debug-input-text</code> 获焦，再按 Esc</td><td><code>event='focus'</code> / <code>event='blur'</code></td></tr>
+        <tr><td>text input</td><td>在输入框中键入字符</td><td><code>event='textinput'</code> / <code>event='change'</code></td></tr>
+        <tr><td>scroll</td><td>滚轮悬停在 <code>#debug-scroll</code> 上滚动</td><td><code>[RmlUi][debug] scroll dx=.. dy=..</code>（路由层记录，每滚轮档一次）</td></tr>
+        <tr><td>Escape blur</td><td>输入框获焦后按 Esc</td><td><code>[RmlUi][debug] clear_focus (Escape) -&gt; blur id='debug-input-text'</code></td></tr>
+      </tbody>
+    </table>
+    <p>日志刻意保持稀疏：鼠标移动不记录（每帧触发），click/focus/blur/textinput/change 只在实际交互时各记一行，scroll 按滚轮档记录。监听器只挂在 <code>debug_input.rml</code> 的元素上，不影响业务面板或数据模型绑定层（<code>RmlBridgeCommandListener</code> 仍照常处理 context 级 <code>click</code> 的 <code>data-command</code> 转换）。</p>
+    <div class="callout info">
+      <strong>验证方法：</strong><code>cmake -B build -DNEWCOLONY_ENABLE_RMLUI=ON &amp;&amp; cmake --build build</code>，再 <code>./build/bin/NewColony.exe --DEBUG</code>。短启动确认 <code>latest.log</code> 同时出现 <code>[RmlUi] loaded document '...main.rml'</code> 与 <code>[RmlUi] loaded debug input document '...debug_input.rml'</code> 两行；窗口左下角出现验证面板后按上表操作，观察对应 <code>[RmlUi][debug]</code> 行。
+    </div>
+    <div class="callout info">
+      <strong>字体：</strong>验证面板与其它 RML/RCSS 文档统一使用 <code>font-family: "Noto Sans", sans-serif</code>，真 backend 启动时优先从 staged <code>main.ttf</code> 加载该字体。若字体文件缺失，输入验证仍不因文字失败而阻断；日志会明确说明是否使用系统 fallback。
+    </div>
+
+    <h2>生命周期</h2>
+    <ul>
+      <li><strong>init：</strong><code>RmlUiHost::init(doc_root, w, h)</code> 创建 backend；真 backend 调 <code>Rml::Initialise()</code>、<code>CreateContext("main", ...)</code>，尝试加载字体。</li>
+      <li><strong>load_document：</strong>入口文档 <code>main.rml</code>（相对 <code>doc_root</code>）；真 backend 解析为绝对路径后 <code>context-&gt;LoadDocument()</code> 并 <code>Show()</code>。</li>
+      <li><strong>update / resize：</strong>每帧 <code>context-&gt;Update()</code>；窗口尺寸变化且 framebuffer 为非零尺寸时调用 <code>context-&gt;SetDimensions()</code>。窗口最小化或 Vulkan surface 暂时报告 0 extent 时，Renderer 暂停 swapchain recreate/acquire/present 并等待恢复，RmlUI 不接收 0×0 尺寸。</li>
+      <li><strong>handle_input：</strong>鼠标移动、按钮、滚轮、键盘按下/释放和文本输入都经 <code>RmlUiHost</code> 转发到 backend；真 backend 按 RmlUI 6.1 API 调用 <code>ProcessMouseMove</code>、<code>ProcessMouseButtonDown/Up</code>、<code>ProcessMouseWheel</code>、<code>ProcessKeyDown/Up</code> 和 <code>ProcessTextInput</code>。</li>
+      <li><strong>shutdown：</strong><code>RemoveContext</code> + <code>Rml::Shutdown()</code>。真 backend 的 Vulkan 资源（管线、描述符池、纹理，以及 <code>Rml::Shutdown()</code> 触发释放的编译几何顶点/索引缓冲与纹理）随 backend 一起在 <code>RmlUiHost::shutdown()</code> 内释放，时机早于 <code>Renderer::shutdown()</code> 销毁 device，因此 RmlUI 侧不存在 device 失效后释放的风险。</li>
+      <li><strong>shutdown 的 GPU 排空约束：</strong><code>RmlUiHost::shutdown()</code> 在 <code>Engine::shutdown()</code> 中位于 <code>Renderer::shutdown()</code> 之前调用，而 <code>Renderer::shutdown()</code> 才是引擎在退出阶段第一次排空 GPU 队列（<code>vkDeviceWaitIdle</code>）的地方。这意味着 RmlUI 释放资源时，最近一帧记录了 RmlUI 绘制的 command buffer 可能仍被 GPU 占用，其引用的顶点/索引缓冲、采样器、管线会被 validation 层标记为"仍被 command buffer 使用"。因此真 backend 在 <code>RealRmlUiRuntime::shutdown()</code> 入口、于 <code>Rml::Shutdown()</code> 之前调用 <code>vkDeviceWaitIdle(renderer device)</code>，并在 <code>VulkanRmlRenderInterface::shutdown()</code> 入口再排空一次（覆盖 backend 重建等独立析构路径），保证 GPU 不再持有 RmlUI 资源引用后才开始销毁。null stub 没有 Vulkan 资源，不受影响。</li>
+    </ul>
+    <p><strong>退出顺序约束（引擎级，非 RmlUI 自身）：</strong>历史上 <code>NEWCOLONY_ENABLE_RMLUI=ON</code> 短启动退出末尾的 0xC0000005 曾被怀疑为 RmlUI shutdown，实际根因在 mod 生命周期回调：mod 的 <code>on_world_init/on_tick/on_shutdown</code> 回调捕获了指向 Lua 函数的引用，其析构会回访 Lua 状态。因此这些引用必须在脚本引擎关闭 Lua 状态之前释放。<code>ModLoader::release_lua_references()</code> 在 <code>Engine::shutdown()</code> 关闭脚本引擎之前清空回调向量，确保 <code>~ModLoader</code> 析构时不再触达已关闭的 Lua 状态。RmlUI shutdown 本身顺序正确，无需为该崩溃调整。</p>
+
+    <h2 id="manual-visual-validation-2026-07-05">人工可视化验证记录（2026-07-05 prompt2）</h2>
+    <p>验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；ON 构建目录 <code>build-rmlui-on</code>（Debug / Ninja / <code>NEWCOLONY_ENABLE_RMLUI=ON</code>），OFF 构建目录 <code>build-rmlui-off</code>（Debug / Ninja / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code>）。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
+    <ul>
+      <li><strong>构建：</strong><code>cmake --build build-rmlui-on</code> 通过；<code>cmake --build build-rmlui-off</code> 通过。</li>
+      <li><strong>ON 启动：</strong><code>build-rmlui-on/bin/NewColony.exe --DEBUG</code> 可启动，日志确认 real backend 初始化、项目字体 <code>main.ttf</code> 加载、<code>main.rml</code> 以及 <code>debug_input</code>、HUD、Build、Crafting、Research、Colonists、Minimap/Zone、Pause、DevConsole 副文档全部加载。</li>
+      <li><strong>主菜单：</strong>窗口直接截图可见主菜单矩形与背景；由于验证机器上外部全屏/置顶程序持续覆盖屏幕，普通屏幕截图无法稳定取得 NewColony 前台画面，New Game/Quit 的鼠标点击未能完成端到端确认，日志中未产生 <code>core:menu.new_game</code> 或 <code>core:menu.quit</code> 命令记录。</li>
+      <li><strong>世界内面板：</strong>HUD、Build Panel、Colonist、Research、Crafting、Minimap/Zone、Pause/Settings、DevConsole 的 RML 文档加载已确认；因 New Game 交互未能可靠送达，未进入世界进行实际面板打开/关闭和重叠检查。</li>
+      <li><strong>输入焦点与命令反馈：</strong>本轮未完成可视端到端确认；没有观察到 <code>build</code>、<code>research</code>、<code>crafting</code>、<code>colonist select</code> 或 <code>console submit</code> 的 <code>command_result</code> 更新。保留为下一轮在干净桌面环境下复验。</li>
+      <li><strong>日志检查：</strong>本轮未发现 RmlUI binding 诊断刷屏；未发现 Vulkan validation error；未发现 Lua error。仅有预期数据告警 <code>[farming] no crop definitions loaded</code>、外部窗口抢占导致的 <code>GLFW poll_events blocked</code> 性能告警，以及窗口最小化/覆盖过程触发的 swapchain suspend/resume。</li>
+      <li><strong>小修：</strong><code>Renderer::on_resize()</code> 将 <code>1x1</code> framebuffer 与 <code>0x0</code> 一样视为不可绘制挂起状态，避免被最小化/外部窗口覆盖时进入 <code>Swapchain created: 1x1</code> 的 present 失败重建循环。</li>
+    </ul>
+
+    <h2 id="manual-new-game-validation-2026-07-06">New Game 真人复验记录（2026-07-06 prompt2）</h2>
+    <p>验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；ON 构建目录 <code>build-rmlui-on</code>（Debug / Ninja / <code>NEWCOLONY_ENABLE_RMLUI=ON</code>），OFF 构建目录 <code>build-rmlui-off</code>（Debug / Ninja / <code>NEWCOLONY_ENABLE_RMLUI=OFF</code>）。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
+    <ul>
+      <li><strong>构建：</strong><code>cmake -S . -B build-rmlui-on -G Ninja -DCMAKE_BUILD_TYPE=Debug -DNEWCOLONY_ENABLE_RMLUI=ON</code> 后 <code>cmake --build build-rmlui-on</code> 通过；<code>NEWCOLONY_ENABLE_RMLUI=OFF</code> 的 <code>build-rmlui-off</code> configure/build 也通过。</li>
+      <li><strong>运行：</strong>启动 <code>build-rmlui-on/bin/NewColony.exe --DEBUG</code>，进程响应正常。真人观察到夜晚天空盒，左下角有类似 HUD/调试输入的控件（深灰/浅蓝条和一个类似滑块控件），但没有看到 RmlUI 主菜单面板或 New Game 按钮。</li>
+      <li><strong>New Game 链路：</strong>由于主菜单不可见，未能进行真人点击。<code>latest.log</code> 未出现 <code>core:menu.new_game</code>、<code>[RmlUi] main menu: New Game requested</code>、<code>[World] start_new_world(...)</code> 或 <code>World started</code>；启动初始帧显示 <code>world_active=no</code>。</li>
+      <li><strong>Lua seed 结论：</strong>本轮日志未出现 <code>integer value will be misrepresented in lua</code>，但没有越过 New Game 入口，不能把它判定为真人端到端已修复；当前新阻断点是 RmlUI 主菜单启动后不可见。</li>
+      <li><strong>世界数据：</strong>未进入世界，无法确认 HUD 是否开始显示真实 <code>world_info</code> / <code>resource_snapshot</code>，也无法观察 Build / Colonist / Research / Crafting 的真实数据刷新。</li>
+    </ul>
+
+    <h2 id="button-command-validation-2026-07-07">业务面板按钮命令验证（2026-07-07 prompt1）</h2>
+    <p>验证范围：Build / Colonist / Research / Crafting 四类业务面板按钮的 <code>core:build.begin</code> / <code>core:colonists.select</code> / <code>core:research.start</code> / <code>core:craft.queue</code> 命令链路。不涉及 Pause/Settings/DevConsole。验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；ON 构建目录 <code>build-rmlui-on</code>（Debug / Ninja / <code>NEWCOLONY_ENABLE_RMLUI=ON</code>），OFF 构建目录 <code>build-rmlui-off</code>（<code>NEWCOLONY_ENABLE_RMLUI=OFF</code>）。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
+    <ul>
+      <li><strong>按钮 payload 契约（静态端到端核对，全部对齐）。</strong>四类按钮均由 <code>RmlUiDataViews</code> 的 <code>*_rml</code> 渲染串生成，写成 <code>&lt;button data-command="..." data-param-...="..."&gt;</code>。click 监听器 <code>build_payload_from_params</code> 把 <code>data-param-*</code> 打包成 JSON 字符串值：Build/Research/Crafting 发 <code>{"id":"..."}</code>，Colonist 发 <code>{"entity":"..."}</code>。Lua 命令桥 <code>normalize_command</code> 把四个 target 分别映射到 <code>order.build</code> / <code>colonist.select</code> / <code>research.start</code> / <code>order.craft</code>，字段读取（<code>payload.id</code> / <code>payload.entity</code> / <code>payload.id</code> / <code>payload.id</code>）与按钮发出的字段一致。</li>
+      <li><strong>世界进入与真实数据刷新（已验证）。</strong>用户交互运行（ON 构建）点击 New Game 后 <code>[World] World started</code>，<code>ui_phase='playing'</code>，build_panel / crafting / research / colonists 四个副文档全部 <code>show</code>；真实数据刷新到位：<code>build_defs rows=12</code>、<code>tech_tree nodes=5</code>、<code>colonist_list rows=1</code>、<code>craft_recipes rows=94</code>、<code>available_zone_tools rows=2</code>，<code>world_info</code> 持续刷新。整轮日志无 Lua error、无 RmlUI 告警刷屏、无 missing font、无 Vulkan validation error（validation 启用）。</li>
+      <li><strong>命令派发路径（已验证）。</strong>新增 env 门控（<code>NC_UI_AUTOFIRE=1</code>，默认关）的开发验证钩子 <code>Engine::maybe_autofire_ui_commands</code> / <code>dispatch_autofire_panel_commands</code>：阶段 1 在主菜单预热后入队 <code>core:menu.new_game</code> 自动进世界，阶段 2 在世界激活、mod bootstrap（<code>on_load</code> 注册 <code>engine.ui.command</code>、<code>on_world_init</code> 生成殖民者）就绪后，从快照取首行 id（空则用 CoreMod 数据兜底 id：<code>core:anvil</code> / 实体 <code>"1"</code> / <code>core:crop_rotation</code> / <code>core:build_anvil</code>）入队四条命令。命令经每帧 <code>drain_commands</code> → <code>dispatch_rml_ui_command</code> → <code>ScriptEngine::run_ui_command</code> → Lua <code>command()</code> → C++ 绑定，结果推到 <code>command_result</code> 通道并记 <code>[RmlUi] command target='...' result=...</code>。实测四条命令均产生 command_result（见下"环境限制"）。</li>
+      <li><strong>环境限制（未完成的活体观测）。</strong>本会话的自动化启动方式（PowerShell <code>Start-Process</code> / 后台 shell）在世界启动帧之后确定性挂起：进程存活但 CPU 近空闲、<code>latest.log</code> 冻结、mod <code>bootstrap.lua</code> 的 <code>on_load</code>/<code>on_world_init</code> 从未执行（故殖民者 0、<code>engine.ui.command</code> 表未注册）。在该挂起点之前同步派发四条命令时，<code>run_ui_command</code> 因 Lua 命令表未就绪而返回 <code>{"ok":false,"reason":"ui_command_table_missing"}</code>——这证实 C++ 派发→command_result 链路本身正常，问题在于 bootstrap 在世界启动后的帧循环里运行、而该帧循环在本环境挂起。用户交互运行（窗口有焦点、桌面会话完整）不存在此挂起，bootstrap 正常运行、殖民者生成、数据刷新（见上）。因此 Lua <code>command()</code> 内部逻辑的活体 command_result 留待在干净桌面环境下用同一 <code>NC_UI_AUTOFIRE=1</code> 钩子复验。</li>
+      <li><strong>在干净环境复验的命令。</strong>设 <code>NC_UI_AUTOFIRE=1</code> 启动 <code>build-rmlui-on/bin/NewColony.exe --DEBUG</code>，保持窗口前台；约 8 秒后查看 <code>build-rmlui-on/bin/logs/latest.log</code> 中 <code>[RmlUi][autofire] enqueue core:build.begin ...</code> 与对应 <code>[RmlUi] command target='core:build.begin' result=...</code> 四行即为四类按钮的活体结果。</li>
+    </ul>
+
+    <h2>相关页面</h2>
+    <ul>
+      <li><a href="mod-ui-api.html#rml-ui-host">UI 框架 · 游戏内 RmlUI 宿主层</a>——接口、数据通道、命令契约的权威说明。</li>
+      <li><a href="mod-assets-ui.html">UI 图片资源</a>——<code>assets/ui/</code> 目录约定（含 RML/RCSS 入口）。</li>
+      <li><a href="mod-ui-html-pages.html">HTML/CSS 页面（过渡期）</a>——迁移到 RML/RCSS 前的参考资产。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

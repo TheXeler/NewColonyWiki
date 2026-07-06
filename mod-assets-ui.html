@@ -79,6 +79,49 @@
       UI 图片资源是客户端表现资源，不参与方块纹理图集。不要把全屏 UI 背景放进 <code>assets/textures/block/</code>。
     </div>
 
+    <h2>RML/RCSS 文档资源（RmlUI 入口）</h2>
+    <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是真 backend 接入后的<strong>正式 UI 资源目录</strong>，与 <code>ui.images</code> 图片资源、<code>ui/html/</code> 过渡期资产三者相互独立，不进方块纹理图集。</p>
+<pre><code>CoreMod/assets/ui/rml/
+├── main.rml      # 入口文档（RmlUiHost 默认加载 main.rml）
+├── main.rcss     # main.rml 链接的 RCSS 样式
+├── main.ttf      # 项目内置 RmlUI 字体（Noto Sans Regular）
+├── FONT_SOURCE.md
+└── NotoSans-OFL.txt
+</code></pre>
+    <p>当前 <code>main.rml</code> 是最小游戏内 UI 占位（顶部状态条），不是浏览器网页布局。默认 Null stub 不实际加载它（<code>load_document</code> 返回 false，属预期）；真 backend（<code>NEWCOLONY_ENABLE_RMLUI=ON</code>）接入后由 <code>RealRmlUiRuntime</code> 加载并渲染。依赖状态、CMake option、stub/真 backend 边界、剩余 Vulkan <code>RenderInterface</code> 缺口见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
+    <div class="callout info">
+      字体：真 backend 优先加载 <code>rml/main.ttf</code>。CoreMod 当前内置 Noto Sans Regular，来源与分发许可记录在 <code>FONT_SOURCE.md</code> 与 <code>NotoSans-OFL.txt</code>；Windows Arial 只作为项目字体缺失或损坏时的开发机 fallback，缺字体不阻止启动。
+    </div>
+
+    <h2>HTML/CSS 页面资源（过渡期资产）</h2>
+    <p>UI 主路线已转向游戏内 RmlUI。<code>&lt;core_assets&gt;/ui/html/</code>（即 <code>CoreMod/assets/ui/html/</code>）下的 HTML/CSS/JS 是此前基于“浏览器/HTML”假设实现的<strong>过渡期页面层资产</strong>，保留以便渐进迁移到 RML/RCSS 文档，不再作为游戏内 UI 验收路径。该目录与 <code>mod.json</code> 的 <code>ui.images</code> 图片资源相互独立，不进方块纹理图集。</p>
+
+    <h3>目录约定</h3>
+    <pre><code>CoreMod/assets/ui/html/
+├── index.html              # 主 HUD 外壳（legacy 入口；真 RmlUI backend 加载 main.rml）
+├── styles/                 # theme.css/layout.css/panels.css（页面样式）+ main.css（骨架）
+├── scripts/
+│   ├── app.js              # 桥契约参考实现（window.NC，线程1）
+│   ├── mock_data.js        # ncNative 缺失时 mock 兜底（线程2）
+│   ├── i18n.js / hud.js    # 本地化 / HUD 控制器（线程2）
+│   └── panels/             # resource_bar / command_bar + orders / colonists / research
+│                           # / view / events / build / craft / combat（线程2）
+├── screens/                # 二级面板独立预览页（线程2）
+└── README.md               # 目录约定与接入说明
+</code></pre>
+    <p>二级界面放在 <code>screens/</code> 子目录（如 <code>screens/colonists.html</code>），主 HUD 由 <code>index.html</code> 内的命令栏本地路由到各面板，<code>ncNative</code> 缺失时可独立打开预览。页面只依赖 <code>window.NC.{snapshot,onSnapshot,sendCommand}</code>：底部 8 个按钮发 <code>core:bottombar.*</code> 导航命令，业务命令收敛为固定清单（<code>core:orders.start</code>、<code>core:colonists.select</code> / <code>change_class</code>、<code>core:research.start</code>、<code>core:view.set_mode</code> / <code>toggle_xray</code>、<code>core:events.act</code> / <code>dismiss</code>、<code>core:build.begin</code>、<code>core:craft.queue</code>、<code>core:locale.set</code>），建造支持缺料等待下单。各面板、数据通道、命令与 System.docx 对照见 <a href="mod-ui-html-pages.html">HTML/CSS 页面</a>。</p>
+
+    <h3>加载与热重载</h3>
+    <ul>
+      <li>入口：<code>RmlUiHost::init()</code> 默认加载 <code>main.rml</code>（Null stub 下 <code>load_document</code> 返回 false，属预期）。上图的 <code>index.html</code> 是过渡期 HTML 资产的入口，仅在浏览器中独立预览用，不被宿主层加载。</li>
+      <li>热重载：页面发 <code>core:rmlui.reload</code> 命令，或开发期调用 <code>engine.rml_ui().reload()</code>。</li>
+      <li>世界加载后 Host 触发 <code>on_world_init()</code> 重载页面并重推 <code>world_info</code>。</li>
+    </ul>
+
+    <div class="callout info">
+      完整桥契约（C++ ↔ 文档的快照与命令）、生命周期、当前支持/未支持能力，见 <a href="mod-ui-api.html#rml-ui-host">UI 框架 · 游戏内 RmlUI 宿主层</a>。
+    </div>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

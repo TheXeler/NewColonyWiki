@@ -19,7 +19,7 @@
       <tbody>
         <tr><td>顶点着色器</td><td><code>.vert</code></td><td>GLSL 4.50 顶点着色器源码。</td></tr>
         <tr><td>片段着色器</td><td><code>.frag</code></td><td>GLSL 4.50 片段着色器源码。</td></tr>
-        <tr><td>计算着色器</td><td><code>.comp</code></td><td>会被预处理编译；当前主渲染管线没有通用 MOD 计算管线接入。</td></tr>
+        <tr><td>计算着色器</td><td><code>.comp</code></td><td>会被预处理编译；当前只有引擎按固定文件名加载的 compute 管线会执行。</td></tr>
         <tr><td>几何着色器</td><td><code>.geom</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载几何阶段。</td></tr>
         <tr><td>曲面控制着色器</td><td><code>.tesc</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载细分阶段。</td></tr>
         <tr><td>曲面求值着色器</td><td><code>.tese</code></td><td>会被预处理编译；当前内置 Vulkan 管线不加载细分阶段。</td></tr>
@@ -92,12 +92,17 @@ void main() {
         <tr><td>体积光遮罩</td><td><code>volumetric_light_mask.vert</code> + <code>volumetric_light_mask.frag</code></td><td>生成体积光遮罩。</td></tr>
         <tr><td>体积光模糊</td><td><code>volumetric_light_blur.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
         <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
-        <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，供后续 compute frustum/occlusion culling 使用。</td></tr>
+        <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，会按 chunk AABB 与当前 frustum 写回 indirect command 的 instance count，并统计 GPU 可见 chunk/draw 数；关闭或不可用时渲染器会把当前帧 indirect instance count 重置为全可见。</td></tr>
+        <tr><td>模拟光照 Compute</td><td><code>sim_light.comp</code></td><td>模拟侧体素完整光照入口；GPU 在 3×3 区块邻域体积内完成 sky light 和 block light 传播，CPU 仅在 GPU 不可用时回退。</td></tr>
+        <tr><td>模拟流体 Compute</td><td><code>sim_fluid.comp</code></td><td>模拟侧流体候选更新入口；输出流向/移除候选标记和候选计数，CPU 仍负责权威提交、BUD 通知和脏区块标记。</td></tr>
+        <tr><td>模拟遮挡 Compute</td><td><code>sim_occlusion.comp</code></td><td>模拟侧区块高度/遮挡辅助入口；失败或关闭时回退到 CPU 高度扫描。</td></tr>
       </tbody>
     </table>
 
+    <p>GPU 模拟路径默认启用，可在开发者控制台使用 <code>gpu_sim on</code>、<code>gpu_sim off</code> 或 <code>gpu_sim status</code> 控制。流体候选 tick 另由 <code>gpu_fluid_tick on|off|status</code> 控制；chunk compute culling 可用 <code>gpu_chunk_cull on|off|status</code> 单独切换。<code>gpu_stats</code> 会输出 GPU 模拟、compute kernel 可用性、chunk culling compute 可用性、流体 batch、aggregate buffer 与 greedy mesh 计数。<code>gpu_probe_occlusion</code>、<code>gpu_probe_light</code> 和 <code>gpu_probe_fluid</code> 可用于检查已加载区块的 GPU 计算结果。</p>
+
     <div class="callout warn">
-      目前没有公开的“新增自定义渲染管线”MOD API。MOD 可以提供会被预处理的 shader 源码，但只有被 C++ 渲染代码按固定名称引用的 shader 会实际进入管线。
+      目前没有公开的“新增自定义渲染或模拟管线”MOD API。MOD 可以提供会被预处理的 shader 源码，但只有被 C++ 代码按固定名称引用的 shader 会实际进入管线。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

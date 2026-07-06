@@ -21,7 +21,6 @@
     bootstrap.lua          —— 默认入口脚本（on_load、on_world_init、on_tick、on_shutdown）
     systems/               —— Lua 系统脚本（可选）
     ui/                    —— Lua UI 脚本（可选）
-    worldgen/              —— Lua 世界生成脚本（可选）
   data/                    —— JSON 数据
     blocks/                —— 方块定义（name, hardness, drops）
     entities/              —— 实体原型（组件拼装：Position, Health, AIState…）
@@ -33,10 +32,10 @@
     name_pools/            —— 名称池（随机命名素材）
     actions/               —— AI 原子动作（mine, chop_wood, eat_food…）
     crops/                 —— 作物生长阶段和产出
-    biomes/                —— 生物群系定义（ModLoader 自动注册，地形系统读取）
+    biomes/                —— 群系定义（ModLoader 自动注册，地形系统读取）
     buildings/             —— 建筑定义（ModLoader 自动注册，建筑系统读取）
     zones/                 —— 区域类型定义（ModLoader 自动注册，区域系统读取）
-    audio/                 —— 声音库 JSON（系统目录；当前核心音频从 core 路径读取）
+    audio/                 —— 音频定义 JSON（ModLoader 自动注册）
   assets/                  —— 模型、纹理、着色器、音频（可选）
     audio/                 —— 音乐、环境音、音效文件（可选）
     models/                —— 模型文件（可选）
@@ -47,9 +46,10 @@
   logs/                    —— 运行时输出或诊断日志（可选，不建议打包发布）</code></pre>
 
     <h2>自动注册的数据目录</h2>
-    <p>当前 C++ 加载器会递归扫描并注册下面 16 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
+    <p>当前 C++ 加载器会递归扫描并注册下面 19 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
     <ul>
       <li><code>data/blocks/</code></li>
+      <li><code>data/tags/</code></li>
       <li><code>data/entities/</code></li>
       <li><code>data/recipes/</code></li>
       <li><code>data/professions/</code></li>
@@ -65,6 +65,7 @@
       <li><code>data/terrain/</code></li>
       <li><code>data/biomes/</code></li>
       <li><code>data/zones/</code></li>
+      <li><code>data/audio/</code></li>
     </ul>
 
     <h2>各目录说明</h2>
@@ -74,7 +75,7 @@
         <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖、入口脚本等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
         <tr><td><code>scripts/bootstrap.lua</code></td><td>是*</td><td>默认 Lua 入口脚本，返回一个可选生命周期表：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。<code>entry</code> 可在 <code>mod.json</code> 中改成别的路径；按当前加载器实现，最终入口文件必须存在。</td></tr>
         <tr><td><code>data/blocks/</code></td><td>否</td><td>体素方块定义。字段包括 <code>name</code>、<code>hardness</code>、<code>drops</code>。工作台类方块可额外声明关联的配方类型。方块同时也是背包中的物品，没有单独的“物品”类型。</td></tr>
-        <tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。JSON 当前解析 Position、Velocity、Health、Needs、Mood、Name、ColonistTag、AIState、Profession、HeldItem、Equipment、Stats、Visual、Animation、Head 和旧 Inventory；NavAgent、BlockInteractor、WorkerPriorityConfig 和 PrototypeRef 由运行时自动附加或维护。</td></tr>
+        <tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。JSON 当前解析 Position、Speed、Health、Needs、Mood、Name、ColonistTag、AIState、Profession、HeldItem、Equipment、Stats、Visual、Animation 和 HeadVisual；NavAgent、BlockInteractor、WorkerPriorityConfig 和 PrototypeRef 由运行时自动附加或维护。</td></tr>
         <tr><td><code>data/recipes/</code></td><td>否</td><td>合成配方。声明输入材料、产物、可选的职业与等级要求。合成成功触发 <code>recipe:crafted</code> 事件。</td></tr>
         <tr><td><code>data/professions/</code></td><td>否</td><td>职业定义。等级范围 1-5，可声明转职所需方块、前置职业、各等级解锁的配方。分配成功触发 <code>profession:assigned</code> 事件。</td></tr>
         <tr><td><code>data/civilizations/</code></td><td>否</td><td>文明定义。组织可用职业、开局选项（初始方块和殖民者）、配方限制。</td></tr>
@@ -86,10 +87,10 @@
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度范围和产出；当前 CoreMod 农业脚本把阶段 ticks 加总为成熟时间。</td></tr>
         <tr><td><code>data/ores/</code></td><td>否</td><td>矿物分布数据。字段包括 <code>block</code>、<code>replace_block</code>、<code>noise_scale</code>、<code>threshold</code>、<code>min_y</code>、<code>max_y</code>。</td></tr>
         <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水和河床方块。</td></tr>
-        <tr><td><code>data/biomes/</code></td><td>否</td><td>生物群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
+        <tr><td><code>data/biomes/</code></td><td>否</td><td>群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>
-        <tr><td><code>data/audio/</code></td><td>否</td><td>声音库 JSON。当前只由核心 sound bank 路径读取，不参与通用数据注册表，也不会自动扫描每个 MOD。详见 <a href="mod-assets-audio.html">音乐和音效格式</a>。</td></tr>
+        <tr><td><code>data/audio/</code></td><td>否</td><td>音频定义 JSON。与其他自动注册目录一致，它作为 <code>audio</code> 类型进入通用数据注册表；每个文件顶层 <code>id</code> 就是可播放声音 ID。详见 <a href="mod-audioregistry.html">音频注册</a> 与 <a href="mod-assets-audio.html">音乐和音效格式</a>。</td></tr>
         <tr><td><code>assets/</code></td><td>否</td><td>模型（.obj / .gltf）、纹理（.png）、着色器（.glsl）、音频文件等资源。</td></tr>
         <tr><td><code>config/</code></td><td>否</td><td>MOD 随附配置文件。CoreMod 使用该目录提供控制台权限、别名和按键配置。</td></tr>
         <tr><td><code>lang/</code></td><td>否</td><td>翻译文件目录，使用 UTF-8 JSON。文件名即 locale ID，例如 <code>en-us.json</code>、<code>zh-cn.json</code>。详见 <a href="mod-localization.html">本地化与翻译</a>。</td></tr>
@@ -104,12 +105,9 @@
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
       <li>配方、职业、文明、方块掉落和作物会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>每个自动注册的数据 JSON 可选 <code>reload</code> 布尔字段，用于标记该条目是否参与热重载流程。</li>
+
       <li>能用 JSON 表达的内容优先放在 <code>data/</code>，Lua 只处理数据难以表达的规则、条件和选项行为。</li>
     </ul>
-
-    <div class="callout warn">
-      <strong>注意：</strong><code>data/audio/</code> 不参与通用数据注册表。当前启动流程只加载运行目录下的核心 <code>data/audio/sounds.json</code>；每个 MOD 自动加载自己的 sound bank 仍未接入。
-    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>引擎光照 - NewColony Wiki</title>
+  <title>引擎光照 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="engine-lighting">
@@ -11,16 +11,66 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>引擎光照</div></div>
   <div class="content">
     <h1>引擎光照</h1>
-    <p class="subtitle">体素光照会在区块网格构建时根据区块数据生成。</p>
+    <p class="subtitle">体素光照由区块数据、光源 registry 和 GPU/CPU 光照路径共同维护。</p>
 
     <h2>运行时规则</h2>
     <ul>
       <li>天空光和方块光使用 0 到 15 的 4 位光照等级。</li>
       <li>透明和半透明方块可以透光；不透明方块会阻挡光照。</li>
-      <li>网格生成会在目标区块周围计算一个临时的 3x3 区块光照网格，因此边界面会采样新生成的邻近光照。</li>
+      <li>网格生成会在目标区块周围计算或读取一个临时的 3x3 区块光照网格，因此边界面会采样新生成的邻近光照。</li>
+      <li><code>LightSystem::compute_all_overlay_with_accessor</code> 使用调用方输出 buffer，并复用 thread-local BFS 队列，避免 dirty mesh rebuild 时重复分配大块临时内存。</li>
       <li>区块网格化会采样可见面前方可透光单元格的光照值，并将其乘以逐顶点环境光遮蔽。</li>
-      <li>影响发光或透光性的变更，会将 15 个方块光照半径触及的每个区块标记为需要重建。</li>
+      <li>影响发光或透光性的变更，会将受影响区块标记为需要重建。</li>
     </ul>
+
+    <h2>方块光源</h2>
+    <ul>
+      <li>方块 JSON 的 <code>emission</code> 字段定义 block light 强度，合法范围为 <code>0</code> 到 <code>15</code>。</li>
+      <li>所有 <code>emission &gt; 0</code> 的方块都会注册为光源，不限于火把。</li>
+      <li><code>GpuLightRegistry</code> 在 chunk load/unload 和 block change 时维护全局光源表。</li>
+      <li>新增光源会 seed GPU BFS frontier，mode 4 在 3x3 chunk volume 内传播 block light，并写入 <code>ChunkDataStore</code> 的 light overlay。</li>
+      <li>删除光源会按移除光源等级清理受影响范围，再用重叠区域内仍存在的光源重新 BFS，以避免旧光残留并减少不必要的 block light 写回。</li>
+      <li>同一 tick 内的同位置 pending add/remove 会做保守合并：同强度替换会取消暗化，add 后 remove 会取消新增，同位置重复 add 会保留最后一次。</li>
+      <li>chunk unload 只从 registry 和 LightSSBO 中移除该 chunk 的光源，并清理相关 pending 队列；它不会触发暗化 BFS。下一次 tick 只上传 light table，日志会出现 <code>table_only=1</code>。</li>
+    </ul>
+
+    <h2>LightBlock 调试日志</h2>
+    <ul>
+      <li><code>[LightBlock] tick</code> 是每次 registry flush 的汇总日志，默认 DEBUG 等级。</li>
+      <li><code>upload</code> 和 <code>light_upload_bytes</code> 表示 LightSSBO 全量上传成本；如果该项高，下一步应做增量上传或 sparse slot。</li>
+      <li><code>clear</code> 表示删除光源时 CPU 清理受影响 block light 的耗时。</li>
+      <li><code>build</code> 表示构建 3x3 GPU BFS volume 的耗时。</li>
+      <li><code>bfs</code> 表示 mode 4 BFS dispatch 加同步等待的耗时；如果该项高，下一步应做异步 compute / 下帧 readback。</li>
+      <li><code>apply</code> 表示把 GPU 输出写回 <code>ChunkDataStore</code> overlay 的耗时。</li>
+      <li><code>frontier</code>、<code>final_frontier</code>、<code>capacity</code>、<code>overflow</code> 和 <code>max_observed_frontier</code> 用于判断 BFS frontier 是否被截断。</li>
+      <li><code>changed_chunks</code> 表示本次 block light 写回导致的 mesh dirty fanout；后续 mesh rebuild 会通过 <code>[Chunks] dirty dispatch</code> 和 <code>[Chunks] dirty upload</code> 记录。</li>
+      <li>存档会把动态光照保存为 chunk-level <code>lights</code> 数组，block payload 只保存 <code>[id,data]</code> state。</li>
+    </ul>
+
+    <h2>Dirty Mesh 调度</h2>
+    <ul>
+      <li>block light 写回后只把实际变化过的 chunk 放入 dirty 集合。</li>
+      <li><code>dispatch_dirty_chunk_rebuilds</code> 会限制每帧提交的 dirty mesh rebuild 数量；积压较高时会小幅提高提交上限。</li>
+      <li><code>[Chunks] dirty dispatch</code> 记录 dirty backlog、提交数、因预算或 inflight 重排的数量。</li>
+      <li><code>[Chunks] dirty upload</code> 记录异步 dirty mesh 完成后的主线程上传数量、重排数量和预算耗时。</li>
+    </ul>
+
+    <h2>天空光</h2>
+    <ul>
+      <li>天空光仍使用列扫描初始化和传播路径。</li>
+      <li>天空光的隐式光源是天空柱，不使用 block light 的光源列表优化。</li>
+    </ul>
+
+    <h2>当前限制</h2>
+    <ul>
+      <li><code>ChunkDataStore::set_block_light()</code> 当前写入 per-column light overlay，不再修改 sub-chunk 内的 <code>BlockState</code> voxel storage，因此 GPU block light 更新不会打散 uniform/palette sub-chunk。</li>
+      <li><code>Block</code> 本体只保留 <code>id/data</code> 状态；<code>LightData</code> 不再是 block 字段。</li>
+      <li><code>ChunkDataStore::ChunkSnapshot</code> 的 uniform、palette 和 dense payload 使用 <code>BlockState{id,data}</code>；region 存档 payload 也只写 state payload，动态光照保留在独立 <code>lights</code> overlay。</li>
+      <li>GPU pack 路径现在显式接收 <code>BlockState</code> 和 <code>LightData</code>。mesh 构建对已加载 chunk 和临时 dense chunk 都通过 light accessor 采样 overlay；旧的 dense <code>Block.light</code> 写回和读取兼容路径已删除。</li>
+      <li>跨 chunk mesh 边界光照通过显式 <code>neighbor_light(wx,y,wz)</code> accessor 读取已加载 neighbor snapshot 的 light overlay；生成但未加载的临时 neighbor 没有 overlay 时返回空光照。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
 <script src="wiki.js"></script>

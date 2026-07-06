@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>建筑蓝图注册 | NewColony Wiki</title>
+  <title>建筑蓝图注册 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="mod-buildingregistry">
@@ -42,6 +42,7 @@
         <tr><td><code>materials</code></td><td>必填数组。施工开始前需要从库存取出的材料列表，<code>item_id</code> 必须是有效数据 ID，<code>count</code> 必须为正整数。</td></tr>
         <tr><td><code>construction_ticks</code></td><td>必填正整数。施工耗时，20 tick 约等于 1 秒。</td></tr>
         <tr><td><code>blueprint</code></td><td>可选的方块放置列表。没有蓝图的建筑仍可作为逻辑建筑存在。</td></tr>
+        <tr><td><code>design</code></td><td>可选的高层建筑设计数据。由建筑设计器保存，用于未来重新编辑；当前 <code>BuildingSystem</code> 仍只消费 <code>blueprint</code>，会忽略该字段。</td></tr>
       </tbody>
     </table>
 
@@ -53,6 +54,70 @@
 
     <h2>内置示例</h2>
     <p><code>CoreMod/data/buildings/matchbox_hut.json</code> 提供了一个木头火柴盒小屋示例，展示地板、墙体、屋顶和门的组合写法。</p>
+
+    <h2>运行时蓝图</h2>
+    <p>Lua 可以通过 <code>engine.buildings.register_runtime_definition(table)</code> 注册运行时建筑定义。运行时定义会进入当前 <code>BuildingSystem</code>，因此可以被 <code>engine.buildings.find_definition</code> 查询，也可以交给 <code>systems.construction</code> 下达施工订单。</p>
+    <p><code>systems.construction.preview_materials(def_id)</code> 会按当前 stockpile 账本返回材料可用性；<code>systems.construction.order(def_id, x, y, z)</code> 在定义和位置合法时创建建筑订单。材料足够时立即预留并推进施工，返回 <code>{ ok=true, status="constructing", info=..., reserved_materials=... }</code>；材料不足时仍创建订单并返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code>，之后由施工系统在 <code>stockpile:changed</code> 或 60 tick 兜底检查时自动尝试预留并继续。</p>
+    <p>HTML 数据桥的 <code>build_defs</code> 快照直接返回建造面板可消费的数组行：<code>{ id, label, label_key, category, size, cost, materials, missing, available, can_order, status }</code>，其中 <code>status</code> 为 <code>available</code>、<code>missing_materials</code> 或 <code>locked</code>。已下单建筑由 <code>construction_active</code> 快照返回：<code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>，<code>status</code> 可为 <code>ordered</code>、<code>waiting_materials</code>、<code>reserved</code>、<code>constructing</code> 或 <code>complete</code>。</p>
+    <p><code>core:build.begin { id }</code> 不带坐标时只启动现有 placement 流程，返回 <code>status="placement_started"</code>；只有传入 <code>x/y/z</code> 时才调用 <code>systems.construction.order(id, x, y, z)</code>。</p>
+    <pre><code>engine.buildings.register_runtime_definition({
+  id = "core:runtime_design_1",
+  name = "Custom Hut",
+  size_x = 5,
+  size_y = 5,
+  size_z = 5,
+  materials = {
+    { item_id = "core:wood_plank", count = 64 }
+  },
+  blueprint = {
+    { x = 0, y = 0, z = 0, block_id = "core:wood_floor" }
+  },
+  construction_ticks = 120
+})</code></pre>
+    <p>运行时蓝图默认只存在于当前 <code>BuildingSystem</code>。逐方块蓝图编辑器保存时会额外把 JSON 写入 <code>generate/core/data/buildings/player_blueprints/</code>，便于玩家或 MOD 作者复制到正式 MOD 数据目录长期保留。保存文件保留顶层 <code>blueprint</code>、<code>materials</code>、<code>size</code>，并额外写入顶层 <code>design</code>；材料统计始终来自最终 <code>blueprint</code> 方块列表。</p>
+
+    <h2>蓝图编辑器（3D 画布）</h2>
+    <p>除了参数化生成器（<code>building_editor.lua</code>），核心 MOD 还提供一个逐方块绘制的蓝图编辑器（<code>blueprint_editor.lua</code> + C++ <code>BlueprintEditor</code> 类）。玩家在世界中打开一个 3D 幽灵画布，用鼠标逐格绘制蓝图，再把画布内容保存为可施工的建筑定义，并导出一份 JSON 到生成目录。</p>
+
+    <p>两个编辑器是并行功能：参数化编辑器走 <code>core:runtime_design_*</code> 前缀，画布编辑器走 <code>core:canvas_design_*</code> 前缀，都注册到同一个 <code>BuildingSystem</code>，所以两者保存的蓝图都可以被建造系统识别。</p>
+
+    <h3>核心交互</h3>
+    <ul>
+      <li>左键：在鼠标 hover 位置应用当前工具（笔刷/矩形/填充/擦除/选区）</li>
+      <li>Esc：干净画布会直接关闭；存在未保存修改时只取消拖拽，不丢弃内容</li>
+      <li>快捷键：B/R/F/E/S 切换笔刷/矩形/填充/擦除/选区；[/] 切换层；Ctrl+Z/Ctrl+Y 撤销/重做；Ctrl+C/Ctrl+V 复制/粘贴</li>
+      <li>笔刷和擦除是单击即生效；矩形和选区是按下-拖拽-松开</li>
+      <li>矩形、填充和选区都作用于当前 Y 层，当前层由 UI 的 Layer +/- 按钮或快捷键切换</li>
+      <li>清空和关闭未保存画布需要二次确认；保存页可输入蓝图名称</li>
+    </ul>
+
+    <h3>Lua API</h3>
+    <p>所有 API 都在 <code>engine.blueprint_editor</code> 表下：</p>
+    <table>
+      <thead><tr><th>方法</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>open(x,y,z, sx,sy,sz)</code></td><td>在 <code>(x,y,z)</code> 打开尺寸为 <code>sx*sy*sz</code> 的画布。最大 16x16x16。</td></tr>
+        <tr><td><code>close()</code></td><td>关闭画布并丢弃所有未保存内容。</td></tr>
+        <tr><td><code>is_active()</code> / <code>is_dirty()</code> / <code>mark_clean()</code></td><td>查询画布状态、未保存修改状态，并在保存后标记为干净。</td></tr>
+        <tr><td><code>set_tool(name)</code></td><td>切换工具。<code>name</code> ∈ <code>pen</code>/<code>rect</code>/<code>fill</code>/<code>erase</code>/<code>select</code>/<code>room</code>/<code>floor_plan</code>/<code>door</code>/<code>window</code>/<code>roof</code>。</td></tr>
+        <tr><td><code>set_block(block_id)</code></td><td>设置当前笔刷/矩形/填充使用的方块。字符串方块 ID。</td></tr>
+        <tr><td><code>set_layer(y)</code> / <code>get_layer()</code></td><td>当前编辑的 Y 层。</td></tr>
+        <tr><td><code>undo()</code> / <code>redo()</code> / <code>can_undo()</code> / <code>can_redo()</code></td><td>撤销/重做。撤销栈最多保留 100 项。</td></tr>
+        <tr><td><code>rotate()</code></td><td>顺时针旋转整个画布 90°。<code>size_x</code> ↔ <code>size_z</code> 互换。</td></tr>
+        <tr><td><code>mirror_x()</code> / <code>mirror_z()</code></td><td>沿 X 或 Z 轴镜像。</td></tr>
+        <tr><td><code>clear()</code></td><td>清空所有方块。</td></tr>
+        <tr><td><code>copy()</code> / <code>paste(x,y,z)</code> / <code>paste_hover()</code> / <code>has_clipboard()</code></td><td>复制选区到剪贴板，在指定位置或当前 hover 格粘贴。</td></tr>
+        <tr><td><code>clear_selection()</code> / <code>has_selection()</code></td><td>管理当前选区。</td></tr>
+        <tr><td><code>load_from_file(path)</code> / <code>load_definition(id)</code></td><td>从导出的建筑 JSON 路径或已注册建筑定义 ID 加载设计。优先恢复 <code>design.rooms/default_materials/roofs/openings</code> 并重新编译；旧文件没有 <code>design</code> 时导入顶层 <code>blueprint</code> 方块。</td></tr>
+        <tr><td><code>save(name)</code></td><td>把画布内容打包成 <code>BuildingDef</code>，注册到 <code>BuildingSystem</code>，并尝试写入 <code>generate/core/data/buildings/player_blueprints/</code>。成功时返回包含 <code>id</code>、<code>path</code>、<code>persisted</code> 的表；空画布或注册失败返回 <code>nil</code>。</td></tr>
+      </tbody>
+    </table>
+    <p>"Save & Build" 按钮在 Lua UI 层组合实现：先调 <code>save</code>，再 <code>require("systems.construction").order(def_id, x, y, z)</code>。建造流程复用参数化编辑器已建立的路径。</p>
+
+    <h3>保存的 design 数据</h3>
+    <p>建筑设计器保存的 JSON 会包含 <code>design.version = 1</code>、<code>origin</code>、<code>default_materials</code>、<code>rooms</code>、<code>roofs</code>、<code>openings</code> 和 <code>patches</code>。<code>rooms</code> 记录房间 <code>id</code>、二维 <code>origin</code>、<code>size</code>、<code>floor_y</code>、<code>wall_height</code> 以及可用的 floor/wall/roof 材料；<code>roofs</code> 支持 <code>none</code>、<code>flat</code> 和简单可见的 <code>gable</code>。Door/Window 工具会在墙体上写入 <code>openings</code>，编译时先扣墙洞，再按对应材料放置门/窗方块；如果材料为空则只保留洞口。高级体素编辑不会被强制转换为 <code>patches</code>，因此 <code>patches</code> 当前为空数组。没有房间设计数据时仍会输出空 design skeleton，并保留旧体素蓝图保存行为。</p>
+
+    <p>画布编辑器的材料调色板会从已注册 <code>blocks</code> 数据中按 ID 关键字扩展 floor/wall/roof/door 分类；保存后的 JSON 可作为玩家蓝图继续用于当前游戏，也可复制到 MOD 的 <code>data/buildings/</code> 下作为正式建筑数据。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

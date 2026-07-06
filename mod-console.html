@@ -42,8 +42,8 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表。</td></tr>
         <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
         <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值。</td></tr>
-        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 blocks、entities、recipes、professions、civilizations、focuses；不写 type 时会列出全部类型。</td></tr>
-        <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code> 和 <code>data type:name_pools</code> 可查看阵营和名称池。</td></tr>
+        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 blocks、tags、entities、recipes、professions、civilizations、focuses、factions、faction_spawn_rules、name_pools、actions、features、ores、crops、buildings、terrain、biomes、zones；不写 type 时会列出全部类型。</td></tr>
+        <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
         <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。</td></tr>
         <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
         <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原型 ID 生成一个实体。</td></tr>
@@ -52,6 +52,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>inventory &lt;entity&gt;</code></td><td>查看实体的背包内容。</td></tr>
         <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池。</td></tr>
         <tr><td><code>spawn_faction &lt;faction_def_id&gt; [seed]</code></td><td>生成一个 NPC 阵营实例。</td></tr>
+        <tr><td><code>spawn_initial_factions [seed]</code></td><td>按 <code>faction_spawn_rules</code> 规则批量生成 AI 阵营；缺省 seed 时复用世界种子派生的随机流。每次生成都会发布 <code>faction:spawned</code> 事件（reason=<code>console</code>）。</td></tr>
         <tr><td><code>list_faction_instances</code></td><td>查看已经生成的 NPC 阵营实例。</td></tr>
         <tr><td><code>faction_relation &lt;instance_id&gt; &lt;delta&gt;</code></td><td>调整阵营关系值，结果会被限制在定义的最小/最大关系内。</td></tr>
         <tr><td><code>gen_name &lt;template&gt; [seed]</code></td><td>按名称模板生成调试名称。模板里可写 <code>${random_name}</code>。</td></tr>
@@ -84,6 +85,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
 
     <h2>说明</h2>
     <p><code>doctor_*</code>、<code>diff_*snapshot*</code>、<code>*doctor_archives*</code> 这些命令主要给引擎维护者用。普通 MOD 作者一般不需要关心它们。</p>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

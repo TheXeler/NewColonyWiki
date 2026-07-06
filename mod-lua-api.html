@@ -13,6 +13,10 @@
     <h1>Lua 怎么用</h1>
     <p class="subtitle">Lua 入口用来连接事件、定时器、焦点、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
 
+    <div class="callout info">
+      <strong>脚本运行时</strong>：LuaJIT 2.1（Lua 5.1 语言）。不要使用 5.3+ 才有的位运算符（<code>&amp;</code> <code>|</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code>）和整除运算符 <code>//</code>——需要位运算时改用 <code>bit</code> 库（<code>bit.band</code>、<code>bit.bor</code>、<code>bit.bxor</code>、<code>bit.lshift</code>、<code>bit.rshift</code>）。注意 <code>bit</code> 库只在 32 位上运算。
+    </div>
+
     <h2>入口脚本结构</h2>
     <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。</p>
     <pre><code>local M = {}
@@ -85,7 +89,7 @@ end</code></pre>
     <p><code>engine.crafting.craft</code> 是低级直接制作接口，只检查实体当前单个 <code>HeldItem</code> 是否满足输入。CoreMod 的菜单制作走 <code>systems.crafting.queue</code>，会从 stockpile 账本预留材料并在 <code>job:completed</code> 后发放产物。</p>
 
     <h2>工作池</h2>
-    <p>发布工作时必须指定工作所属势力。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己势力一致的工作。</p>
+    <p>发布工作时必须指定工作所属阵营。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己阵营一致的工作。</p>
     <p>工作系统内部有 JobType、JobCategory 和 WorkAction，但当前 Lua 只公开发布工作实例的入口，没有公开的工作类型注册 API。</p>
     <p><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code> 中的 <code>type</code> 当前只识别 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code> 五个字符串；未知字符串会落回 Build。<code>duration</code> 是无修正基础时长；<code>data</code> 是可选上下文，通常放动作 ID、配方 ID 或目标方块 ID 的哈希。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
@@ -94,8 +98,8 @@ local job_id = engine.jobs.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, 
     <p>当工作需要改变世界或实体状态时，推荐把 <code>data</code> 指向一个已注册动作。动作本身描述 WorkAction 的细节，例如 <code>block_action</code> 配合 <code>action_type</code> 执行挖掘、放置或交互；工作实例只负责进入工作池、被分配、计时和完成事件。</p>
     <p>Craft 工作完成时，引擎会先尝试用 <code>data</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>job:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
     <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
-    <p>Pathfinding failures are logged as errors; the AI no longer creates an in-place fallback job when a navigation target cannot be reached.</p>
-    <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同势力 AI 重新领取。</p>
+    <p>寻路失败会被记为 error；AI 不再因导航目标不可达而生成原地 fallback 工作。</p>
+    <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同阵营 AI 重新领取。</p>
 
     <h2>事件</h2>
     <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
@@ -233,12 +237,30 @@ end)</code></pre>
 end</code></pre>
 
     <h2>NPC 阵营</h2>
-    <p>阵营定义和名称池优先写在 <code>data/factions</code>、<code>data/name_pools</code>。Lua 适合在事件发生时生成实例、修改关系或生成调试名称。</p>
+    <p>阵营定义和名称池优先写在 <code>data/factions</code>、<code>data/name_pools</code>，自动生成规则写在 <code>data/faction_spawn_rules</code>（开新世界时引擎会按规则批量 spawn）。Lua 适合在事件发生时生成实例、修改关系或生成调试名称。</p>
     <pre><code>local faction = engine.factions.spawn("core:merchant_guild", 1234)
 if faction.id ~= "" then
   engine.log.info("spawned faction: " .. faction.display_name)
   engine.factions.modify_relation(faction.id, 5)
 end
+
+-- 手动重放开局批量生成（可选 seed；不传则用世界种子）
+local batch = engine.factions.spawn_initial()
+for _, f in ipairs(batch) do
+  engine.log.info("initial faction: " .. f.display_name)
+end
+
+-- 查看当前已注册的自动生成规则
+local rules = engine.factions.list_spawn_rules()
+for _, r in ipairs(rules) do
+  engine.log.info(string.format("rule %s: %d..%d", r.faction_def_id, r.min_count, r.max_count))
+end
+
+-- 订阅阵营生成事件（自动 spawn、控制台 spawn、Lua spawn 都会触发）
+engine.events.subscribe("faction:spawned", function(evt)
+  engine.log.info(string.format("faction spawned: %s (%s) reason=%s relation=%d",
+    evt.display_name, evt.def_id, evt.reason, evt.relation))
+end)
 
 local name = engine.factions.generate_name("${random_name} Guild", {"core:generic"}, 42)
 engine.log.info("sample name: " .. name)</code></pre>

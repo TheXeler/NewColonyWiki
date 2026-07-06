@@ -24,6 +24,7 @@
         "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
         "Profession": { "id": "my_mod:hunter", "level": 1 },
         "Name": { "data": "Hunter" },
+        "Backstory": { "data": "Former trail scout with steady hands." },
         "Stats": { "strength": 12.0, "dexterity": 14.0, "intelligence": 8.0 },
         "HeldItem": {},
         "Equipment": {}
@@ -59,14 +60,14 @@
         <tr><td><code>Profession</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
         <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
         <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品。<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为空。</td></tr>
-        <tr><td><code>Inventory</code></td><td>（legacy，最多 32 格）</td><td>遗留多槽背包。当前实体原型以 <code>HeldItem</code> 为主；若 JSON 只提供 <code>Inventory</code>（含 <code>slots</code> 数组），加载器会取第一个 slot 作为 HeldItem。</td></tr>
         <tr><td><code>Equipment</code></td><td><code>MainHand</code>, <code>OffHand</code>, <code>Armor</code>, <code>Accessory</code></td><td>固定装备栏。每个槽可写 <code>{"id": "core:tool", "count": 1}</code>；空对象表示有装备组件但初始为空。</td></tr>
         <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>基础属性。加载、生成、读档或通过 Lua 修改基础属性后会重新计算派生属性；导航实体会使用派生移动速度。</td></tr>
         <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
+        <tr><td><code>Backstory</code></td><td><code>data</code> 或 <code>value</code> (string)</td><td>角色经历文本。人员界面的角色菜单会通过聚合接口展示该字段。</td></tr>
         <tr><td><code>PrototypeRef</code></td><td>自动生成</td><td>引用创建该实例的原型 ID。实体原型 JSON 不需要声明。</td></tr>
         <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>实体外观。未声明时使用默认 box 外观；<code>model: "biped"</code> 会自动生成默认头部视觉。</td></tr>
         <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>biped 程序动画参数。</td></tr>
-        <tr><td><code>Head</code></td><td><code>center_x</code>, <code>center_y</code>, <code>center_z</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>头部视觉盒，用于看向 InterestPoint。可覆盖 biped 自动生成的头部。</td></tr>
+        <tr><td><code>HeadVisual</code></td><td><code>center_x</code>, <code>center_y</code>, <code>center_z</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>头部视觉盒，用于看向 InterestPoint。可覆盖 biped 自动生成的头部。</td></tr>
       </tbody>
     </table>
 
@@ -93,37 +94,37 @@
     </table>
     <p>没有 <code>Stats</code> 的导航实体默认速度为 <code>0</code>，不会获得隐含移动速度。拥有 <code>Stats</code> 的实体空手时直接使用 <code>move_speed</code> 作为导航速度；如果正在手持物品，则改用 <code>carry_move_speed</code>。</p>
 
-    <h2>内置实体原型</h2>
-    <p>CoreMod 注册了 10 个实体原型：</p>
+    <h2>人员界面聚合接口</h2>
+    <p>HTML/Lua UI 可通过 <code>engine.colonists</code> 读取页面所需数据：</p>
     <table>
-      <thead><tr><th>原型</th><th>ID</th><th>职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
+      <thead><tr><th>API</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.colonists.list(profession_filter?, sort_key?)</code></td><td>返回殖民者列表摘要，字段包含名称、职业 ID/名称、等级、经验和心情；<code>sort_key</code> 支持 <code>name</code>、<code>profession</code>、<code>level</code>、<code>xp</code>、<code>mood</code>。</td></tr>
+        <tr><td><code>engine.colonists.detail(entity)</code></td><td>返回角色菜单数据：名称、职业、职业等级/经验、经历、心情、thoughts、基础/工作/战斗属性分组。</td></tr>
+        <tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回装备槽、装备属性、HeldItem/Inventory 物品栏，并提供 <code>sort_keys</code> 与 <code>filter_keys</code>。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>内置实体原型</h2>
+    <p>CoreMod 只注册 1 个殖民者实体原型。职业不是实体类型；矿工、木匠、铁匠等都应生成为 <code>core:colonist</code>，再通过 <code>Profession</code> 数据组件或 <code>engine.professions.assign</code> 分配职业。</p>
+    <table>
+      <thead><tr><th>原型</th><th>ID</th><th>默认职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
       <tbody>
         <tr><td>殖民者</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
-        <tr><td>农民</td><td><code>core:farmer</code></td><td>farmer (Lv.1)</td><td>9 / 10 / 11</td><td>10</td></tr>
-        <tr><td>矿工</td><td><code>core:miner</code></td><td>miner (Lv.1)</td><td>12 / 9 / 9</td><td>20</td></tr>
-        <tr><td>木匠</td><td><code>core:carpenter</code></td><td>carpenter (Lv.3)</td><td>11 / 10 / 11</td><td>1</td></tr>
-        <tr><td>伐木工</td><td><code>core:lumberjack</code></td><td>lumberjack (Lv.1)</td><td>12 / 10 / 8</td><td>1</td></tr>
-        <tr><td>石匠</td><td><code>core:stonemason</code></td><td>stonemason (Lv.3)</td><td>13 / 9 / 9</td><td>2</td></tr>
-        <tr><td>厨师</td><td><code>core:cook_entity</code></td><td>cook (Lv.2)</td><td>8 / 10 / 12</td><td>1</td></tr>
-        <tr><td>铁匠</td><td><code>core:blacksmith_entity</code></td><td>blacksmith (Lv.3)</td><td>14 / 9 / 10</td><td>1</td></tr>
-        <tr><td>陶工</td><td><code>core:potter_entity</code></td><td>potter (Lv.2)</td><td>9 / 11 / 11</td><td>1</td></tr>
-        <tr><td>织工</td><td><code>core:weaver_entity</code></td><td>weaver (Lv.2)</td><td>8 / 12 / 10</td><td>1</td></tr>
       </tbody>
     </table>
 
     <h3>殖民者 <code>core:colonist</code></h3>
     <p>通用殖民者原型，全属性 10，使用通用行为树（ID 0）。作为文明开局的基础单位，后续可转职为其他职业。</p>
 
-    <h3>职业原型</h3>
-    <p>各职业原型有针对性的属性分配：铁匠和石匠力量高（13~14），厨师和陶工智力高（11~12），农民较均衡。行为树 ID 对应不同的 AI 行为模式。注意部分实体 ID 带有 <code>_entity</code> 后缀。</p>
-
     <h2>生成实体</h2>
-    <p>通过 Lua API 从原型生成实体：</p>
-    <pre><code>-- 在指定位置生成一个矿工
-local id = engine.ecs.spawn_prototype("core:miner")
-engine.ecs.set_position(id, 10, 70, 20)</code></pre>
+    <p>通过 Lua API 从原型生成实体，并按需分配职业：</p>
+    <pre><code>-- 在指定位置生成一个殖民者并分配矿工职业
+local id = engine.ecs.spawn_prototype("core:colonist")
+engine.ecs.set_position(id, 10, 70, 20)
+engine.professions.assign(id, "core:miner", 1)</code></pre>
     <p>或在控制台中：</p>
-    <pre><code>spawn_proto core:miner          -- 在玩家附近生成一个矿工实体</code></pre>
+    <pre><code>spawn_proto core:colonist       -- 在玩家附近生成一个殖民者实体</code></pre>
 
     <h2>生成时自动补全</h2>
     <ul>
@@ -131,7 +132,6 @@ engine.ecs.set_position(id, 10, 70, 20)</code></pre>
       <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业 <code>core:worker</code>（如果 JSON 没有声明 <code>Profession</code>）。</li>
       <li>声明 <code>Needs</code> 但未声明 <code>Mood</code> 时，会自动添加默认 <code>Mood</code>。</li>
       <li>声明 <code>Stats</code> 时会重新计算派生属性；未声明 <code>Health</code> 时，生命值会用派生 <code>max_hp</code>。</li>
-      <li><code>Inventory</code> 是兼容旧数据的入口，只读取 <code>slots</code> 的第一个槽并转换为 <code>HeldItem</code>；如果同时存在 <code>HeldItem</code>，<code>Inventory</code> 会被忽略。</li>
     </ul>
 
     <h2>文件放置规则</h2>
@@ -142,8 +142,8 @@ engine.ecs.set_position(id, 10, 70, 20)</code></pre>
 
     <h2>验证命令</h2>
     <pre><code>list_data entities               -- 列出所有已注册的实体原型
-data core:miner                  -- 查看单个原型的完整 JSON
-spawn_proto core:miner           -- 在世界中生成一个实体</code></pre>
+data core:colonist               -- 查看殖民者原型的完整 JSON
+spawn_proto core:colonist        -- 在世界中生成一个殖民者实体</code></pre>
 
     <h2>实体模型与动画</h2>
     <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为石质摩尔庄园风格的 Q 版三头身模型——大头、小身体、浮动的手脚（脚与身体之间保留较小间隙，整体控制在实体高度内）。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
@@ -161,8 +161,8 @@ spawn_proto core:miner           -- 在世界中生成一个实体</code></pre>
   "idle_bob": 0.015
 }</code></pre>
     <p><code>Animation</code> 当前支持 biped 的程序行走动画：实体有水平速度时双脚和双手前后摆动，<code>walk_speed</code> 控制频率，<code>walk_amplitude</code> 控制角度。Biped 模型头部约占实体高度 40%，身体约 35%，脚底贴地，脚与身体之间使用紧凑间隙以适配 1.8 格实体高度。模型资源写法见 <a href="mod-assets-model.html">模型资源</a>。</p>
-    <p>带有 <code>Head</code> 的实体会跟踪运行时 <code>InterestPoint</code>；没有 active interest point 时，头部使用身体朝向。方块交互会把 interest point 设置到被交互方块中心。</p>
-    <p>任意实体都可以通过 <code>Head</code> 组件加入这个行为。使用 <code>center_x</code>、<code>center_y</code>、<code>center_z</code>、<code>width</code>、<code>height</code> 和 <code>depth</code> 描述模型局部空间中的头部盒。</p>
+    <p>带有 <code>HeadVisual</code> 的实体会跟踪运行时 <code>InterestPoint</code>；没有 active interest point 时，头部使用身体朝向。方块交互会把 interest point 设置到被交互方块中心。</p>
+    <p>任意实体都可以通过 <code>HeadVisual</code> 组件加入这个行为。使用 <code>center_x</code>、<code>center_y</code>、<code>center_z</code>、<code>width</code>、<code>height</code> 和 <code>depth</code> 描述模型局部空间中的头部盒。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

@@ -40,7 +40,7 @@ data copper_age:copper_ore</code></pre>
     </ul>
 
     <h2>进食或饮水动作没有执行</h2>
-    <p>当前数据校验接受 <code>inventory_block_action</code>，CoreMod 的吃饭/喝水动作也使用这个类型；但运行时 ActionRegistry 仍检查旧名 <code>held_item_block_action</code>。因此动作会出现在通用数据注册里，但不会进入 held-item 动作执行表。这是当前实现缺口，不是 MOD JSON 写法错误。</p>
+    <p><code>inventory_block_action</code> 会进入 held-item 动作执行表。若动作没有执行，优先检查 colonist 是否拥有对应 <code>HeldItem</code>、物品分类是否匹配、以及动作消耗数量是否大于手持数量。</p>
 
     <h2>焦点 没有触发</h2>
     <ul>
@@ -67,6 +67,21 @@ data copper_age:copper_ore</code></pre>
 
     <h2><code>math.random</code> 报错</h2>
     <p>这是有意为之。<code>math.random</code> 在脚本环境中被禁用了。改用 <code>engine.random.int(min, max)</code> 或 <code>engine.random.float()</code>。</p>
+
+    <h2>LuaJIT 与 Lua 5.4 差异</h2>
+    <p>脚本运行时是 <strong>LuaJIT 2.1</strong>（Lua 5.1 语言）。从 Lua 5.3/5.4 移植脚本时需要特别注意：</p>
+    <ul>
+      <li><strong>位运算符</strong>：<code>&amp;</code>、<code>|</code>、<code>~</code>、<code>&lt;&lt;</code>、<code>&gt;&gt;</code>（5.3+）在 LuaJIT 中不存在。改用 <code>bit</code> 库：<code>bit.band</code>、<code>bit.bor</code>、<code>bit.bxor</code>、<code>bit.lshift</code>、<code>bit.rshift</code>。注意 <code>bit</code> 库只在 32 位整数上运算。</li>
+      <li><strong>整除 <code>//</code></strong>：5.3+ 才有。LuaJIT 下用 <code>math.floor(a / b)</code>。</li>
+      <li><strong>整数 / 浮点分离</strong>：5.3+ 区分 <code>integer</code> 和 <code>float</code> 子类型，<code>math.type(1)</code> 返回 <code>"integer"</code>。LuaJIT 下所有数字都是 double，<code>math.type</code> 不存在。</li>
+      <li><strong><code>math.tointeger</code></strong>：LuaJIT 提供扩展实现，可用。</li>
+      <li><strong>64 位整数字面量</strong>：例如 <code>0x9E3779B97F4A7C15</code>。LuaJIT 的 number 是 53 位精度的 double，超过 <code>2^53</code> 的字面量会丢精度。需要 64 位运算时把算法移到 C++ 端，或用 <code>engine.random</code>。</li>
+      <li><strong><code>utf8</code> 标准库</strong>：5.3+ 才有。LuaJIT 没有 <code>utf8</code> 库。</li>
+      <li><strong><code>goto</code>/<code>::label::</code></strong>：LuaJIT 支持，与 5.3+ 一致。</li>
+    </ul>
+    <div class="callout warn">
+      <strong>世界生成在 C++ 端</strong>：CoreMod 不再包含 Lua worldgen 脚本。所有世界生成算法（地形 noise、群系选择、地物放置、RNG）都在 C++ <code>TerrainGenerator</code> 中实现，由 <code>data/biomes/</code> 和 <code>data/features/</code> 下的 JSON 配置驱动。MOD 不应再 <code>require("worldgen.*")</code>。
+    </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

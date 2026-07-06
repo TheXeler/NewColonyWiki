@@ -11,13 +11,13 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>焦点注册</div></div>
   <div class="content">
     <h1>焦点注册</h1>
-    <p class="subtitle">焦点是一种事件驱动的提示系统。当游戏内条件满足时，引擎会触发一个焦点，向玩家展示一段信息并提供可选的响应动作。焦点定义放在 <code>data/focuses/</code> 下。</p>
+    <p class="subtitle">焦点是一种事件驱动的提示系统。当游戏内条件满足时，引擎会触发一个焦点，向玩家展示一段信息并提供可选的响应动作。焦点定义放在 <code>data/focuses/</code> 下，也是事件界面的当前后端。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
   "id": "core:first_colonist",
-  "title": "First Colonist Active",
-  "body": "The first colonist has entered the world. Review their needs and role.",
+  "title": "ui.core:events.first_colonist.title",
+  "body": "ui.core:events.first_colonist.body",
   "severity": "info",
   "icon": "colonist",
   "enabled": true,
@@ -31,14 +31,14 @@
   "choices": [
     {
       "id": "inspect",
-      "label": "Inspect Colonist",
-      "description": "Open the colonist inspection panel.",
+      "label": "ui.core:events.first_colonist.inspect",
+      "description": "ui.core:events.first_colonist.inspect.desc",
       "action": "inspect_last_colonist"
     },
     {
       "id": "dismiss",
-      "label": "Dismiss",
-      "description": "Close this focus."
+      "label": "ui.core:events.dismiss",
+      "description": "ui.core:events.dismiss.desc"
     }
   ]
 }</code></pre>
@@ -48,8 +48,8 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
-        <tr><td><code>title</code></td><td>string</td><td>否</td><td>焦点触发时显示的标题。</td></tr>
-        <tr><td><code>body</code></td><td>string</td><td>否</td><td>焦点触发时显示的正文描述。</td></tr>
+        <tr><td><code>title</code></td><td>string</td><td>否</td><td>焦点触发时显示的标题。可以写普通文本，也可以写 <code>ui.core:events.example.title</code> 这类本地化引用。</td></tr>
+        <tr><td><code>body</code></td><td>string</td><td>否</td><td>焦点触发时显示的正文描述。可以写普通文本，也可以写 <code>ui.</code> 开头的本地化引用。</td></tr>
         <tr><td><code>severity</code></td><td>string</td><td>否</td><td>严重程度，影响 UI 显示风格。可选值：<code>info</code>（默认）、<code>warning</code>、<code>critical</code>。</td></tr>
         <tr><td><code>icon</code></td><td>string</td><td>否</td><td>焦点图标名称，对应实体或 UI 图标 ID。</td></tr>
         <tr><td><code>enabled</code></td><td>bool</td><td>否</td><td>是否启用该焦点，默认 <code>true</code>。设为 <code>false</code> 可临时禁用。</td></tr>
@@ -82,14 +82,20 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>选项的唯一标识（在同一焦点内不重复）。</td></tr>
-        <tr><td><code>label</code></td><td>string</td><td>是</td><td>选项按钮上显示的文本。</td></tr>
-        <tr><td><code>description</code></td><td>string</td><td>否</td><td>选项的详细描述（鼠标悬停提示）。</td></tr>
+        <tr><td><code>label</code></td><td>string</td><td>是</td><td>选项按钮上显示的文本。可以写普通文本，也可以写 <code>ui.</code> 开头的本地化引用。</td></tr>
+        <tr><td><code>description</code></td><td>string</td><td>否</td><td>选项的详细描述（鼠标悬停提示）。可以写普通文本，也可以写 <code>ui.</code> 开头的本地化引用。</td></tr>
         <tr><td><code>action</code></td><td>string</td><td>否</td><td>关联的 Lua 动作名称，玩家选择后由脚本引擎执行。</td></tr>
+        <tr><td><code>enabled</code></td><td>bool</td><td>否</td><td>选项是否可选，默认 <code>true</code>。设为 <code>false</code> 时 HTML 命令不会消费事件。</td></tr>
+        <tr><td><code>reason</code></td><td>string</td><td>否</td><td>禁用原因。选择 disabled option 时 <code>core:events.act</code> 返回该 reason。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
       焦点系统通过 <code>one_shot</code> + <code>cooldown_ticks</code> 控制触发频率。<code>one_shot: true</code>（默认）时事件只触发一次；设为 <code>false</code> 并配合 <code>cooldown_ticks</code> 可实现周期性提醒（如每 24000 刻检查一次派系关系）。
+    </div>
+
+    <div class="callout info">
+      旧 Lua 事件面板和 HTML 数据桥会在显示前调用本地化解析：<code>title</code>、<code>body</code>、<code>choices[].label</code>、<code>choices[].description</code>、<code>choices[].reason</code> 若写成 <code>ui.&lt;key&gt;</code>，会按当前语言显示；普通文本保持原样。
     </div>
 
     <h2>Lua 条件函数</h2>
@@ -99,6 +105,29 @@ engine.focus.register_condition("core:faction_relation_daily_8_up", function(ctx
   -- ctx.condition, ctx.focus_id, ctx.tick
   return true
 end)</code></pre>
+
+    <h2>事件界面 API</h2>
+    <p>事件列表复用焦点系统。右侧事件列表读取 <code>engine.focuses.active()</code>，详情窗口调用 <code>engine.focuses.choose(instance_id, choice_id)</code> 或 <code>engine.focuses.dismiss(instance_id)</code>。活动项包含 <code>severity</code>、<code>tick</code> 和 <code>choices</code>，可用于显示优先级/严重度和后续操作。</p>
+
+    <h2>HTML UI 数据桥</h2>
+    <p>HTML/CSS UI 可以读取 <code>event_list</code> 快照通道。该通道直接来自 <code>FocusSystem</code> 的活动焦点，稳定字段为 <code>id</code>、<code>title</code>、<code>body</code>、<code>severity</code>、<code>priority</code>、<code>options</code>、<code>choices</code>、<code>dismissible</code> 和 <code>location</code>。<code>choices</code> 是 <code>options</code> 的短期兼容别名。</p>
+    <pre><code>{
+  id = 1,
+  title = "首位殖民者已就绪",
+  body = "首位殖民者已经进入世界。",
+  severity = "info",
+  priority = 0,
+  options = {
+    { id = "inspect", label = "查看殖民者", enabled = true }
+  },
+  choices = options,
+  dismissible = true,
+  location = nil
+}</code></pre>
+    <pre><code>NC.snapshot("event_list")
+NC.sendCommand("core:events.act", { id: 1, optionId: "inspect" })
+NC.sendCommand("core:events.dismiss", { id: 1 })</code></pre>
+    <p><code>core:events.act</code> 和 <code>core:events.dismiss</code> 接入真实焦点系统；未注册或暂时无法执行的 choice 会返回 <code>{ ok: false, reason: "choice_unavailable" }</code> 或等价 reason。选择 <code>enabled=false</code> 的 option 时返回 <code>{ ok: false, reason }</code>，并且不会消费事件。</p>
 
     <h2>验证命令</h2>
     <p>在控制台（按物理 Grave/反引号键）中确认焦点注册成功：</p>

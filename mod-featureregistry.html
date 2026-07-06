@@ -46,18 +46,13 @@
     </table>
 
     <h2>树类型地物</h2>
-    <p>当 <code>type</code> 设为 <code>"tree"</code> 时，推荐使用 <code>block</code> 指向一个单体树地物方块。CoreMod 的树木生成 <code>core:tree</code>，伐木时一次性移除整棵树并按该方块的 <code>drops</code> 产出原木。旧的 <code>trunk_block</code>/<code>leaves_block</code> 组合仍可被引擎读取，但不再是 CoreMod 默认树木表现。</p>
+    <p>当 <code>type</code> 设为 <code>"tree"</code> 时，使用 <code>block</code> 指向一个单体树地物方块。CoreMod 的树木生成 <code>core:tree</code>，伐木时一次性移除整棵树并按该方块的 <code>drops</code> 产出原木。</p>
     <p>树木不会只按随机尝试次数分布，而是在每个可用地表点计算植被概率。群系的 <code>vegetation</code> 字段控制整体密度、噪声/湿度/温度/随机权重和噪声尺度；树类型地物自己的 <code>density</code> 控制该树种相对密度，<code>temperature_optimum</code> 和 <code>temperature_range</code> 控制该树种适合的温度。</p>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>type</code></td><td>string</td><td>是</td><td>必须为 <code>"tree"</code>。</td></tr>
-        <tr><td><code>block</code></td><td>string 或 int</td><td>推荐</td><td>单体树地物方块 ID，如 <code>"core:tree"</code>。</td></tr>
-        <tr><td><code>trunk_block</code></td><td>string 或 int</td><td>兼容</td><td>旧式树干方块 ID；仅在未提供 <code>block</code> 时使用。</td></tr>
-        <tr><td><code>leaves_block</code></td><td>string 或 int</td><td>兼容</td><td>旧式树叶方块 ID；仅在未提供 <code>block</code> 时使用。</td></tr>
-        <tr><td><code>trunk_height_min</code></td><td>int</td><td>否</td><td>旧式树干最小高度。</td></tr>
-        <tr><td><code>trunk_height_max</code></td><td>int</td><td>否</td><td>旧式树干最大高度。</td></tr>
-        <tr><td><code>leaves_radius</code></td><td>int</td><td>否</td><td>旧式树冠半径。</td></tr>
+        <tr><td><code>block</code></td><td>string 或 int</td><td>是</td><td>单体树地物方块 ID，如 <code>"core:tree"</code>。</td></tr>
         <tr><td><code>temperature_optimum</code></td><td>float</td><td>否</td><td>该树种最适宜温度，范围 0..1，默认 0.4。</td></tr>
         <tr><td><code>temperature_range</code></td><td>float</td><td>否</td><td>温度适宜范围半径，必须 &gt; 0 且 &lt;= 1，默认 0.6。离最适温度越远，温度贡献越低。</td></tr>
       </tbody>
@@ -76,7 +71,7 @@
     <ul>
       <li>地物只会放在当前群系的地表方块上方。</li>
       <li>目标位置上方必须在世界高度范围内。</li>
-      <li>如果配置了 <code>biomes</code>，当前 chunk 的群系 ID 必须在列表中。</li>
+      <li>如果配置了 <code>biomes</code>，生成时使用的 chunk 中心 column 群系 ID 必须在列表中。地形表层本身可能已经按 column 级气候呈现多个群系。</li>
       <li>同一个 <code>id</code> 再次注册会覆盖旧定义，方便 mod 在 Lua 中调整数据。</li>
     </ul>
 

@@ -18,6 +18,7 @@
       <thead><tr><th>格式</th><th>扩展名</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>Blockbench JSON 子集</td><td><code>.json</code></td><td>支持 <code>texture_size</code>、<code>textures</code>、<code>elements</code>、<code>from</code>/<code>to</code>、<code>rotation</code>、<code>faces</code>、<code>uv</code> 和 <code>texture</code>。</td></tr>
+        <tr><td>glTF/GLB 静态实体模型</td><td><code>.gltf</code> / <code>.glb</code></td><td>实体 <code>Visual.model</code> 可引用 Blender 标准导出的静态三角网格。当前读取 position、normal、TEXCOORD_0、tangent、indices、多 primitive/submesh 和材质 baseColorFactor；baseColorTexture 会保存在独立实体模型材质结构中，但第一版渲染仍使用材质颜色因子 + 白色 fallback，不接入 TextureAtlas。</td></tr>
       </tbody>
     </table>
 
@@ -27,6 +28,7 @@
 
     <h2>目录放置</h2>
     <p>模型 JSON 放在 <code>assets/models/</code> 下；对应纹理放在 <code>assets/textures/</code> 的同名相对目录下。对 <code>assets/models/block/foo.json</code>，纹理引用 <code>"foo"</code> 会优先解析到 <code>assets/textures/block/foo.png</code>，找不到时才尝试模型文件旁边路径。</p>
+    <p>实体 glTF/GLB 推荐放在 <code>assets/models/entities/</code> 下；引用时可写 <code>"gltf:colonist.glb"</code>、<code>"colonist.glb"</code>，或省略扩展名写 <code>"gltf:colonist"</code>（运行时会尝试 <code>.glb</code> 再尝试 <code>.gltf</code>）。也可写相对 <code>assets/</code> 的路径，例如 <code>"models/entities/colonist.glb"</code>。实体 glTF/GLB 走独立 <code>entity_model</code> 管线，不使用方块 TextureAtlas、BlockVertex 或 block shader。</p>
     <pre><code>assets/textures/block/NewColonyTextures/
   grass.png                  -- 纹理图（64×64）
   lantern.png                -- 纹理图
@@ -108,9 +110,31 @@ assets/models/block/
     <p>启动时 <code>ModPreprocessor</code> 会扫描每个 active MOD 的 <code>assets/models/</code> 目录，把 JSON 编译到运行目录的 <code>generate/&lt;mod_id&gt;/models/...</code>。源码 JSON 修改时间晚于缓存时会重新编译。</p>
     <p>预处理失败会回退到运行时解析 JSON；但发布和开发时仍应修复预处理错误，因为缓存路径是正常启动流程的一部分。</p>
 
+    <h2>实体 glTF/GLB 使用方式</h2>
+    <p>实体定义的 <code>components.Visual</code> 可使用以下字段。保留 <code>model: "biped"</code> 或 <code>"box"</code> 时仍走旧程序化实体网格；当 <code>model</code> 以 <code>gltf:</code> 开头，或扩展名是 <code>.gltf/.glb</code> 时，会跳过 box/biped 网格并改由实体模型管线绘制。旧 <code>Visual.texture</code> 只对 box/biped fallback 有意义，glTF/GLB 实体不再兼容旧 atlas 材质路径。</p>
+    <pre><code>"Visual": {
+    "model": "gltf:colonist.glb",
+    "texture": "textures/entities/colonist.png",
+    "animation": "idle",
+    "skinned": false,
+    "model_scale": 1.0,
+    "width": 0.8,
+    "height": 1.8,
+    "depth": 0.8
+}</code></pre>
+    <table>
+      <thead><tr><th>字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>model</code></td><td><code>gltf:</code> 前缀或 <code>.gltf/.glb</code> 扩展名会启用 glTF 静态模型。无扩展名时按 <code>assets/models/entities/&lt;name&gt;.glb</code>、再 <code>.gltf</code> 查找。</td></tr>
+        <tr><td><code>animation</code></td><td>预留动画名字段，当前静态管线只保存和传递，不驱动骨骼动画。</td></tr>
+        <tr><td><code>skinned</code></td><td>预留蒙皮标记；当前基础管线仍按静态网格处理。</td></tr>
+        <tr><td><code>model_scale</code></td><td>实体模型实例缩放，默认 <code>1.0</code>。位置和朝向来自实体 Position/Rotation。</td></tr>
+      </tbody>
+    </table>
+
     <h2>当前接入边界</h2>
     <div class="callout warn">
-      模型解析能力已经存在，但通用 MOD 方块模型注册还不是完整稳定 API。当前渲染初始化主要为 CoreMod 的内置模型和程序化方块映射建立贴图/模型资源。内容 MOD 可以参考本文准备资源格式，但不要依赖未文档化的自动接入规则。
+      glTF/GLB 实体模型标准管线第一版已经独立于旧方块材质系统：不复用 <code>TextureAtlas</code>、<code>BlockVertex</code> 或 block shader。当前渲染使用 glTF 材质的 <code>baseColorFactor</code>；<code>baseColorTexture</code> 路径会被加载器记录，后续接入实体模型纹理描述符后再采样。旧 box/biped fallback 仍保留给没有 glTF/GLB 模型的实体。
     </div>
 
     <h2>示例：多元素灯笼模型</h2>

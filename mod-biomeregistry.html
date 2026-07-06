@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>群系注册</div></div>
   <div class="content">
     <h1>群系注册</h1>
-    <p class="subtitle">群系（Biome）推荐放在 <code>data/biomes/</code> 下用 JSON 注册；加载器会把它们作为 <code>biomes</code> 数据类型交给地形系统。每个群系定义地表方块、次地表方块、是否生成洞穴和河流等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系；当气候范围存在缺口时，会选择气候距离最近的群系作为混合过渡。树木生成由 <a href="mod-featureregistry.html">特性系统（Features）</a> 单独管理，不再属于群系数据。</p>
+    <p class="subtitle">群系（Biome）推荐放在 <code>data/biomes/</code> 下用 JSON 注册；加载器会把它们作为 <code>biomes</code> 数据类型交给地形系统。每个群系定义地表方块、次地表方块、是否生成洞穴等属性，以及偏好气候范围。地形生成器在生成 chunk 时根据对应位置的世界地图气候数据（温度、湿度、海拔）选择匹配的群系；当气候范围存在缺口时，会选择气候距离最近的群系作为混合过渡。树木生成由 <a href="mod-featureregistry.html">地物系统（Features）</a> 单独管理，不再属于群系数据。</p>
 
     <h2>JSON 示例</h2>
     <p>把文件放在 <code>data/biomes/wasteland.json</code>：</p>
@@ -22,7 +22,6 @@
   "weight": 1,
   "subsurface_depth": 2,
   "has_caves": false,
-  "has_rivers": false,
   "climate": {
     "temperature_min": 0.60,
     "temperature_max": 1.00,
@@ -52,9 +51,8 @@
         <tr><td><code>subsurface_depth</code></td><td>int</td><td>否</td><td>次地表深度（层数），默认 3。地表下方这么厚的层使用 <code>subsurface_block</code>。</td></tr>
         <tr><td><code>map_color</code></td><td>string</td><td>否</td><td>保留字段。CoreMod 数据中可见该字段，但当前小地图颜色由地表/次地表方块推导，尚未把 <code>map_color</code> 作为稳定控制入口。</td></tr>
         <tr><td><code>has_caves</code></td><td>bool</td><td>否</td><td>是否在此群系中生成洞穴，默认 true。</td></tr>
-        <tr><td><code>has_rivers</code></td><td>bool</td><td>否</td><td>是否在此群系中生成河流，默认 true。</td></tr>
         <tr><td><code>climate</code></td><td>table</td><td>否</td><td>偏好气候范围。省略或部分省略的字段默认为 0.0~1.0（匹配任何气候）。</td></tr>
-        <tr><td><code>height</code></td><td>table</td><td>否</td><td>per-column 高度配置。让山地气候 column 在草原 chunk 内也能真的高起来，而不是被压平到 chunk 主导群系的高度。省略时默认 <code>offset=0, amplitude_scale=1.0</code>，保持旧版本行为。</td></tr>
+        <tr><td><code>height</code></td><td>table</td><td>否</td><td>per-column 高度配置。让山地气候 column 在草原区域内也能真的高起来，而不是只沿用基础 fbm 高度骨架。省略时默认 <code>offset=0, amplitude_scale=1.0</code>。</td></tr>
         <tr><td><code>vegetation</code></td><td>table</td><td>否</td><td>此群系整体植被概率场。最常调的是 <code>density</code>，用于控制该群系树木总体多少。</td></tr>
       </tbody>
     </table>
@@ -93,91 +91,120 @@
     </div>
 
     <h3>高度子表字段</h3>
-    <p>multi-noise 模型下，同一 chunk 内不同 column 可能落到不同群系（"颜料晕染"过渡）。如果不写 <code>height</code> 块，所有 column 共享 chunk 主导群系算出来的高度图——山地气候 column 也会和草原 column 一样平。写 <code>height</code> 块后，每列按自己群系的高度参数独立计算 surface_y，山才会真的高起来、平原才会真的平。</p>
+    <p>multi-noise 模型下，同一 chunk 内不同 column 可能落到不同群系（"颜料晕染"过渡）。基础高度骨架是 biome-independent 的居中 fbm（输出范围 <code>[-amp/2, +amp/2]</code>）；写 <code>height</code> 块后，每列会按自己群系的高度参数独立调整 surface_y，山才会真的高起来、平原才会真的平。</p>
     <table>
       <thead><tr><th>字段</th><th>默认值</th><th>含义</th></tr></thead>
       <tbody>
-        <tr><td><code>offset</code></td><td>0</td><td>高度抬升（块数）。最终 surface_y 会加上这个值。范围 [-64, 64]，可以是整数或浮点数（浮点会四舍五入）。例如山地群系用 +18 让整体地形抬升 18 块。</td></tr>
-        <tr><td><code>amplitude_scale</code></td><td>1.0</td><td>噪声幅度倍率。chunk 级 fbm 噪声的输出乘以这个倍率。&gt;1 让地形更崎岖，&lt;1 让地形更平。范围 [0.0, 4.0]。例如平原用 0.5 让起伏减半，山地用 2.4 让起伏放大。</td></tr>
+        <tr><td><code>offset</code></td><td>0</td><td>高度抬升（块数）。最终 surface_y 会加上这个值。范围 [-64, 64]，可以是整数或浮点数（浮点会四舍五入）。陆地群系常用正值让地表平均高于 macro（CoreMod 陆地群系统一用 <code>+7</code>，水域用 <code>+3</code>）；山地群系用 <code>+18</code> 让整体地形再抬升 18 块。</td></tr>
+        <tr><td><code>amplitude_scale</code></td><td>1.0</td><td>噪声幅度倍率。fbm 输出的 <code>[-amp/2, +amp/2]</code> 范围乘以这个倍率。&gt;1 让地形更崎岖，&lt;1 让地形更平。范围 [0.0, 4.0]。例如平原用 0.5 让起伏减半，山地用 2.4 让起伏放大。</td></tr>
       </tbody>
     </table>
     <div class="callout info">
-      <strong>过渡平滑</strong>：引擎在 per-column 高度计算后会做 3×3 box-blur，避免相邻 column 因 <code>offset</code> 或 <code>amplitude_scale</code> 突变出现单格高的台阶。MOD 作者无需关心这点，但要意识到山地群系的 <code>offset</code> 不会"瞬间"生效——边界处会有 2~3 列的过渡带。
+      <strong>offset 选择参考（2026-06-19 重构后）</strong>：fbm 居中输出后，<code>offset</code> 决定 biome 的平均海拔相对 macro 的偏移。CoreMod 的取值：<code>jungle/savanna/desert/beach/taiga/snow_forest/tundra/swamp/steppe</code> 用 <code>+7</code>（陆地默认偏置，匹配 amp/2）；<code>plains</code> 用 <code>+2</code>（amp_scale=0.5 时补偿 amp_scale * amp / 2 ≈ 3.75）；<code>forest</code> 用 <code>+4</code>（amp_scale=0.7 补偿 ~5.25）；<code>river/ocean_shallow</code> 用 <code>+3</code>（水域 chunk amplitude 被压到 6，amp/2=3）；<code>ocean</code> 用 <code>-8</code>（深水海床需要远低于海平面）；<code>mountains</code> 用 <code>+18</code>（不靠 offset 撑起山脉，主要让 ridge noise 产生山脊）。
     </div>
     <div class="callout info">
-      <strong>海岸兼容</strong>：水域群系（<code>surface_block</code> 是水方块）的 <code>offset</code> 应为负数让海床低于海平面。CoreMod 的 <code>ocean</code> 群系用 <code>offset=-8, amplitude_scale=0.3</code>。引擎在 chunk 内部区会额外把水域 column 钳制到 <code>max_water_surface_y</code> 以下，所以即使 <code>offset</code> 设得不够低也不会露出干涸海床。
+      <strong>世界级 fbm（2026-06-19 重构后）</strong>：高度计算直接在世界坐标上采样 fbm + ridge，跨 chunk 天然连续，不再有 chunk 内 box-blur 或边缘锚定。MOD 设的 <code>offset</code> 和 <code>amplitude_scale</code> 立即在该 column 生效，相邻 column 之间的差异完全由 climate 漂移和 fbm 决定。
+    </div>
+    <div class="callout info">
+      <strong>海岸兼容</strong>：水域群系（<code>surface_block</code> 是水方块）的 <code>offset</code> 应为负数让海床低于海平面。CoreMod 的 <code>ocean</code>（深海）用 <code>offset=-15, amplitude_scale=0.4</code>，<code>ocean_shallow</code>（浅海）用 <code>offset=-3, amplitude_scale=1.2</code>，<code>river</code> 用 <code>offset=-3, amplitude_scale=0.4</code>。海床按 fbm 自由起伏，若 ridge/fbm 让 surface 高于 sea_level 则该 column 不再被填充水，会形成浅滩或孤岛——这是预期行为。
     </div>
 
     <h2>方块 ID 参考</h2>
-    <p>方块 ID 是引擎分配的数字常量。CoreMod 中定义的方块对应如下：</p>
+    <p>方块 ID 在运行时是数据 ID 字符串经过 FNV-1a 计算的 32 位哈希值，<strong>不是</strong>固定数字常量。空气方块固定为 0，其它方块在每次引擎初始化时按其 <code>id</code> 字符串算出确定哈希。Lua 脚本通过 <code>engine.util.data_id_hash("core:stone")</code> 取得这些哈希。</p>
+    <p>典型方块语义对照（值见 <code>engine.util.data_id_hash</code>）：</p>
     <table>
-      <thead><tr><th>常量名</th><th>ID</th><th>说明</th></tr></thead>
+      <thead><tr><th>常量名</th><th>字符串 ID</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>Blocks.AIR</code></td><td>0</td><td>空气</td></tr>
-        <tr><td><code>Blocks.STONE</code></td><td>1</td><td>石头</td></tr>
-        <tr><td><code>Blocks.DIRT</code></td><td>2</td><td>泥土</td></tr>
-        <tr><td><code>Blocks.GRASS</code></td><td>3</td><td>草地</td></tr>
-        <tr><td><code>Blocks.WOOD</code></td><td>4</td><td>木头</td></tr>
-        <tr><td><code>Blocks.LEAVES</code></td><td>5</td><td>树叶</td></tr>
-        <tr><td><code>Blocks.CLAY</code></td><td>10</td><td>粘土</td></tr>
-        <tr><td><code>Blocks.WATER</code></td><td>12</td><td>水</td></tr>
+        <tr><td><code>Blocks.AIR</code></td><td>0</td><td>空气，固定为 0</td></tr>
+        <tr><td><code>Blocks.STONE</code></td><td><code>core:stone</code></td><td>石头</td></tr>
+        <tr><td><code>Blocks.DIRT</code></td><td><code>core:dirt</code></td><td>泥土</td></tr>
+        <tr><td><code>Blocks.GRASS</code></td><td><code>core:grass</code></td><td>草地</td></tr>
+        <tr><td><code>Blocks.WOOD</code></td><td><code>core:wood</code></td><td>木头</td></tr>
+        <tr><td><code>Blocks.LEAVES</code></td><td><code>core:leaves</code></td><td>树叶</td></tr>
+        <tr><td><code>Blocks.CLAY</code></td><td><code>core:clay</code></td><td>粘土</td></tr>
+        <tr><td><code>Blocks.SAND</code></td><td><code>core:sand</code></td><td>沙子</td></tr>
+        <tr><td><code>Blocks.WATER</code></td><td><code>core:water</code></td><td>水</td></tr>
+        <tr><td><code>Blocks.TREE</code></td><td><code>core:tree</code></td><td>树地物方块</td></tr>
       </tbody>
     </table>
-    <p>在 Lua 脚本中通过 <code>require("worldgen.blocks")</code> 引用这些常量。</p>
+    <p>在 Lua 脚本中通过 <code>engine.util.data_id_hash("core:stone")</code> 计算方块哈希。脚本可以直接保存到本地变量以便复用。</p>
 
     <h2>内置群系</h2>
-    <p>CoreMod 内置 15 个群系，定义在 <code>data/biomes/</code> 下的 JSON 文件中（由 C++ <code>TerrainGenerator</code> 在加载时直接读取，<code>scripts/worldgen/biome_registry.lua</code> 仅作 legacy 入口日志）。它们按「温度 × 湿度」3×3 气候矩阵加上水域和海拔特化组织：</p>
+    <p>CoreMod 内置 17 个群系，定义在 <code>data/biomes/</code> 下的 JSON 文件中（由 C++ <code>TerrainGenerator</code> 在加载时直接读取）。它们按「温度 × 湿度」3×3 气候矩阵加上水域和海拔特化组织：</p>
     <table>
-      <thead><tr><th>群系</th><th>ID</th><th>地表</th><th>次地表</th><th>温度</th><th>湿度</th><th>海拔</th><th>洞穴</th><th>河流</th></tr></thead>
+      <thead><tr><th>群系</th><th>ID</th><th>地表</th><th>次地表</th><th>温度</th><th>湿度</th><th>海拔</th><th>洞穴</th></tr></thead>
       <tbody>
-        <tr><td>海洋</td><td><code>core:ocean</code></td><td>水</td><td>粘土（4层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.35</td><td>否</td><td>否</td></tr>
-        <tr><td>浅海</td><td><code>core:ocean_shallow</code></td><td>水</td><td>粘土（3层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.35–0.50</td><td>否</td><td>否</td></tr>
-        <tr><td>海滩</td><td><code>core:beach</code></td><td>沙</td><td>沙（2层）</td><td>0.20–1.0</td><td>0.0–1.0</td><td>0.50–0.58</td><td>否</td><td>否</td></tr>
-        <tr><td>河流</td><td><code>core:river</code></td><td>水</td><td>粘土（2层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.55</td><td>否</td><td>否</td></tr>
-        <tr><td>冻原</td><td><code>core:tundra</code></td><td>泥土</td><td>泥土（3层）</td><td>0.0–0.20</td><td>0.0–0.40</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
-        <tr><td>针叶林</td><td><code>core:taiga</code></td><td>草地</td><td>泥土（3层）</td><td>0.15–0.40</td><td>0.30–0.65</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
-        <tr><td>雪林</td><td><code>core:snow_forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.05–0.25</td><td>0.55–1.0</td><td>0.0–0.75</td><td>是</td><td>是</td></tr>
-        <tr><td>干草原</td><td><code>core:steppe</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.60</td><td>0.0–0.25</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
-        <tr><td>平原</td><td><code>core:plains</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.25–0.60</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
-        <tr><td>森林</td><td><code>core:forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.60–1.0</td><td>0.0–0.82</td><td>是</td><td>是</td></tr>
-        <tr><td>沙漠</td><td><code>core:desert</code></td><td>沙</td><td>石头（2层）</td><td>0.60–1.0</td><td>0.0–0.20</td><td>0.0–1.0</td><td>否</td><td>否</td></tr>
-        <tr><td>稀树草原</td><td><code>core:savanna</code></td><td>草地</td><td>泥土（3层）</td><td>0.60–1.0</td><td>0.20–0.50</td><td>0.0–0.65</td><td>是</td><td>是</td></tr>
-        <tr><td>丛林</td><td><code>core:jungle</code></td><td>草地</td><td>泥土（4层）</td><td>0.60–1.0</td><td>0.50–1.0</td><td>0.0–0.70</td><td>是</td><td>是</td></tr>
-        <tr><td>沼泽</td><td><code>core:swamp</code></td><td>泥土</td><td>泥土（4层）</td><td>0.35–1.0</td><td>0.55–1.0</td><td>0.0–0.45</td><td>否</td><td>是</td></tr>
-        <tr><td>高山</td><td><code>core:mountains</code></td><td>石头</td><td>石头（1层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.85–1.0</td><td>是</td><td>否</td></tr>
+        <tr><td>海洋</td><td><code>core:ocean</code></td><td>水</td><td>粘土（4层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.40</td><td>否</td></tr>
+        <tr><td>浅海</td><td><code>core:ocean_shallow</code></td><td>水</td><td>粘土（3层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.40–0.50</td><td>否</td></tr>
+        <tr><td>海滩</td><td><code>core:beach</code></td><td>沙</td><td>沙（2层）</td><td>0.20–1.0</td><td>0.0–1.0</td><td>0.48–0.52</td><td>否</td></tr>
+        <tr><td>河流</td><td><code>core:river</code></td><td>水</td><td>粘土（2层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.0–0.55</td><td>否</td></tr>
+        <tr><td>冻原</td><td><code>core:tundra</code></td><td>泥土</td><td>泥土（3层）</td><td>0.0–0.20</td><td>0.0–0.40</td><td>0.0–0.65</td><td>是</td></tr>
+        <tr><td>雪原</td><td><code>core:snow_plains</code></td><td>雪</td><td>泥土（2层）</td><td>0.0–0.18</td><td>0.0–0.55</td><td>0.0–0.78</td><td>是</td></tr>
+        <tr><td>冰川</td><td><code>core:glacier</code></td><td>压实冰</td><td>冰（4层）</td><td>0.0–0.15</td><td>0.0–1.0</td><td>0.0–0.45</td><td>否</td></tr>
+        <tr><td>针叶林</td><td><code>core:taiga</code></td><td>草地</td><td>泥土（3层）</td><td>0.15–0.40</td><td>0.30–0.65</td><td>0.0–0.82</td><td>是</td></tr>
+        <tr><td>雪林</td><td><code>core:snow_forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.05–0.25</td><td>0.55–1.0</td><td>0.0–0.75</td><td>是</td></tr>
+        <tr><td>干草原</td><td><code>core:steppe</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.60</td><td>0.0–0.25</td><td>0.0–0.65</td><td>是</td></tr>
+        <tr><td>平原</td><td><code>core:plains</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.25–0.60</td><td>0.0–0.82</td><td>是</td></tr>
+        <tr><td>森林</td><td><code>core:forest</code></td><td>草地</td><td>泥土（3层）</td><td>0.30–0.65</td><td>0.60–1.0</td><td>0.0–0.82</td><td>是</td></tr>
+        <tr><td>沙漠</td><td><code>core:desert</code></td><td>沙</td><td>石头（2层）</td><td>0.60–1.0</td><td>0.0–0.20</td><td>0.0–1.0</td><td>否</td></tr>
+        <tr><td>稀树草原</td><td><code>core:savanna</code></td><td>草地</td><td>泥土（3层）</td><td>0.60–1.0</td><td>0.20–0.50</td><td>0.0–0.82</td><td>是</td></tr>
+        <tr><td>丛林</td><td><code>core:jungle</code></td><td>草地</td><td>泥土（4层）</td><td>0.60–1.0</td><td>0.50–1.0</td><td>0.0–0.82</td><td>是</td></tr>
+        <tr><td>沼泽</td><td><code>core:swamp</code></td><td>泥土</td><td>泥土（4层）</td><td>0.35–1.0</td><td>0.55–1.0</td><td>0.0–0.45</td></tr>
+        <tr><td>高山</td><td><code>core:mountains</code></td><td>石头</td><td>石头（1层）</td><td>0.0–1.0</td><td>0.0–1.0</td><td>0.85–1.0</td><td>是</td></tr>
       </tbody>
     </table>
 
     <h3>海洋 <code>core:ocean</code></h3>
-    <p>大面积深水区域，匹配最低海拔的格子。底部覆盖粘土层。不生成洞穴和河流。</p>
+    <p>大面积深水区域，匹配最低海拔的格子。底部覆盖粘土层。不生成洞穴。</p>
     <ul>
       <li>地表：水，次地表：粘土（4 层）</li>
-      <li>海拔偏好 0.0–0.35</li>
-      <li>无树木、无洞穴、无河流</li>
+      <li>海拔偏好 0.0–0.40</li>
+      <li>高度 offset -15，amp_scale 0.4（深海平原，fbm 起伏只有 ±3 块，偶尔海山）</li>
+      <li>无树木、无洞穴</li>
     </ul>
 
     <h3>浅海 <code>core:ocean_shallow</code></h3>
-    <p>靠近陆地的浅水带，作为深海与海滩之间的过渡。底部仍为粘土。同样不生成洞穴和河流。</p>
+    <p>靠近陆地的浅水带，作为深海与海滩之间的过渡。底部仍为粘土。同样不生成洞穴。</p>
     <ul>
       <li>地表：水，次地表：粘土（3 层）</li>
-      <li>海拔偏好 0.35–0.50</li>
-      <li>无树木、无洞穴、无河流</li>
+      <li>海拔偏好 0.40–0.50</li>
+      <li>高度 offset -3，amp_scale 1.2（fbm 起伏 ±9 块，偶尔露出海面形成浅滩/孤岛）</li>
+      <li>无树木、无洞穴</li>
     </ul>
 
     <h3>海滩 <code>core:beach</code></h3>
     <p>沿着海岸线的沙带，作为水域与陆地之间的过渡。在温暖至炎热的纬度才会形成。</p>
     <ul>
       <li>地表：沙，次地表：沙（2 层）</li>
-      <li>偏好温度 0.20–1.0，海拔 0.50–0.58</li>
-      <li>无树木、无洞穴、无河流</li>
+      <li>偏好温度 0.20–1.0，海拔 0.48–0.52（紧贴 sea_level，确保只出现在真正的海岸带）</li>
+      <li>无树木、无洞穴</li>
     </ul>
 
     <h3>河流 <code>core:river</code></h3>
-    <p>狭窄的水道，匹配略高于海洋的低海拔区域。底床为粘土。与海洋类似，不生成洞穴和河流。</p>
+    <p>狭窄的水道，匹配略高于海洋的低海拔区域。底床为粘土。与海洋类似，不生成洞穴。</p>
     <ul>
       <li>地表：水，次地表：粘土（2 层）</li>
       <li>海拔偏好 0.0–0.55</li>
-      <li>无树木、无洞穴、无河流</li>
+      <li>高度 offset -3，amp_scale 0.4（保证河床不会因为 fbm 起伏露出水面形成"干河"）</li>
+      <li>无树木、无洞穴</li>
+    </ul>
+
+    <h3>雪原 <code>core:snow_plains</code></h3>
+    <p>极地干燥气候下的开阔雪原，地表覆盖积雪，下面是冻土。比冻原更冷，几乎不长植被。出现在 hex grid 真正的极地区域（latitude 接近 ±1）。</p>
+    <ul>
+      <li>地表：雪，次地表：泥土（2 层）</li>
+      <li>偏好温度 0.0–0.18，湿度 0.0–0.55，海拔 0.0–0.78</li>
+      <li>高度 offset -1，amplitude_scale 0.5（地形平坦）</li>
+      <li>植被密度 0.02</li>
+    </ul>
+
+    <h3>冰川 <code>core:glacier</code></h3>
+    <p>极地低海拔的纯冰群系，整片地表是压实冰，下面是普通冰层。出现在极地海洋位置（低海拔 + 极冷），相当于海面冻结成冰架。</p>
+    <ul>
+      <li>地表：压实冰，次地表：冰（4 层）</li>
+      <li>偏好温度 0.0–0.15，湿度 0.0–1.0，海拔 0.0–0.45</li>
+      <li>高度 offset -4，amplitude_scale 0.25（接近海平面，平坦）</li>
+      <li>无植被、无洞穴</li>
     </ul>
 
     <h3>冻原 <code>core:tundra</code></h3>
@@ -233,14 +260,14 @@
     <ul>
       <li>地表：沙，次地表：石头（2 层）</li>
       <li>偏好温度 0.60–1.0，湿度 0.0–0.20</li>
-      <li>无树木、无洞穴、无河流</li>
+      <li>无树木、无洞穴</li>
     </ul>
 
     <h3>稀树草原 <code>core:savanna</code></h3>
     <p>热带中湿度群系，草地夹杂零星的金合欢状树木。是沙漠和丛林之间的过渡生态。</p>
     <ul>
       <li>地表：草地，次地表：泥土（3 层）</li>
-      <li>偏好温度 0.60–1.0，湿度 0.20–0.50，海拔 0.0–0.65</li>
+      <li>偏好温度 0.60–1.0，湿度 0.20–0.50，海拔 0.0–0.82</li>
       <li>植被密度 0.20</li>
     </ul>
 
@@ -248,7 +275,7 @@
     <p>炎热潮湿的热带雨林，植被极其茂密，树木高大交错。是木材和生物资源最丰富的群系。</p>
     <ul>
       <li>地表：草地，次地表：泥土（4 层）</li>
-      <li>偏好温度 0.60–1.0，湿度 0.50–1.0，海拔 0.0–0.70</li>
+      <li>偏好温度 0.60–1.0，湿度 0.50–1.0，海拔 0.0–0.82</li>
       <li>植被密度 0.95</li>
     </ul>
 
@@ -261,11 +288,11 @@
     </ul>
 
     <h3>高山 <code>core:mountains</code></h3>
-    <p>海拔最高的山地区域，地表裸露岩石，植被稀疏。不生成河流（山脊上无水道）。覆盖任何温度带的高海拔格子。</p>
+    <p>海拔最高的山地区域，地表裸露岩石，植被稀疏。覆盖任何温度带的高海拔格子。</p>
     <ul>
       <li>地表：石头，次地表：石头（1 层）</li>
       <li>海拔偏好 0.85–1.0</li>
-      <li>植被密度 0.05，无河流</li>
+      <li>植被密度 0.05</li>
     </ul>
 
     <h2>群系选择机制</h2>
@@ -287,7 +314,7 @@
     </div>
 
     <div class="callout info">
-      想了解群系在完整地形生成 pipeline 中的位置（世界地图采样、高度混合、洞穴河流装饰等阶段），见 <a href="engine-terraingeneration.html">地形生成流程</a>。
+      想了解群系在完整地形生成 pipeline 中的位置（世界地图采样、高度混合、洞穴装饰等阶段），见 <a href="engine-terraingeneration.html">地形生成流程</a>。
     </div>
 
     <h2>Lua 注册入口</h2>
@@ -299,7 +326,6 @@
     weight = 1,
     subsurface_depth = 2,
     has_caves = false,
-    has_rivers = false,
     climate = {
         temperature_min = 0.60,
         temperature_max = 1.00,
@@ -311,7 +337,7 @@
 })</code></pre>
 
     <div class="callout warn">
-      <code>scripts/worldgen/biome_registry.lua</code> 现在只是 legacy 兼容入口和日志提示；CoreMod 的运行时群系来自 <code>data/biomes/</code>，地物来自 <code>data/features/</code>。
+      CoreMod 的运行时群系来自 <code>data/biomes/</code>，地物来自 <code>data/features/</code>。世界生成完全在 C++ 端完成（<code>TerrainGenerator</code> + JSON 数据），没有 Lua worldgen 脚本。
     </div>
 
     <h2>验证命令</h2>

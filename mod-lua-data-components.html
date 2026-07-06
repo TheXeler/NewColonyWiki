@@ -97,6 +97,18 @@ end)</code></pre>
       <li>需要大量实体查询时，先用 <code>engine.ecs.query_*</code> 缩小范围，再读取数据组件。</li>
     </ul>
 
+    <h2>经营界面只读聚合数据</h2>
+    <p>人员界面不需要把 <code>Name</code>、<code>Profession</code>、<code>Mood</code>、<code>Stats</code>、<code>Equipment</code> 和物品栏组件散落到 UI 中自行拼装。运行时提供了只读聚合入口：</p>
+    <table>
+      <thead><tr><th>API</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.colonists.list(profession_filter?, sort_key?)</code></td><td>角色列表、职业筛选、排序。</td></tr>
+        <tr><td><code>engine.colonists.detail(entity)</code></td><td>角色菜单：名称、职业、职业经验、心情、经历、基础/工作/战斗属性。</td></tr>
+        <tr><td><code>engine.colonists.equipment(entity)</code></td><td>角色装备：固定装备槽、装备属性、HeldItem/Inventory 物品栏、筛选/排序字段。</td></tr>
+        <tr><td><code>engine.colonists.career_tree()</code></td><td>角色转职：职业树节点、职业介绍、职业加成和转职需求。</td></tr>
+      </tbody>
+    </table>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

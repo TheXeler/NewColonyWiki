@@ -18,11 +18,11 @@
     </div>
 
     <div class="callout warn">
-      当前实现有一个需要修复的边界：<code>ModLoader</code> 校验和 CoreMod 数据使用 <code>inventory_block_action</code>，但 <code>ActionRegistry</code> 的运行时装载分支仍检查旧名 <code>held_item_block_action</code>。因此 <code>core:eat_food</code> 和 <code>core:drink</code> 会进入通用数据注册表，但不会作为 HeldItem 动作进入 <code>ActionRegistry</code> 执行路径；下面的物品动作格式是当前数据契约，不代表运行时闭环已经完成。
+      <code>ModLoader</code> 校验和 <code>ActionRegistry</code> 运行时都使用 <code>inventory_block_action</code> 表示手持物品动作。CoreMod 的 <code>core:eat_food</code> 和 <code>core:drink</code> 会装入 HeldItem 动作表。
     </div>
 
     <h2>与 WorkType / WorkAction 的关系</h2>
-    <p>工作实例进入 WorkPool 时会带有工作类型、所属势力、位置、基础时长和可选 <code>data</code>。工作类型负责分组、优先级和管理界面展示；动作负责完成时的实际效果。一个 WorkType 可以复用多个动作，例如“挖掘”工作可以执行 <code>core:mine</code>，也可以执行 <code>core:chop_wood</code>；它们都走方块交互 WorkAction，但目标过滤、时长和需求变化不同。</p>
+    <p>工作实例进入 WorkPool 时会带有工作类型、所属阵营、位置、基础时长和可选 <code>data</code>。工作类型负责分组、优先级和管理界面展示；动作负责完成时的实际效果。一个 WorkType 可以复用多个动作，例如"挖掘"工作可以执行 <code>core:mine</code>，也可以执行 <code>core:chop_wood</code>；它们都走方块交互 WorkAction，但目标过滤、时长和需求变化不同。</p>
     <p>WorkAction 的基础种类由引擎硬性定义，MOD 通过本页的 JSON 注册具体动作参数。当前动作数据里的 <code>base_type</code> 对应执行路径，<code>action_type</code> 对应方块交互的基本类型。</p>
 
     <h2>两种动作类型</h2>
@@ -97,7 +97,7 @@
     </table>
 
     <h2>内置动作</h2>
-    <p>CoreMod 数据定义了 6 个内置动作；其中 4 个 <code>block_action</code> 当前会进入 <code>ActionRegistry</code> 的方块动作表，2 个 <code>inventory_block_action</code> 受上方实现缺口影响，暂不能作为已闭环的运行时动作处理。</p>
+    <p>CoreMod 数据定义了 6 个内置动作：4 个 <code>block_action</code> 进入方块动作表，2 个 <code>inventory_block_action</code> 进入 HeldItem 动作表。</p>
 
     <h3>挖掘 <code>core:mine</code></h3>
     <p>通用挖掘动作，匹配所有 <code>core:</code> 前缀的方块。</p>
@@ -124,7 +124,7 @@
     </table>
 
     <h3>收获 <code>core:harvest_crop</code></h3>
-    <p>收获成熟的作物方块。</p>
+    <p>收获成熟的作物方块。完成后由 <code>systems.farming</code> 发放作物定义中的 <code>outputs</code>；工人的职业 <code>work_success_rate</code> bonus 会提高每种产出额外 +1 的概率，无 bonus 时保持基础产量。</p>
     <table>
       <thead><tr><th>属性</th><th>值</th></tr></thead>
       <tbody>

@@ -57,7 +57,7 @@
     </div>
 
     <div class="callout warn">
-      <code>RecipeSystem::craft</code> 的直接 C++/Lua 制作路径当前只读取实体的单个 <code>HeldItem</code> 槽。多输入配方只有在每个输入都是同一种方块、且手持数量足够时才可能通过；输入为不同方块时会失败。CoreMod 制作菜单另有 stockpile 账本预留与产出回写流程，不等同于这个直接制作接口。
+      <code>RecipeSystem::craft</code> 的直接 C++/Lua 制作路径当前只读取实体的单个 <code>HeldItem</code> 槽。多输入配方只有在每个输入都是同一种方块、且手持数量足够时才可能通过；输入为不同方块时会失败。CoreMod 制作菜单另有 stockpile 账本预留与产出回写流程；预留路径发布的 Craft 工作使用 <code>data=0</code>，避免 C++ 直接制作和 Lua 预留制作重复消耗或重复产出。
     </div>
 
     <h2>配方分类</h2>

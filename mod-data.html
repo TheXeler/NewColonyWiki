@@ -20,7 +20,7 @@
       <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎支持 16 种数据类型：<code>blocks</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>focuses</code>、<code>factions</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>zones</code>。</li>
+      <li>当前引擎支持 20 种数据类型：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>audio</code>、<code>zones</code>。</li>
     </ul>
 
     <h2>方块（blocks）</h2>
@@ -76,12 +76,11 @@
       <thead><tr><th>组件</th><th>描述</th></tr></thead>
       <tbody>
         <tr><td><code>Position</code></td><td>世界坐标 (x, y, z)</td></tr>
-        <tr><td><code>Velocity</code></td><td>移动速度向量</td></tr>
+        <tr><td><code>Speed</code></td><td>移动速度向量</td></tr>
         <tr><td><code>Health</code></td><td>生命值 (current, max)</td></tr>
         <tr><td><code>Needs</code></td><td>两项需求 (hunger, fatigue)</td></tr>
         <tr><td><code>Mood</code></td><td>心情值 (mood_value, 0~100)</td></tr>
         <tr><td><code>HeldItem</code></td><td>手持物品 (item_id, count)</td></tr>
-        <tr><td><code>Inventory</code></td><td>遗留多槽背包（最多 32 格）。原型加载时会取第一个 slot 作为 HeldItem。</td></tr>
         <tr><td><code>Equipment</code></td><td>固定槽位装备栏：MainHand、OffHand、Armor、Accessory。</td></tr>
         <tr><td><code>Profession</code></td><td>职业 ID 和等级 (1-5)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
@@ -90,7 +89,7 @@
         <tr><td><code>Stats</code></td><td>力量、敏捷、智力、耐力和工艺等属性。</td></tr>
         <tr><td><code>Visual</code></td><td>实体渲染模型和贴图。</td></tr>
         <tr><td><code>Animation</code></td><td>biped 程序动画参数。</td></tr>
-        <tr><td><code>Head</code></td><td>头部纹理和朝向数据。</td></tr>
+        <tr><td><code>HeadVisual</code></td><td>头部纹理和朝向数据。</td></tr>
       </tbody>
     </table>
     <p><code>Rotation</code> 和 <code>Scale</code> 是 Lua/运行时组件，可用 <code>engine.ecs.set_rotation</code> 和 <code>engine.ecs.set_scale</code> 添加；<code>AIState</code> 原型生成实体时会自动附加 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业；<code>PrototypeRef</code> 由原型生成流程自动记录。</p>
@@ -100,14 +99,14 @@
   "id": "copper_age:copper_worker",
   "components": {
     "Position": { "x": 0, "y": 64, "z": 0 },
-    "Velocity": { "x": 0, "y": 0, "z": 0 },
+    "Speed": { "x": 0, "y": 0, "z": 0 },
     "Health": { "current": 100, "max": 100 },
     "Needs": { "hunger": 40, "fatigue": 20 },
     "ColonistTag": {},
     "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
     "Profession": { "id": "copper_age:coppersmith", "level": 1 },
     "Name": { "data": "Copper Worker" },
-    "Inventory": { "slots": [] }
+    "HeldItem": { "id": "core:stone_chunk", "count": 1 }
   }
 }</code></pre>
 
@@ -117,7 +116,7 @@
       <thead><tr><th>概念</th><th>来源</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>JobType</code></td><td>C++ 枚举</td><td>内部工作类型包含 Build、Mine、Haul、Craft、Research、Social、Patrol、Emergency 等。</td></tr>
-        <tr><td><code>JobCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同势力工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
+        <tr><td><code>JobCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
         <tr><td><code>WorkAction</code></td><td>动作注册表/C++ 执行路径</td><td>描述完成时要执行的底层行为，例如方块动作、手持物品动作或脚本监听。</td></tr>
       </tbody>
     </table>
@@ -135,7 +134,7 @@
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
     <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。底层 <code>engine.crafting.craft</code> 仍是直接检查实体单个 <code>HeldItem</code> 的低级接口，多种输入或不同槽位输入不会在这条路径里自动汇总。</p>
-    <p>CoreMod 的制作菜单通过 <code>systems.crafting.queue</code> 下单：优先从 stockpile 账本预留输入材料，工作完成后把产物放入工人手中或存回账本。当前 Craft 工作完成时 C++ 会先尝试直接 <code>RecipeSystem::craft</code>，随后 Lua 仍会收到 <code>job:completed</code>；如果工人手中刚好也有匹配输入，可能形成 C++ 直接制作和 Lua 预留制作的双路径风险，需要回归验证。</p>
+    <p>CoreMod 的制作菜单通过 <code>systems.crafting.queue</code> 下单：优先从 stockpile 账本预留输入材料，工作完成后把产物放入工人手中或存回账本。使用 stockpile 预留时 Craft 工作的 <code>data</code> 会置为 <code>0</code>，因此 C++ 工作完成路径不会再调用 <code>RecipeSystem::craft</code> 重复消耗或产出；只有未预留、依赖工人手持材料的低级制作才继续走 C++ 直接制作路径。</p>
 
     <h2>建筑蓝图（buildings）</h2>
     <p>建筑定义放在 <code>data/buildings/</code> 下。建造菜单列出这些建筑蓝图；施工完成后，<code>blueprint</code> 中声明的方块会按建筑原点偏移放入世界。蓝图支持单点 <code>pos</code>，也支持闭区间长方体 <code>from</code>/<code>to</code>。</p>
@@ -154,9 +153,11 @@
   ]
 }</code></pre>
     <p><code>materials[].item_id</code> 和 <code>blueprint[].block</code> 都必须引用已注册方块/物品；所有蓝图坐标都必须在 <code>size</code> 范围内。完整说明见 <a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
+    <p>CoreMod 施工入口 <code>systems.construction.order(def_id, x, y, z)</code> 会创建建筑订单；材料足够时立即从 stockpile 账本预留并推进施工，材料不足时返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code> 并等待后续库存补足。等待订单会在 <code>stockpile:changed</code> 后立即重试预留，并每 60 tick 做一次兜底检查。<code>systems.construction.preview_materials(def_id)</code> 可用于只预览材料可用性，不会作为硬阻止。</p>
+    <p>HTML 建造面板读取 <code>build_defs</code> 快照，行结构为 <code>{ id, label, label_key, category, size, cost, materials, missing, available, can_order, status }</code>；已下单建筑读取 <code>construction_active</code> 快照，行结构为 <code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>。页面发送 <code>core:build.begin { id }</code> 时进入 placement；只有带 <code>x/y/z</code> 时才实际下单。</p>
 
     <h2>职业（professions）</h2>
-    <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。</p>
+    <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。<code>bonuses</code> 会进入人员 UI 聚合属性；当前实际模拟已接入工作时长、搬运容量和作物收获成功率：<code>mining_speed</code> 影响挖矿/采集 job，<code>construction_speed</code> 或 <code>work_speed</code> 影响建造 job，<code>crafting_speed</code> 或 <code>work_speed</code> 影响制作 job，<code>hauling_speed</code> 或 <code>carry_move_speed</code> 影响搬运 job 进度，<code>carry_capacity</code> 影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 影响成熟作物收获时每种产出额外 +1 的概率。战斗属性目前仍只保证展示。</p>
     <pre><code>{
   "id": "copper_age:coppersmith",
   "name": "Coppersmith",
@@ -167,6 +168,9 @@
   ],
   "unlocks_recipes": [
     { "id": "copper_age:smelt_copper", "level": 1 }
+  ],
+  "bonuses": [
+    { "stat": "crafting_speed", "value": 0.10, "mode": "add_mult" }
   ]
 }</code></pre>
     <p>分配职业成功时会触发 <code>profession:assigned</code> 事件。</p>
@@ -217,6 +221,19 @@
   "name_pools": ["copper_age:metals"]
 }</code></pre>
 
+    <h2>阵营自动生成规则（faction_spawn_rules）</h2>
+    <p>开新世界时引擎会按 <code>data/faction_spawn_rules/</code> 下的规则文件批量 spawn AI 阵营实例，让世界开局就存在若干 NPC 势力。每个文件包含一个 <code>id</code>（信息字段）和一个 <code>rules</code> 数组；每条规则指定一个 <code>faction_def_id</code> 和 <code>[min_count, max_count]</code> 区间，引擎用世界种子派生的独立随机流在每个区间内取一个数，按数量 spawn 该阵营。引用未知 def 的规则会被跳过并警告。<code>max_count=0</code> 的规则不生效。Lua API：<code>engine.factions.spawn_initial(seed?)</code>、<code>engine.factions.list_spawn_rules()</code>；控制台命令：<code>spawn_initial_factions [seed]</code>。</p>
+    <pre><code>{
+  "id": "core:default",
+  "rules": [
+    { "faction_def_id": "core:barbarian_tribe", "min_count": 1, "max_count": 2 },
+    { "faction_def_id": "core:pirate_band", "min_count": 0, "max_count": 1 },
+    { "faction_def_id": "core:merchant_guild", "min_count": 1, "max_count": 2 },
+    { "faction_def_id": "core:scholar_order", "min_count": 0, "max_count": 1 }
+  ]
+}</code></pre>
+    <p>每个阵营实例加入世界时（自动 spawn、控制台 <code>spawn_faction</code> / <code>spawn_initial_factions</code>、Lua <code>engine.factions.spawn</code> / <code>spawn_initial</code>）都会发布 <code>faction:spawned</code> 事件，payload 字段：<code>instance_id</code>、<code>def_id</code>、<code>faction_hash</code>、<code>display_name</code>、<code>relation</code>、<code>min_relation</code>、<code>max_relation</code>、<code>inclination</code>、<code>spawned_tick</code>、<code>reason</code>。reason 取值：<code>initial</code>（开局自动 spawn）、<code>console</code>（控制台命令）、<code>script</code>（Lua API）、<code>spawned</code>（缺省）。Lua 订阅示例：<code>engine.events.subscribe("faction:spawned", function(evt) ... end)</code>。</p>
+
     <h2>名称池（name_pools）</h2>
     <p>名称池给 NPC 阵营生成名称使用。放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过。</p>
     <pre><code>{
@@ -225,7 +242,7 @@
 }</code></pre>
 
     <h2>动作（actions）、地物（features）与作物（crops）</h2>
-    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。当前数据校验和 CoreMod 使用 <code>inventory_block_action</code> 表示手持物品动作，但 <code>ActionRegistry</code> 运行时仍检查旧名 <code>held_item_block_action</code>，所以进食/饮水动作只应视为数据已注册，不能视为运行时闭环已完成。<code>data/features/</code> 定义地形装饰阶段生成的地物。<code>data/crops/</code> 定义作物的生长阶段和产出。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
+    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。<code>inventory_block_action</code> 表示手持物品动作。<code>data/features/</code> 定义地形装饰阶段生成的地物。<code>data/crops/</code> 定义作物的生长阶段和产出。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
 
     <h2>验证命令</h2>
     <p>在控制台中用这些命令确认数据注册成功：</p>
@@ -236,6 +253,7 @@ list_data professions prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:
 data type:factions
+data type:faction_spawn_rules
 data type:name_pools
 list_factions
 list_name_pools

@@ -25,6 +25,7 @@
     bootstrap.lua
   data/
     blocks/
+    tags/
     entities/
     recipes/
     professions/
@@ -33,8 +34,13 @@
     factions/
     name_pools/
     actions/
+    features/
     crops/
+    ores/
+    buildings/
+    terrain/
     biomes/
+    zones/
   assets/
   lang/</code></pre>
     <p>各目录的详细用途和规则见 <a href="mod-directory.html">MOD 目录结构</a>。</p>
@@ -46,7 +52,6 @@
   "name": "Copper Age",
   "version": "0.1.0",
   "description": "Adds early copper content.",
-  "api_version": "0.1",
   "license": "MIT",
   "entry": "scripts/bootstrap.lua",
   "dependencies": [
@@ -64,8 +69,7 @@ function M.on_load()
 end
 
 return M</code></pre>
-    <p>如果你在脚本里需要加载额外的 Lua 文件（比如 worldgen 辅助函数），用 <code>dofile</code>，不要用 <code>require</code>——后者在当前沙箱里不可用。</p>
-    <pre><code>local Blocks = dofile("CoreMod/scripts/worldgen/blocks.lua")</code></pre>
+    <p>如果你在脚本里需要加载额外的 Lua 文件，用 <code>dofile</code>，不要用 <code>require</code>——后者在当前沙箱里不可用。</p>
 
     <h2>4. 注册第一个方块</h2>
     <p>新方块放在 <code>data/blocks/*.json</code>。文件名随便取，真正的唯一标识是 JSON 里面的 <code>id</code>。</p>

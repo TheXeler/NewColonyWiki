@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音频注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-audioregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>音频注册</div></div>
+  <div class="content">
+    <h1>音频注册</h1>
+    <p class="subtitle"><code>data/audio/</code> 是标准自动注册目录。每个 <code>.json</code> 文件注册一个可播放声音定义，顶层 <code>id</code> 就是 Lua 和引擎播放接口使用的声音 ID；不再使用 sound bank / <code>sounds[]</code> 包装。</p>
+
+    <h2>路径</h2>
+    <pre><code>CoreMod/data/audio/sfx_button_click.json
+mods/my_mod/data/audio/ui/click.json</code></pre>
+
+    <h2>最小示例</h2>
+    <pre><code>{
+  "id": "my_mod:sfx_click",
+  "file": "assets/audio/effects/click.wav"
+}</code></pre>
+
+    <h2>完整示例</h2>
+    <pre><code>{
+  "id": "my_mod:bgm_title",
+  "file": "assets/audio/music/title.ogg",
+  "category": "music",
+  "streaming": true,
+  "loop": true,
+  "volume": 0.7,
+  "format": "ogg",
+  "length_seconds": 96.5,
+  "reload": false
+}</code></pre>
+
+    <h2>字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>音频数据 ID，也是 <code>engine.audio.play(id)</code> / <code>engine.audio.play_3d(id)</code> 使用的播放 ID。未带命名空间时按所属 MOD 解析。</td></tr>
+        <tr><td><code>file</code></td><td>string</td><td>是</td><td>音频文件路径。相对路径从 MOD 根目录解析，通常指向 <code>assets/audio/</code>。</td></tr>
+        <tr><td><code>category</code></td><td>string</td><td>否</td><td><code>music</code>、<code>ambient</code>、<code>effect</code> 或兼容别名 <code>effects</code>。默认 <code>effect</code>。</td></tr>
+        <tr><td><code>streaming</code></td><td>bool</td><td>否</td><td>是否流式加载。长音乐和环境音建议设为 <code>true</code>。</td></tr>
+        <tr><td><code>loop</code></td><td>bool</td><td>否</td><td>默认是否循环播放。</td></tr>
+        <tr><td><code>volume</code></td><td>number</td><td>否</td><td>默认音量，范围 <code>0.0</code> 到 <code>1.0</code>，默认 <code>1.0</code>。</td></tr>
+        <tr><td><code>format</code></td><td>string</td><td>否</td><td>资源格式元数据，例如 <code>wav</code> 或 <code>ogg</code>。当前用于校验/文档化，不覆盖底层解码器识别。</td></tr>
+        <tr><td><code>length_seconds</code></td><td>number</td><td>否</td><td>音频长度元数据，单位秒，必须非负。引擎不会依赖该字段计算播放时长。</td></tr>
+        <tr><td><code>reload</code></td><td>bool</td><td>否</td><td>通用数据注册表热重载标记。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>加载行为</h2>
+    <ul>
+      <li>ModLoader 像处理其他注册表一样扫描 <code>data/audio/**/*.json</code>，每个文件生成一个 <code>type = "audio"</code> 的注册项。</li>
+      <li>音频系统在引擎初始化阶段读取这些注册项，并把每个条目注册为一个可播放声音。</li>
+      <li>注册表格式已经去除 sound bank 外壳；旧版 <code>sounds[]</code> bank 仅保留为无注册项时的兼容回退，不应在新 MOD 中使用。</li>
+      <li>如果多个 MOD 注册同一个音频 ID，通用数据注册表的覆盖/冲突规则与其他数据类型一致。</li>
+    </ul>
+
+    <h2>播放</h2>
+    <pre><code>local handle = engine.audio.play("my_mod:sfx_click")
+engine.audio.play("my_mod:bgm_title", 1.0, true)</code></pre>
+
+    <div class="callout info">
+      <strong>相关页面：</strong><a href="mod-directory.html">MOD 目录结构</a>、<a href="mod-assets-audio.html">音乐和音效格式</a>。
+    </div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

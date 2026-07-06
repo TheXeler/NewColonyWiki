@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>矿物分布注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-oreregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>矿物分布注册</div></div>
+  <div class="content">
+    <h1>矿物分布注册</h1>
+    <p class="subtitle">矿物分布（Ore Deposit）放在 <code>data/ores/</code> 下，用 JSON 描述某种方块在地下生成时如何替换基础方块。它由 ModLoader 自动注册，并在地形生成器的地下阶段读取。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+    "id": "my_mod:tin_ore_deposit",
+    "block": "my_mod:tin_ore",
+    "replace_block": "core:stone",
+    "noise_scale": 0.09,
+    "threshold": 0.62,
+    "min_y": 8,
+    "max_y": 48
+}</code></pre>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。用于注册表检查和调试输出。</td></tr>
+        <tr><td><code>block</code></td><td>string</td><td>是</td><td>要生成的方块 ID，必须引用已注册的 <code>data/blocks/</code> 条目。</td></tr>
+        <tr><td><code>replace_block</code></td><td>string</td><td>是</td><td>可被替换的原始方块 ID，必须引用已注册方块。常见值是 <code>core:stone</code>。</td></tr>
+        <tr><td><code>noise_scale</code></td><td>number</td><td>是</td><td>三维噪声采样尺度，必须大于 0。值越大，矿脉变化越密集；值越小，矿脉块状区域越大。</td></tr>
+        <tr><td><code>threshold</code></td><td>number</td><td>是</td><td>生成阈值。地形生成时对每个候选方块采样噪声，只有 <code>noise &gt; threshold</code> 才替换为 <code>block</code>。阈值越高，矿物越稀少。</td></tr>
+        <tr><td><code>min_y</code></td><td>int</td><td>是</td><td>最低生成高度，必须是非负整数。</td></tr>
+        <tr><td><code>max_y</code></td><td>int</td><td>是</td><td>最高生成高度，必须是非负整数。生成循环会在 <code>WORLD_HEIGHT</code> 处截断。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>生成规则</h2>
+    <ul>
+      <li>矿物在地下生成阶段运行，早于地表装饰和地物放置。</li>
+      <li>每个矿物定义会遍历 chunk 内所有 X/Z 列和 <code>min_y</code> 到 <code>max_y</code> 的高度。</li>
+      <li>只有当前方块等于 <code>replace_block</code> 时才会被替换，因此矿物不会覆盖空气、水、植物或其他矿物，除非你明确把它们设为 <code>replace_block</code>。</li>
+      <li>多个矿物定义按注册顺序处理。较早生成的矿物会改变方块 ID，后续只会替换它们自己的 <code>replace_block</code>。</li>
+    </ul>
+
+    <div class="callout warn">
+      <code>threshold</code> 没有硬性限制在 0 到 1。实际噪声函数的输出范围由引擎实现决定；通常推荐从 CoreMod 的 0.5 到 0.85 区间开始调参。
+    </div>
+
+    <h2>内置矿物分布</h2>
+    <table>
+      <thead><tr><th>ID</th><th>生成方块</th><th>替换方块</th><th>Y 范围</th><th>阈值</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:clay_ball_deposit</code></td><td><code>core:clay_ball</code></td><td><code>core:stone</code></td><td>60-72</td><td>0.50</td></tr>
+        <tr><td><code>core:copper_ore_chunk_deposit</code></td><td><code>core:copper_ore_chunk</code></td><td><code>core:stone</code></td><td>10-60</td><td>0.55</td></tr>
+        <tr><td><code>core:stone_chunk_deposit</code></td><td><code>core:stone_chunk</code></td><td><code>core:stone</code></td><td>5-54</td><td>0.60</td></tr>
+        <tr><td><code>core:gold_nugget_deposit</code></td><td><code>core:gold_nugget</code></td><td><code>core:stone</code></td><td>5-32</td><td>0.72</td></tr>
+        <tr><td><code>core:silver_nugget_deposit</code></td><td><code>core:silver_nugget</code></td><td><code>core:stone</code></td><td>5-40</td><td>0.75</td></tr>
+        <tr><td><code>core:diamond_deposit</code></td><td><code>core:diamond</code></td><td><code>core:stone</code></td><td>2-16</td><td>0.85</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Lua 注册入口</h2>
+    <p>需要运行时添加矿物时，可以通过 Lua 调用 <code>engine.terrain.register_ore(table)</code>。Lua 入口使用运行时 block hash，因此通常仍建议优先使用 JSON 注册。</p>
+    <pre><code>engine.terrain.register_ore({
+    block = engine.data.hash_id("my_mod:tin_ore"),
+    replace_block = engine.data.hash_id("core:stone"),
+    noise_scale = 0.09,
+    threshold = 0.62,
+    min_y = 8,
+    max_y = 48
+})</code></pre>
+
+    <h2>文件放置规则</h2>
+    <ul>
+      <li>放在 <code>data/ores/</code> 下，支持子目录。</li>
+      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
+      <li><code>block</code> 和 <code>replace_block</code> 会在跨引用校验阶段确认存在；引用不存在会导致 MOD 加载失败。</li>
+    </ul>
+
+    <h2>验证命令</h2>
+    <p>在控制台（按物理 Grave/反引号键）中确认矿物分布注册：</p>
+    <pre><code>list_data ores                  -- 列出所有已注册的矿物分布
+data core:diamond_deposit       -- 查看单个矿物分布 JSON
+data type:ores                  -- 查看 ores 类型下的注册数据</code></pre>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

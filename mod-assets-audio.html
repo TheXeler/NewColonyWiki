@@ -100,8 +100,8 @@
     </table>
 
     <h2>当前加载边界</h2>
-    <p>当前启动流程只会调用一次 <code>AudioSystem::load_sound_bank</code>，路径是运行目录下的 <code>data/audio/sounds.json</code>（CoreMod 被复制到运行目录后的核心 sound bank）。<code>data/audio</code> 不进入通用 ModLoader 注册表，也不会自动扫描每个 active MOD 的 <code>data/audio/sounds.json</code>。</p>
-    <p>这意味着内容型 MOD 可以参考本页格式准备音频资源，但“每个 MOD 自动加载自己的 sound bank”还不是当前稳定功能。要让自定义音频真正可播，需要后续接入音频加载流程或由引擎显式调用 <code>load_sound_bank</code>。</p>
+    <p><code>data/audio/</code> 已接入通用 ModLoader 注册表。每个 active MOD 的单音频 <code>data/audio/*.json</code> 都会注册为 <code>audio</code> 数据记录，并在启动阶段加载进 <code>SoundBank</code>。旧版 <code>sounds.json</code> 聚合清单会在注册表扫描时跳过；如果没有任何音频注册表记录，启动阶段会兜底读取核心 MOD 下的 <code>data/audio/sounds.json</code>。</p>
+    <p>sound bank 文件可以带顶层 <code>id</code>；省略时引擎会用 <code>mod_id:文件名</code> 作为注册表 ID。实际可播放的音频 ID 来自 <code>sounds[].id</code>。</p>
 
     <h2>Lua 播放接口</h2>
     <pre><code>-- 播放音效

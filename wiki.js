@@ -12,8 +12,11 @@ const WIKI_NAV = [
     title: "Mod 开发基础",
     links: [
       ["mod-quickstart", "从头开始", "mod-quickstart.html"],
+      ["mod-manual", "开发手册", "mod-manual.html"],
+      ["mod-examples", "MOD 示例", "mod-examples.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
+      ["mod-data", "注册物品、方块和规则", "mod-data.html"],
       ["mod-configfiles", "配置文件", "mod-configfiles.html"],
       ["mod-localization", "本地化与翻译", "mod-localization.html"],
       {
@@ -30,24 +33,30 @@ const WIKI_NAV = [
         title: "注册表",
         children: [
           ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
-          ["mod-biomeregistry", "群系注册", "mod-biomeregistry.html"],
-          ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
+          ["mod-tagregistry", "Tag 注册", "mod-tagregistry.html"],
           ["mod-entityregistry", "实体注册", "mod-entityregistry.html"],
-          ["mod-actionregistry", "动作注册", "mod-actionregistry.html"],
-          ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
           ["mod-reciperegistry", "配方注册", "mod-reciperegistry.html"],
+          ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
+          ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"],
+          ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
+          ["mod-factionregistry", "NPC 阵营注册", "mod-factionregistry.html"],
+          ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
+          ["mod-actionregistry", "动作注册", "mod-actionregistry.html"],
+          ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
+          ["mod-oreregistry", "矿物分布注册", "mod-oreregistry.html"],
           ["mod-cropregistry", "作物注册", "mod-cropregistry.html"],
           ["mod-buildingregistry", "建筑蓝图注册", "mod-buildingregistry.html"],
+          ["mod-terrainregistry", "地形配置注册", "mod-terrainregistry.html"],
+          ["mod-biomeregistry", "群系注册", "mod-biomeregistry.html"],
           ["mod-zoneregistry", "区域注册", "mod-zoneregistry.html"],
-          ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
-          ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
-          ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"]
+          ["mod-audioregistry", "音频注册", "mod-audioregistry.html"]
         ]
       },
       {
         title: "引擎参考",
         children: [
           ["engine-terraingeneration", "地形生成流程", "engine-terraingeneration.html"],
+          ["engine-lighting", "引擎光照", "engine-lighting.html"],
           ["engine-save-system", "存档系统状态", "engine-save-system.html"]
         ]
       }
@@ -60,6 +69,8 @@ const WIKI_NAV = [
       ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
       ["mod-lua-data-components", "数据组件 API", "mod-lua-data-components.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
+      ["ui-rmlui", "游戏内 RmlUI", "ui-rmlui.html"],
+      ["mod-ui-html-pages", "HTML/CSS 页面", "mod-ui-html-pages.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
       ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]
     ]
@@ -148,18 +159,29 @@ function createSidebar(activePage) {
 
 function setupApiSearch() {
   const input = document.querySelector("[data-api-search]");
-  const rows = Array.from(document.querySelectorAll("[data-api-row]"));
+  const tables = Array.from(document.querySelectorAll("[data-lua-api-container] table"));
   const empty = document.querySelector("[data-api-empty]");
-  if (!input || rows.length === 0) return;
+  if (!input || tables.length === 0) return;
 
   const update = () => {
     const query = input.value.trim().toLowerCase();
     let visible = 0;
-    for (const row of rows) {
-      const haystack = row.textContent.toLowerCase();
-      const match = query === "" || haystack.includes(query);
-      row.hidden = !match;
-      if (match) visible += 1;
+    for (const table of tables) {
+      const heading = table.previousElementSibling;
+      const isGroupHeading = heading && heading.classList.contains("api-group-title");
+      const headingMatch = isGroupHeading && heading.textContent.toLowerCase().includes(query);
+      let groupVisible = 0;
+      for (const row of table.querySelectorAll("[data-api-row]")) {
+        const haystack = row.textContent.toLowerCase();
+        const match = query === "" || headingMatch || haystack.includes(query);
+        row.hidden = !match;
+        if (match) {
+          visible += 1;
+          groupVisible += 1;
+        }
+      }
+      table.hidden = groupVisible === 0;
+      if (isGroupHeading) heading.hidden = groupVisible === 0;
     }
     if (empty) empty.hidden = visible !== 0;
   };
@@ -168,8 +190,64 @@ function setupApiSearch() {
   update();
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function renderLuaApiTable() {
+  const container = document.querySelector("[data-lua-api-container]");
+  if (!container) return;
+  const data = window.__LUA_API_DATA;
+  if (!data) {
+    container.innerHTML = '<div class="callout warn">lua-api-data.js 未加载，请确认 HTML 中包含对应的 &lt;script&gt; 标签。</div>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const group of data.groups || []) {
+    const h = document.createElement("h3");
+    h.className = "api-group-title";
+    h.textContent = group.name;
+    fragment.appendChild(h);
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    thead.innerHTML = "<tr><th>API</th><th>参数</th><th>返回</th><th>备注</th></tr>";
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    for (const item of group.items || []) {
+      const tr = document.createElement("tr");
+      tr.className = "api-row";
+      tr.setAttribute("data-api-row", "");
+      const tdApi = document.createElement("td");
+      tdApi.innerHTML = "<code>" + escapeHtml(item.api) + "</code>";
+      const tdParams = document.createElement("td");
+      tdParams.textContent = item.params;
+      const tdReturns = document.createElement("td");
+      tdReturns.textContent = item.returns;
+      const tdNote = document.createElement("td");
+      tdNote.innerHTML = escapeHtml(item.note);
+      tr.appendChild(tdApi);
+      tr.appendChild(tdParams);
+      tr.appendChild(tdReturns);
+      tr.appendChild(tdNote);
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    fragment.appendChild(table);
+  }
+
+  container.innerHTML = "";
+  container.appendChild(fragment);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const activePage = document.body.dataset.page || "index";
   document.body.prepend(createSidebar(activePage));
+  renderLuaApiTable();
   setupApiSearch();
 });
+

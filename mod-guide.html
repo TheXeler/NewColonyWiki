@@ -15,6 +15,7 @@
 
     <h2>一个 MOD 至少需要什么</h2>
     <p>游戏在 MOD 目录下找 <code>mod.json</code>。找到了就读取这个文件、检查依赖、排好加载顺序，然后递归扫描 <code>data/</code> 下所有受支持的类型目录。入口脚本默认指向 <code>scripts/bootstrap.lua</code>，也可以在 <code>mod.json</code> 的 <code>entry</code> 字段改成别的存在路径。</p>
+    <p>mod.json 里最常见的字段还有 <code>side</code>、<code>dependencies</code>、<code>load_after</code>、<code>load_before</code>、<code>conflicts</code>、<code>settings</code>、<code>ui</code> 和 <code>lua.permissions.io</code>。其中 <code>dependencies</code> 条目使用 <code>name</code>、<code>minVer</code>、<code>maxVer</code>。</p>
     <p>下面是一个典型 MOD 的目录结构。游戏会检查 <code>data/</code> 下是否存在这些类型子目录，存在就走进去递归扫描 JSON 文件。</p>
     <pre><code>mods/my_mod/
   mod.json
@@ -22,12 +23,14 @@
     bootstrap.lua
   data/
     blocks/
+    tags/
     entities/
     recipes/
     professions/
     civilizations/
     focuses/
     factions/
+    faction_spawn_rules/
     name_pools/
     actions/
     features/
@@ -36,38 +39,39 @@
     buildings/
     terrain/
     biomes/
+    audio/
     zones/</code></pre>
 
     <h2>加载流程</h2>
     <p>游戏启动时按下面六个阶段加载 MOD：</p>
     <ol class="step-list">
       <li><strong>发现 MOD。</strong>引擎扫描传入的根目录；根目录自身有 <code>mod.json</code> 时会作为 MOD 读取，也会扫描其直接子目录。读出来之后，检查 <code>id</code> 是否重复、JSON 格式是否合法。</li>
-      <li><strong>解析加载顺序。</strong>引擎按照 <code>dependencies</code>、<code>load_after</code>、<code>load_before</code> 三个字段计算最终顺序。循环依赖会直接报错；<code>load_before: ["*"]</code> 会尝试让该 MOD 排在其他 MOD 前面。</li>
+      <li><strong>解析加载顺序。</strong>引擎按照 <code>dependencies</code>、<code>load_after</code>、<code>load_before</code> 三个字段计算最终顺序。<code>dependencies</code> 条目支持 <code>name</code>、<code>minVer</code>、<code>maxVer</code>；<code>load_before: ["*"]</code> 会尝试让该 MOD 排在其他 MOD 前面。循环依赖会直接报错。</li>
       <li><strong>应用玩家配置。</strong>读取运行目录 <code>config/&lt;mod_id&gt;.json</code>，把类型匹配的设置覆盖到清单默认值；<code>enabled</code> 决定非 core MOD 是否参与后续加载。</li>
-      <li><strong>注册数据。</strong>引擎递归扫描 16 类受支持目录，把每条 JSON 记录放进数据注册表。注意，这时 Lua 脚本还没执行——数据在脚本执行前就已经可用了。</li>
+      <li><strong>注册数据。</strong>引擎递归扫描 20 类受支持目录，把每条 JSON 记录放进数据注册表。注意，这时 Lua 脚本还没执行——数据在脚本执行前就已经可用了。</li>
       <li><strong>校验引用。</strong>配方里的输入输出、职业要求、文明开局物品、方块掉落、群系/地形方块、建筑材料等引用 ID 会被检查是否存在。出错的非 core MOD 会被禁用，依赖它的 MOD 也会被跳过。</li>
       <li><strong>执行入口脚本。</strong>所有数据注册完毕并通过交叉引用校验后，引擎按加载顺序执行每个已启用 MOD 的入口脚本。脚本返回一个表，引擎会读取 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code> 这些函数。</li>
     </ol>
 
     <h2>什么时候写 JSON，什么时候写 Lua</h2>
-    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。当前自动注册 16 类：blocks、entities、recipes、professions、civilizations、focuses、factions、name_pools、actions、features、ores、crops、buildings、terrain、biomes、zones。Lua 只用来补充 JSON 做不到的事情：监听事件、注册焦点条件、定时执行逻辑、生成实体、操作地形。</p>
+    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。当前自动注册 20 类：blocks、tags、entities、recipes、professions、civilizations、techs、focuses、factions、faction_spawn_rules、name_pools、actions、features、ores、crops、buildings、terrain、biomes、audio、zones。Lua 只用来补充 JSON 做不到的事情：监听事件、注册焦点条件、定时执行逻辑、生成实体、操作地形。</p>
 
     <div class="callout warn">
       不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询。
     </div>
 
     <h2>数据 ID 命名习惯</h2>
-    <p>公共数据的 ID 统一用 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。这样做的好处是：其他 MOD 引用时一眼能看出数据来源，也不会和 core 或者其他 MOD 撞名。</p>
+    <p>公共数据的 ID 通常写成 <code>&lt;mod_id&gt;:&lt;name&gt;</code> 格式，例如 <code>copper_age:copper_ingot</code>。这样做的好处是：其他 MOD 引用时一眼能看出数据来源，也不会和 core 或者其他 MOD 撞名；在同一个 MOD 内省略前缀时，加载器会自动补成当前 <code>mod_id:</code>。</p>
 
     <h2>核心数据 vs MOD 数据</h2>
-    <p><code>CoreMod/data/</code> 下的 JSON 是核心数据的标准格式。MOD 数据也使用相同的格式，区别只在于 <code>id</code> 的前缀。CoreMod 内容的前缀是 <code>core:</code>，MOD 数据的前缀是 <code>&lt;mod_id&gt;:</code>。跨 MOD 引用时必须写完整的 <code>mod_id:name</code>。</p>
+    <p><code>CoreMod/data/</code> 下的 JSON 是核心数据的标准格式。MOD 数据也使用相同的格式，区别只在于 <code>id</code> 的前缀。CoreMod 内容通常使用 <code>core:</code>；同一个 MOD 内可以省略前缀，加载器会自动补成当前 <code>mod_id:</code>。跨 MOD 引用时必须写完整的 <code>mod_id:name</code>。</p>
 
     <div class="callout info">
-      如果你在 MOD 里用 <code>dofile</code> 加载了其他 Lua 文件（如 worldgen 脚本），注意 <code>package</code> 库默认未加载，请用 <code>dofile</code> 代替 <code>require</code>。
+      如果你在 MOD 里用 <code>require</code> 加载其他 Lua 文件，可以直接使用。引擎会在 MOD 沙箱里预置 <code>package</code> 库，并把当前 MOD 的 <code>scripts/</code> 和生成 Lua 目录加入 <code>package.path</code>；<code>dofile</code> 当然也仍然可用。
     </div>
 
     <div class="callout warn">
-      当前入口脚本文件必须存在。纯 JSON 内容包也建议提供 <code>scripts/bootstrap.lua</code>，内容为 <code>return {}</code>。
+      当前入口脚本文件必须存在，默认是 <code>scripts/bootstrap.lua</code>，也可以在 <code>mod.json</code> 的 <code>entry</code> 字段改成别的现有路径。纯 JSON 内容包同样需要一个入口文件，最简单的做法是让它 <code>return {}</code>。
     </div>
 
     <h2>下一步</h2>
@@ -79,3 +83,4 @@
 <script src="wiki.js"></script>
 </body>
 </html>
+

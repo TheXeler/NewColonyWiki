@@ -33,7 +33,7 @@
       <thead><tr><th>组件</th><th>同步字段</th></tr></thead>
       <tbody>
         <tr><td>Position</td><td>x, y, z</td></tr>
-        <tr><td>Velocity</td><td>x, y, z</td></tr>
+        <tr><td>Speed</td><td>x, y, z</td></tr>
         <tr><td>Rotation</td><td>yaw, pitch</td></tr>
         <tr><td>Health</td><td>current, max</td></tr>
         <tr><td>HeldItem</td><td>item_id, count</td></tr>
@@ -75,6 +75,10 @@
     </table>
     <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>
     <p>每条命令携带一个递增的序列号。主机收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
+
+    <h2>Chunk Terrain Sync</h2>
+    <p>主机维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
+    <p>ChunkDelta 由主机把当前 <code>ChunkSnapshot</code> 与同 seed 生成的原始地形对比得到。生成 delta 时会按 sub-chunk 遍历，完全一致的 sub-chunk 不发送；连续相同 <code>BlockState{id,data}</code> 的修改会编码成 run，短修改保留为单点 entry。客户端解码后把 run 展开到现有 block entry 应用路径，因此应用层仍按 block_index/id/data 写入本地 <code>ChunkDataStore</code>。</p>
 
     <h2>握手流程</h2>
     <ol class="step-list">

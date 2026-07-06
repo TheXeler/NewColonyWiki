@@ -29,7 +29,7 @@
 
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
-      <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（17 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
+      <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、数据注册（20 种类型）和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
       <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、作物、区域类型和本地化文本。能用 JSON 表达的内容优先写 JSON。</li>
       <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、焦点条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
@@ -39,18 +39,19 @@
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td>mod.json 清单、依赖顺序、load_before 通配符、严格清单检查、用户设置覆盖。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>通过 <code>data/</code> 注册 17 种类型：blocks、tags、entities、recipes、professions、civilizations、focuses、factions、name_pools、actions、features、ores、crops、buildings、terrain、biomes、zones。Tags 是矿物词典（OreDictionary / MC 1.13+ tag），详见 <a href="mod-tagregistry.html">Tag 注册</a>。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td>通过 <code>data/</code> 注册 20 种类型：blocks、tags、entities、recipes、professions、civilizations、techs、focuses、factions、faction_spawn_rules、name_pools、actions、features、ores、crops、buildings、terrain、biomes、audio、zones。Tags 是矿物词典（OreDictionary / MC 1.13+ tag），详见 <a href="mod-tagregistry.html">Tag 注册</a>；科技见 <a href="mod-techregistry.html">科技注册</a>。</td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本返回表，支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 和 <code>engine.timers</code>。10+ 内置事件，支持自定义。</td></tr>
-        <tr><td>控制台系统</td><td><span class="badge done">可用</span></td><td>50+ 控制台命令，权限系统，别名，配置验证（doctor），快照和差异对比。</td></tr>
+        <tr><td>控制台系统</td><td><span class="badge done">可用</span></td><td>80+ 控制台命令，权限系统，别名，配置验证（doctor），快照和差异对比。</td></tr>
         <tr><td>NPC 阵营</td><td><span class="badge done">可用</span></td><td>faction/name_pool 注册，模板命名，阵营实例化，关系值系统和外交事件。</td></tr>
-        <tr><td>方块世界</td><td><span class="badge done">可用</span></td><td>体素地形生成、程序化生物群系、矿石沉积、洞穴、河流、昼夜天空盒。</td></tr>
+        <tr><td>方块世界</td><td><span class="badge done">可用</span></td><td>体素地形生成、程序化群系、矿石沉积、洞穴、河流、昼夜天空盒。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>Host/Client TCP 同步、快照广播、MOD 列表校验码交换。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD <code>lang/</code> 合并、Lua 查询/切换/热重载 API 和控制台命令。详见 <a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>UI 框架</td><td><span class="badge partial">部分可用</span></td><td>底边栏槽位、浮动提示、窗口系统、CSS 主题；API 已稳定，渲染层持续完善中。</td></tr>
+        <tr><td>经营界面</td><td><span class="badge partial">部分可用</span></td><td>建造、制造、人员信息、科技、事件、外交和视图选项已接到底边栏；HTML/CSS 主 HUD 与各二级面板页面资源已落在 <code>CoreMod/assets/ui/html/</code>（<a href="mod-ui-html-pages.html">HTML/CSS 页面</a>），并可通过 <code>tech_tree</code>、<code>event_list</code>、<code>view_modes</code> 通道消费真实科技、焦点事件和视图状态。科技 unlock 已第一批影响 <code>core:matchbox_hut</code> 建造和 <code>core:wooden_sword</code>/<code>core:bow</code> 制造；视图模式当前提供 shader 色调和 F3 调试 HUD 状态反馈，Building View 已第一阶段隐藏实体绘制，但 chunk 级透明/过滤仍待完善。UI 主路线已转向游戏内 RmlUI（宿主层 <a href="mod-ui-api.html#rml-ui-host">RmlUiHost</a>）；<code>CoreMod/assets/ui/html/</code> 下的 HTML 为过渡期参考资产，真 RmlUI 库仍待接入。</td></tr>
         <tr><td>区域系统</td><td><span class="badge partial">部分可用</span></td><td>矩形区域指定（拖拽模式）、收获/存储/种植/居住区域类型。</td></tr>
         <tr><td>AI 与行为树</td><td><span class="badge partial">部分</span></td><td>基于需求、调度、寻路（A* + NavMesh）、LOD 系统，行为树可运行。</td></tr>
-        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、天气、阵营、工作和焦点可保存；方块改动、建筑/区域实例、迁移和 MOD 自动解析仍未完成。</td></tr>
+        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、天气、阵营、工作、焦点和已加载 chunk 方块状态可保存；建筑/区域实例和 MOD 自动解析仍未完成。</td></tr>
       </tbody>
     </table>
 

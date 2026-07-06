@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形生成流程</div></div>
   <div class="content">
     <div class="callout info">
-      <strong>Runtime boundary wrap (2026-06-14):</strong> <code>wrap_position_in_place</code> reports whether a finite-planet wrap crossed a pole. East/west wraps only translate positions; polar wraps also rotate the orbit camera yaw by 180 degrees and reset chunk streaming state so the new side is scheduled immediately.
+      <strong>Seamless border crossing (2026-06-20):</strong> 摄像机和所有实体允许在原始世界坐标里越过 <code>[-planet_radius, +planet_radius]</code> 边界自由移动；不再有"瞬移到星球对面 + 相机 yaw 旋转 180° + 清空 NavMesh"的硬切换。<code>enumerate_display_chunks_for_camera</code> 在玩家视野内枚举所有显示位置，每个显示位置经过 <code>normalize_planet_chunk_with_info</code> 反查归一化存储 chunk。同一份 chunk mesh 可以在多个显示位置绘制：渲染时按"显示坐标 − 存储坐标"的 chunk 偏移平移顶点，视锥剔除基于显示坐标。NavMesh 的公开查询（<code>is_walkable</code> / <code>surface_y</code> / <code>traversal_cost</code>）在内部把原始世界坐标归一化后再查存储；寻路邻居枚举（<code>dispatch_navmesh_backprop</code>）也通过 <code>normalize_chunk_coord</code> 折回边界另一侧。<code>wrap_position_in_place</code> / <code>wrap_block_in_place</code> 保留用于存档加载等一次性场景，主循环不再调用。
     </div>
     <h1>地形生成流程</h1>
     <p class="subtitle">这篇文章是引擎层面的地形生成流程参考。MOD 作者通常只需要关心 <a href="mod-biomeregistry.html">群系注册</a> 与 <a href="mod-featureregistry.html">地物注册</a>；如果你想知道群系和地物是「在什么时候被使用」、或者想调试地形异常，请阅读本文。文中所述的内部结构（C++ 类名、阶段顺序）不是 API 兼容承诺，仅用于辅助理解。</p>
@@ -24,7 +24,7 @@
     <p>地形生成分为两层：</p>
     <ol>
       <li><strong>行星级世界地图</strong>（<code>Engine/WorldMap/</code>）：在世界创建时一次性生成一张六边形网格地图，为每格打上 <em>海拔 / 温度 / 湿度 / 是否水域 / 群系 ID</em> 标签。这是「宏观气候场」。</li>
-      <li><strong>Chunk 体素生成</strong>（<code>Engine/Voxel/TerrainGenerator</code> + <code>Engine/ChunkManager</code>）：玩家走到哪里，就为对应的 16×16×256 chunk 实时生成方块。生成时从世界地图采样气候，再叠加生物群系的局部噪声。</li>
+      <li><strong>Chunk 体素生成</strong>（<code>Engine/Voxel/TerrainGenerator</code> + <code>Engine/ChunkManager</code>）：玩家走到哪里，就为对应的 16×16×256 chunk 实时生成方块。生成时从世界地图采样气候，再叠加群系的局部噪声。</li>
     </ol>
 
     <h2>第一层:世界地图</h2>
@@ -41,7 +41,7 @@
       <li><strong>计算湿度</strong>：Perlin 噪声主导，叠加雨影（高海拔背风面干旱）和极地干旱。</li>
       <li><strong>确定海平面</strong>：把所有 tile 的海拔排序，取 <code>water_coverage</code> 分位数作为 <code>sea_level</code>。这样无论地形分布如何，水域占比都精确匹配设定。</li>
       <li><strong>水域判定</strong>：<code>elevation ≤ sea_level</code> 即为水域 tile。</li>
-      <li><strong>群系分类</strong>：调用 <code>select_biome_for_climate</code>，对每个 tile 根据（温度，湿度，海拔）匹配群系，写入 <code>biome_id</code>。后续 chunk 生成时直接读取这个预计算结果。</li>
+      <li><strong>minimap 群系分类</strong>：调用 <code>select_biome_for_climate</code>，对每个 world-map tile 根据（温度，湿度，海拔）匹配主导群系，写入 <code>biome_id</code> 和 <code>map_color</code>。这只用于 minimap/地图显示，不参与 chunk 体素生成。</li>
     </ol>
 
     <h2>第二层:Chunk 体素生成</h2>
@@ -57,83 +57,81 @@
           <li>输出当前 chunk 的 <code>temperature / moisture / elevation / water / biome_id</code></li>
         </ul>
       </li>
-      <li><strong>block 级扰动</strong>（<code>WorldMap::sample_climate_for_block</code>）：在 chunk 级 climate 上叠加两个独立的中频 Perlin 扰动场（温度、湿度）。扰动周期约 48 块边长，幅度约 0.14。这让气候在 chunk 内连续漂移，是后续 per-column 群系选择能够"在同一 chunk 内出现多种群系"的来源。海拔不做 block 级扰动，避免海岸线逐块抖动。</li>
+      <li><strong>block 级扰动</strong>（<code>WorldMap::sample_climate_for_block</code>）：在 chunk 级 climate 上叠加三个独立的中频 Perlin 扰动场（温度、湿度、海拔）。温度/湿度扰动周期约 48 块边长，幅度约 0.14；海拔扰动周期约 128 块（更慢，避免海岸线逐块抖动），幅度 0.05。这让气候在 chunk 内连续漂移，包括海拔——是后续 per-column 群系选择能够在 chunk 内出现 beach/shallow/deep 渐变的来源。扰动后水域判定（<code>elevation ≤ sea_level</code>）也随之更新。</li>
     </ul>
     <div class="callout info">
       <strong>性能优化（2026-06-14 修复）</strong>：气候采样结果是 chunk 局部常量，但旧实现对每列方块都会重新采样，造成每个 chunk 调用 <code>sample_climate_for_chunk</code> 上千次、每次遍历约 7 千个 tile。修复后 <code>ChunkManager::cached_climate_for_chunk</code> 用 <code>thread_local</code> 缓存每个 worker 线程最近一次采样的 chunk，使后续相同 chunk 的查询从 O(tiles) 降到 O(1)。
     </div>
     <div class="callout info">
-      <strong>block 级扰动设计</strong>：<code>sample_climate_for_block</code> 不重复 IDW，而是复用 chunk 缓存的宏观气候，仅在末尾追加两次 Perlin 查询。per-column 调用的开销近似为两次 Perlin 噪声查询，不会随世界地图 tile 数量增长。
+      <strong>block 级扰动设计</strong>：<code>sample_climate_for_block</code> 不重复 IDW，而是复用 chunk 缓存的宏观气候，仅在末尾追加三次 Perlin 查询（温度、湿度、海拔）。per-column 调用的开销近似为三次 Perlin 噪声查询，不会随世界地图 tile 数量增长。
     </div>
 
     <h3>阶段 1:地形配置（<code>terrain_config_for_chunk</code>）</h3>
     <p>根据气候生成 <code>TerrainConfig</code>：</p>
     <ul>
-      <li>从 <code>data/terrain/default.json</code> 读取 <code>base_block / water_block / riverbed_block</code></li>
+      <li>从 <code>data/terrain/default.json</code> 读取 <code>base_block / water_block</code></li>
       <li>把 <code>temperature / moisture</code> 注入 cfg，供装饰阶段使用</li>
       <li>根据 <code>elevation - sea_level</code> 调整 <code>base_height</code>：海床降低、陆地抬升，钳制到 [36, WORLD_HEIGHT - 48]</li>
-      <li>水域或近岸降低 <code>amplitude</code>（让海岸线更平缓）</li>
-      <li><code>river.water_level = sea_level - 2</code></li>
+      <li>水域降低 <code>amplitude</code>（避免海床大幅起伏）。近岸 chunk 不再单独压平。</li>
     </ul>
 
     <h3>阶段 2:群系选择（multi-noise 气候空间）</h3>
     <p>群系选择遵循 Minecraft 1.18+ 的 multi-noise 模型：群系不是 chunk 大小的离散格子，而是从连续气候场里"涌现"出来的连续区域——相邻 column 气候相同则群系必然相同，气候跨越群系 climate range 边界处就是天然的过渡带。</p>
-    <p>两个查询入口：</p>
+    <p>两个相关数据入口：</p>
     <ul>
-      <li><strong>chunk 主导群系</strong>（<code>select_biome_for_chunk</code>）：返回单一群系，用于高度图、装饰、UI/minimap 等需要 chunk 级一致性的场合。优先用世界地图 tile 的 <code>biome_id</code>，找不到时走 <code>select_biome_for_climate</code>，仍失败回退到 <code>select_biome</code>。</li>
-      <li><strong>per-column 群系</strong>（<code>column_biome_lookup</code> → <code>sample_climate_for_block</code> → <code>select_biome_for_climate</code>）：每个 column 独立采样气候，独立选择群系。同一 chunk 内不同 column 可落到不同群系，这是"颜料晕染"过渡的来源。</li>
+      <li><strong>minimap 主导群系</strong>（<code>WorldMapTile::biome_id</code>）：世界地图 tile 的显示颜色来源。它表示该 tile 主要是什么群系，不再作为 chunk 生成输入。</li>
+      <li><strong>per-column 群系</strong>（<code>column_biome_lookup</code> → <code>sample_climate_for_block</code> → <code>select_biome_for_climate</code>）：每个 column 独立采样气候，独立选择群系。实际地表/次地表方块、水域列判定和高度 profile 都使用这个结果。同一 chunk 内不同 column 可落到不同群系，这是"颜料晕染"过渡的来源。</li>
     </ul>
-    <p><code>select_biome_for_climate</code> 核心算法是<strong>纯气候距离最近邻</strong>：在 (温度, 湿度, 海拔) 三维空间里找最近的群系 climate range。完全落在某群系 range 内 → distance = 0；否则按"超出 range 边界的距离平方和"比较。同距离时取注册顺序最早的（确定性 tie-break）。<strong>不再有 hash 加权随机</strong>——这是相邻 column 不会因随机噪声被分到不同群系的关键，也是消除"草原/深海交错"问题的核心改动。</p>
+    <p><code>select_biome_for_climate</code> 核心算法是<strong>纯气候距离最近邻</strong>：在 (温度, 湿度, 海拔) 三维空间里找最近的群系 climate range。完全落在某群系 range 内 → distance = 0；否则按"超出 range 边界的距离平方和"比较。同距离时优先选 <strong>climate range 更窄</strong> 的群系（窄 range 表示该群系更"专一"，应该优先于宽 range 的"通吃型"群系，例如热带中湿度气候应归 jungle 而不是 desert）。<strong>不再有 hash 加权随机</strong>——这是相邻 column 不会因随机噪声被分到不同群系的关键，也是消除"草原/深海交错"问题的核心改动。</p>
 
     <h3>阶段 3:地形 pipeline（<code>generate_terrain_for_chunk</code>）</h3>
-    <p>主体由 <code>TerrainGenerator::generate_chunk</code> 完成，但 <code>ChunkManager</code> 在外层加了一层「海岸线平滑」逻辑：</p>
+    <p>所有 surface 高度计算都基于世界坐标：fbm 噪声、气候采样、双线性宏观骨架都是纯函数 of <code>(wx, wz)</code>。因此相邻 chunk 在共享边界 column 上的高度一致（仅整数取整可能差 1），无需任何 chunk-local 高度图后处理。完整流程：</p>
     <ol>
-      <li><strong>双线性高度混合</strong>：先用 <code>generate_biome_height_map</code>（SIMD 4 路 fbm 噪声）计算生物群系局部高度图，再用 <code>base_height_at</code> 把 <code>cfg.base_height</code> 替换为世界地图的双线性插值高度。这样相邻 chunk 之间的高低差异是平滑的，而不是突变。
-        <div class="callout info">
-          <strong>multi-noise per-column 高度（Phase 4）</strong>：高度图计算分三步。
-          <ol>
-            <li>先用 chunk 主导群系跑一次 <code>generate_biome_height_map</code> 拿到 chunk 级 fbm 高度骨架。</li>
-            <li>对每列查 per-column 群系，按群系的 <code>height.amplitude_scale</code>（噪声幅度倍率）和 <code>height.offset</code>（最终抬升）重新计算 surface_y。这样山地气候 column 在草原 chunk 内也能真的高起来，而不是被压平到草原高度。</li>
-            <li>3×3 box-blur 平滑。没有这一步的话，相邻 column 之间会因 <code>amplitude_scale</code> 或 <code>offset</code> 突变出现单格高的台阶。</li>
-          </ol>
-          MOD 不写 <code>height</code> 块时默认 <code>offset=0, amplitude_scale=1.0</code>，保持旧的 chunk-dominant-only 行为。
-        </div>
-        <div class="callout info">
-          <strong>性能优化（2026-06-14 修复）</strong>：<code>base_height_at</code> 对每列方块都要求 4 个角 chunk 的基础高度。旧实现每个角 chunk 都重新采样气候，相当于 1 个 chunk 生成触发 256 × 4 = 1024 次气候采样。修复后 <code>terrain_base_height_for_block</code> 用 <code>thread_local</code> 的 4 角 cache，第一次调用预计算 4 个角的高度，后续 255 次调用只做纯插值，气候采样次数从 ~1024 降到 4。
-        </div>
+      <li><strong>Per-column surface_y 计算</strong>（<code>TerrainGenerator::surface_y_for_column_climate</code>）：
+        <ol>
+          <li>查 per-column 群系（<code>column_biome_at</code> → <code>sample_climate_for_block</code> → <code>select_biome_for_climate</code>）——用于方块 ID 选择（surface/subsurface block 不能混合）。</li>
+          <li>取宏观骨架高度 <code>base_height_at(wx, wz)</code>（<code>terrain_base_height_for_block</code>，4 角 chunk 气候的双线性插值）。</li>
+          <li>取 per-column 气候（<code>column_climate_at</code> → <code>sample_climate_for_block</code>）——用于高度 profile 混合。</li>
+          <li><strong>混合 (offset, amplitude_scale) profile</strong>：用 IDW（反距离加权）混合所有 biome 的 height profile。距离 = 气候 (T, M, E) 到 biome climate range 的平方距离。气候落在某 biome range 内时（距离=0），用该 biome 的 profile（tie-break 选 range 最窄的）；否则按 <code>1 / (distance + epsilon)</code> 加权平均。这让 beach (+7) 到 ocean (-8) 的过渡是连续渐变，而不是 chunk 边界突变。</li>
+          <li>叠加居中 fbm 偏移：<code>fbm * (amplitude / 2) * blended_amp_scale</code>。fbm 输出范围 <code>[-1, 1]</code>，所以这一项是双向的 <code>[-amp/2, +amp/2]</code>——这是"chunk 中心不再系统性偏高"的关键。</li>
+          <li>加 blended 高度偏移：<code>blended_offset</code>。</li>
+          <li>叠加 ridge 山脉抬升：若 <code>m_ridge_noise</code> 在阈值之上，按 <code>(noise - threshold) / (1 - threshold) * mountain.amplitude</code> 加上抬升量。海洋 column 不再做 <code>shore_fade</code> 或海平面钳制，海床可自由起伏到海平面之上形成浅滩、孤岛。</li>
+        </ol>
+        MOD 不写 <code>height</code> 块时默认 <code>offset=0, amplitude_scale=1.0</code>。
       </li>
-      <li><strong>海岸带处理</strong>：对每列判定距 chunk 边的距离。
-        <ul>
-          <li>内部区（距边 ≥ 4 块）：按生物群系规则钳制高度（水域钳到 <code>max_water_surface_y</code>，陆地钳到 <code>sea_level</code>）</li>
-          <li>边缘带（距边 &lt; 4 块）：不钳制，让自然插值高度决定海陆，避免邻接 chunk 在边缘出现悬崖</li>
-        </ul>
-      </li>
-      <li><strong>方块填充（per-column 群系）</strong>：高度图仍是 chunk 级（用 chunk 主导群系算，避免相邻 chunk 边界出现悬崖），但 <code>surface</code> / <code>subsurface</code> 方块和 <code>subsurface_depth</code> 按 per-column 群系决定。例如草原 chunk 中某个 column 落到了沙漠气候，那一列的表层就是沙子而不是草；紧邻 column 若仍属于草原气候则仍是草。这是 multi-noise 在视觉上最显著的一步——chunk 内可以同时呈现多种群系的表层材质，过渡处呈现"颜料晕染"而不是硬切换。装饰阶段（树木、灌木、河流、洞穴）仍按 chunk 主导群系工作，per-column 装饰是后续可选增强。</li>
+      <li><strong>方块填充（per-column 群系）</strong>：<code>surface</code> / <code>subsurface</code> 方块和 <code>subsurface_depth</code> 按 per-column 群系（最近邻 biome）决定。如果 surface_y 低于 sea_level 或者 biome 是水域群系，column 标记为 underwater，水面填到 sea_level。陆地的 surface 高于 sea_level 时按实际高度填充，不再强制压平。</li>
       <li><strong>地下矿石</strong>（<code>generate_underground</code> → <code>place_ores</code>）：用 <code>m_cave_noise</code> 的 3D Perlin 在指定 y 区间内把 <code>replace_block</code> 替换为矿石方块。矿石定义在 <code>data/ores/</code>。</li>
     </ol>
+    <div class="callout info">
+      <strong>已废弃的 chunk-local 路径</strong>：早期实现用 <code>generate_biome_height_map</code>（SIMD 4 路 fbm）算 chunk 内部高度图，再用 3×3 box-blur 平滑 biome 边界、最外 4 圈 column 用 <code>base_height_at</code> 锚定 chunk 边缘。这套机制已被世界坐标 fbm 取代——所有 chunk-local 后处理都因为 fbm 本身就是世界坐标连续函数而变成多余的补丁。相应地 <code>generate_base</code> / <code>generate_chunk</code> / <code>raise_mountains</code> 等老入口已删除。
+    </div>
+    <div class="callout info">
+      <strong>性能（2026-06-14 修复）</strong>：<code>base_height_at</code> 对每列方块都要求 4 个角 chunk 的基础高度。旧实现每个角 chunk 都重新采样气候，相当于 1 个 chunk 生成触发 256 × 4 = 1024 次气候采样。修复后 <code>terrain_base_height_for_block</code> 用 <code>thread_local</code> 的 4 角 cache，第一次调用预计算 4 个角的高度，后续 255 次调用只做纯插值，气候采样次数从 ~1024 降到 4。
+    </div>
 
-    <h3>阶段 4:大型特性（<code>generate_large_features_and_decorations</code>）</h3>
-    <p>在已经填好基础方块的 chunk 上叠加四类特性，顺序敏感：</p>
+    <h3>阶段 4:大型地物（<code>generate_large_features_and_decorations</code>）</h3>
+    <p>在已经填好基础方块的 chunk 上叠加地物，顺序敏感：</p>
     <ol>
-      <li><strong>山脉抬升</strong>（<code>raise_mountains</code>，仅陆地群系）：用 <code>m_noise</code> 的 2D Perlin，<code>noise > threshold</code> 时按 <code>(noise - threshold) / (1 - threshold)</code> 抬升地表，并叠加 <code>shore_fade</code> 让海岸附近不抬升。</li>
-      <li><strong>洞穴挖掘</strong>（<code>carve_caves</code>，<code>biome.has_caves</code> 时）：以 chunk 网格为锚点（每个 anchor 4×4 半径），用确定性哈希决定是否生成洞穴系统。生成时挖出椭球隧道，并向外延伸分支隧道。锚点机制保证相邻 chunk 挖出的洞穴能无缝衔接。</li>
-      <li><strong>河流刻蚀</strong>（<code>carve_rivers</code>，<code>biome.has_rivers</code> 时）：用 <code>m_river_noise</code> 的 2D Perlin，在 <code>|noise| < threshold</code> 的窄带内挖出河道，并填充 water 到 <code>water_level</code>。河床底部铺 <code>riverbed_block</code>。</li>
+      <li><strong>洞穴挖掘</strong>（<code>carve_caves</code>，<code>biome.has_caves</code> 时）：以 chunk 网格为锚点（每个 anchor 4×4 半径），用确定性哈希决定是否生成洞穴系统。生成时挖出椭球隧道，并向外延伸分支隧道。锚点机制保证相邻 chunk 挖出的洞穴能无缝衔接。洞穴入口高度直接用 <code>height_at</code> 的输出，后者已经包含 ridge 山脉抬升，所以入口与最终地表对齐。</li>
       <li><strong>地表装饰</strong>（<code>decorate_chunk</code>）：遍历已注册的 <code>TerrainFeature</code>，按群系白名单过滤。对每列计算植被概率场：
         <ul>
-          <li>树木类：综合 <code>vegetation.density</code>、噪声权重、湿度权重、温度适宜度（基于 <code>temperature_optimum</code> 和 <code>temperature_range</code>）和坐标随机权重，决定是否放置树。放置时按 <code>trunk_block + leaves_block</code> 或单体 <code>block</code> 绘制。</li>
-          <li>单方块特性（石堆、灌木、遗迹碎片等）：按 <code>density * 6</code> 次随机尝试放置。</li>
+          <li>树木类：综合 <code>vegetation.density</code>、噪声权重、湿度权重、温度适宜度（基于 <code>temperature_optimum</code> 和 <code>temperature_range</code>）和坐标随机权重，决定是否放置树。放置时使用单体 <code>block</code> 地物方块。树木可以放在 chunk 边缘 column。</li>
+          <li>单方块地物（石堆、灌木、遗迹碎片等）：按 <code>density * 6</code> 次随机尝试放置。</li>
         </ul>
       </li>
     </ol>
+    <div class="callout info">
+      山脉抬升已合并到 fbm 阶段（<code>surface_y_for_column</code> 末尾的 ridge noise 分支）。早期独立的 <code>raise_mountains</code> 后处理阶段已删除——它需要先扫描已生成的 chunk 数据找当前 surface_y 再叠加 uplift，而 ridge noise 作为 surface 公式的一部分可以直接在世界坐标上采样，跨 chunk 天然连续，不会出现"山脉从 chunk 边界突然隆起"的伪影。
+    </div>
 
     <h2>噪声分层</h2>
     <p><code>TerrainGenerator</code> 持有三组独立 Perlin 噪声（不同种子偏移），保证用途互不干扰：</p>
     <table>
       <thead><tr><th>成员</th><th>种子偏移</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>m_noise</code></td><td>无（直接用 world_seed）</td><td>地表高度图、山脉抬升、装饰概率场</td></tr>
+        <tr><td><code>m_noise</code></td><td>无（直接用 world_seed）</td><td>地表高度图 fbm、装饰概率场</td></tr>
         <tr><td><code>m_cave_noise</code></td><td>0xA5A5... 异或</td><td>矿石分布</td></tr>
-        <tr><td><code>m_river_noise</code></td><td>0x5A5A... 异或</td><td>河流路径</td></tr>
+        <tr><td><code>m_ridge_noise</code></td><td>0xD1B5... 异或</td><td>ridge 山脉抬升，叠加到 surface_y_for_column</td></tr>
       </tbody>
     </table>
 
@@ -160,22 +158,55 @@
         <tr><td>per-column 群系查询</td><td>O(biomes)</td><td>线性扫描 climate range 找最近邻，单 chunk 256 column × 群系数</td></tr>
         <tr><td>地表高度图</td><td>O(CHUNK_SIZE² / 4 × octaves)</td><td>SIMD 4 路并行处理 4 列</td></tr>
         <tr><td>洞穴挖掘</td><td>O(anchor² × tunnel_length)</td><td>每 chunk 受 9×9 = 81 个 anchor 影响</td></tr>
-        <tr><td>河流刻蚀</td><td>O(CHUNK_SIZE² × WORLD_HEIGHT)（最坏）</td><td>实际只对命中阈值的列扫描</td></tr>
       </tbody>
     </table>
 
     <h2>已知的未来改进</h2>
     <ul>
       <li><strong>极地折返处双线性高度异常</strong>：<code>base_height_at</code> 用四个角 chunk 的气候做双线性插值，在极地折返附近可能产生高度异常。考虑改用球面插值或对极地区域使用最近邻。该项影响面小（极地仅占星球一小部分），优先级低。</li>
-      <li><strong>per-column 装饰</strong>：当前 <code>decorate_chunk</code>（树木、灌木、河流、洞穴）仍按 chunk 主导群系工作。如果要让 chunk 边界处的装饰也按 column 群系分布（比如草原 chunk 内的小片沙漠不长树），需要把装饰阶段改成 per-column 群系评估。改动面较大，留作可选增强。</li>
+      <li><strong>per-column 装饰</strong>：当前 <code>decorate_chunk</code>（树木、灌木、洞穴）仍按 chunk 中心 column 的群系工作。如果要让 chunk 边界处的装饰也按 column 群系分布（比如草原区域内的小片沙漠不长树），需要把装饰阶段改成 per-column 群系评估。改动面较大，留作可选增强。</li>
     </ul>
+
+    <div class="callout info">
+      <strong>海洋深度与海岸过渡（2026-06-20 下午）</strong>
+      <ul>
+        <li><code>terrain_config_for_chunk</code> 和 <code>sample_chunk_base_height_value</code> 移除 water chunk 的两个钳制：<code>cfg.base_height ≤ sea_level - 4</code> 和 <code>cfg.amplitude ≤ 6</code>。macro 完全按 elevation 平滑变化，海床 fbm 起伏跟陆地一样（amp=15），不再是平的"海底地板"。</li>
+        <li><code>sample_climate_for_block</code> 新增第三个 Perlin 扰动场——海拔。周期 128 块（比温度/湿度的 48 块慢），幅度 0.05，让 chunk 内 elevation 也能连续漂移。这样 beach/ocean_shallow/ocean 群系选择在 chunk 内是渐变而不是按 chunk 中心离散判定，海岸过渡带自然变宽。扰动后 water 标志按新 elevation 重新判定。</li>
+        <li>CoreMod 重新设计海洋群系对：<code>ocean</code>（深海）offset -15、amp_scale 0.4、elevation 0.0-0.40；<code>ocean_shallow</code>（浅海）offset -3、amp_scale 1.2、elevation 0.40-0.50。浅海 fbm 起伏明显（±9 块），偶尔露出海面形成浅滩/孤岛；深海是相对平坦的深海平原，fbm 起伏只有 ±3 块。</li>
+        <li><code>river</code> 群系 offset 改为 -3、amp_scale 0.4，避免新管线下河床偶尔高出 sea_level 形成"干河"。</li>
+      </ul>
+    </div>
+
+    <div class="callout info">
+      <strong>边界连续性补丁（2026-06-20）</strong>
+      <ul>
+        <li>新增 <code>TerrainGenerator::surface_y_for_column_climate</code>：把 biome 的 <code>(offset, amplitude_scale)</code> 按气候距离 IDW 混合，而不是离散选用最近 biome。这让 land biome (+7) 和 ocean biome (-8) 之间的 surface_y 是连续渐变，消除 chunk 边界悬崖。方块 ID 选择（surface_block 等）仍按最近 biome，因为方块类型不能混合。</li>
+        <li><code>ChunkManager</code> 新增 <code>column_climate_lookup()</code> 回调，给 <code>generate_terrain_for_chunk</code> 传 <code>column_climate_at</code> 参数。所有内部调用点已更新。</li>
+        <li>CoreMod 的 <code>beach</code> 群系 climate range 收紧到 <code>elevation 0.48-0.52</code>（紧贴 sea_level），避免在内陆中等海拔地区误判为 beach。</li>
+        <li><code>decorate_chunk</code> 允许树木放在 chunk 边缘 column。</li>
+      </ul>
+    </div>
+
+    <div class="callout info">
+      <strong>世界级 fbm 重构（2026-06-19）</strong>
+      <ul>
+        <li><code>height_at</code> 不再把 fbm 重映射到 <code>[0, 1]</code>——直接用居中输出 <code>[-1, 1]</code>，所以高度增量是双向的 <code>[-amp/2, +amp/2]</code>。这消除了"chunk 内部系统性高于边缘"的偏置。</li>
+        <li>删除 Phase 1c 的 3×3 box-blur 和 4 圈 border zone 锚定——fbm 本身就是世界坐标连续函数，所有 chunk-local 后处理都成了多余补丁。</li>
+        <li>删除水域 column 在 inner zone 钳到 <code>max_water_surface_y</code> 的逻辑——海床按 fbm 自由起伏，可在海平面之上形成浅滩/孤岛。</li>
+        <li>删除 <code>raise_mountains</code> 后处理阶段。山脉抬升合并到 <code>surface_y_for_column</code> 的 ridge 分支，跨 chunk 天然连续。</li>
+        <li>删除老入口 <code>generate_biome_height_map</code> / <code>generate_base_from_height_map</code> / <code>generate_base</code> / <code>generate_chunk</code> / <code>raise_mountains</code>，及 <code>ChunkHeightMap</code> typedef。</li>
+        <li>新增 <code>TerrainGenerator::surface_y_for_column</code>：chunk 生成阶段每列调一次，组合宏观骨架 + 居中 fbm + ridge 抬升，应用 biome amplitude_scale 和 offset。</li>
+        <li>新增 <code>m_ridge_noise</code> 成员（独立种子偏移）作为山脉抬升的来源。</li>
+        <li><code>carve_caves</code> 入口高度直接取 <code>height_at</code>（已经包含 ridge），不再做水域钳制。</li>
+      </ul>
+    </div>
 
     <div class="callout info">
       <strong>multi-noise / 气候空间迁移</strong>
       <ul>
         <li>群系选择从 hash 加权随机改为纯气候距离最近邻，相同气候必然映射到相同群系，相邻 column 不会因随机噪声被分到不同群系。</li>
         <li>气候采样新增 block 级扰动（<code>sample_climate_for_block</code>），让气候在 chunk 内连续漂移，是 chunk 内多群系的物理基础。</li>
-        <li><code>generate_terrain_for_chunk</code> 新增 <code>column_biome_at</code> 参数，<code>surface</code> / <code>subsurface</code> 方块按 per-column 群系决定，同一 chunk 内可呈现多种群系表层。</li>
+        <li><code>generate_terrain_for_chunk</code> 不再接收 chunk 级 biome 参数；实际生成使用 <code>column_biome_at</code>，<code>surface</code> / <code>subsurface</code> 方块按 per-column 群系决定，同一 chunk 内可呈现多种群系表层。</li>
         <li>per-column 高度（Phase 4）：群系可选 <code>height</code> 块声明 <code>offset</code> 和 <code>amplitude_scale</code>，让山地气候 column 在草原 chunk 内也能真的高起来；3×3 box-blur 平滑过渡，MOD 不写 <code>height</code> 块则保持旧行为。</li>
         <li>消除了"草原/深海交错"问题：相邻 chunk 同气候 → 同群系；chunk 内气候漂移 → 颜料晕染式过渡。</li>
       </ul>
@@ -187,18 +218,30 @@
         <li>气候采样 thread_local 缓存：单 chunk 生成气候采样次数从 ~1024 降到 4。</li>
         <li><code>terrain_base_height_for_block</code> 4-corner thread_local cache：插值查询从 O(tiles) 降到 O(1)。</li>
         <li><code>carve_caves</code> 入口高度加入 biome 钳制，与 <code>generate_biome_height_map</code> 对齐。</li>
-        <li><code>place_tree_feature</code> 按 <code>leaves_radius</code> 限制 trunk 位置，避免树冠跨 chunk 截断。</li>
+        <li><code>place_tree_feature</code> 使用单体 tree block。</li>
         <li><code>BiomeDescriptor</code> 移除 6 个 <code>tree_*</code> 死字段，相关 JSON/Lua 解析同步清理。</li>
         <li>删除死代码 <code>WorldMap::find_nearest_tile_for_chunk</code>。</li>
       </ul>
       详见仓库根目录 <code>TERRAIN_PIPELINE_AUDIT.md</code>。
     </div>
 
+    <div class="callout info">
+      <strong>性能改进（2026-06-18）</strong>
+      <ul>
+        <li><code>ChunkDataStore</code> 内部改为 16 高度 sub-chunk 存储。全空气或全同类方块的 sub-chunk 只保存一个 uniform <code>BlockState</code>；多状态 sub-chunk 会优先保存 state palette + u8/u16 indices，palette key 只看 id/data，写入 id/data 时保守展开为 dense；GPU block light 写入独立 light overlay，不再修改 voxel state。</li>
+        <li>主要读路径已切到 sub-chunk API：高度缓存通过 accessor 扫描 uniform/palette/dense 数据；NavMesh backprop 对已加载 chunk 可通过 accessor 从 <code>ChunkDataStore</code> 直接构建；GPU light registry 也通过 accessor 扫描发光方块和构建 BFS light volume。GPU probe / GPU fluid candidate 输入通过 <code>copy_chunk_packed()</code> 以 <code>BlockState + LightData</code> 打包；网络 chunk delta 使用 <code>ChunkSnapshot</code> 对比原始地形，snapshot 保留独立 <code>lights</code> 数组。</li>
+        <li>存档写出的 block payload 只保存 <code>[id,data]</code> state，光照进入 chunk-level <code>lights</code> 数组。</li>
+        <li><code>ChunkMesher</code> 新增 accessor 入口。LOD-only mesh refresh 不再重建 NavMesh，且只快照 <code>BlockId</code> 数组，不复制完整 <code>Block</code>，并会跳过已知全空气 sub-chunk 的 LOD 扫描。</li>
+        <li>chunk mesh 的 3×3 邻居缓存统一使用 <code>MeshNeighborChunk</code>：已加载 chunk 通过 <code>ChunkDataStore::ChunkSnapshot</code> 保留 sub-chunk/uniform 结构，未加载邻居才临时生成 dense terrain。dirty rebuild、async chunk build、初始核心 chunk 和同步 <code>build_chunk_at</code> 都不再为了读取已加载邻居而展开完整 dense <code>Block</code> 副本。<code>LightSystem::compute_all_overlay_with_accessor</code> 负责生成独立 light overlay，再通过 mesher light accessor 采样光照。</li>
+        <li>渲染 chunk mesh 的 <code>BlockVertex</code> 从 40B 压缩到 32B：位置仍为 float3，UV 使用 half-float，atlas origin/size、light 和 surface grid coord 使用 16-bit normalized attribute。chunk CPU mesh 和 aggregate index buffer 改为 16-bit index，实体 mesh 仍保留 32-bit index。</li>
+        <li>chunk aggregate 增加 CPU cache 和 slice table：可见 chunk 集合不变时，三帧 in-flight 复用同一份拼接结果；同尺寸 chunk mesh 更新会覆盖所有 display copy 对应的 CPU slice，并只向 GPU copy 该 slice 的 vertex/index range。wrap seam 下同一 storage mesh 的 display offset 会在 partial update 时重新应用；尺寸变化但可见集合不变时会重排 aggregate CPU cache 并全量上传 GPU，避免重跑 frustum/sort/draw-list。aggregate GPU buffer 按增长 capacity 分配，减少 streaming 或 render distance 波动时的小幅扩容重建。</li>
+      </ul>
+    </div>
+
     <h2>调试技巧</h2>
     <ul>
       <li>控制台输入 <code>engine.terrain.list_biomes()</code> 列出所有已注册群系</li>
-      <li>日志中若出现 <code>[Worldgen] no biome match for chunk=...</code>，说明气候采样返回 <code>valid=false</code>（通常是世界地图尚未生成或归一化失败），<code>select_biome_for_chunk</code> 走到了 <code>select_biome</code> 兜底分支。检查世界地图是否已通过 <code>WorldMapGenerator::generate</code> 正常生成。注意：multi-noise 改造后 <code>select_biome_for_climate</code> 是纯最近邻，总会返回候选，不会再因"climate range 缺口"打印该 warning。</li>
-      <li>调试 column 级群系分布：用 <code>engine.terrain.select_biome</code> 在 Lua 控制台查询某个 chunk 的主导群系，或在生成器中临时调高 <code>sample_climate_for_block</code> 的扰动幅度（<code>PERTURB_AMP</code>）观察 chunk 内多群系变化是否如预期。</li>
+        <li>调试 column 级群系分布：移动鼠标查看 debug 面板中的 Biome，它显示的是当前 block column 的实际群系；也可以在生成器中临时调高 <code>sample_climate_for_block</code> 的扰动幅度（<code>PERTURB_AMP</code>）观察 chunk 内多群系变化是否如预期。</li>
       <li>启动加 <code>--DEBUG</code> 参数可看到 <code>[WorldMap]</code> 和 <code>[Chunks]</code> 日志，了解世界地图大小和 chunk 生成状况。</li>
     </ul>
 

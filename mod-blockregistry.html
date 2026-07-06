@@ -19,6 +19,7 @@
   "name": "Copper Ore",
   "stack_size": 64,
   "hardness": 3.0,
+  "emission": 0,
   "category": "material",
   "drops": [
     "copper_age:copper_ore",
@@ -34,6 +35,7 @@
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。</td></tr>
         <tr><td><code>stack_size</code></td><td>int</td><td>否</td><td>背包每格最大堆叠数，范围 1~999。不填默认为 1（不可堆叠）。</td></tr>
         <tr><td><code>hardness</code></td><td>float</td><td>否</td><td>挖掘硬度，决定挖掘所需时间。</td></tr>
+        <tr><td><code>emission</code></td><td>int</td><td>否</td><td>方块光源强度，范围 <code>0</code> 到 <code>15</code>。省略或为 <code>0</code> 时不发光；大于 <code>0</code> 的任意方块都会作为 block light 光源注册，不限于火把。</td></tr>
         <tr><td><code>drops</code></td><td>array</td><td>否</td><td>挖掘后掉落的物品列表。元素可以是字符串 ID，也可以是 <code>{ "item": "...", "min": 1, "max": 2 }</code> 对象；引用必须指向已注册的方块 ID。</td></tr>
         <tr><td><code>category</code></td><td>string</td><td>否</td><td>分类标签，如 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</td></tr>
         <tr><td><code>material</code></td><td>string</td><td>否</td><td>材质类型，如 <code>rock</code>、<code>earth</code>、<code>wood</code>、<code>plant</code>、<code>metal</code>、<code>fluid</code>、<code>glass</code>。</td></tr>
@@ -95,6 +97,7 @@ data copper_age:copper_ore        —— 查看单个方块的完整 JSON</code>
     <ul>
       <li>每个方块 ID 被哈希为 32 位整数；运行时 <code>BlockId</code>、网络同步和 <code>resolve_block_id</code> 均使用该 32 位值。</li>
       <li><code>stack_size</code> 被独立解析存入 <code>m_block_stack_limit</code> 表，库存系统直接查询哈希表获取堆叠上限。</li>
+      <li><code>emission</code> 会在世界初始化时注册到体素光照系统，所有 <code>emission &gt; 0</code> 的方块都会被光源 registry 扫描和增量跟踪。</li>
       <li><code>block_class</code> 和旧 <code>translucent</code> 字段会在世界初始化时写入体素遮挡/通行分类；未显式设置时，<code>material=fluid</code> 或 <code>material=plant</code> 会被推导为 transparent。</li>
       <li>热重载时旧元数据自动清理，新元数据重新填入。</li>
     </ul>

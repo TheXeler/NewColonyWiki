@@ -17,12 +17,20 @@
     <pre><code>{
   "id": "core:blacksmith",
   "name": "Blacksmith",
+  "description": "Metalworking specialist for smelting, tools, weapons, and armor.",
+  "parent": "core:stonemason",
+  "tier": 3,
+  "sort_order": 80,
   "max_level": 5,
   "required_block": { "id": "core:anvil_item", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
     { "id": "core:smelt_iron", "level": 1 },
     { "id": "core:craft_iron_pickaxe", "level": 2 }
+  ],
+  "bonuses": [
+    { "stat": "work_speed", "value": 0.12, "mode": "add_mult" },
+    { "stat": "melee_damage", "value": 1.5, "mode": "add" }
   ]
 }</code></pre>
 
@@ -32,16 +40,39 @@
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>职业显示名称。</td></tr>
+        <tr><td><code>description</code></td><td>string</td><td>否</td><td>职业介绍文本，供转职界面展示。</td></tr>
+        <tr><td><code>parent</code> / <code>tree_parent</code></td><td>string</td><td>否</td><td>转职树父节点职业 ID。仅用于 UI/数据展示，不改变当前前置校验逻辑。</td></tr>
+        <tr><td><code>tier</code></td><td>int</td><td>否</td><td>转职树层级，默认 1。</td></tr>
+        <tr><td><code>sort_order</code></td><td>int</td><td>否</td><td>职业列表和转职树中的稳定排序值。</td></tr>
         <tr><td><code>civilization</code></td><td>string</td><td>否</td><td>限制可分配该职业的文明 ID；实体必须有匹配的 <code>Civilization</code> 组件。</td></tr>
         <tr><td><code>max_level</code></td><td>int</td><td>否</td><td>最大等级，范围 1-5，决定配方解锁的等级上限。</td></tr>
         <tr><td><code>required_block</code></td><td>object</td><td>是</td><td>从事该职业所需的工具方块。<code>id</code> 指向已注册的方块 ID，<code>count</code> 为所需数量。</td></tr>
         <tr><td><code>prerequisites</code></td><td>object[]</td><td>否</td><td>前置职业列表。每项包含 <code>id</code>（职业 ID）和 <code>level</code>（所需等级）。空数组表示无条件可转职。</td></tr>
         <tr><td><code>unlocks_recipes</code></td><td>array</td><td>否</td><td>该职业解锁的配方列表。每个条目可以是一个配方 ID 字符串，也可以是包含 <code>id</code>（配方 ID）和 <code>level</code>（解锁所需等级）的对象。</td></tr>
+        <tr><td><code>bonuses</code></td><td>object[]</td><td>否</td><td>职业加成。每项包含 <code>stat</code>、<code>value</code> 和 <code>mode</code>（如 <code>add</code>、<code>add_mult</code>、<code>mul</code>、<code>set</code>）。当前会进入人员界面的只读聚合属性（基础 <code>Stats</code> + 当前职业加成）；其中 <code>mining_speed</code>、<code>work_speed</code>、<code>construction_speed</code>、<code>crafting_speed</code>、<code>hauling_speed</code> 已影响对应工作 job 的完成速度，<code>carry_capacity</code> 已影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 已影响作物收获的额外产出概率。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
       职业系统通过 <code>required_block</code> 控制门槛——殖民者背包中必须持有指定数量和类型的方块才能转职。配方按 <code>level</code> 阶梯解锁，等级提升后可获得更高级的制造能力。
+    </div>
+
+    <h2>Lua/UI 聚合接口</h2>
+    <p>经营界面可直接读取聚合后的职业数据，不需要逐个解析组件：</p>
+    <table>
+      <thead><tr><th>API</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.professions.defs()</code></td><td>返回按 <code>sort_order</code> 排序的职业定义，包含介绍、需求物品、前置、解锁配方和加成。</td></tr>
+        <tr><td><code>engine.professions.tree()</code></td><td>返回按 <code>tier</code>/<code>sort_order</code> 排序的转职树节点。</td></tr>
+        <tr><td><code>engine.professions.aggregate_stats(entity)</code></td><td>返回指定实体基础属性叠加当前职业加成后的扁平属性表，并在 <code>snapshot</code> 字段提供 UI 分组视图。</td></tr>
+        <tr><td><code>engine.colonists.detail(entity)</code></td><td>返回人员面板角色菜单字段，包含 <code>id/entity</code>、名称、职业 ID/名称、等级/经验、经历、心情、需求和聚合后的 <code>base_attrs</code>、<code>work_attrs</code>、<code>combat_attrs</code>。</td></tr>
+        <tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回装备槽、物品栏和页面用的 <code>equipment</code>/<code>page_inventory</code> 摘要。</td></tr>
+        <tr><td><code>engine.colonists.career_tree(entity?)</code></td><td>人员界面同源转职树入口；传入实体时返回 <code>{ current, options }</code>，每个选项包含职业介绍、加成、需求和 <code>unlocked/reason</code>。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <code>bonuses</code> 已分阶段接入模拟。工作时长接入包括：挖矿使用 <code>mining_speed</code>，建造使用 <code>construction_speed</code> 或回退到 <code>work_speed</code>，制作使用 <code>crafting_speed</code> 或回退到 <code>work_speed</code>，搬运 job 的移动型进度使用 <code>hauling_speed</code> 或回退到 <code>carry_move_speed</code>。搬运容量接入包括：<code>carry_capacity</code> 影响从方块掉落表拾取物品时的一次携带数量；无该 bonus 时默认仍为 1。成功率接入包括：<code>work_success_rate</code> 在 <code>systems.farming</code> 的成熟作物收获中按"聚合成功率 / 基础成功率"计算职业成功倍率，超过 1 的部分 clamp 到 0-100% 作为每种产出额外 +1 的概率；无职业 bonus 时倍率为 1，不改变原产量。<code>max_hp</code>、伤害、闪避等战斗字段仍只保证 UI 聚合展示，尚未进入战斗公式。
     </div>
 
     <h2>CoreMod 内置职业</h2>
