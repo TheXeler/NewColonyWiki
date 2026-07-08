@@ -18,7 +18,7 @@
     </div>
 
     <h2>资源位置</h2>
-    <p>过渡期页面资源在 <code>CoreMod/assets/ui/html/</code> 下; 引擎 RmlUI 宿主层的文档根为 <code>&lt;core_assets&gt;/ui</code>（<code>Engine::init()</code> 时 <code>RmlUiHost::init</code>），当前默认 Null stub 不实际加载。下面的 HTML 资源供迁移参考。</p>
+    <p>过渡期页面资源在 <code>CoreMod/assets/ui/html/</code> 下；引擎 RmlUI 宿主层的文档根为 <code>&lt;core_assets&gt;/ui</code>（<code>Engine::init()</code> 时 <code>RmlUiHost::init</code>），默认玩家构建加载 <code>CoreMod/assets/ui/rml/</code> 下的 RML/RCSS 文档。下面的 HTML 资源仅供离线迁移参考，不是游戏内 UI 路线。</p>
 <pre><code>CoreMod/assets/ui/html/
 ├── index.html              主 HUD 外壳 (资源栏 + 底部命令栏 + 面板层)
 ├── README.md               目录说明 / 宿主层 / 桥契约 / 页面层
@@ -65,7 +65,7 @@
     </table>
 
     <h2>页面 → C++ 命令</h2>
-    <p>页面以 <code>sendCommand(target, payload)</code> 发指令, 引擎每帧 <code>drain_commands()</code> 派发 (宿主保留 <code>core:webui.reload</code> 已在 <code>handle_host_command</code> 处理):</p>
+    <p>这些 HTML 参考页面使用 <code>sendCommand(target, payload)</code> 描述旧桥契约；实际游戏内 RmlUI 文档以 <code>data-command</code> / <code>data-param-*</code> 生成 <code>RmlUiCommand</code>，宿主保留命令为 <code>core:rmlui.reload</code>。</p>
     <table>
       <thead><tr><th>target</th><th>payload</th><th>用途</th></tr></thead>
       <tbody>

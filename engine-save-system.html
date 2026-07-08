@@ -14,7 +14,7 @@
     <p class="subtitle">本页按 <code>Engine/Save/SaveSystem.cpp</code> 的当前实现整理，用来判断哪些状态会被保存、哪些只是占位或仍需补齐。</p>
 
     <h2>入口和文件布局</h2>
-    <p>控制台命令 <code>save [name]</code>、<code>load [name]</code> 和 <code>save_list</code> 通过 <code>Engine::save_world</code>、<code>Engine::load_world</code> 调用 <code>SaveSystem</code>。保存槽 ID 只能包含字母、数字、下划线和短横线。</p>
+    <p>控制台命令 <code>save [name]</code>、<code>load [name]</code> 和 <code>save_list</code> 通过 <code>Engine::save_world</code>、<code>Engine::load_world</code> 调用 <code>SaveSystem</code>。保存槽 ID 只能包含字母、数字、下划线和短横线。窗口关闭或退出游戏时，如果世界仍处于活动状态，引擎会先暂停模拟、取消未开始的后台 chunk 工作，并同步保存当前槽后再释放资源。</p>
     <table>
       <thead><tr><th>文件</th><th>当前内容</th><th>加载行为</th></tr></thead>
       <tbody>

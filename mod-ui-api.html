@@ -377,7 +377,7 @@ return M</code></pre>
     </table>
 
     <h2 id="rml-ui-host">游戏内 RmlUI 宿主层（目标主 UI 路线）</h2>
-    <p>UI 技术路线已从旧即时模式 UI / 外部浏览器（ExternalBrowser + 本地 HTTP server）转向游戏内 <strong>RmlUI</strong>：HTML/CSS 风格、进程内渲染、合成进 Vulkan 画面。引擎不再启动本地 HTTP server，不再以外部浏览器作为 UI 验收路径；旧即时模式 UI 依赖已完全移除。默认构建使用 <strong>Null stub</strong>（backend 名 <code>rml</code>，<code>is_real_backend()==false</code>，不渲染、不启动任何外部进程），但宿主层完整生命周期、数据桥和命令通道全部接好。真 RmlUi 库接入后，在 <code>make_rml_ui_runtime()</code> 切换；初始化失败会自动退回 Null stub，不会崩溃。</p>
+    <p>UI 技术路线已从旧即时模式 UI / 外部浏览器（ExternalBrowser + 本地 HTTP server）转向游戏内 <strong>RmlUI</strong>：HTML/CSS 风格、进程内渲染、合成进 Vulkan 画面。引擎不再启动本地 HTTP server，不再以外部浏览器作为 UI 验收路径；旧即时模式 UI 依赖已完全移除。玩家构建固定使用真实 RmlUI backend，宿主层完整生命周期、数据桥、命令通道和 Vulkan 合成都由 <code>RmlUiHost</code> / <code>RealRmlUiRuntime</code> 驱动。Null stub 只保留为显式诊断/失败回退路径，启用时不会渲染文档并会记录错误级日志。</p>
 
     <h3>三层结构</h3>
     <table>
@@ -390,7 +390,7 @@ return M</code></pre>
     </table>
 
     <h3>生命周期与引擎接入</h3>
-    <p>引擎通过 <code>engine.rml_ui()</code> 拿到 <code>RmlUiHost</code>。Host 在 <code>Engine::init()</code> 创建并加载 <code>&lt;core_assets&gt;/ui/rml/main.rml</code>（Null stub 下 <code>load_document</code> 返回 false，属预期）；主循环每帧 <code>update(dt)</code> 并 <code>drain_commands()</code>；<code>shutdown()</code> 时释放。世界加载时触发 <code>on_world_init()</code>（重载文档 + 重推 <code>world_info</code>），回到主菜单触发 <code>on_return_to_main_menu()</code>，窗口尺寸变化调用 <code>resize()</code>。对应 <code>Engine.cpp</code> 中 <code>RmlUi</code> 帧采样段。</p>
+    <p>引擎通过 <code>engine.rml_ui()</code> 拿到 <code>RmlUiHost</code>。Host 在 <code>Engine::init()</code> 创建并加载 <code>&lt;core_assets&gt;/ui/rml/main.rml</code>；主循环每帧 <code>update(dt)</code>、<code>drain_commands()</code>，并由 renderer UI pass 调用 <code>render(cmd)</code> 合成到窗口；<code>shutdown()</code> 时释放。世界加载时触发 <code>on_world_init()</code>（重载文档 + 重推 <code>world_info</code>），回到主菜单触发 <code>on_return_to_main_menu()</code>，窗口尺寸变化调用 <code>resize()</code>。对应 <code>Engine.cpp</code> 中 <code>RmlUi</code> 帧采样段。</p>
     <p>数据刷新走统一入口 <code>Engine::publish_rml_ui_snapshots()</code>：遍历 <code>RML_UI_SNAPSHOT_CHANNELS</code> 全部十一个通道，逐个调用 <code>ScriptEngine::get_ui_snapshot(channel)</code>（内部走 Lua 数据桥 <code>engine.ui.data.snapshot</code> 并序列化为 JSON）后推入 <code>RmlUiBridge</code>。刷新按 <code>RML_UI_REFRESH_INTERVAL</code>（约 5 Hz）节流，避免每帧重复聚合快照；世界（重新）进入的那一帧强制立即刷新一次，保证新加载页面不会短暂空白。命令派发同样集中：<code>Engine::dispatch_rml_ui_command()</code> 调用 <code>ScriptEngine::run_ui_command(target, payload)</code>，由 Lua 桥 <code>engine.ui.command.run</code> 落到具体系统；命令返回的 <code>changed_channels</code> 会驱动局部刷新，返回 JSON 另写入 <code>command_result</code> 通道。</p>
 
     <h3>C++ → 文档：快照通道</h3>
@@ -419,7 +419,7 @@ return M</code></pre>
 
     <h3>渲染接入点</h3>
     <div class="callout info">
-      当前 <strong>未</strong> 把 RmlUI 合成到 Vulkan 画面。接入点已留：<code>RmlUiRuntime::render(VkCommandBuffer)</code> 接口存在，<code>Engine.cpp</code> 主循环内标注 <code>TODO(rmlui-render)</code>。默认 Null stub 的 <code>render()</code> 返回 false，零开销。接入真后端时，在 <code>make_rml_ui_runtime()</code> 返回新后端，在其 <code>render()</code> 内把文档纹理 blit 到命令缓冲，并取消该 TODO 调用。注意不要覆盖 Renderer 现有的 <code>set_ui_render_callback</code>（已由 DevConsole 使用）——需要时扩展为回调链。
+      真实 RmlUI backend 已通过 <code>RmlUiRuntime::render(VkCommandBuffer)</code> 接入 Vulkan UI pass。<code>RealRmlUiRuntime</code> 的 RenderInterface 负责 compiled geometry、纹理描述符、scissor 和 <code>context-&gt;Render()</code> 命令录制；Null stub 的 <code>render()</code> 返回 false，仅用于显式诊断/失败回退。
     </div>
 
     <h3 id="ui-backend-select">backend 选择</h3>
@@ -427,33 +427,32 @@ return M</code></pre>
     <table>
       <thead><tr><th>取值</th><th>行为</th></tr></thead>
       <tbody>
-        <tr><td>未设置 / 空 / <code>rml</code></td><td><code>NullRmlUiRuntime</code> stub（<code>backend_name()=="rml"</code>，<code>is_real_backend()==false</code>；不渲染、不启动任何外部进程，游戏行为不变）。这是当前默认且唯一的 backend。</td></tr>
-        <tr><td><code>null</code></td><td>显式强制 stub，即使将来接入了真 backend 也可用此值禁用 UI（便于无头/自动化运行）。</td></tr>
+        <tr><td>未设置 / 空 / <code>rml</code></td><td>默认真实 RmlUI backend，玩家可见 UI 从 RML/RCSS 文档渲染。</td></tr>
+        <tr><td><code>null</code></td><td>显式强制 stub，即使已编译真 backend 也可禁用 UI（仅用于无头/自动化诊断）；运行时会记录错误级提示。</td></tr>
       </tbody>
     </table>
     <div class="callout info">
       <strong>已移除 <code>external</code> 路径。</strong> 此前的 <code>NC_WEBUI_BACKEND=external</code> / <code>ExternalBrowserWebUiRuntime</code> 调试后端（绑定 127.0.0.1 的微型 HTTP server + <code>ShellExecuteW</code> 打开系统浏览器 + <code>ws2_32</code>/<code>shell32</code> 链接）已整体删除。引擎不再启动本地 HTTP server，不再以外部浏览器作为 UI 验收路径。游戏内 UI 统一走 RmlUI；真 backend 接入方式见下文。
     </div>
-    <p>Fallback：真 backend 接入后，<code>RmlUiHost::init</code> 调用其 <code>init()</code>，若失败会 <code>shutdown</code> 该 backend 并用 <code>make_null_rml_ui_runtime()</code> 替换，宿主层照常运行，游戏绝不因缺依赖崩溃。</p>
+    <p>Fallback：<code>RmlUiHost::init</code> 调用真实 backend 的 <code>init()</code>，若失败会 <code>shutdown</code> 该 backend 并用 <code>make_null_rml_ui_runtime()</code> 替换，宿主层照常运行，同时日志明确指出没有可见 UI。</p>
 
     <h3 id="integrate-real-rmlui">接入真 RmlUI backend</h3>
-    <p>vcpkg 已有 <code>rmlui</code> 端口（v6.1，默认 feature <code>freetype</code>，CMake 目标 <code>RmlUi::RmlUi</code>），但默认构建<strong>不</strong>写进 <code>vcpkg.json</code>，避免每次 configure 强制联网构建。完整的启用步骤、CMake option（<code>NEWCOLONY_ENABLE_RMLUI</code>，默认 OFF）、资源入口（<code>CoreMod/assets/ui/rml/</code>）、stub 与真 backend 边界、剩余的 Vulkan <code>RenderInterface</code> 缺口，统一见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。要点：</p>
+    <p><code>vcpkg.json</code> 已声明 <code>rmlui</code> 端口（v6.1，默认 feature <code>freetype</code>，CMake 目标 <code>RmlUi::RmlUi</code>）。普通构建会编译真实 backend；只有设置 <code>NC_UI_BACKEND=null</code> 或真实 backend 初始化失败时才走诊断 stub。资源入口、stub 与真 backend 边界统一见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。要点：</p>
     <ol>
-      <li>在 <code>vcpkg.json</code> 的 <code>dependencies</code> 增加 <code>"rmlui"</code>（自带 <code>freetype</code>），随后 reconfigure 让 vcpkg 构建它。</li>
-      <li>configure 时 <code>-DNEWCOLONY_ENABLE_RMLUI=ON</code>：该 option 会 <code>find_package(RmlUi CONFIG)</code>、把 <code>Engine/UI/RmlUiRealRuntime.cpp</code> 加入编译、链接 <code>RmlUi::RmlUi</code>、定义 <code>NEWCOLONY_HAVE_RMLUI=1</code>；<code>make_rml_ui_runtime()</code> 据此返回 <code>RealRmlUiRuntime</code>（<code>is_real_backend()==true</code>）。</li>
-      <li>真 backend 的 <code>render(VkCommandBuffer)</code> 当前是 no-op（<code>StubRmlRenderInterface</code>）；落地 Vulkan <code>RenderInterface</code> 后，在其中录制命令缓冲、调用 <code>m_context-&gt;Render()</code>、返回 true，并在 <code>Engine.cpp</code> 的 <code>TODO(rmlui-render)</code> 处调用 <code>m_rml_ui_host.render(cmd)</code>（或扩展 Renderer 的 UI 回调链，注意不要覆盖 DevConsole 已用的 <code>set_ui_render_callback</code>）。</li>
-      <li>把 RmlUI 的事件/数据绑定桥接到 <code>RmlUiBridge</code> 的 <code>push_snapshot</code> / <code>enqueue_command</code>。</li>
+      <li>Release configure 使用 <code>cmake --preset export-release</code>：构建系统会 <code>find_package(RmlUi CONFIG REQUIRED)</code>、把 <code>Engine/UI/RmlUiRealRuntime.cpp</code> 加入编译、链接 <code>RmlUi::RmlUi</code>；<code>make_rml_ui_runtime()</code> 默认返回 <code>RealRmlUiRuntime</code>（<code>is_real_backend()==true</code>）。</li>
+      <li>真实 backend 的 <code>render(VkCommandBuffer)</code> 通过 RmlUI 6.1 <code>RenderInterface</code> 录制 UI 几何、纹理和 scissor，并由 renderer 的 UI 命令缓冲合成到游戏窗口。</li>
+      <li>RmlUI 事件/数据绑定已桥接到 <code>RmlUiBridge</code> 的 snapshot 与 command 队列。</li>
     </ol>
     <p>文档层、桥契约、通道名约定在接入真 backend 时无需改动。</p>
     <div class="callout info">
-      真 backend 的实现文件 <code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code> 已作为受维护的文件边界存在；它针对 RmlUi 6.1 编写，但默认环境下未做构建验证（默认不编译）。详见 <a href="ui-rmlui.html#enable-real-rmlui">游戏内 RmlUI · 接入真 backend</a>。
+      真 backend 的实现文件 <code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code> 是当前受维护玩家可见 UI 路线。详见 <a href="ui-rmlui.html#enable-real-rmlui">游戏内 RmlUI · 接入真 backend</a>。
     </div>
 
     <h3>与旧 Lua UI 的关系</h3>
-    <p>RmlUI 是目标主 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）与 DevConsole / MainMenu / Minimap 的可见渲染实现已禁用；保留的 C++ 类仅作为编译兼容和数据注册入口。后续需要把这些界面重写为 RML/RCSS 文档，并通过 <code>RmlUiBridge</code> 消费稳定通道数据。</p>
+    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）可见渲染实现已移除；保留的 C++ 类仅作为编译兼容、设置持久化、命令处理和数据注册入口。DevConsole、MainMenu、HUD、Pause/Settings、Minimap/Zone、Build、Research、Crafting、Colonists 等可见界面由 RML/RCSS 文档和 <code>RmlUiBridge</code> 数据通道驱动。</p>
 
     <h3>文档侧数据契约</h3>
-    <p>真 backend 接入 RmlUI 数据绑定后，文档侧按通道名读取快照、以 <code>{ target, payload }</code> 发命令，与 <code>RmlUiBridge</code> 对接。通道名字符串、命令 target 命名、<code>command_result</code> 反馈通道均为稳定契约，不随后端实现变化。过渡期的 HTML/JS 参考实现（<code>CoreMod/assets/ui/html/scripts/app.js</code> 的 <code>window.NC</code>）见下节，仅供迁移参考。</p>
+    <p>文档侧按通道名读取快照、以 <code>{ target, payload }</code> 发命令，与 <code>RmlUiBridge</code> 对接。通道名字符串、命令 target 命名、<code>command_result</code> 反馈通道均为稳定契约，不随后端实现变化。过渡期的 HTML/JS 参考实现（<code>CoreMod/assets/ui/html/scripts/app.js</code> 的 <code>window.NC</code>）见下节，仅供迁移参考。</p>
 
     <h3>过渡期 HTML 页面资产（待迁移）</h3>
     <p><code>CoreMod/assets/ui/html/</code> 下的 HTML/CSS/JS 是此前基于“浏览器/HTML”假设实现的主 HUD 外壳、底部命令栏、资源栏及各二级面板（人员/科技/视图/事件/建造/制造/战斗），保留为渐进迁移到 RML/RCSS 文档的参考资产，<strong>不再作为游戏内 UI 验收路径</strong>。其页面结构与 <code>window.NC</code> 桥契约见 <a href="mod-ui-html-pages.html">HTML/CSS 页面</a>（迁移前参考）；资源目录约定见 <a href="mod-assets-ui.html">UI 资源</a>。</p>

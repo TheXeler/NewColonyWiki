@@ -80,7 +80,7 @@
     </div>
 
     <h2>RML/RCSS 文档资源（RmlUI 入口）</h2>
-    <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是真 backend 接入后的<strong>正式 UI 资源目录</strong>，与 <code>ui.images</code> 图片资源、<code>ui/html/</code> 过渡期资产三者相互独立，不进方块纹理图集。</p>
+    <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是当前<strong>正式玩家可见 UI 资源目录</strong>，与 <code>ui.images</code> 图片资源、<code>ui/html/</code> 过渡期资产三者相互独立，不进方块纹理图集。</p>
 <pre><code>CoreMod/assets/ui/rml/
 ├── main.rml      # 入口文档（RmlUiHost 默认加载 main.rml）
 ├── main.rcss     # main.rml 链接的 RCSS 样式
@@ -88,7 +88,7 @@
 ├── FONT_SOURCE.md
 └── NotoSans-OFL.txt
 </code></pre>
-    <p>当前 <code>main.rml</code> 是最小游戏内 UI 占位（顶部状态条），不是浏览器网页布局。默认 Null stub 不实际加载它（<code>load_document</code> 返回 false，属预期）；真 backend（<code>NEWCOLONY_ENABLE_RMLUI=ON</code>）接入后由 <code>RealRmlUiRuntime</code> 加载并渲染。依赖状态、CMake option、stub/真 backend 边界、剩余 Vulkan <code>RenderInterface</code> 缺口见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
+    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
     <div class="callout info">
       字体：真 backend 优先加载 <code>rml/main.ttf</code>。CoreMod 当前内置 Noto Sans Regular，来源与分发许可记录在 <code>FONT_SOURCE.md</code> 与 <code>NotoSans-OFL.txt</code>；Windows Arial 只作为项目字体缺失或损坏时的开发机 fallback，缺字体不阻止启动。
     </div>
@@ -113,7 +113,7 @@
 
     <h3>加载与热重载</h3>
     <ul>
-      <li>入口：<code>RmlUiHost::init()</code> 默认加载 <code>main.rml</code>（Null stub 下 <code>load_document</code> 返回 false，属预期）。上图的 <code>index.html</code> 是过渡期 HTML 资产的入口，仅在浏览器中独立预览用，不被宿主层加载。</li>
+      <li>入口：<code>RmlUiHost::init()</code> 默认加载 <code>main.rml</code>。上图的 <code>index.html</code> 是过渡期 HTML 资产的入口，仅在浏览器中独立预览用，不被宿主层加载。</li>
       <li>热重载：页面发 <code>core:rmlui.reload</code> 命令，或开发期调用 <code>engine.rml_ui().reload()</code>。</li>
       <li>世界加载后 Host 触发 <code>on_world_init()</code> 重载页面并重推 <code>world_info</code>。</li>
     </ul>
