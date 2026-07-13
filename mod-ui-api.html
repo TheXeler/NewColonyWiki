@@ -11,12 +11,12 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI 框架</div></div>
   <div class="content">
     <h1>UI 框架</h1>
-    <p class="subtitle">通过 Lua 注册底边栏按钮、窗口和浮动提示。旧即时模式 UI 渲染层已经移除，当前 Lua UI API 仅保留数据注册兼容入口，实际可见界面需要迁移到 RmlUI。</p>
+    <p class="subtitle">通过 Lua 注册底边栏按钮、窗口和浮动提示。旧即时模式 UI 渲染层已经移除；当前 Lua UI API 已由 RmlUI 文档渲染为玩家可见界面。</p>
 
     <h2>设计思路</h2>
     <ul>
       <li>所有 Lua UI API 挂在 <code>engine.ui</code> 全局表下。</li>
-      <li>Lua 注册 UI 内容；旧渲染层已移除，后续由 RmlUI 文档消费这些数据。</li>
+      <li>Lua 注册 UI 内容；RmlUI HUD 文档消费兼容快照并渲染底栏扩展按钮、窗口和浮动提示。</li>
       <li>注册 API 返回正整数句柄（失败时返回 <code>0</code>），方便后续更新、隐藏和注销。</li>
       <li>同一 <code>id</code> 重复注册会覆盖旧定义，适合脚本热重载。</li>
       <li>回调中的错误不会中断游戏循环——引擎记录日志并跳过本帧对应 UI。</li>
@@ -85,7 +85,7 @@
       <tbody>
         <tr><td><code>kind</code></td><td>string</td><td>否</td><td><code>"button"</code></td><td><code>"button"</code>、<code>"toggle"</code>、<code>"label"</code>、<code>"meter"</code></td></tr>
         <tr><td><code>label</code></td><td>string / function</td><td>否</td><td><code>""</code></td><td>显示文本</td></tr>
-        <tr><td><code>icon</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>保留字段；当前底边栏渲染只显示文本、角标和热键。</td></tr>
+        <tr><td><code>icon</code></td><td>string / function</td><td>否</td><td><code>nil</code></td><td>保留字段；icon 当前不渲染。button/toggle 渲染文本、角标与热键，label 渲染纯文本，meter 渲染进度条与数值。</td></tr>
         <tr><td><code>hotkey</code></td><td>string</td><td>否</td><td><code>nil</code></td><td>仅作 UI 提示显示；实际输入走输入系统</td></tr>
         <tr><td><code>value</code></td><td>number / function</td><td>meter 必填</td><td><code>nil</code></td><td>meter 当前值，范围 0..1</td></tr>
         <tr><td><code>active</code></td><td>boolean / function</td><td>toggle 推荐</td><td><code>false</code></td><td>toggle 是否处于激活状态</td></tr>
@@ -290,12 +290,30 @@ engine.ui.command.run("core:craft.queue", { id = "core:craft_stick", entity_id =
       </tbody>
     </table>
 
+    <h2>RML 面板注册</h2>
+    <p><code>engine.ui.rml.register_panel(def)</code> 注册一个 RmlUI panel document，成功返回句柄。当前实现会按 <code>def.id</code> 的 <code>modid</code> 定位该 MOD 根目录，读取 <code>document</code> 指向的 <code>.rml</code> 文件，并通过 <code>lua_ui_rml_panels</code> 通道让真实 RmlUI runtime 在同一个 context 内加载、显示和关闭该文档；路径会规范化并禁止越出 MOD 目录。若只想输出轻量片段，可以继续使用 <code>engine.ui.window.register({ content_rml = ... })</code>。</p>
+    <pre><code>local handle = engine.ui.rml.register_panel({
+    id = "example:overview",
+    title = "Overview",
+    document = "assets/ui/rml/overview.rml",
+    position = { x = 96, y = 96 },
+    size_hint = { w = 640, h = 420 },
+    on_close = function(ctx) engine.log.info(ctx.id .. " closed") end,
+})</code></pre>
+    <p><code>engine.ui.rml</code> 提供与 <code>window</code> 分组对称的完整生命周期，全部通过 <code>lua_ui_rml_panels</code> 快照通道驱动真实 RmlUI runtime：</p>
+    <ul>
+      <li><code>register_panel(def)</code> 注册 RML document 并返回句柄；<code>unregister_panel(handle_or_id)</code> 关闭并卸载，移除前触发 <code>on_close</code> 回调（与 window 的关闭路径一致）。</li>
+      <li><code>update_panel(handle_or_id, patch)</code> 合并 patch 字段；<code>show_panel</code> / <code>hide_panel</code> 是 <code>visible</code> 的便捷封装；<code>is_registered(handle_or_id)</code> 查询；<code>clear(mod_id)</code> 批量卸载该 MOD 或全部面板。</li>
+      <li><code>reload(mod_id)</code> 强制热重载：递增面板的内部 <code>reload_epoch</code>，runtime 在下一帧快照中检测到该值变化即 <code>Close</code> + <code>LoadDocument</code>，即便 <code>.rml</code> 路径未变也会重新读取磁盘内容。传 <code>mod_id</code> 只重载该 MOD，省略则重载全部；返回是否有面板被标记。</li>
+    </ul>
+    <div class="callout info">编辑 <code>.rml</code> 文件后调用 <code>engine.ui.rml.reload("example")</code> 即可在不重启游戏的前提下看到改动；改变 <code>def.document</code> 路径本身也会触发重载。<code>reload</code> 只对已注册的面板生效，返回 <code>false</code> 表示没有匹配的面板。</div>
+
     <h2>生命周期与调用时机</h2>
     <ol class="step-list">
       <li><strong>on_load</strong> —— 注册静态底边栏槽位（按钮、toggle 等）。</li>
       <li><strong>on_world_init</strong> —— 注册依赖世界状态的浮动锚点。</li>
       <li>引擎每帧 UI 阶段调用渲染系统，Lua 函数字段被求值。</li>
-      <li>引擎每 tick 清理过期的 <code>ttl_ticks</code> 提示。</li>
+      <li>一次性提示当前由脚本自行 dismiss；<code>ttl_ticks</code> 字段保留但不自动回收。</li>
       <li>热重载或 MOD 卸载时调用 <code>clear(mod_id)</code>。</li>
     </ol>
 
@@ -391,7 +409,7 @@ return M</code></pre>
 
     <h3>生命周期与引擎接入</h3>
     <p>引擎通过 <code>engine.rml_ui()</code> 拿到 <code>RmlUiHost</code>。Host 在 <code>Engine::init()</code> 创建并加载 <code>&lt;core_assets&gt;/ui/rml/main.rml</code>；主循环每帧 <code>update(dt)</code>、<code>drain_commands()</code>，并由 renderer UI pass 调用 <code>render(cmd)</code> 合成到窗口；<code>shutdown()</code> 时释放。世界加载时触发 <code>on_world_init()</code>（重载文档 + 重推 <code>world_info</code>），回到主菜单触发 <code>on_return_to_main_menu()</code>，窗口尺寸变化调用 <code>resize()</code>。对应 <code>Engine.cpp</code> 中 <code>RmlUi</code> 帧采样段。</p>
-    <p>数据刷新走统一入口 <code>Engine::publish_rml_ui_snapshots()</code>：遍历 <code>RML_UI_SNAPSHOT_CHANNELS</code> 全部十一个通道，逐个调用 <code>ScriptEngine::get_ui_snapshot(channel)</code>（内部走 Lua 数据桥 <code>engine.ui.data.snapshot</code> 并序列化为 JSON）后推入 <code>RmlUiBridge</code>。刷新按 <code>RML_UI_REFRESH_INTERVAL</code>（约 5 Hz）节流，避免每帧重复聚合快照；世界（重新）进入的那一帧强制立即刷新一次，保证新加载页面不会短暂空白。命令派发同样集中：<code>Engine::dispatch_rml_ui_command()</code> 调用 <code>ScriptEngine::run_ui_command(target, payload)</code>，由 Lua 桥 <code>engine.ui.command.run</code> 落到具体系统；命令返回的 <code>changed_channels</code> 会驱动局部刷新，返回 JSON 另写入 <code>command_result</code> 通道。</p>
+    <p>数据刷新走统一入口 <code>Engine::publish_rml_ui_snapshots()</code>：遍历 <code>RML_UI_SNAPSHOT_CHANNELS</code> 的经营通道和 Lua UI 兼容通道。经营通道逐个调用 <code>ScriptEngine::get_ui_snapshot(channel)</code>（内部走 Lua 数据桥 <code>engine.ui.data.snapshot</code> 并序列化为 JSON）后推入 <code>RmlUiBridge</code>；兼容通道由 <code>LuaUi</code> 直接生成 RML 片段。刷新按 <code>RML_UI_REFRESH_INTERVAL</code>（约 5 Hz）节流，避免每帧重复聚合快照；世界（重新）进入的那一帧强制立即刷新一次，保证新加载页面不会短暂空白。命令派发同样集中：<code>Engine::dispatch_rml_ui_command()</code> 调用 <code>ScriptEngine::run_ui_command(target, payload)</code>，由 Lua 桥 <code>engine.ui.command.run</code> 落到具体系统；命令返回的 <code>changed_channels</code> 会驱动局部刷新，返回 JSON 追加事件序号 <code>sequence</code> 后另写入 <code>command_result</code> 通道。</p>
 
     <h3>C++ → 文档：快照通道</h3>
     <p>C++ 按通道名推送 JSON 快照，最新值覆盖旧值，文档侧自行轮询。经营数值由 <code>ScriptEngine::get_ui_snapshot(channel)</code> 调用 Lua 数据桥生成，避免把业务适配塞进文档层。十一个常规数据通道全部接通到宿主层，另有事件式 <code>command_result</code> 通道，数据来源如下：</p>
@@ -409,7 +427,7 @@ return M</code></pre>
         <tr><td><code>construction_active</code></td><td><code>systems.construction.active()</code></td><td>已接通；建造面板显示已下单施工，支持 <code>waiting_materials</code>。</td></tr>
         <tr><td><code>craft_recipes</code></td><td><code>engine.crafting.list_recipes/get_recipe</code></td><td>已接通</td></tr>
         <tr><td><code>combat_state</code></td><td>殖民者生命汇总（取自人员快照）</td><td><strong>部分接通</strong>：包含 <code>colonists</code>、空 <code>threats</code>、<code>alert_level</code>；威胁列表待战斗系统补全。</td></tr>
-        <tr><td><code>command_result</code></td><td><code>Engine::dispatch_rml_ui_command()</code> 写入最近一次命令返回 JSON</td><td>事件式通道；不在 5 Hz 全量刷新列表内，仅命令执行后更新。</td></tr>
+        <tr><td><code>command_result</code></td><td><code>Engine::dispatch_rml_ui_command()</code> 写入最近一次命令返回 JSON，并追加 <code>sequence</code></td><td>事件式通道；不在 5 Hz 全量刷新列表内，仅命令执行后更新；序号用于区分连续同形结果。</td></tr>
       </tbody>
     </table>
     <p>除统一刷新入口外，<code>RmlUiHost</code> 仍保留 <code>push_resource_snapshot/push_colonist_list/push_event_list/push_world_info/push_tech_tree/push_view_modes</code> 等便捷方法，以及通用 <code>push(channel, json)</code> 转发器，供需要单通道直推的调用方使用；文档侧只认通道名字符串。</p>
@@ -443,13 +461,13 @@ return M</code></pre>
       <li>真实 backend 的 <code>render(VkCommandBuffer)</code> 通过 RmlUI 6.1 <code>RenderInterface</code> 录制 UI 几何、纹理和 scissor，并由 renderer 的 UI 命令缓冲合成到游戏窗口。</li>
       <li>RmlUI 事件/数据绑定已桥接到 <code>RmlUiBridge</code> 的 snapshot 与 command 队列。</li>
     </ol>
-    <p>文档层、桥契约、通道名约定在接入真 backend 时无需改动。</p>
+    <p>旧 Lua UI 的可见输出通过 <code>lua_ui_bottom_bar</code>、<code>lua_ui_windows</code>、<code>lua_ui_floating</code> 三个 RmlUI 快照通道进入 <code>hud.rml</code>。按钮和窗口内 action 使用 <code>lua_ui:&lt;handle&gt;:...</code> 内部命令回调原 Lua 函数。</p>
     <div class="callout info">
       真 backend 的实现文件 <code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code> 是当前受维护玩家可见 UI 路线。详见 <a href="ui-rmlui.html#enable-real-rmlui">游戏内 RmlUI · 接入真 backend</a>。
     </div>
 
     <h3>与旧 Lua UI 的关系</h3>
-    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）可见渲染实现已移除；保留的 C++ 类仅作为编译兼容、设置持久化、命令处理和数据注册入口。DevConsole、MainMenu、HUD、Pause/Settings、Minimap/Zone、Build、Research、Crafting、Colonists 等可见界面由 RML/RCSS 文档和 <code>RmlUiBridge</code> 数据通道驱动。</p>
+    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）的即时模式实现已移除，但兼容 API 现在会生成 RmlUI-backed 可见界面；保留的 C++ 类负责注册仓库、RML 片段生成、回调命令和数据通道。DevConsole、MainMenu、HUD、Pause/Settings、Minimap/Zone、Build、Research、Crafting、Colonists 等核心界面仍由 RML/RCSS 文档和 <code>RmlUiBridge</code> 数据通道驱动。</p>
 
     <h3>文档侧数据契约</h3>
     <p>文档侧按通道名读取快照、以 <code>{ target, payload }</code> 发命令，与 <code>RmlUiBridge</code> 对接。通道名字符串、命令 target 命名、<code>command_result</code> 反馈通道均为稳定契约，不随后端实现变化。过渡期的 HTML/JS 参考实现（<code>CoreMod/assets/ui/html/scripts/app.js</code> 的 <code>window.NC</code>）见下节，仅供迁移参考。</p>

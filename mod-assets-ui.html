@@ -88,7 +88,7 @@
 ├── FONT_SOURCE.md
 └── NotoSans-OFL.txt
 </code></pre>
-    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
+    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。HUD 的右上角时间条由 <code>hud.rml</code>/<code>hud.rcss</code> 渲染，并包含 <code>core:time.speed</code> 的 1x/2x/3x/Max 模拟速度按钮。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
     <div class="callout info">
       字体：真 backend 优先加载 <code>rml/main.ttf</code>。CoreMod 当前内置 Noto Sans Regular，来源与分发许可记录在 <code>FONT_SOURCE.md</code> 与 <code>NotoSans-OFL.txt</code>；Windows Arial 只作为项目字体缺失或损坏时的开发机 fallback，缺字体不阻止启动。
     </div>
