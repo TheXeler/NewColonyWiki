@@ -108,7 +108,7 @@
         <tr><td><code>clear()</code></td><td>清空所有方块。</td></tr>
         <tr><td><code>copy()</code> / <code>paste(x,y,z)</code> / <code>paste_hover()</code> / <code>has_clipboard()</code></td><td>复制选区到剪贴板，在指定位置或当前 hover 格粘贴。</td></tr>
         <tr><td><code>clear_selection()</code> / <code>has_selection()</code></td><td>管理当前选区。</td></tr>
-        <tr><td><code>load_from_file(path)</code> / <code>load_definition(id)</code></td><td>从导出的建筑 JSON 路径或已注册建筑定义 ID 加载设计。优先恢复 <code>design.rooms/default_materials/roofs/openings</code> 并重新编译；旧文件没有 <code>design</code> 时导入顶层 <code>blueprint</code> 方块。</td></tr>
+          <tr><td><code>load_from_file(path)</code> / <code>load_definition(id)</code></td><td>从导出的建筑 JSON 路径或已注册建筑定义 ID 加载设计；Lua 文件路径必须位于 MOD 或 generated 内容目录内。优先恢复 <code>design.rooms/default_materials/roofs/openings</code> 并重新编译；旧文件没有 <code>design</code> 时导入顶层 <code>blueprint</code> 方块。</td></tr>
         <tr><td><code>save(name)</code></td><td>把画布内容打包成 <code>BuildingDef</code>，注册到 <code>BuildingSystem</code>，并尝试写入 <code>generate/core/data/buildings/player_blueprints/</code>。成功时返回包含 <code>id</code>、<code>path</code>、<code>persisted</code> 的表；空画布或注册失败返回 <code>nil</code>。</td></tr>
       </tbody>
     </table>

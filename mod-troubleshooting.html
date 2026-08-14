@@ -35,7 +35,7 @@ data copper_age:copper_ore</code></pre>
       <li>stockpile 账本或实体手持物里有没有足够的输入物品，实体手中有没有输出空间。</li>
       <li>配方是否声明了职业要求，实体的职业等级是否满足。</li>
       <li><code>engine.crafting.craft</code> 只检查实体当前单个 <code>HeldItem</code>；多输入制作通常应走 CoreMod 的 <code>systems.crafting.queue</code> stockpile 队列。</li>
-      <li>Craft 工作完成时 C++ 会先尝试直接制作，然后 Lua 才收到 <code>job:completed</code>。如果工人手持输入物且队列也预留了 stockpile 材料，要检查是否发生双路径产出。</li>
+      <li>Craft 工作完成时 C++ 会先尝试直接制作，然后 Lua 才收到 <code>work:completed</code>。如果工人手持输入物且队列也预留了 stockpile 材料，要检查是否发生双路径产出。</li>
       <li>用 <code>inventory &lt;entity&gt;</code> 和 <code>data &lt;recipe_id&gt;</code> 在控制台查看实际状态。</li>
     </ul>
 
@@ -55,8 +55,11 @@ data copper_age:copper_ore</code></pre>
       <li>入口脚本末尾是否有 <code>return M</code>。</li>
       <li>生命周期函数名是否拼写正确：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</li>
       <li>查看 <code>logs/latest.log</code> 里是否有 Lua 报错。</li>
-      <li>如果用了 <code>require</code>，换成 <code>dofile</code>——<code>package</code> 库在 MOD 沙箱中未加载。</li>
+      <li>如果用了 <code>dofile</code> 或 <code>loadfile</code>，换成 <code>require</code>。沙箱只允许加载引擎预注册的同 MOD Lua 模块。</li>
     </ul>
+
+    <h2>只在 DEBUG 日志里看到的解析失败</h2>
+    <p>部分控制台参数、本地设置和存档区域文件解析会保持原来的容错流程：解析异常或失败返回被吞掉，命令继续尝试其它格式、返回既有默认值，或把存档加载报告为失败。启动时加 <code>--DEBUG</code> 可以在 <code>logs/latest.log</code> 里看到这些被忽略的异常细节，例如 <code>time set</code> 的无效时间、doctor archive 命令的无效数字参数、settings JSON 中无效的数字字段，或 <code>regions/*.ncr</code> 的无效 header、表项、压缩 payload 和 chunk 坐标。</p>
 
     <h2>NPC 阵营实例生成失败</h2>
     <ul>

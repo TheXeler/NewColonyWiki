@@ -53,14 +53,14 @@ engine.research.start("core:crop_rotation", 1)</code></pre>
 list_techs
 research_start core:crop_rotation</code></pre>
 
-    <h2>HTML UI 数据桥</h2>
-    <p>HTML/CSS UI 可以读取 <code>tech_tree</code> 快照通道。该通道固定返回 <code>production</code>、<code>building</code>、<code>combat</code>、<code>diplomacy</code>、<code>trade</code> 五类，每个节点包含 <code>id</code>、<code>name</code>、<code>description</code>、<code>category</code>、<code>prerequisites</code>、<code>cost</code>、<code>progress</code>、<code>status</code> 和 <code>unlocks</code>。</p>
+    <h2>RmlUI 数据桥</h2>
+    <p>RmlUI 文档可以读取 <code>tech_tree</code> 快照通道。该通道固定返回 <code>production</code>、<code>building</code>、<code>combat</code>、<code>diplomacy</code>、<code>trade</code> 五类，每个节点包含 <code>id</code>、<code>name</code>、<code>description</code>、<code>category</code>、<code>prerequisites</code>、<code>cost</code>、<code>progress</code>、<code>status</code> 和 <code>unlocks</code>。</p>
     <pre><code>NC.snapshot("tech_tree")
 NC.sendCommand("core:research.start", { nodeId: "core:crop_rotation" })</code></pre>
     <p><code>core:research.start</code> 进入真实研究系统，返回 <code>{ ok, reason? }</code>，并广播 <code>ui:data:changed</code>；开始研究和完成研究都会刷新 <code>tech_tree</code>、<code>build_defs</code> 和 <code>craft_recipes</code>。</p>
 
     <h2>当前实际 unlock</h2>
-    <p>第一批实际接入范围很小：未研究对应科技时，HTML 快照会把目标项标记为 <code>status: "locked"</code>，并返回 <code>locked_by</code>。</p>
+    <p>第一批实际接入范围很小：未研究对应科技时，RmlUI 快照会把目标项标记为 <code>status: "locked"</code>，并返回 <code>locked_by</code>。</p>
     <table>
       <thead><tr><th>科技</th><th>影响目标</th><th>快照字段</th></tr></thead>
       <tbody>

@@ -28,7 +28,7 @@
     tags/
     entities/
     recipes/
-    professions/
+    jobs/
     civilizations/
     focuses/
     factions/
@@ -69,7 +69,7 @@ function M.on_load()
 end
 
 return M</code></pre>
-    <p>如果你在脚本里需要加载额外的 Lua 文件，用 <code>dofile</code>，不要用 <code>require</code>——后者在当前沙箱里不可用。</p>
+    <p>如果你在脚本里需要加载额外的 Lua 文件，用 <code>require</code>。沙箱只允许加载引擎预注册的同 MOD Lua 模块，不开放 <code>dofile</code>、<code>loadfile</code> 或任意磁盘路径搜索。</p>
 
     <h2>4. 注册第一个方块</h2>
     <p>新方块放在 <code>data/blocks/*.json</code>。文件名随便取，真正的唯一标识是 JSON 里面的 <code>id</code>。</p>

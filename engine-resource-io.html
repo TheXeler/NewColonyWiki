@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资源 IO 与 UTF-8 路径</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="engine-resource-io">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a> / 资源 IO</div></div>
+  <div class="content">
+    <h1>资源 IO 与 UTF-8 路径</h1>
+    <p class="subtitle">引擎运行时资源、MOD 数据、配置、存档和日志路径统一按 UTF-8 处理。Windows 上不要直接把 UTF-8 字符串交给 <code>fopen</code>、<code>std::ifstream</code>、<code>std::ofstream</code> 或第三方库的 char 路径 API。</p>
+
+    <div class="callout info">
+      统一入口是 <code>Engine/Core/IO/FileIO.hpp</code>。读取文本/二进制文件使用 <code>nc::io::read_file</code>、<code>read_binary_file</code>；写出使用 <code>write_text_file</code>、<code>write_binary_file</code>。需要 simdjson DOM 时使用 <code>Engine/Core/IO/JsonIO.hpp</code> 的 <code>nc::io::load_dom</code>，不要调用 <code>parser.load(path)</code>。
+    </div>
+
+    <h2>覆盖范围</h2>
+    <ul>
+      <li>JSON 数据和配置：MOD 清单、数据注册、控制台配置、本地化、设置和存档 JSON 都先通过 <code>FileIO</code> 读入内存，再解析。</li>
+      <li>图片、shader、模型和脚本：stb_image、SPIR-V、Lua 脚本和 glTF 主文件改为内存加载；glTF 的外部文件读取通过 tinygltf filesystem callbacks 接到 <code>FileIO</code>。</li>
+      <li>音频：Windows 上 miniaudio 使用 <code>ma_sound_init_from_file_w</code>；其他平台继续使用原生 char 路径。</li>
+      <li>RmlUI：运行时注册自定义 <code>Rml::FileInterface</code>，RML、RCSS 和字体文件都通过 UTF-8 安全路径打开。</li>
+      <li>日志和随机访问文件：日志使用 <code>FileIO</code> 打开底层文件句柄；需要 seek/read 的区域文件先安全读入内存再解析。</li>
+    </ul>
+
+    <h2>开发约束</h2>
+    <ul>
+      <li>新增资源加载点时，优先使用库的 memory API；如果库只有路径 API，Windows 上必须走宽字符 API 或接入该库的 filesystem callback。</li>
+      <li>从 <code>std::filesystem::directory_iterator</code> 得到的 <code>path</code> 应直接传给 <code>nc::io</code> 的 <code>std::filesystem::path</code> 重载，不要先转成 <code>path.string()</code> 再打开。</li>
+      <li><code>std::filesystem</code> 的 <code>exists</code>、<code>directory_iterator</code>、<code>last_write_time</code> 等路径查询可以继续使用；问题集中在实际打开文件的 char 路径 API。</li>
+    </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

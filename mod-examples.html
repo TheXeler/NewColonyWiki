@@ -21,7 +21,7 @@
   data/blocks/copper_ore.json
   data/blocks/copper_ingot.json
   data/blocks/copper_hammer.json
-  data/professions/coppersmith.json
+  data/jobs/coppersmith.json
   data/civilizations/copper_clan.json
   data/recipes/smelt_copper.json
   data/focuses/copper_found.json</code></pre>
@@ -45,7 +45,7 @@
     <pre><code>{
   "id": "copper_age:coppersmith",
   "name": "Coppersmith",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "copper_age:copper_hammer", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -57,7 +57,7 @@
     <pre><code>{
   "id": "copper_age:copper_clan",
   "name": "Copper Clan",
-  "professions": ["copper_age:coppersmith"],
+  "jobs": ["copper_age:coppersmith"],
   "starting_options": [
     {
       "id": "copper_age:workshop_start",
@@ -66,7 +66,7 @@
         { "id": "copper_age:copper_hammer", "count": 1 },
         { "id": "copper_age:copper_ore", "count": 6 }
       ],
-      "professions": [
+      "jobs": [
         { "id": "copper_age:coppersmith", "level": 1, "count": 1 }
       ]
     }
@@ -80,7 +80,7 @@
   "inputs": [
     { "id": "copper_age:copper_ore", "count": 2 }
   ],
-  "profession": { "id": "copper_age:coppersmith", "level": 1 },
+  "Job": { "id": "copper_age:coppersmith", "level": 1 },
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
 
@@ -131,8 +131,8 @@ function M.on_load()
     end
   end)
 
-  engine.events.subscribe("profession:assigned", function(evt)
-    if evt.profession_id == "copper_age:coppersmith" then
+  engine.events.subscribe("job:assigned", function(evt)
+    if evt.job_id == "copper_age:coppersmith" then
       engine.log.info("[copper_age] coppersmith assigned at level " .. tostring(evt.level))
     end
   end)
@@ -161,7 +161,7 @@ return M</code></pre>
     <p>复制 MOD 到 <code>mods/</code> 下后，先在主菜单 MOD 管理器启用它并重启游戏。进入游戏后在控制台跑一遍这些命令：</p>
     <pre><code>mods
 list_data blocks prefix=copper_age:
-list_data professions prefix=copper_age:
+list_data jobs prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:
 list_recipes prefix=copper_age:

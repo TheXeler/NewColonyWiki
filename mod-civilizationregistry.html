@@ -19,18 +19,18 @@
   "name": "Cave Civilization",
   "leader": "core:stonemason",
   "description": "A resilient civilization ...",
-  "professions": [
+  "jobs": [
     { "id": "core:miner", "count": 2 },
     { "id": "core:blacksmith", "count": 1 }
   ],
   "recipe_modifiers": [
     {
-      "profession": "core:stonemason",
+      "Job": "core:stonemason",
       "unlock": ["core:craft_stone_pickaxe", "core:build_stone_furnace"],
       "extra_recipes": ["core:craft_torch", "core:build_anvil"]
     },
     {
-      "profession": "core:blacksmith",
+      "Job": "core:blacksmith",
       "deny": ["core:craft_wooden_tools"],
       "blocked_recipes": ["core:build_wooden_wall"]
     }
@@ -42,7 +42,7 @@
         { "id": "core:stone_chunk", "count": 20 },
         { "id": "core:torch", "count": 5 }
       ],
-      "professions": [
+      "jobs": [
         { "id": "core:miner", "level": 1, "count": 2 },
         { "id": "core:stonemason", "level": 2, "count": 1 }
       ]
@@ -62,16 +62,16 @@
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>文明显示名称。</td></tr>
-        <tr><td><code>professions</code></td><td>string[] 或 object[]</td><td>否</td><td>该文明可用的职业 ID 列表，指向 <code>data/professions/</code> 下的职业。对象形式只读取 <code>id</code>；CoreMod 中的 <code>count</code> 会被交叉引用校验允许，但不会存入 <code>CivilizationDef.professions</code>。</td></tr>
-        <tr><td><code>starting_options</code></td><td>object[]</td><td>否</td><td>开局选项。每项包含 <code>id</code>、可选的 <code>name</code>、<code>blocks</code>（初始方块及数量）和 <code>professions</code>（初始殖民者职业、等级和数量）。</td></tr>
-        <tr><td><code>recipe_modifiers</code></td><td>object[]</td><td>否</td><td>配方规则修改。每项包含 <code>profession</code>（职业 ID）以及 <code>deny</code>、<code>blocked_recipes</code>、<code>unlock</code>、<code>extra_recipes</code> 中的一个或多个，用于微调配方可制造性。</td></tr>
+        <tr><td><code>jobs</code></td><td>string[] 或 object[]</td><td>否</td><td>该文明可用的职业 ID 列表，指向 <code>data/jobs/</code> 下的职业。对象形式只读取 <code>id</code>；CoreMod 中的 <code>count</code> 会被交叉引用校验允许，但不会存入 <code>CivilizationDef.jobs</code>。</td></tr>
+        <tr><td><code>starting_options</code></td><td>object[]</td><td>否</td><td>开局选项。每项包含 <code>id</code>、可选的 <code>name</code>、<code>blocks</code>（初始方块及数量）和 <code>jobs</code>（初始殖民者职业、等级和数量）。</td></tr>
+        <tr><td><code>recipe_modifiers</code></td><td>object[]</td><td>否</td><td>配方规则修改。每项包含 <code>Job</code>（职业 ID）以及 <code>deny</code>、<code>blocked_recipes</code>、<code>unlock</code>、<code>extra_recipes</code> 中的一个或多个，用于微调配方可制造性。</td></tr>
         <tr><td><code>starting_buildings</code></td><td>string[] 或 object[]</td><td>否</td><td>加载器会交叉校验建筑 ID，但 <code>CivilizationSystem</code> 当前不保存这个字段，开局建筑实例生成尚未接入。</td></tr>
         <tr><td><code>leader</code> / <code>description</code> / <code>traits</code> / <code>bonuses</code></td><td>mixed</td><td>否</td><td>CoreMod 数据中存在，当前 <code>CivilizationSystem</code> 不读取；可作为原始 mod_data 供脚本或未来系统使用。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      文明系统定义了游戏的初始条件和玩法风格。<code>professions</code> 决定可选职业，<code>starting_options</code> 决定初始资源和人手，<code>recipe_modifiers</code> 提供配方层面的差异化控制。
+      文明系统定义了游戏的初始条件和玩法风格。<code>jobs</code> 决定可选职业，<code>starting_options</code> 决定初始资源和人手，<code>recipe_modifiers</code> 提供配方层面的差异化控制。
     </div>
 
     <div class="callout warn">
@@ -85,7 +85,7 @@
     <ul>
       <li>文明 ID 只能包含小写字母 <code>a-z</code>、数字 <code>0-9</code>、下划线 <code>_</code>、短横线 <code>-</code>、冒号 <code>:</code>。</li>
       <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如 <code>nomad:desert_tribe</code>。</li>
-      <li><code>professions</code>、<code>recipe_modifiers</code> 中引用的 ID 必须是已注册的完整 ID（含 mod 前缀），否则加载报错。</li>
+      <li><code>jobs</code>、<code>recipe_modifiers</code> 中引用的 ID 必须是已注册的完整 ID（含 mod 前缀），否则加载报错。</li>
     </ul>
 
     <h2>文件放置规则</h2>

@@ -28,6 +28,9 @@
 local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</code></pre>
     <p>第三个参数是 fallback 值，防止旧配置缺字段时出错。详见 <a href="mod-manifest.html">mod.json</a>。</p>
 
+    <h2>内容默认值</h2>
+    <p>不面向玩家设置界面的脚本默认值可以放进 <code>data/</code> 注册表，而不是 <code>config/</code> 用户覆盖文件。CoreMod 当前使用 <code>data/combat/bootstrap_defaults.json</code> 的 <code>core:bootstrap_defaults</code> 记录驱动 <code>bootstrap.lua</code> 中的阵营关系日程、事件概率、关系变化量和初始殖民者生成坐标。Lua 通过 <code>engine.modding.get_data_json("combat", "core:bootstrap_defaults")</code> 读取原始 JSON；记录或字段缺失时脚本保留内置 fallback。</p>
+
     <h2>控制台权限</h2>
     <p>文件：<code>mods/core/config/console_permissions.json</code></p>
     <p>控制哪些控制台命令在什么权限等级下可用。</p>
@@ -76,7 +79,8 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     <pre><code>{
   "bindings": {
     "camera_orbit": [
-      { "type": "mouse_button", "button": 1 }
+      { "type": "mouse_button", "button": 1 },
+      { "type": "mouse_button", "button": 2 }
     ],
     "camera_zoom_in": [
       { "type": "scroll", "scroll_direction": 1 }
@@ -129,6 +133,65 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     "zone_operation_modifier": [
       { "type": "key", "key": "LEFT_CONTROL" },
       { "type": "key", "key": "RIGHT_CONTROL" }
+    ],
+    "battle_prev_squad": [],
+    "battle_next_squad": [],
+    "battle_select_all": [
+      { "type": "key", "key": "R" }
+    ],
+    "battle_formation": [
+      { "type": "key", "key": "P" }
+    ],
+    "battle_hold_ground": [
+      { "type": "key", "key": "D" }
+    ],
+    "battle_move": [
+      { "type": "key", "key": "Z" }
+    ],
+    "battle_stop": [
+      { "type": "key", "key": "S" }
+    ],
+    "battle_camera_follow": [
+      { "type": "key", "key": "Y" }
+    ],
+    "battle_attack": [
+      { "type": "key", "key": "A" }
+    ],
+    "battle_select_melee": [
+      { "type": "key", "key": "U" }
+    ],
+    "battle_select_ranged": [
+      { "type": "key", "key": "I" }
+    ],
+    "battle_select_squad_1": [
+      { "type": "key", "key": "1" }
+    ],
+    "battle_select_squad_2": [
+      { "type": "key", "key": "2" }
+    ],
+    "battle_select_squad_3": [
+      { "type": "key", "key": "3" }
+    ],
+    "battle_select_squad_4": [
+      { "type": "key", "key": "4" }
+    ],
+    "battle_select_squad_5": [
+      { "type": "key", "key": "5" }
+    ],
+    "battle_select_squad_6": [
+      { "type": "key", "key": "6" }
+    ],
+    "battle_select_squad_7": [
+      { "type": "key", "key": "7" }
+    ],
+    "battle_select_squad_8": [
+      { "type": "key", "key": "8" }
+    ],
+    "battle_select_squad_9": [
+      { "type": "key", "key": "9" }
+    ],
+    "battle_select_squad_10": [
+      { "type": "key", "key": "0" }
     ]
   }
 }</code></pre>
@@ -163,7 +226,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     <table>
       <thead><tr><th>动作名</th><th>默认绑定</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>camera_orbit</code></td><td>鼠标右键</td><td>按住拖拽旋转视角</td></tr>
+        <tr><td><code>camera_orbit</code></td><td>鼠标右键 / 鼠标中键</td><td>按住拖拽旋转视角；战斗模式下右键用于移动目标，中键保留为镜头 fallback</td></tr>
         <tr><td><code>camera_zoom_in</code></td><td>滚轮上</td><td>沿视线方向前进</td></tr>
         <tr><td><code>camera_zoom_out</code></td><td>滚轮下</td><td>沿视线方向后退</td></tr>
         <tr><td><code>camera_move_forward</code></td><td>W</td><td>镜头前进</td></tr>
@@ -181,6 +244,18 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
         <tr><td><code>set_speed_4</code></td><td>4</td><td>最快速度</td></tr>
         <tr><td><code>toggle_debug_hud</code></td><td>F3</td><td>切换调试 HUD 与 RmlUI 输入验证面板显示</td></tr>
         <tr><td><code>zone_operation_modifier</code></td><td>Ctrl</td><td>区域操作辅助键，按住并滚轮可调整 3D 区域高度；持续 WASD 移动中按住可将镜头移速提升到 2 倍</td></tr>
+        <tr><td><code>battle_prev_squad</code></td><td>未绑定</td><td>战斗 HUD：循环到上一小队（默认未绑定，可在设置中自行绑定）</td></tr>
+        <tr><td><code>battle_next_squad</code></td><td>未绑定</td><td>战斗 HUD：循环到下一小队（默认未绑定，可在设置中自行绑定）</td></tr>
+        <tr><td><code>battle_select_all</code></td><td>R</td><td>战斗 HUD：全选小队</td></tr>
+        <tr><td><code>battle_formation</code></td><td>P</td><td>战斗 HUD：绑定或召回编队</td></tr>
+        <tr><td><code>battle_hold_ground</code></td><td>D</td><td>战斗 HUD：原地防御；战斗模式下覆盖相机右移</td></tr>
+        <tr><td><code>battle_move</code></td><td>Z</td><td>战斗 HUD：移动指令；也可长按右键设置移动目标</td></tr>
+        <tr><td><code>battle_stop</code></td><td>S</td><td>战斗 HUD：停止；战斗模式下覆盖相机后退</td></tr>
+        <tr><td><code>battle_camera_follow</code></td><td>Y</td><td>战斗 HUD：镜头跟随选中小队</td></tr>
+        <tr><td><code>battle_attack</code></td><td>A</td><td>战斗 HUD：攻击；战斗模式下覆盖相机左移</td></tr>
+        <tr><td><code>battle_select_melee</code></td><td>U</td><td>战斗 HUD：筛选近战小队</td></tr>
+        <tr><td><code>battle_select_ranged</code></td><td>I</td><td>V2 近战战斗暂不使用；保留绑定键位以兼容旧配置</td></tr>
+        <tr><td><code>battle_select_squad_1</code> .. <code>battle_select_squad_10</code></td><td>1 .. 0</td><td>战斗 HUD：按数字键直接选第 1-10 个小队（按花名册顺序）；战斗模式下占用数字键，速度键 1-4 在战斗模式下让位。Ctrl+数字 仍用于编队赋值</td></tr>
       </tbody>
     </table>
 

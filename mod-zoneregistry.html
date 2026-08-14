@@ -88,13 +88,13 @@
     </ul>
 
     <h2>挖掘指定</h2>
-    <p><code>core:mine</code> 是内置 3D 区域类型。底栏的挖掘按钮会进入 3D 拖拽指定模式；默认指定 1 格高，按住区域操作辅助键（默认 Ctrl）并滚轮可向上增加垂直范围但不会低于起始层，Esc 可取消当前指定。未按住辅助键时滚轮仍用于镜头缩放。确认拖拽后会创建挖掘区域，并为选中的每个可挖实体方块向 WorkPool 发布一个 <code>mine</code> 工作。空气、水、岩浆、流体、植物材质和注册地物方块不会被加入挖掘任务。该工作使用 <code>core:mine</code> 方块动作，完成后会触发 <code>block:interacted</code> 并进入 CoreMod 挖掘系统，掉落来自方块 JSON 的 <code>drops</code> 字段。</p>
+    <p><code>core:mine</code> 是内置 3D 区域类型。底栏的区域按钮子菜单和独立挖掘按钮都可以进入 3D 拖拽指定模式；默认指定 1 格高，按住区域操作辅助键（默认 Ctrl）并滚轮可向上增加垂直范围但不会低于起始层，Esc 可取消当前指定。未按住辅助键时滚轮仍用于镜头缩放。确认拖拽后会创建挖掘区域，并为选中的每个可挖实体方块向 WorkPool 发布一个 <code>mine</code> 工作。空气、水、岩浆、流体、植物材质和注册地物方块不会被加入挖掘任务。该工作使用 <code>core:mine</code> 方块动作，完成后会触发 <code>block:interacted</code> 并进入 CoreMod 挖掘系统，掉落来自方块 JSON 的 <code>drops</code> 字段。</p>
 
     <h3>挖掘区域透明化</h3>
     <p>挖掘区域内的方块默认渲染为透明，使玩家可以看到区域内部的方块布局。区域周围会显示淡蓝色（75% 透明度）的 3D 边框标记。在区域设置窗口中可以通过 "Transparent Blocks"（方块透明）复选框切换此行为——取消勾选后区域内的方块恢复为不透明渲染。该设置通过区域实例的 <code>settings["transparent"]</code> 字段存储（值为 <code>"true"</code> 或 <code>"false"</code>）。</p>
 
     <h2>伐木指定</h2>
-    <p><code>core:chop</code> 是内置 2D 指定类型。底栏的伐木按钮会进入地面拖拽指定模式，Esc 可取消当前指定；确认拖拽后不会保留伐木区域本身，而是为选中的每个匹配 <code>core:chop_wood</code> 方块动作的 <code>core:tree</code> 单体树地物向 WorkPool 发布一个挖掘工作。该工作完成后触发 <code>block:interacted</code>，由 CoreMod 的挖掘/采集系统移除整棵树，按 <code>core:tree</code> 的 <code>drops</code> 产出木材，并发出 <code>block:chopped</code>。</p>
+    <p><code>core:chop</code> 是内置 2D 指定类型。底栏的区域按钮子菜单和独立伐木按钮都可以进入地面拖拽指定模式，Esc 可取消当前指定；确认拖拽后不会保留伐木区域本身，而是为选中的每个匹配 <code>core:chop_wood</code> 方块动作的 <code>core:tree</code> 单体树地物向 WorkPool 发布一个挖掘工作。该工作完成后触发 <code>block:interacted</code>，由 CoreMod 的挖掘/采集系统移除整棵树，按 <code>core:tree</code> 的 <code>drops</code> 产出木材，并发出 <code>block:chopped</code>。</p>
     <p>拖拽选区格子的验证规则：格子本身必须是 <code>core:tree</code> 树木或空气，且正下方（<code>y-1</code>）必须是非空气、非流体的实心支撑方块——这意味着选区不能跨越空中浮空区域或水面/熔岩面，只能贴着地面框选。空气格子通过验证后不会创建砍伐工作（仍由 <code>is_choppable_block</code> 过滤），便于玩家直接框选一片混杂树木与空地的区域。</p>
 
     <h2>文件放置规则</h2>

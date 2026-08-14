@@ -22,7 +22,7 @@
         "Needs": { "hunger": 50.0, "fatigue": 20.0 },
         "ColonistTag": {},
         "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
-        "Profession": { "id": "my_mod:hunter", "level": 1 },
+        "Job": { "id": "my_mod:hunter", "level": 1 },
         "Name": { "data": "Hunter" },
         "Backstory": { "data": "Former trail scout with steady hands." },
         "Stats": { "strength": 12.0, "dexterity": 14.0, "intelligence": 8.0 },
@@ -57,7 +57,7 @@
         <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 状态。behavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率。</td></tr>
         <tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代理。</td></tr>
         <tr><td><code>Speed</code> runtime</td><td><code>fall_distance</code>, <code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状态。实体会受重力影响，下落超过 4 格后受伤；在水中忽略摔落伤害，并会受流体推动。</td></tr>
-        <tr><td><code>Profession</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
+        <tr><td><code>Job</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
         <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
         <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品。<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为空。</td></tr>
         <tr><td><code>Equipment</code></td><td><code>MainHand</code>, <code>OffHand</code>, <code>Armor</code>, <code>Accessory</code></td><td>固定装备栏。每个槽可写 <code>{"id": "core:tool", "count": 1}</code>；空对象表示有装备组件但初始为空。</td></tr>
@@ -99,18 +99,18 @@
     <table>
       <thead><tr><th>API</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>engine.colonists.list(profession_filter?, sort_key?)</code></td><td>返回殖民者列表摘要，字段包含名称、职业 ID/名称、等级、经验和心情；<code>sort_key</code> 支持 <code>name</code>、<code>profession</code>、<code>level</code>、<code>xp</code>、<code>mood</code>。</td></tr>
+        <tr><td><code>engine.colonists.list(Job_filter?, sort_key?)</code></td><td>返回殖民者列表摘要，字段包含名称、职业 ID/名称、等级、经验和心情；<code>sort_key</code> 支持 <code>name</code>、<code>Job</code>、<code>level</code>、<code>xp</code>、<code>mood</code>。</td></tr>
         <tr><td><code>engine.colonists.detail(entity)</code></td><td>返回角色菜单数据：名称、职业、职业等级/经验、经历、心情、thoughts、基础/工作/战斗属性分组。</td></tr>
         <tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回装备槽、装备属性、HeldItem/Inventory 物品栏，并提供 <code>sort_keys</code> 与 <code>filter_keys</code>。</td></tr>
       </tbody>
     </table>
 
     <h2>内置实体原型</h2>
-    <p>CoreMod 只注册 1 个殖民者实体原型。职业不是实体类型；矿工、木匠、铁匠等都应生成为 <code>core:colonist</code>，再通过 <code>Profession</code> 数据组件或 <code>engine.professions.assign</code> 分配职业。</p>
+    <p>CoreMod 只注册 1 个殖民者实体原型。职业不是实体类型；矿工、木匠、铁匠等都应生成为 <code>core:colonist</code>，再通过 <code>Job</code> 数据组件或 <code>engine.jobs.assign</code> 分配职业。</p>
     <table>
       <thead><tr><th>原型</th><th>ID</th><th>默认职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
       <tbody>
-        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>worker (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
+        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>colonist (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
       </tbody>
     </table>
 
@@ -122,14 +122,14 @@
     <pre><code>-- 在指定位置生成一个殖民者并分配矿工职业
 local id = engine.ecs.spawn_prototype("core:colonist")
 engine.ecs.set_position(id, 10, 70, 20)
-engine.professions.assign(id, "core:miner", 1)</code></pre>
+engine.jobs.assign(id, "core:miner", 1)</code></pre>
     <p>或在控制台中：</p>
     <pre><code>spawn_proto core:colonist       -- 在玩家附近生成一个殖民者实体</code></pre>
 
     <h2>生成时自动补全</h2>
     <ul>
       <li>生成实体总会写入 <code>PrototypeRef</code>，值为原型 ID。</li>
-      <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业 <code>core:worker</code>（如果 JSON 没有声明 <code>Profession</code>）。</li>
+      <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业 <code>core:worker</code>（如果 JSON 没有声明 <code>Job</code>）。</li>
       <li>声明 <code>Needs</code> 但未声明 <code>Mood</code> 时，会自动添加默认 <code>Mood</code>。</li>
       <li>声明 <code>Stats</code> 时会重新计算派生属性；未声明 <code>Health</code> 时，生命值会用派生 <code>max_hp</code>。</li>
     </ul>

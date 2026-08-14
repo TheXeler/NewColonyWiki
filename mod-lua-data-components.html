@@ -41,6 +41,18 @@ end</code></pre>
         <tr><td><code>cooldowns.mining</code></td><td>脚本自定义的挖矿冷却计数。</td></tr>
       </tbody>
     </table>
+
+    <h2>战斗组件字段</h2>
+    <p>战斗职业会在转职成功时建立原生 ECS 战斗组件。Lua 侧的 <code>components.combat</code> 模块公开字段清单，后续战斗系统和 HUD 可用它对齐数据视图。</p>
+    <table>
+      <thead><tr><th>组件</th><th>字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>Squad</code></td><td><code>squad_id</code>, <code>leader_entity</code>, <code>member_count</code>, <code>member_cap</code>, <code>hp</code>, <code>hp_max</code>, <code>attack</code>, <code>hit_rate</code>, <code>dodge</code>, <code>move_speed</code>, <code>range</code>, <code>attack_cooldown</code>, <code>attack_frequency</code>, <code>formation_width</code>, <code>facing</code>, <code>combat_state</code>, <code>hold_ground</code>, <code>has_move_order</code>, <code>attack_order</code>, <code>move_target_x/y/z</code>, <code>suppression_stacks</code></td><td>小队由队长殖民者和虚拟士兵人数构成；V2 使用隐藏 <code>attack_cooldown</code>，<code>attack_frequency</code> 和 <code>suppression_stacks</code> 仅兼容保留。</td></tr>
+        <tr><td><code>SquadSoldierVisual</code></td><td><code>leader_entity</code>, <code>slot</code></td><td>战斗系统生成的临时显示实体，用于让虚拟士兵在队长周围形成方阵；保存时跳过。</td></tr>
+        <tr><td><code>CombatState</code></td><td><code>alert_range</code>, <code>target_squad</code>, <code>state</code>, <code>cooldown</code></td><td>目标小队、和平/战斗状态和动作冷却；V2 交战由方阵接触触发，不使用警戒距离入战。</td></tr>
+        <tr><td><code>ManaReserve</code></td><td><code>mana</code>, <code>mana_max</code>, <code>reserve</code>, <code>regeneration</code>, <code>region_key</code></td><td>兼容保留组件；V2 基础战斗不创建或消费区域法力。</td></tr>
+      </tbody>
+    </table>
     <p>空路径、连续点号或末尾点号都是无效路径，例如 <code>quest..stage</code> 和 <code>quest.</code>。</p>
 
     <h2>支持的值</h2>
@@ -98,11 +110,12 @@ end)</code></pre>
     </ul>
 
     <h2>经营界面只读聚合数据</h2>
-    <p>人员界面不需要把 <code>Name</code>、<code>Profession</code>、<code>Mood</code>、<code>Stats</code>、<code>Equipment</code> 和物品栏组件散落到 UI 中自行拼装。运行时提供了只读聚合入口：</p>
+    <p>人员界面不需要把 <code>Name</code>、<code>Job</code>、<code>Mood</code>、<code>Stats</code>、<code>Equipment</code> 和物品栏组件散落到 UI 中自行拼装。运行时提供了只读聚合入口：</p>
+    <p><code>Stats</code> 的战斗派生字段包含 <code>melee_damage</code>、<code>ranged_damage</code>、<code>dodge_rate</code>、<code>spell_damage</code>、<code>max_hp</code>、<code>hit_rate</code>、<code>attack_range</code> 和 <code>attack_frequency</code>。后三项是基础派生值，最终战斗命中和频率规则由战斗系统消费。</p>
     <table>
       <thead><tr><th>API</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>engine.colonists.list(profession_filter?, sort_key?)</code></td><td>角色列表、职业筛选、排序。</td></tr>
+        <tr><td><code>engine.colonists.list(Job_filter?, sort_key?)</code></td><td>角色列表、职业筛选、排序。</td></tr>
         <tr><td><code>engine.colonists.detail(entity)</code></td><td>角色菜单：名称、职业、职业经验、心情、经历、基础/工作/战斗属性。</td></tr>
         <tr><td><code>engine.colonists.equipment(entity)</code></td><td>角色装备：固定装备槽、装备属性、HeldItem/Inventory 物品栏、筛选/排序字段。</td></tr>
         <tr><td><code>engine.colonists.career_tree()</code></td><td>角色转职：职业树节点、职业介绍、职业加成和转职需求。</td></tr>

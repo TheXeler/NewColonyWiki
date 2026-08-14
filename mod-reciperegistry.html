@@ -31,7 +31,7 @@
         { "id": "my_mod:stick", "count": 1 }
     ],
     "output": { "id": "my_mod:steel_sword", "count": 1 },
-    "profession": { "id": "my_mod:blacksmith", "level": 3 }
+    "Job": { "id": "my_mod:blacksmith", "level": 3 }
 }</code></pre>
 
     <h2>字段说明</h2>
@@ -46,9 +46,9 @@
         <tr><td><code>output</code></td><td>object</td><td>是</td><td>产出物品。包含 <code>id</code> 和 <code>count</code>。</td></tr>
         <tr><td><code>output.id</code></td><td>string</td><td>是</td><td>产出方块的完整 ID。必须指向已注册的方块。</td></tr>
         <tr><td><code>output.count</code></td><td>int</td><td>是</td><td>产出数量，必须 ≥ 1。</td></tr>
-        <tr><td><code>profession</code></td><td>object</td><td>否</td><td>职业限制。只有指定职业且达到指定等级的殖民者才能执行此配方。省略时任何殖民者都可执行。</td></tr>
-        <tr><td><code>profession.id</code></td><td>string</td><td>是</td><td>职业的完整 ID。必须指向已注册的职业。</td></tr>
-        <tr><td><code>profession.level</code></td><td>int</td><td>否</td><td>要求的职业等级，范围 1~5。省略时不检查等级。</td></tr>
+        <tr><td><code>Job</code></td><td>object</td><td>否</td><td>职业限制。只有指定职业且达到指定等级的殖民者才能执行此配方。省略时任何殖民者都可执行。</td></tr>
+        <tr><td><code>Job.id</code></td><td>string</td><td>是</td><td>职业的完整 ID。必须指向已注册的职业。</td></tr>
+        <tr><td><code>Job.level</code></td><td>int</td><td>否</td><td>要求的职业等级，范围 1~5。省略时不检查等级。</td></tr>
       </tbody>
     </table>
 
@@ -119,8 +119,8 @@
       <li><code>inputs[].id</code> 必须指向已注册的方块；<code>inputs[].tag</code> 必须非空字符串（tag 字典在 RecipeSystem 初始化时构建，不在此处校验存在性）。</li>
       <li><code>inputs[]</code> 必须明确写 <code>id</code> 或 <code>tag</code> 中的一项，两者都缺或都写都会报错。</li>
       <li><code>output.id</code> 必须指向已注册的方块。<code>output</code> 不允许使用 tag。</li>
-      <li><code>profession.id</code>（如果填写）必须指向已注册的职业。</li>
-      <li><code>profession.level</code>（如果填写）必须在 1~5 范围内。</li>
+      <li><code>Job.id</code>（如果填写）必须指向已注册的职业。</li>
+      <li><code>Job.level</code>（如果填写）必须在 1~5 范围内。</li>
       <li>引用不存在的 ID 会导致加载报错。</li>
     </ul>
 

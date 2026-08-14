@@ -42,7 +42,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表。</td></tr>
         <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
         <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值。</td></tr>
-        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 blocks、tags、entities、recipes、professions、civilizations、focuses、factions、faction_spawn_rules、name_pools、actions、features、ores、crops、buildings、terrain、biomes、zones；不写 type 时会列出全部类型。</td></tr>
+        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看数据。type 支持 blocks、tags、entities、recipes、jobs、civilizations、focuses、factions、faction_spawn_rules、name_pools、actions、features、ores、crops、buildings、terrain、biomes、combat、zones；不写 type 时会列出全部类型。</td></tr>
         <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
         <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。</td></tr>
         <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
@@ -63,6 +63,8 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>lua &lt;code&gt;</code></td><td>直接执行一段 Lua 代码。</td></tr>
         <tr><td><code>echo &lt;lua_expression&gt;</code></td><td>执行 Lua 表达式并输出返回值。</td></tr>
         <tr><td><code>locale_list</code> / <code>locale_set &lt;id&gt;</code> / <code>locale_reload</code></td><td>查看、切换和重载本地化资源。</td></tr>
+        <tr><td><code>reload</code> / <code>reload rml</code> / <code>reload &lt;lua_path&gt;</code></td><td>热重载。<code>reload</code>（不带参数）重载所有子项：游戏内 RmlUI 的界面文档与样式、以及全部已加载的 Lua 脚本；<code>reload rml</code> 只重载 RmlUI 文档（<code>.rml</code>/<code>.rcss</code>，改完即时生效，无需重启游戏）；<code>reload &lt;lua_path&gt;</code> 只热重载指定的单个 Lua 脚本。</td></tr>
+        <tr><td><code>ui_lab</code> / <code>ui_lab show</code> / <code>ui_lab hide</code> / <code>ui_lab toggle</code> / <code>ui_lab components</code> / <code>ui_lab tech_tree</code></td><td>切换、显示、隐藏真实 RmlUI 设计实验室，或直接打开指定预览场景。仅 <code>--DEBUG</code> 运行会加载该文档；普通/Release 路径不可用。Components 与 Tech Tree fixture 场景都使用真实共享 RCSS；修改后执行 <code>reload rml</code> 即可刷新。</td></tr>
         <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档。</td></tr>
         <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体。</td></tr>
         <tr><td><code>list_civs</code></td><td>查看文明系统状态。</td></tr>
@@ -74,7 +76,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
     <ol>
       <li><code>mods</code> —— 确认 MOD 出现在加载列表中。</li>
       <li><code>list_data blocks prefix=copper_age:</code> —— 检查方块是否注册。</li>
-      <li><code>list_data professions prefix=copper_age:</code> —— 检查职业是否注册。</li>
+      <li><code>list_data jobs prefix=copper_age:</code> —— 检查职业是否注册。</li>
       <li><code>list_data civilizations prefix=copper_age:</code> —— 检查文明是否注册。</li>
       <li><code>list_data focuses prefix=copper_age:</code> —— 检查 焦点 是否注册。</li>
       <li><code>data type:factions</code> —— 检查 NPC 阵营定义是否注册。</li>

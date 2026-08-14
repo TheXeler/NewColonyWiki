@@ -36,12 +36,11 @@ const WIKI_NAV = [
           ["mod-tagregistry", "Tag 注册", "mod-tagregistry.html"],
           ["mod-entityregistry", "实体注册", "mod-entityregistry.html"],
           ["mod-reciperegistry", "配方注册", "mod-reciperegistry.html"],
-          ["mod-professionregistry", "职业注册", "mod-professionregistry.html"],
+          ["mod-jobregistry", "职业注册", "mod-jobregistry.html"],
           ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"],
           ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
           ["mod-factionregistry", "NPC 阵营注册", "mod-factionregistry.html"],
           ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
-          ["mod-actionregistry", "动作注册", "mod-actionregistry.html"],
           ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
           ["mod-oreregistry", "矿物分布注册", "mod-oreregistry.html"],
           ["mod-cropregistry", "作物注册", "mod-cropregistry.html"],
@@ -56,6 +55,7 @@ const WIKI_NAV = [
         title: "引擎参考",
         children: [
           ["engine-terraingeneration", "地形生成流程", "engine-terraingeneration.html"],
+          ["engine-combat", "战斗规则与法力", "engine-combat.html"],
           ["engine-lighting", "引擎光照", "engine-lighting.html"],
           ["engine-save-system", "存档系统状态", "engine-save-system.html"]
         ]
@@ -70,7 +70,6 @@ const WIKI_NAV = [
       ["mod-lua-data-components", "数据组件 API", "mod-lua-data-components.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["ui-rmlui", "游戏内 RmlUI", "ui-rmlui.html"],
-      ["mod-ui-html-pages", "HTML/CSS 页面", "mod-ui-html-pages.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
       ["mod-network-sync", "网络同步与 Mod 数据", "mod-network-sync.html"]
     ]
@@ -250,4 +249,4 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLuaApiTable();
   setupApiSearch();
 });
-
+

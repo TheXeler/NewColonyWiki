@@ -40,10 +40,10 @@
         <tr><td>Equipment</td><td>MainHand, OffHand, Armor, Accessory (各含 item_id, count, two_handed)</td></tr>
         <tr><td>Needs</td><td>hunger, fatigue</td></tr>
         <tr><td>Mood</td><td>mood_value, broken_down, breakdown_timer, thought_count</td></tr>
-        <tr><td>Profession</td><td>profession_id, level</td></tr>
+        <tr><td>Job</td><td>job_id, level</td></tr>
         <tr><td>Name</td><td>data</td></tr>
         <tr><td>Scale</td><td>x, y, z</td></tr>
-        <tr><td>AIState</td><td>behavior_tree_id, current_node, lod_level, busy, current_job_instance</td></tr>
+        <tr><td>AIState</td><td>behavior_tree_id, current_node, lod_level, busy, current_work_instance</td></tr>
         <tr><td>WorkerPriorityConfig</td><td>所有 category_priorities</td></tr>
         <tr><td>Civilization</td><td>civilization_id</td></tr>
         <tr><td>BlockInteractor</td><td>target_block(x,y,z), action_type</td></tr>
@@ -68,9 +68,9 @@
         <tr><td>MoveEntity</td><td>entity_id, x, y, z</td><td>移动实体</td></tr>
         <tr><td>BuildBlock</td><td>x, y, z, block_id</td><td>放置方块</td></tr>
         <tr><td>MineBlock</td><td>x, y, z</td><td>挖掘方块</td></tr>
-        <tr><td>AssignProfession</td><td>entity_id, profession_id, level</td><td>分配职业</td></tr>
+        <tr><td>AssignJob</td><td>entity_id, job_id, level</td><td>分配职业</td></tr>
         <tr><td>GiveBlock</td><td>entity_id, block_id, count</td><td>给予方块物品</td></tr>
-        <tr><td>PostJob</td><td>job_type, faction_id, x, y, z, duration, data</td><td>发布工作到主机 WorkPool</td></tr>
+        <tr><td>PostWork</td><td>work_tag, faction_id, x, y, z, duration, payload_id</td><td>发布工作到主机 WorkPool</td></tr>
       </tbody>
     </table>
     <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>

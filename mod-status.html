@@ -18,8 +18,8 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖与加载顺序（<code>dependencies</code>/<code>load_after</code>/<code>load_before</code>，支持 <code>load_before: ["*"]</code>）、<code>side</code>、<code>conflicts</code>、<code>settings</code>、<code>lua.permissions.io</code>、用户设置覆盖和 MOD 翻译合并均已接入。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 20 类 JSON：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>audio</code>、<code>zones</code>。</td></tr>
+        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖与加载顺序（<code>dependencies</code>/<code>load_after</code>/<code>load_before</code>，支持 <code>load_before: ["*"]</code>）、<code>side</code>、<code>conflicts</code>、<code>settings</code>、用户设置覆盖和 MOD 翻译合并均已接入。<code>lua.permissions.io</code> 只保留为兼容声明，当前不会打开 Lua <code>io</code> 库。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 21 类 JSON：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>audio</code>、<code>zones</code>。</td></tr>
         <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、无效字段、配方/职业/文明/作物/方块引用错误会报告明确来源。</td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持 <code>after</code>、<code>every</code>、<code>cancel</code>、<code>clear</code>。</td></tr>
@@ -27,8 +27,8 @@
         <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业等级、转职方块、前置职业、配方输入输出、职业要求、文明配方限制和解锁均已从注册表初始化。</td></tr>
         <tr><td>文明</td><td><span class="badge done">可用</span></td><td>文明定义、初始方块/职业、配方修正规则和 TechTree 入口已接入；当前 CoreMod 有 2 个文明。</td></tr>
         <tr><td>焦点系统</td><td><span class="badge done">可用</span></td><td>玩家可见焦点事件支持 tick、实体数量、殖民者需求、Lua 条件和选项。</td></tr>
-        <tr><td>NPC 阵营与名称池</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、模板命名、阵营实例、关系值和外交动作已接入；新世界开局时按规则批量 spawn AI 阵营。</td></tr>
-        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>核心语言文件、MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
+        <tr><td>派系、城邦与外交</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、模板命名、城邦资源/等级、密度与最小间隔、双边关系、战争状态、贸易许可、谈判积分、反议/接受/拒绝、AI 周期外交和存档已接入；世界地图标记及城邦列表可进入外交面板。</td></tr>
+        <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 26 种标准组件可用。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令、客户端预测、延迟补偿、重连恢复、增量快照和 MOD 数据交换已实现。</td></tr>
         <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册约 80 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
@@ -43,7 +43,7 @@
         <tr>
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
-          <td>需求驱动、WorkPool、JobRegistry、ActionRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
+          <td>需求驱动、WorkPool、WorkRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
           <td>挖矿、搬运入库、建造材料预留、施工推进、农业产出和手持物品动作已接入 WorkPool/Lua 事件闭环；巡逻、社交和紧急行为仍需继续完善。</td>
         </tr>
         <tr>
@@ -73,8 +73,8 @@
         <tr>
           <td>UI 系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td>玩家可见 UI 统一走游戏内 RmlUI：主菜单、HUD、暂停/设置、开发者控制台、小地图/区域、建造、研究、制造和殖民者面板由 RML/RCSS 文档驱动。旧即时模式/Lua 可见渲染层已移除。</td>
-          <td>Lua UI 兼容 API 已接入 RmlUI-backed 可见层，可显示底栏扩展、窗口/table/tabs_table 和浮动提示；<code>MainMenuState</code> 仍承载设置、暂停和世界创建状态。旧 CSS 主题后端不再应用样式，主题扫描只为旧配置兼容保留。</td>
+          <td>玩家可见 UI 统一走游戏内 RmlUI：主菜单、HUD、暂停/设置、开发者控制台、小地图和全局提示由静态 RML/RCSS 文档驱动；经营类游戏内菜单通过 Lua <code>on_load</code> 注册到底栏/窗口兼容层。旧即时模式/Lua 可见渲染层已移除。</td>
+          <td>Lua UI 兼容 API 已接入 RmlUI-backed 可见层，可显示底栏扩展、窗口/table/tabs_table、动态 RML 面板和浮动提示；<code>MainMenuState</code> 仍承载设置、暂停和世界创建状态。旧 CSS 主题后端不再应用样式，主题扫描只为旧配置兼容保留。</td>
         </tr>
         <tr>
           <td>存档</td>
@@ -112,8 +112,8 @@
       <tbody>
         <tr><td>Core</td><td>29</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
         <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 26 种标准组件</td></tr>
-        <tr><td>Simulation</td><td>34</td><td>TickManager, DeterministicRNG, RecipeSystem, ProfessionSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree, BuildingSystem, ZoneSystem</td></tr>
-        <tr><td>AI</td><td>16</td><td>AISystem, WorkPool, JobRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
+        <tr><td>Simulation</td><td>34</td><td>TickManager, DeterministicRNG, RecipeSystem, JobSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree, BuildingSystem, ZoneSystem</td></tr>
+        <tr><td>AI</td><td>16</td><td>AISystem, WorkPool, WorkRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
         <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
         <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
         <tr><td>Renderer</td><td>42</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>

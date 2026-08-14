@@ -6,28 +6,30 @@
   <title>职业注册 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body data-page="mod-professionregistry">
+<body data-page="mod-jobregistry">
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>职业注册</div></div>
   <div class="content">
     <h1>职业注册</h1>
-    <p class="subtitle">职业定义放在 <code>data/professions/</code> 下，引擎加载时自动扫描。职业决定了殖民者可以解锁哪些配方，以及需要什么工具方块才能从事该职业。</p>
+    <p class="subtitle">职业定义放在 <code>data/jobs/</code> 下，引擎加载时自动扫描。职业决定了殖民者可以解锁哪些配方，以及需要什么工具方块才能从事该职业。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
   "id": "core:blacksmith",
   "name": "Blacksmith",
   "description": "Metalworking specialist for smelting, tools, weapons, and armor.",
+  "category": "work",
   "parent": "core:stonemason",
   "tier": 3,
   "sort_order": 80,
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:anvil_item", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
     { "id": "core:smelt_iron", "level": 1 },
     { "id": "core:craft_iron_pickaxe", "level": 2 }
   ],
+  "allowed_work_tags": ["craft"],
   "bonuses": [
     { "stat": "work_speed", "value": 0.12, "mode": "add_mult" },
     { "stat": "melee_damage", "value": 1.5, "mode": "add" }
@@ -41,20 +43,22 @@
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>职业显示名称。</td></tr>
         <tr><td><code>description</code></td><td>string</td><td>否</td><td>职业介绍文本，供转职界面展示。</td></tr>
+        <tr><td><code>category</code></td><td>string</td><td>否</td><td>职业分类。<code>combat</code> 表示战斗职业；成功转职时会给殖民者建立小队、战斗状态，法师还会建立法力储备。省略时按普通工作职业处理。</td></tr>
         <tr><td><code>parent</code> / <code>tree_parent</code></td><td>string</td><td>否</td><td>转职树父节点职业 ID。仅用于 UI/数据展示，不改变当前前置校验逻辑。</td></tr>
         <tr><td><code>tier</code></td><td>int</td><td>否</td><td>转职树层级，默认 1。</td></tr>
         <tr><td><code>sort_order</code></td><td>int</td><td>否</td><td>职业列表和转职树中的稳定排序值。</td></tr>
         <tr><td><code>civilization</code></td><td>string</td><td>否</td><td>限制可分配该职业的文明 ID；实体必须有匹配的 <code>Civilization</code> 组件。</td></tr>
-        <tr><td><code>max_level</code></td><td>int</td><td>否</td><td>最大等级，范围 1-5，决定配方解锁的等级上限。</td></tr>
+        <tr><td><code>max_level</code></td><td>int</td><td>否</td><td>最大等级，范围 1-6，决定配方解锁的等级上限。</td></tr>
         <tr><td><code>required_block</code></td><td>object</td><td>是</td><td>从事该职业所需的工具方块。<code>id</code> 指向已注册的方块 ID，<code>count</code> 为所需数量。</td></tr>
         <tr><td><code>prerequisites</code></td><td>object[]</td><td>否</td><td>前置职业列表。每项包含 <code>id</code>（职业 ID）和 <code>level</code>（所需等级）。空数组表示无条件可转职。</td></tr>
         <tr><td><code>unlocks_recipes</code></td><td>array</td><td>否</td><td>该职业解锁的配方列表。每个条目可以是一个配方 ID 字符串，也可以是包含 <code>id</code>（配方 ID）和 <code>level</code>（解锁所需等级）的对象。</td></tr>
-        <tr><td><code>bonuses</code></td><td>object[]</td><td>否</td><td>职业加成。每项包含 <code>stat</code>、<code>value</code> 和 <code>mode</code>（如 <code>add</code>、<code>add_mult</code>、<code>mul</code>、<code>set</code>）。当前会进入人员界面的只读聚合属性（基础 <code>Stats</code> + 当前职业加成）；其中 <code>mining_speed</code>、<code>work_speed</code>、<code>construction_speed</code>、<code>crafting_speed</code>、<code>hauling_speed</code> 已影响对应工作 job 的完成速度，<code>carry_capacity</code> 已影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 已影响作物收获的额外产出概率。</td></tr>
+        <tr><td><code>allowed_work_tags</code></td><td>string[]</td><td>否</td><td>该职业允许接取的玩家工作类型；旧字段 <code>allowed_work_types</code> / <code>allowed_job_types</code> 会作为迁移别名读取。支持需求文档用语 <code>gather</code>、<code>mine</code>/<code>dig</code>、<code>build</code>/<code>plant</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>research</code>、<code>guard</code> 和 <code>patrol</code> 等值；需求、社交和紧急工作不受此字段限制，省略时不限制旧 MOD。</td></tr>
+        <tr><td><code>bonuses</code></td><td>object[]</td><td>否</td><td>职业加成。每项包含 <code>stat</code>、<code>value</code> 和 <code>mode</code>（如 <code>add</code>、<code>add_mult</code>、<code>mul</code>、<code>set</code>）。当前会进入人员界面的只读聚合属性（基础 <code>Stats</code> + 当前职业加成）；其中 <code>mining_speed</code>、<code>work_speed</code>、<code>construction_speed</code>、<code>crafting_speed</code>、<code>hauling_speed</code> 已影响对应 work 的完成速度，<code>carry_capacity</code> 已影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 已影响作物收获的额外产出概率。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      职业系统通过 <code>required_block</code> 控制门槛——殖民者背包中必须持有指定数量和类型的方块才能转职。配方按 <code>level</code> 阶梯解锁，等级提升后可获得更高级的制造能力。
+      职业系统通过 <code>required_block</code> 控制门槛——殖民者背包中必须持有指定数量和类型的方块才能转职。配方按 <code>level</code> 阶梯解锁，等级提升后可获得更高级的制造能力。显式玩家工作完成后会获得职业经验，经验阈值为 <code>100 * 当前等级</code>；心情会把经验效率调整到 50%-150%；达到职业 <code>max_level</code> 后不再累计经验。撤职会回到父职业的等级上限并清空当前经验；没有父职业时回到 <code>core:colonist</code>。
     </div>
 
     <h2>Lua/UI 聚合接口</h2>
@@ -62,9 +66,12 @@
     <table>
       <thead><tr><th>API</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>engine.professions.defs()</code></td><td>返回按 <code>sort_order</code> 排序的职业定义，包含介绍、需求物品、前置、解锁配方和加成。</td></tr>
-        <tr><td><code>engine.professions.tree()</code></td><td>返回按 <code>tier</code>/<code>sort_order</code> 排序的转职树节点。</td></tr>
-        <tr><td><code>engine.professions.aggregate_stats(entity)</code></td><td>返回指定实体基础属性叠加当前职业加成后的扁平属性表，并在 <code>snapshot</code> 字段提供 UI 分组视图。</td></tr>
+        <tr><td><code>engine.jobs.defs()</code></td><td>返回按 <code>sort_order</code> 排序的职业定义，包含 <code>category</code>、介绍、需求物品、前置、解锁配方和加成。</td></tr>
+        <tr><td><code>engine.jobs.tree()</code></td><td>返回按 <code>tier</code>/<code>sort_order</code> 排序的转职树节点，节点同样包含 <code>category</code>。</td></tr>
+        <tr><td><code>engine.jobs.aggregate_stats(entity)</code></td><td>返回指定实体基础属性叠加当前职业加成后的扁平属性表，并在 <code>snapshot</code> 字段提供 UI 分组视图。</td></tr>
+        <tr><td><code>engine.jobs.resign(entity)</code></td><td>撤销当前职业，回到父职业或 <code>core:colonist</code>，等级设为目标职业上限并清空经验。</td></tr>
+        <tr><td><code>engine.jobs.add_xp(entity, xp)</code></td><td>按职业等级表增加经验并自动升级；返回本次是否升级。</td></tr>
+        <tr><td><code>engine.jobs.xp_required_for_level(level)</code></td><td>返回某一等级升到下一级所需经验。</td></tr>
         <tr><td><code>engine.colonists.detail(entity)</code></td><td>返回人员面板角色菜单字段，包含 <code>id/entity</code>、名称、职业 ID/名称、等级/经验、经历、心情、需求和聚合后的 <code>base_attrs</code>、<code>work_attrs</code>、<code>combat_attrs</code>。</td></tr>
         <tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回装备槽、物品栏和页面用的 <code>equipment</code>/<code>page_inventory</code> 摘要。</td></tr>
         <tr><td><code>engine.colonists.career_tree(entity?)</code></td><td>人员界面同源转职树入口；传入实体时返回 <code>{ current, options }</code>，每个选项包含职业介绍、加成、需求和 <code>unlocked/reason</code>。</td></tr>
@@ -72,26 +79,40 @@
     </table>
 
     <div class="callout warn">
-      <code>bonuses</code> 已分阶段接入模拟。工作时长接入包括：挖矿使用 <code>mining_speed</code>，建造使用 <code>construction_speed</code> 或回退到 <code>work_speed</code>，制作使用 <code>crafting_speed</code> 或回退到 <code>work_speed</code>，搬运 job 的移动型进度使用 <code>hauling_speed</code> 或回退到 <code>carry_move_speed</code>。搬运容量接入包括：<code>carry_capacity</code> 影响从方块掉落表拾取物品时的一次携带数量；无该 bonus 时默认仍为 1。成功率接入包括：<code>work_success_rate</code> 在 <code>systems.farming</code> 的成熟作物收获中按"聚合成功率 / 基础成功率"计算职业成功倍率，超过 1 的部分 clamp 到 0-100% 作为每种产出额外 +1 的概率；无职业 bonus 时倍率为 1，不改变原产量。<code>max_hp</code>、伤害、闪避等战斗字段仍只保证 UI 聚合展示，尚未进入战斗公式。
+      <code>bonuses</code> 已分阶段接入模拟。工作时长接入包括：挖矿使用 <code>mining_speed</code>，建造使用 <code>construction_speed</code> 或回退到 <code>work_speed</code>，制作使用 <code>crafting_speed</code> 或回退到 <code>work_speed</code>，搬运 work 的移动型进度使用 <code>hauling_speed</code> 或回退到 <code>carry_move_speed</code>。搬运容量接入包括：<code>carry_capacity</code> 影响从方块掉落表拾取物品时的一次携带数量；无该 bonus 时默认仍为 1。成功率接入包括：<code>work_success_rate</code> 在 <code>systems.farming</code> 的成熟作物收获中按"聚合成功率 / 基础成功率"计算职业成功倍率，超过 1 的部分 clamp 到 0-100% 作为每种产出额外 +1 的概率；无职业 bonus 时倍率为 1，不改变原产量。<code>max_hp</code>、伤害、闪避等战斗字段仍只保证 UI 聚合展示，尚未进入战斗公式。
     </div>
 
     <h2>CoreMod 内置职业</h2>
-    <p>CoreMod 目前注册了 10 个职业：</p>
+    <p>CoreMod 目前注册了 20 个职业，其中 4 个是 <code>category:"combat"</code> 的战斗职业。基础职业树按 <code>core:colonist</code> 向工人、采集工和农民辐射，再进入对应子职业。</p>
     <table>
       <thead><tr><th>职业 ID</th><th>显示名称</th><th>所需工具方块</th><th>前置职业</th></tr></thead>
       <tbody>
-        <tr><td><code>core:worker</code></td><td>Worker</td><td>worker_badge</td><td>—</td></tr>
-        <tr><td><code>core:farmer</code></td><td>Farmer</td><td>wooden_hoe</td><td>—</td></tr>
-        <tr><td><code>core:miner</code></td><td>Miner</td><td>stone_pickaxe</td><td>—</td></tr>
+        <tr><td><code>core:colonist</code></td><td>Colonist</td><td>worker_badge</td><td>—</td></tr>
+        <tr><td><code>core:worker</code></td><td>Worker</td><td>worker_badge</td><td>colonist level 1</td></tr>
+        <tr><td><code>core:builder</code></td><td>Builder</td><td>workbench_item</td><td>worker level 6</td></tr>
+        <tr><td><code>core:artisan</code></td><td>Artisan</td><td>workbench_item</td><td>worker level 6</td></tr>
+        <tr><td><code>core:gatherer</code></td><td>Gatherer</td><td>worker_badge</td><td>colonist level 1</td></tr>
+        <tr><td><code>core:farmer</code></td><td>Farmer</td><td>wooden_hoe</td><td>colonist level 1</td></tr>
+        <tr><td><code>core:gardener</code></td><td>Gardener</td><td>wooden_hoe</td><td>farmer level 6</td></tr>
+        <tr><td><code>core:hauler</code></td><td>Hauler</td><td>worker_badge</td><td>farmer level 6</td></tr>
+        <tr><td><code>core:miner</code></td><td>Miner</td><td>stone_pickaxe</td><td>gatherer level 6</td></tr>
         <tr><td><code>core:carpenter</code></td><td>Carpenter</td><td>workbench_item</td><td>—</td></tr>
-        <tr><td><code>core:lumberjack</code></td><td>Lumberjack</td><td>wooden_axe</td><td>—</td></tr>
+        <tr><td><code>core:lumberjack</code></td><td>Lumberjack</td><td>wooden_axe</td><td>gatherer level 6</td></tr>
         <tr><td><code>core:stonemason</code></td><td>Stonemason</td><td>stone_furnace_item</td><td>—</td></tr>
-        <tr><td><code>core:cook</code></td><td>Cook</td><td>cooking_pot_item</td><td>—</td></tr>
+        <tr><td><code>core:cook</code></td><td>Cook</td><td>cooking_pot_item</td><td>farmer level 6</td></tr>
         <tr><td><code>core:blacksmith</code></td><td>Blacksmith</td><td>anvil_item</td><td>—</td></tr>
         <tr><td><code>core:potter</code></td><td>Potter</td><td>pottery_bowl</td><td>—</td></tr>
         <tr><td><code>core:weaver</code></td><td>Weaver</td><td>cloth</td><td>—</td></tr>
+        <tr><td><code>core:soldier</code></td><td>Soldier</td><td>stone_sword</td><td>worker level 1</td></tr>
+        <tr><td><code>core:archer</code></td><td>Archer</td><td>bow</td><td>worker level 1</td></tr>
+        <tr><td><code>core:mage</code></td><td>Mage</td><td>worker_badge</td><td>worker level 1</td></tr>
+        <tr><td><code>core:captain</code></td><td>Captain</td><td>iron_sword</td><td>soldier level 2</td></tr>
       </tbody>
     </table>
+
+    <h2>战斗职业接入</h2>
+    <p>当 <code>engine.jobs.assign</code> 成功分配 <code>category:"combat"</code> 职业时，引擎会给该殖民者附加 <code>Squad</code> 和 <code>CombatState</code>。小队以该殖民者为队长，士兵用 <code>member_count</code> 表示，不创建额外实体。V2 不再为 <code>core:mage</code> 附加 <code>ManaReserve</code>。</p>
+    <p>当前战斗循环按 2026-07-20 V2 需求运行：只处理近战方阵接触、队长命中、士兵固定伤害和隐藏攻击冷却，不处理远程、法术、夹击压制和区域法力。</p>
 
     <h2>新职业定义示例</h2>
 
@@ -99,7 +120,7 @@
     <pre><code>{
   "id": "core:farmer",
   "name": "Farmer",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:wooden_hoe", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -114,7 +135,7 @@
     <pre><code>{
   "id": "core:miner",
   "name": "Miner",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:stone_pickaxe", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -127,7 +148,7 @@
     <pre><code>{
   "id": "core:carpenter",
   "name": "Carpenter",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:workbench_item", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -154,7 +175,7 @@
     <pre><code>{
   "id": "core:lumberjack",
   "name": "Lumberjack",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:wooden_axe", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -167,7 +188,7 @@
     <pre><code>{
   "id": "core:stonemason",
   "name": "Stonemason",
-  "max_level": 5,
+  "max_level": 6,
   "required_block": { "id": "core:stone_furnace_item", "count": 1 },
   "prerequisites": [],
   "unlocks_recipes": [
@@ -195,7 +216,7 @@
 
     <h2>文件放置规则</h2>
     <ul>
-      <li>放在 <code>data/professions/</code> 下，支持任意深度的子目录。</li>
+      <li>放在 <code>data/jobs/</code> 下，支持任意深度的子目录。</li>
       <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
       <li>每个 JSON 文件定义一个职业。</li>
     </ul>
@@ -207,12 +228,12 @@
   "prerequisites": [{"id": "core:worker", "level": 1}],
   ...
 }</code></pre>
-    <p>加载器会校验前置职业 ID 存在，但不会做拓扑排序或循环依赖检测。运行时实体只有一个当前 <code>Profession</code> 组件；多个 <code>prerequisites</code> 按“满足任意一项”处理，而不是必须全部满足。</p>
+    <p>加载器会校验前置职业 ID 存在，但不会做拓扑排序或循环依赖检测。运行时实体只有一个当前 <code>Job</code> 组件；多个 <code>prerequisites</code> 按“满足任意一项”处理，而不是必须全部满足。</p>
 
     <h2>验证命令</h2>
     <p>在控制台（按物理 Grave/反引号键）中确认职业注册成功：</p>
     <pre><code>mods                                  —— 确认 MOD 已加载
-list_data professions                  —— 列出所有已注册职业
+list_data jobs                  —— 列出所有已注册职业
 data core:blacksmith                   —— 查看单个职业的完整 JSON</code></pre>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

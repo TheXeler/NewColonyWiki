@@ -17,6 +17,18 @@
       <strong>脚本运行时</strong>：LuaJIT 2.1（Lua 5.1 语言）。不要使用 5.3+ 才有的位运算符（<code>&amp;</code> <code>|</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code>）和整除运算符 <code>//</code>——需要位运算时改用 <code>bit</code> 库（<code>bit.band</code>、<code>bit.bor</code>、<code>bit.bxor</code>、<code>bit.lshift</code>、<code>bit.rshift</code>）。注意 <code>bit</code> 库只在 32 位上运算。
     </div>
 
+    <div class="callout info">
+      <strong>MOD API 版本</strong>：当前公共脚本 API 版本可读 <code>engine.api_version</code>，也可读 <code>engine.version.api</code>。旧入口 <code>engine.api.version()</code> 暂时保留用于兼容，但新脚本不要再依赖它。
+    </div>
+
+    <div class="callout info">
+      <strong>API 稳定性</strong>：速查页按 <code>stable</code>、<code>experimental</code>、<code>deprecated</code> 标记接口。稳定接口用于普通内容 MOD 和 CoreMod 路径，兼容性优先；实验接口通常是低级 ECS、世界修改、网络命令、编辑器或运行时注册能力，可用但后续可能收窄权限；废弃接口只为兼容保留。
+    </div>
+
+    <div class="callout warn">
+      <strong>沙箱边界</strong>：MOD Lua 不暴露进程和通用文件系统能力。<code>os</code>、<code>io</code>、<code>debug</code>、<code>dofile</code>、<code>loadfile</code>、<code>load</code>、<code>loadstring</code> 不可用；<code>package.loadlib</code>、<code>package.path</code> 和 <code>package.cpath</code> 也不可用。加载同 MOD 下的预编译 Lua 模块请使用 <code>require</code>。少数内容文件入口（例如语言包加载和蓝图导入）限制在 MOD 或 generated 内容目录内。
+    </div>
+
     <h2>入口脚本结构</h2>
     <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。</p>
     <pre><code>local M = {}
@@ -75,7 +87,7 @@ local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
 
     <h2>合成和职业</h2>
     <p>配方和职业本体写在 JSON 里，Lua 只负责触发或响应结果。</p>
-    <pre><code>local ok = engine.professions.assign(id, "core:worker", 1)
+    <pre><code>local ok = engine.jobs.assign(id, "core:worker", 1)
 if ok and engine.crafting.craft(id, "core:craft_stick") then
   engine.log.info("crafted sticks")
 end
@@ -86,17 +98,17 @@ for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
     engine.log.info("recipe: " .. recipe.id .. " -> " .. recipe.output.id)
   end
 end</code></pre>
-    <p><code>engine.crafting.craft</code> 是低级直接制作接口，只检查实体当前单个 <code>HeldItem</code> 是否满足输入。CoreMod 的菜单制作走 <code>systems.crafting.queue</code>，会从 stockpile 账本预留材料并在 <code>job:completed</code> 后发放产物。</p>
+    <p><code>engine.crafting.craft</code> 是低级直接制作接口，只检查实体当前单个 <code>HeldItem</code> 是否满足输入。CoreMod 的菜单制作走 <code>systems.crafting.queue</code>，会从 stockpile 账本预留材料并在 <code>work:completed</code> 后发放产物。</p>
 
     <h2>工作池</h2>
     <p>发布工作时必须指定工作所属阵营。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己阵营一致的工作。</p>
-    <p>工作系统内部有 JobType、JobCategory 和 WorkAction，但当前 Lua 只公开发布工作实例的入口，没有公开的工作类型注册 API。</p>
-    <p><code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code> 中的 <code>type</code> 当前只识别 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code> 五个字符串；未知字符串会落回 Build。<code>duration</code> 是无修正基础时长；<code>data</code> 是可选上下文，通常放动作 ID、配方 ID 或目标方块 ID 的哈希。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
+    <p>工作系统内部有 WorkTag、WorkCategory、WorkTargetKind、WorkAction 和 WorkPayloadKind，但当前 Lua 只公开发布工作实例的兼容入口，没有公开的工作类型注册 API。</p>
+    <p><code>engine.work.post(type, faction_id, x, y, z, duration, payload_id)</code> 中的 <code>type</code> 支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>mine</code>/<code>dig</code>/<code>gather</code>、<code>chop</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>research</code>、<code>guard</code> 和 <code>patrol</code>；未知字符串会落回 Build。这个兼容入口默认发布 Block 目标工作，其中 <code>mine</code>/<code>chop</code> 使用 Destroy，其它标签使用 Interact。<code>duration</code> 是无修正基础时长；非零 <code>payload_id</code> 会作为 Custom payload 保存，常用于配方 ID 或目标数据哈希。脚本驱动 work 主要通过 <code>work:completed</code> 处理完成逻辑；只有显式 Block payload 的 Block+Interact 会触发底层 block interaction。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
 local recipe_hash = engine.util.data_id_hash("core:craft_stick")
-local job_id = engine.jobs.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
-    <p>当工作需要改变世界或实体状态时，推荐把 <code>data</code> 指向一个已注册动作。动作本身描述 WorkAction 的细节，例如 <code>block_action</code> 配合 <code>action_type</code> 执行挖掘、放置或交互；工作实例只负责进入工作池、被分配、计时和完成事件。</p>
-    <p>Craft 工作完成时，引擎会先尝试用 <code>data</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>job:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
+local work_id = engine.work.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
+    <p>底层执行不再查找数据驱动 action 注册表。引擎根据目标类型、Interact/Destroy、工作标签和 payload 语义处理方块交互、规划方块放置、实体攻击或脚本事件。</p>
+    <p>Craft 工作完成时，引擎会先尝试用 <code>payload_id</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>work:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
     <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
     <p>寻路失败会被记为 error；AI 不再因导航目标不可达而生成原地 fallback 工作。</p>
     <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同阵营 AI 重新领取。</p>
@@ -117,9 +129,9 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
       <tbody>
         <tr><td><code>inventory:changed</code></td><td>entity_id, reason, item_id, item_key, delta</td></tr>
         <tr><td><code>recipe:crafted</code></td><td>entity_id, recipe_id, output_item_id, output_item_key, output_count</td></tr>
-        <tr><td><code>profession:assigned</code></td><td>entity_id, profession_id, level</td></tr>
+        <tr><td><code>job:assigned</code></td><td>entity_id, job_id, level</td></tr>
         <tr><td><code>block:interacted</code></td><td>entity_id, x, y, z, action_type, action</td></tr>
-        <tr><td><code>job:completed</code></td><td>instance_id, worker, type, category, faction_id, x, y, z, data, tick</td></tr>
+        <tr><td><code>work:completed</code></td><td>instance_id, worker, tag, category, target_kind, action, payload_kind, payload_id, faction_id, x, y, z, target_entity, tick</td></tr>
         <tr><td><code>focus:chosen</code></td><td>focus_id, instance_id, choice_id, choice_action, tick</td></tr>
         <tr><td><code>focus:dismissed</code></td><td>focus_id, instance_id, tick</td></tr>
       </tbody>
@@ -263,7 +275,23 @@ engine.events.subscribe("faction:spawned", function(evt)
 end)
 
 local name = engine.factions.generate_name("${random_name} Guild", {"core:generic"}, 42)
-engine.log.info("sample name: " .. name)</code></pre>
+engine.log.info("sample name: " .. name)
+
+-- 玩家城邦对目标城邦发起谈判。先评估可显示谈判积分，再执行。
+local preview = engine.factions.evaluate_proposal(faction.id, "trade_permission", 0)
+if preview.valid and not preview.accepted then
+  local counter_score = math.max(0, -preview.score)
+  local result = engine.factions.execute_proposal(faction.id, "trade_permission", counter_score)
+  engine.log.info(string.format("accepted=%s score=%d status=%s",
+    tostring(result.accepted), result.score, result.status))
+end
+
+-- 其它基础提案；开战只要求当前不在战争，议和只要求当前处于战争。
+engine.factions.execute_proposal(faction.id, "declare_war", 0)
+engine.factions.execute_proposal(faction.id, "make_peace", 0)
+local status = engine.factions.diplomatic_status(faction.id)
+local can_trade = engine.factions.has_treaty(faction.id, "trade_permission")</code></pre>
+    <p>完整谈判 API：<code>engine.factions.list_negotiations()</code> 返回待处理和历史谈判；<code>begin_negotiation(target, proposal, offered_score)</code> 创建玩家提议；收到 AI 提议后可调用 <code>accept_negotiation(id)</code>、<code>counter_negotiation(id, offered_score)</code> 或 <code>reject_negotiation(id)</code>。谈判状态会随城邦存档保存。</p>
 
     <h2>网络命令</h2>
     <p>网络 API 用于联机和命令同步。内容型 MOD 不建议把核心玩法依赖放在网络回调里。详情见<a href="mod-network-sync.html">网络同步</a>。</p>

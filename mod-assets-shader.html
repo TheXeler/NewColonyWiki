@@ -28,6 +28,7 @@
 
     <h2>编译流程</h2>
     <p>引擎在启动时使用运行目录下的 <strong>tools/glslang/glslangValidator</strong> 将 GLSL 源码编译为 Vulkan SPIR-V 字节码（<code>.spv</code>）。编译后的文件缓存在 <code>generate/&lt;mod_id&gt;/shaders/</code> 中，源码未修改时跳过编译。</p>
+    <p>渲染器加载这些 <code>.spv</code> 时，graphics 和 compute 管线都会通过内部 <code>VulkanShaderModule</code> RAII 封装创建临时 <code>VkShaderModule</code>。管线创建完成或失败返回时 shader module 会自动销毁；<code>VkPipeline</code> 和 <code>VkPipelineLayout</code> 也由内部 RAII 封装管理。该封装范围不包括 swapchain、buffer、image、image view、sampler、render pass、framebuffer 或 descriptor 资源。</p>
     <pre><code>assets/shaders/block.vert     -- 源码（MOD 提供）
     ↓ glslangValidator（启动时自动执行）
 generate/core/shaders/block.vert.spv

@@ -95,7 +95,7 @@
     </div>
 
     <div class="callout info">
-      旧 Lua 事件面板和 HTML 数据桥会在显示前调用本地化解析：<code>title</code>、<code>body</code>、<code>choices[].label</code>、<code>choices[].description</code>、<code>choices[].reason</code> 若写成 <code>ui.&lt;key&gt;</code>，会按当前语言显示；普通文本保持原样。
+      旧 Lua 事件面板和 RmlUI 数据桥会在显示前调用本地化解析：<code>title</code>、<code>body</code>、<code>choices[].label</code>、<code>choices[].description</code>、<code>choices[].reason</code> 若写成 <code>ui.&lt;key&gt;</code>，会按当前语言显示；普通文本保持原样。
     </div>
 
     <h2>Lua 条件函数</h2>
@@ -109,8 +109,8 @@ end)</code></pre>
     <h2>事件界面 API</h2>
     <p>事件列表复用焦点系统。右侧事件列表读取 <code>engine.focuses.active()</code>，详情窗口调用 <code>engine.focuses.choose(instance_id, choice_id)</code> 或 <code>engine.focuses.dismiss(instance_id)</code>。活动项包含 <code>severity</code>、<code>tick</code> 和 <code>choices</code>，可用于显示优先级/严重度和后续操作。</p>
 
-    <h2>HTML UI 数据桥</h2>
-    <p>HTML/CSS UI 可以读取 <code>event_list</code> 快照通道。该通道直接来自 <code>FocusSystem</code> 的活动焦点，稳定字段为 <code>id</code>、<code>title</code>、<code>body</code>、<code>severity</code>、<code>priority</code>、<code>options</code>、<code>choices</code>、<code>dismissible</code> 和 <code>location</code>。<code>choices</code> 是 <code>options</code> 的短期兼容别名。</p>
+    <h2>RmlUI 数据桥</h2>
+    <p>RmlUI 文档可以读取 <code>event_list</code> 快照通道。该通道直接来自 <code>FocusSystem</code> 的活动焦点，稳定字段为 <code>id</code>、<code>title</code>、<code>body</code>、<code>severity</code>、<code>priority</code>、<code>options</code>、<code>choices</code>、<code>dismissible</code> 和 <code>location</code>。<code>choices</code> 是 <code>options</code> 的短期兼容别名。</p>
     <pre><code>{
   id = 1,
   title = "首位殖民者已就绪",

@@ -23,8 +23,8 @@
         <tr><td><code>entities.json</code></td><td>实体 ID 和一组标准 ECS 组件。</td><td>清空 ECS World 后按原 ID 重建实体和组件。</td></tr>
         <tr><td><code>regions/*.ncr</code></td><td>按 32×32 chunk region 写出已加载 chunk。文件头包含 magic/version、region 坐标、header size、1024 项 chunk offset/size/flags table 和 v2 block id 字典；chunk payload 保存 sub-chunk uniform/palette/dense <code>BlockState{id,data}</code> 表示和独立 <code>lights</code> overlay。payload 使用内置 RLE 压缩，压缩后不变小时自动保留未压缩数据。</td><td>读档会读取 region 文件并恢复成 <code>ChunkSnapshot</code>；运行时 chunk streaming 会按目标 chunk 坐标定向打开对应 <code>r.x.z.ncr</code>，优先从当前 slot 的 region payload 加载 snapshot，缺失时才重新生成地形。targeted streaming 会缓存 region header/table，并按 offset 只读取目标 chunk payload。v2 region 会通过保存的 block id 字典把已知字符串 id 重新映射到当前 MOD registry hash，缺失 block 保留原 numeric fallback。far chunk unload 会复制 terrain/light-dirty snapshot 后排入后台 region 写回任务，再卸载运行时 chunk。</td></tr>
         <tr><td><code>mods.json</code></td><td>已加载 MOD 的 id、name、version、side。</td><td>用于 MOD 差异诊断；不会自动下载、启用或重排 MOD。</td></tr>
-        <tr><td><code>factions.json</code></td><td>NPC 阵营实例和阵营对关系。</td><td>恢复实例、关系值、倾向和 last_changed_tick。</td></tr>
-        <tr><td><code>jobs.json</code></td><td>WorkPool 活跃 job 和 next_id。</td><td>清空当前 WorkPool 后恢复活跃工作。</td></tr>
+        <tr><td><code>factions.json</code></td><td>NPC 阵营实例、外交地图坐标/影响半径/颜色和阵营对关系。</td><td>恢复实例、关系值、倾向、外交地图要素和 last_changed_tick。</td></tr>
+        <tr><td><code>works.json</code></td><td>WorkPool 活跃 work 和 next_id。</td><td>清空当前 WorkPool 后恢复活跃工作。</td></tr>
         <tr><td><code>focuses.json</code></td><td>焦点触发状态、活跃焦点和 next_instance_id。</td><td>恢复已触发状态和仍在显示的焦点。</td></tr>
       </tbody>
     </table>
@@ -33,7 +33,7 @@
     <p><code>entities.json</code> 当前覆盖以下标准组件。保存时尽量同时写字符串 ID 和哈希，加载时优先用字符串 ID 重新从当前注册表计算哈希。</p>
     <ul>
       <li>基础空间与生命：<code>Position</code>、<code>Speed</code>、<code>Rotation</code>、<code>Scale</code>、<code>Health</code>、<code>Name</code>。</li>
-      <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Profession</code>、<code>Civilization</code>、<code>WorkerPriorityConfig</code>、<code>NavAgent</code>。</li>
+      <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Job</code>、<code>Civilization</code>、<code>WorkerPriorityConfig</code>、<code>NavAgent</code>。</li>
       <li>物品与交互：<code>HeldItem</code>、<code>Equipment</code>、<code>BlockInteractor</code>、<code>Stats</code>。</li>
       <li>实体原型和表现：<code>PrototypeRef</code>、<code>EntityVisual</code>、<code>EntityAnimation</code>、<code>HeadVisual</code>、<code>InterestPoint</code>。</li>
     </ul>

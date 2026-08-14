@@ -25,15 +25,15 @@
     blocks/                —— 方块定义（name, hardness, drops）
     entities/              —— 实体原型（组件拼装：Position, Health, AIState…）
     recipes/               —— 合成配方（inputs 和 output, 可选职业要求）
-    professions/           —— 职业定义（等级 1-5, 转职条件, 解锁配方）
+    jobs/           —— 职业定义（等级 1-6, 转职条件, 工作类型, 解锁配方）
     civilizations/         —— 文明定义（可用职业、开局选项）
     focuses/               —— 焦点事件（条件触发、玩家选择）
     factions/              —— NPC 阵营（关系范围、名称模板）
     name_pools/            —— 名称池（随机命名素材）
-    actions/               —— AI 原子动作（mine, chop_wood, eat_food…）
     crops/                 —— 作物生长阶段和产出
     biomes/                —— 群系定义（ModLoader 自动注册，地形系统读取）
     buildings/             —— 建筑定义（ModLoader 自动注册，建筑系统读取）
+    combat/                —— 战斗相关数据（V2 仅保留启动默认值）
     zones/                 —— 区域类型定义（ModLoader 自动注册，区域系统读取）
     audio/                 —— 音频定义 JSON（ModLoader 自动注册）
   assets/                  —— 模型、纹理、着色器、音频（可选）
@@ -46,24 +46,24 @@
   logs/                    —— 运行时输出或诊断日志（可选，不建议打包发布）</code></pre>
 
     <h2>自动注册的数据目录</h2>
-    <p>当前 C++ 加载器会递归扫描并注册下面 19 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
+    <p>当前 C++ 加载器会递归扫描并注册下面 21 个目录中的 <code>.json</code> 文件。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
     <ul>
       <li><code>data/blocks/</code></li>
       <li><code>data/tags/</code></li>
       <li><code>data/entities/</code></li>
       <li><code>data/recipes/</code></li>
-      <li><code>data/professions/</code></li>
+      <li><code>data/jobs/</code></li>
       <li><code>data/civilizations/</code></li>
       <li><code>data/focuses/</code></li>
       <li><code>data/factions/</code></li>
       <li><code>data/name_pools/</code></li>
-      <li><code>data/actions/</code></li>
       <li><code>data/features/</code></li>
       <li><code>data/ores/</code></li>
       <li><code>data/crops/</code></li>
       <li><code>data/buildings/</code></li>
       <li><code>data/terrain/</code></li>
       <li><code>data/biomes/</code></li>
+      <li><code>data/combat/</code></li>
       <li><code>data/zones/</code></li>
       <li><code>data/audio/</code></li>
     </ul>
@@ -75,20 +75,20 @@
         <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖、入口脚本等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
         <tr><td><code>scripts/bootstrap.lua</code></td><td>是*</td><td>默认 Lua 入口脚本，返回一个可选生命周期表：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。<code>entry</code> 可在 <code>mod.json</code> 中改成别的路径；按当前加载器实现，最终入口文件必须存在。</td></tr>
         <tr><td><code>data/blocks/</code></td><td>否</td><td>体素方块定义。字段包括 <code>name</code>、<code>hardness</code>、<code>drops</code>。工作台类方块可额外声明关联的配方类型。方块同时也是背包中的物品，没有单独的“物品”类型。</td></tr>
-        <tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。JSON 当前解析 Position、Speed、Health、Needs、Mood、Name、ColonistTag、AIState、Profession、HeldItem、Equipment、Stats、Visual、Animation 和 HeadVisual；NavAgent、BlockInteractor、WorkerPriorityConfig 和 PrototypeRef 由运行时自动附加或维护。</td></tr>
+        <tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。JSON 当前解析 Position、Speed、Health、Needs、Mood、Name、ColonistTag、AIState、Job、HeldItem、Equipment、Stats、Visual、Animation 和 HeadVisual；NavAgent、BlockInteractor、WorkerPriorityConfig 和 PrototypeRef 由运行时自动附加或维护。</td></tr>
         <tr><td><code>data/recipes/</code></td><td>否</td><td>合成配方。声明输入材料、产物、可选的职业与等级要求。合成成功触发 <code>recipe:crafted</code> 事件。</td></tr>
-        <tr><td><code>data/professions/</code></td><td>否</td><td>职业定义。等级范围 1-5，可声明转职所需方块、前置职业、各等级解锁的配方。分配成功触发 <code>profession:assigned</code> 事件。</td></tr>
+        <tr><td><code>data/jobs/</code></td><td>否</td><td>职业定义。等级范围 1-6，可声明转职所需方块、前置职业、允许接取的工作类型、各等级解锁的配方。分配成功触发 <code>job:assigned</code> 事件。</td></tr>
         <tr><td><code>data/civilizations/</code></td><td>否</td><td>文明定义。组织可用职业、开局选项（初始方块和殖民者）、配方限制。</td></tr>
         <tr><td><code>data/focuses/</code></td><td>否</td><td>焦点事件。展示给玩家的消息，可附带选择项。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>）或 Lua 注册的自定义条件。</td></tr>
         <tr><td><code>data/factions/</code></td><td>否</td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池。</td></tr>
         <tr><td><code>data/name_pools/</code></td><td>否</td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材。<code>words</code> 字段为字符串数组。</td></tr>
-        <tr><td><code>data/actions/</code></td><td>否</td><td>AI 可执行的原子动作定义（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code>）。</td></tr>
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度范围和产出；当前 CoreMod 农业脚本把阶段 ticks 加总为成熟时间。</td></tr>
         <tr><td><code>data/ores/</code></td><td>否</td><td>矿物分布数据。字段包括 <code>block</code>、<code>replace_block</code>、<code>noise_scale</code>、<code>threshold</code>、<code>min_y</code>、<code>max_y</code>。</td></tr>
         <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水和河床方块。</td></tr>
         <tr><td><code>data/biomes/</code></td><td>否</td><td>群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
+        <tr><td><code>data/combat/</code></td><td>否</td><td>战斗相关数据目录。V2 近战战斗不读取武器克制或压制规则；当前 CoreMod 仅保留启动默认值记录。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/audio/</code></td><td>否</td><td>音频定义 JSON。与其他自动注册目录一致，它作为 <code>audio</code> 类型进入通用数据注册表；每个文件顶层 <code>id</code> 就是可播放声音 ID。详见 <a href="mod-audioregistry.html">音频注册</a> 与 <a href="mod-assets-audio.html">音乐和音效格式</a>。</td></tr>
         <tr><td><code>assets/</code></td><td>否</td><td>模型（.obj / .gltf）、纹理（.png）、着色器（.glsl）、音频文件等资源。</td></tr>

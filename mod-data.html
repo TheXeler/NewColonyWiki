@@ -20,7 +20,7 @@
       <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎支持 20 种数据类型：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>professions</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>audio</code>、<code>zones</code>。</li>
+      <li>当前引擎支持 21 种数据类型：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>combat</code>、<code>audio</code>、<code>zones</code>。</li>
     </ul>
 
     <h2>方块（blocks）</h2>
@@ -82,7 +82,7 @@
         <tr><td><code>Mood</code></td><td>心情值 (mood_value, 0~100)</td></tr>
         <tr><td><code>HeldItem</code></td><td>手持物品 (item_id, count)</td></tr>
         <tr><td><code>Equipment</code></td><td>固定槽位装备栏：MainHand、OffHand、Armor、Accessory。</td></tr>
-        <tr><td><code>Profession</code></td><td>职业 ID 和等级 (1-5)</td></tr>
+        <tr><td><code>Job</code></td><td>职业 ID 和等级 (1-6)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
         <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤）</td></tr>
         <tr><td><code>AIState</code></td><td>AI 状态（行为树 ID, 当前节点, LoD 层级, busy 标志）</td></tr>
@@ -104,33 +104,35 @@
     "Needs": { "hunger": 40, "fatigue": 20 },
     "ColonistTag": {},
     "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
-    "Profession": { "id": "copper_age:coppersmith", "level": 1 },
+    "Job": { "id": "copper_age:coppersmith", "level": 1 },
     "Name": { "data": "Copper Worker" },
     "HeldItem": { "id": "core:stone_chunk", "count": 1 }
   }
 }</code></pre>
 
-    <h2>工作类型与动作</h2>
-    <p>工作系统使用 <strong>WorkType</strong> 和 <strong>WorkAction</strong> 两层概念，避免把“这是什么工作”和“它怎么执行”混在一起。</p>
+    <h2>工作标签与动作</h2>
+    <p>工作系统使用 <strong>WorkTag</strong>、<strong>WorkTargetKind</strong>、<strong>WorkAction</strong> 和 <strong>WorkPayloadKind</strong> 描述一个归一化工作实例：前往目标位置，然后对实体、方块或规划方块执行 Interact 或 Destroy。</p>
     <table>
       <thead><tr><th>概念</th><th>来源</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>JobType</code></td><td>C++ 枚举</td><td>内部工作类型包含 Build、Mine、Haul、Craft、Research、Social、Patrol、Emergency 等。</td></tr>
-        <tr><td><code>JobCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
-        <tr><td><code>WorkAction</code></td><td>动作注册表/C++ 执行路径</td><td>描述完成时要执行的底层行为，例如方块动作、手持物品动作或脚本监听。</td></tr>
+        <tr><td><code>WorkTag</code></td><td>C++ 枚举</td><td>细粒度工作标签，包含 Build、Mine、Chop、Haul、Craft、Research、Rest、Sleep 等。</td></tr>
+        <tr><td><code>WorkCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
+        <tr><td><code>WorkTargetKind</code></td><td>C++ 枚举</td><td>目标类型：Entity、Block 或 PlannedBlock。</td></tr>
+        <tr><td><code>WorkAction</code></td><td>C++ 枚举</td><td>硬编码底层动作：Interact 或 Destroy；不再有数据驱动 action 注册表。</td></tr>
+        <tr><td><code>WorkPayloadKind</code></td><td>C++ 枚举</td><td>payload_id 的语义类型：None、Block、Item、Recipe、Building、Zone 或 Custom。</td></tr>
       </tbody>
     </table>
-    <p>当前公开的 Lua 发布入口是 <code>engine.jobs.post(type, faction_id, x, y, z, duration, data)</code>。<code>type</code> 只识别 <code>build</code>、<code>mine</code>、<code>haul</code>、<code>craft</code>、<code>research</code> 五个字符串；未知字符串会落回 Build。Social、Patrol、Emergency 等内部枚举目前没有 Lua 发布字符串，也没有公开的 Lua 工作类型注册 API。</p>
-    <p>工作完成时引擎会发出 <code>job:completed</code> 事件，payload 包含 <code>instance_id</code>、<code>worker</code>、<code>type</code>、<code>category</code>、<code>faction_id</code>、坐标、<code>data</code> 和 <code>tick</code>。CoreMod 常把动作、配方或目标数据哈希放进 <code>data</code> 字段，并在 Lua 监听完成事件。</p>
+    <p>当前公开的 Lua 发布入口仍是兼容形式 <code>engine.work.post(type, faction_id, x, y, z, duration, payload_id)</code>。<code>type</code> 支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>mine</code>/<code>dig</code>/<code>gather</code>、<code>chop</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>research</code>、<code>guard</code> 和 <code>patrol</code>；未知字符串会落回 Build。这个入口默认发布 Block 目标工作，其中 <code>mine</code>/<code>chop</code> 使用 Destroy，其它标签使用 Interact；非零 <code>payload_id</code> 作为 Custom payload 保存。脚本驱动 work 主要通过 <code>work:completed</code> 处理完成逻辑；只有显式 Block payload 的 Block+Interact 会触发底层 block interaction。目前没有公开的 Lua 工作类型注册 API。</p>
+    <p>工作完成时引擎会发出 <code>work:completed</code> 事件，payload 包含 <code>instance_id</code>、<code>worker</code>、<code>tag</code>、<code>category</code>、<code>target_kind</code>、<code>action</code>、<code>payload_kind</code>、<code>payload_id</code>、<code>faction_id</code>、坐标、<code>target_entity</code> 和 <code>tick</code>。</p>
 
     <h2>配方（recipes）</h2>
-    <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写了 <code>profession</code> 后，只有满足职业与等级要求的实体能制作。</p>
+    <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写了 <code>Job</code> 后，只有满足职业与等级要求的实体能制作。</p>
     <pre><code>{
   "id": "copper_age:smelt_copper",
   "inputs": [
     { "id": "copper_age:copper_ore", "count": 2 }
   ],
-  "profession": { "id": "copper_age:coppersmith", "level": 1 },
+  "Job": { "id": "copper_age:coppersmith", "level": 1 },
   "output": { "id": "copper_age:copper_ingot", "count": 1 }
 }</code></pre>
     <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。底层 <code>engine.crafting.craft</code> 仍是直接检查实体单个 <code>HeldItem</code> 的低级接口，多种输入或不同槽位输入不会在这条路径里自动汇总。</p>
@@ -156,12 +158,13 @@
     <p>CoreMod 施工入口 <code>systems.construction.order(def_id, x, y, z)</code> 会创建建筑订单；材料足够时立即从 stockpile 账本预留并推进施工，材料不足时返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code> 并等待后续库存补足。等待订单会在 <code>stockpile:changed</code> 后立即重试预留，并每 60 tick 做一次兜底检查。<code>systems.construction.preview_materials(def_id)</code> 可用于只预览材料可用性，不会作为硬阻止。</p>
     <p>HTML 建造面板读取 <code>build_defs</code> 快照，行结构为 <code>{ id, label, label_key, category, size, cost, materials, missing, available, can_order, status }</code>；已下单建筑读取 <code>construction_active</code> 快照，行结构为 <code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>。页面发送 <code>core:build.begin { id }</code> 时进入 placement；只有带 <code>x/y/z</code> 时才实际下单。</p>
 
-    <h2>职业（professions）</h2>
-    <p>职业定义放在 <code>data/professions/</code> 下。声明转职需要的方块、前置职业和到达特定等级后解锁的配方。等级范围 1-5。<code>bonuses</code> 会进入人员 UI 聚合属性；当前实际模拟已接入工作时长、搬运容量和作物收获成功率：<code>mining_speed</code> 影响挖矿/采集 job，<code>construction_speed</code> 或 <code>work_speed</code> 影响建造 job，<code>crafting_speed</code> 或 <code>work_speed</code> 影响制作 job，<code>hauling_speed</code> 或 <code>carry_move_speed</code> 影响搬运 job 进度，<code>carry_capacity</code> 影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 影响成熟作物收获时每种产出额外 +1 的概率。战斗属性目前仍只保证展示。</p>
+    <h2>职业（jobs）</h2>
+    <p>职业定义放在 <code>data/jobs/</code> 下，旧 MOD 的 <code>data/professions/</code> 会兼容注册为 jobs。职业声明转职需要的方块、前置职业、允许接取的 <code>allowed_work_tags</code> 和到达特定等级后解锁的配方；旧字段 <code>allowed_work_types</code> / <code>allowed_job_types</code> 也会作为迁移别名读取。等级范围 1-6，工作标签可使用 <code>gather</code>、<code>mine</code>、<code>dig</code>、<code>build</code>、<code>plant</code>、<code>haul</code>、<code>craft</code>、<code>manufacture</code>、<code>cook</code>、<code>guard</code>、<code>patrol</code> 等需求文档用语。完成玩家显式工作后按 <code>100 * 当前等级</code> 的阈值累计职业经验并升级，心情会把经验效率调整到 50%-150%。<code>bonuses</code> 会进入人员 UI 聚合属性；当前实际模拟已接入工作时长、搬运容量和作物收获成功率：<code>mining_speed</code> 影响挖矿/采集 work，<code>construction_speed</code> 或 <code>work_speed</code> 影响建造 work，<code>crafting_speed</code> 或 <code>work_speed</code> 影响制作 work，<code>hauling_speed</code> 或 <code>carry_move_speed</code> 影响搬运 work 进度，<code>carry_capacity</code> 影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 影响成熟作物收获时每种产出额外 +1 的概率。战斗属性目前仍只保证展示。</p>
     <pre><code>{
   "id": "copper_age:coppersmith",
   "name": "Coppersmith",
-  "max_level": 5,
+  "category": "work",
+  "max_level": 6,
   "required_block": { "id": "copper_age:copper_hammer", "count": 1 },
   "prerequisites": [
     { "id": "core:worker", "level": 1 }
@@ -173,21 +176,28 @@
     { "stat": "crafting_speed", "value": 0.10, "mode": "add_mult" }
   ]
 }</code></pre>
-    <p>分配职业成功时会触发 <code>profession:assigned</code> 事件。</p>
+    <p>分配职业成功时会触发 <code>job:assigned</code> 事件。<code>category:"combat"</code> 表示战斗职业；成功分配后会建立 <code>Squad</code> 和 <code>CombatState</code>。2026-07-20 V2 战斗不再为法师建立 <code>ManaReserve</code>。</p>
+
+    <h2>战斗规则数据（combat）</h2>
+    <p>战斗相关的非玩家设置默认值仍可放在 <code>data/combat/</code> 下，作为 <code>combat</code> 类型进入通用数据注册表。2026-07-20 V2 战斗只实现近战基础循环，CoreMod 不再提供武器克制和压制规则表。</p>
+
+    <h2>启动脚本默认值</h2>
+    <p>CoreMod 的 Lua 启动脚本会读取 <code>data/combat/bootstrap_defaults.json</code> 中的 <code>core:bootstrap_defaults</code> 记录，用于不属于玩家设置、但适合随 MOD 内容版本调整的启动默认值。当前字段包括阵营关系事件的日长 tick、触发时刻、概率、关系变化量、随机 salt，以及初始殖民者生成的 x/z 坐标。缺少该记录或缺少单个字段时，<code>bootstrap.lua</code> 会回退到脚本内默认值，保持旧版启动行为。</p>
+    <p>运行时交战规则、命中公式、攻击冷却和测试命令说明见 <a href="engine-combat.html">战斗规则</a>。</p>
 
     <h2>文明（civilizations）</h2>
     <p>文明用来把职业、开局选项和配方限制组织在一起。放在 <code>data/civilizations/</code> 下。目前建议保持简单：声明可用职业、一个开局选项，需要时再加配方限制。</p>
     <pre><code>{
   "id": "copper_age:copper_clan",
   "name": "Copper Clan",
-  "professions": ["copper_age:coppersmith"],
+  "jobs": ["copper_age:coppersmith"],
   "starting_options": [
     {
       "id": "copper_age:starter",
       "blocks": [
         { "id": "copper_age:copper_ore", "count": 4 }
       ],
-      "professions": [
+      "jobs": [
         { "id": "copper_age:coppersmith", "level": 1, "count": 1 }
       ]
     }
@@ -234,6 +244,9 @@
 }</code></pre>
     <p>每个阵营实例加入世界时（自动 spawn、控制台 <code>spawn_faction</code> / <code>spawn_initial_factions</code>、Lua <code>engine.factions.spawn</code> / <code>spawn_initial</code>）都会发布 <code>faction:spawned</code> 事件，payload 字段：<code>instance_id</code>、<code>def_id</code>、<code>faction_hash</code>、<code>display_name</code>、<code>relation</code>、<code>min_relation</code>、<code>max_relation</code>、<code>inclination</code>、<code>spawned_tick</code>、<code>reason</code>。reason 取值：<code>initial</code>（开局自动 spawn）、<code>console</code>（控制台命令）、<code>script</code>（Lua API）、<code>spawned</code>（缺省）。Lua 订阅示例：<code>engine.events.subscribe("faction:spawned", function(evt) ... end)</code>。</p>
 
+    <h2>外交提议（diplomacy_proposals）</h2>
+    <p>外交提议放在 <code>data/diplomacy_proposals/</code>。每个文件定义一个 <code>id</code>、<code>effect</code>、<code>required_status</code> 和可选的 <code>relation_offset</code>、<code>maximum_base_score</code>、<code>treaty_id</code>、<code>forced</code>。提议可在谈判 API 中被反议、接受或拒绝。</p>
+
     <h2>名称池（name_pools）</h2>
     <p>名称池给 NPC 阵营生成名称使用。放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过。</p>
     <pre><code>{
@@ -241,19 +254,19 @@
   "words": ["Copper", "Bronze", "Tin", "Verdigris"]
 }</code></pre>
 
-    <h2>动作（actions）、地物（features）与作物（crops）</h2>
-    <p><code>data/actions/</code> 定义 AI 可执行的原子动作（如 <code>mine</code>、<code>chop_wood</code>、<code>eat_food</code>、<code>harvest_crop</code> 等）。<code>inventory_block_action</code> 表示手持物品动作。<code>data/features/</code> 定义地形装饰阶段生成的地物。<code>data/crops/</code> 定义作物的生长阶段和产出。core 内容里已有示例，可以对照 <code>CoreMod/data/actions/</code> 和 <code>CoreMod/data/crops/</code>。</p>
+    <h2>地物（features）与作物（crops）</h2>
 
     <h2>验证命令</h2>
     <p>在控制台中用这些命令确认数据注册成功：</p>
     <pre><code>list_data blocks prefix=copper_age:
 list_data recipes prefix=copper_age:
 list_data buildings prefix=copper_age:
-list_data professions prefix=copper_age:
+list_data jobs prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:
 data type:factions
 data type:faction_spawn_rules
+data type:diplomacy_proposals
 data type:name_pools
 list_factions
 list_name_pools
