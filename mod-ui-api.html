@@ -75,7 +75,7 @@
     tooltip = "打开建造菜单",
     hotkey = "B",
     on_click = function(ctx)
-        engine.events.emit("ui:build_menu:toggle", { source = ctx.id })
+        engine.events.emit("ui", "build_menu:toggle", { source = ctx.id })
     end
 })</code></pre>
 
@@ -154,7 +154,7 @@
       <tbody>
         <tr><td><code>engine.ui.data.snapshot("world_info")</code></td><td>世界信息：day/year/season/tick_of_day/locale。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("resource_snapshot")</code></td><td>资源栏数组：<code>{ id, label_key, label, amount, capacity }</code>。</td></tr>
-        <tr><td><code>engine.ui.data.snapshot("colonist_list")</code></td><td>人员面板数组：左侧名单派生成 <code>colonists_list</code>；选中人员派生成 <code>selected_colonist_view</code>，包含身份、职业等级/经验、心情 thoughts、基础/工作/战斗属性、四槽装备、物品栏和转职树。</td></tr>
+        <tr><td><code>engine.ui.data.snapshot("colonist_list")</code></td><td>人员面板数组：左侧名单派生成 <code>colonists_list</code>；选中人员派生成 <code>selected_colonist_view</code>，包含身份、职业等级/经验、心情 thoughts、基础/工作/战斗属性、单一 <code>equipment.item</code>、物品栏和转职树。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("event_list")</code></td><td>事件面板数组：<code>id/title/summary/detail/severity/options</code>。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("tech_tree")</code></td><td>科技树：按分类分组的 <code>{ id, label_key, nodes }</code>。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("view_modes")</code></td><td>当前视图与可选模式；Building View 保留 shader 色调并隐藏实体绘制，其他模式仍以状态反馈为主。</td></tr>
@@ -165,7 +165,7 @@
         <tr><td><code>engine.ui.data.snapshot("combat_state")</code></td><td>战斗面板占位状态：<code>colonists</code>、<code>threats</code>、<code>alert_level</code>。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("battle_hud")</code></td><td>战斗 HUD Lua 通道：<code>visible</code>、<code>battle_mode</code>、<code>squads</code>、<code>selected_squad</code>、<code>mana</code> 和可用指令。该通道由 <code>combat_hud.lua</code> 包装数据桥提供；要作为 RML typed view 直接绑定，还需要宿主层把 <code>battle_hud</code> 加入快照白名单。</td></tr>
         <tr><td><code>engine.ui.data.resources()</code></td><td>返回 <code>colony/resources</code> 快照，汇总 stockpile 账本和殖民者手持资源。</td></tr>
-        <tr><td><code>engine.ui.data.colonists()</code></td><td>返回人员界面所需的名称、状态、职业等级/经验、心情 thoughts、基础/工作/战斗属性、四槽装备、物品栏和转职树。</td></tr>
+        <tr><td><code>engine.ui.data.colonists()</code></td><td>返回人员界面所需的名称、状态、职业等级/经验、心情 thoughts、基础/工作/战斗属性、单一 <code>equipment.item</code>、物品栏和转职树。</td></tr>
         <tr><td><code>engine.ui.data.work()</code></td><td>返回当前工作池实例、建造定义和制造配方入口。</td></tr>
         <tr><td><code>engine.ui.data.research()</code></td><td>返回科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。</td></tr>
         <tr><td><code>engine.ui.data.events()</code></td><td>返回事件/焦点列表、严重度、详情和可执行动作。</td></tr>
@@ -183,7 +183,7 @@ end</code></pre>
       <thead><tr><th>target</th><th>落点</th></tr></thead>
       <tbody>
         <tr><td><code>core:bottombar.*</code></td><td><code>panel.toggle</code>，并广播 <code>ui:data:changed</code>。</td></tr>
-        <tr><td><code>core:orders.start</code></td><td><code>engine.zone.start_designate(kind)</code>。</td></tr>
+        <tr><td><code>core:orders.start</code></td><td><code>engine.selection.start(options)</code>。</td></tr>
         <tr><td><code>core:colonists.select</code></td><td><code>engine.selection.select_entity</code>。</td></tr>
         <tr><td><code>core:colonists.change_class</code></td><td><code>engine.jobs.assign</code>。</td></tr>
         <tr><td><code>core:colonists.resign_class</code></td><td><code>engine.jobs.resign</code>，返回父职业或 <code>core:colonist</code>。</td></tr>
@@ -350,7 +350,7 @@ function M.on_load()
             return "待处理工作：" .. tostring(jobs_badge)
         end,
         on_click = function()
-            engine.events.emit("ui:jobs:toggle", {})
+            engine.events.emit("ui", "jobs:toggle", {})
         end
     })
 
@@ -364,7 +364,7 @@ function M.on_load()
             return engine.simulation and engine.simulation.paused and engine.simulation.paused()
         end,
         on_click = function()
-            engine.events.emit("simulation:pause:toggle", {})
+            engine.events.emit("ui", "simulation:pause:toggle", {})
         end
     })
 end

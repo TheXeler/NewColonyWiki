@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lua 事件系统 - NewColony Modder Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-events">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a> / Lua 事件系统</div></div>
+  <div class="content">
+    <h1>Lua 事件系统</h1>
+    <p class="subtitle">Lua 可以监听引擎/CoreMod 事件，也可以在 MOD 之间发布自定义 Lua 事件。</p>
+
+    <div class="callout info">
+      事件回调在 Lua 主线程执行。回调使用 protected call 隔离：某个回调报错会写入日志，但不会阻止同一事件的其他回调继续执行。
+    </div>
+
+    <h2>监听事件</h2>
+    <pre><code>local handler_id = engine.events.subscribe("inventory:changed", function(evt)
+  if evt.item_key == "core:wood" then
+    engine.log.info("wood delta=" .. tostring(evt.delta))
+  end
+end, 10) -- priority 越大越早执行；默认是 0
+
+-- 在 MOD 卸载或不再需要时取消（来源也可放在最前）
+engine.events.unsubscribe("inventory:changed", handler_id)
+engine.events.unsubscribe("core", "inventory:changed", handler_id)</code></pre>
+    <p><code>subscribe(name, fn, priority?)</code> 省略来源时匹配所有来源；也可以把来源放在最前：<code>subscribe("ui", "panel:opened", fn)</code>。来源为 <code>e</code>（引擎）、<code>core</code>（CoreMod）或 <code>ui</code>。相同 priority 的回调保持注册顺序。</p>
+
+    <h2>按来源和前缀监听</h2>
+    <pre><code>-- 只监听 CoreMod 的 inventory:changed
+engine.events.subscribe("core", "inventory:changed", on_inventory, 0)
+
+-- 监听 UI 来源下的所有 ui:panel:* 事件
+local id = engine.events.subscribe_prefix("ui", "panel", function(evt)
+  engine.log.info("panel event")
+end)</code></pre>
+    <p><code>subscribe_prefix(prefix, fn, priority?)</code> 或 <code>subscribe_prefix(source, prefix, fn, priority?)</code> 支持嵌套前缀。上例会匹配 <code>ui:panel:opened</code> 和 <code>ui:panel:closed</code>，不会匹配 <code>ui:panelist</code>。发布时来源放在最前：<code>engine.events.emit("ui", "panel:opened", payload)</code>。</p>
+
+    <h2>发布自定义事件</h2>
+    <pre><code>-- mod_a
+engine.events.emit("core", "copper_age:ore_found", {
+  x = 12, y = 48, z = -3,
+  block_id = "copper_age:copper_ore"
+})
+
+-- mod_b
+engine.events.subscribe("copper_age:ore_found", function(evt)
+  engine.log.info(string.format("ore at %d,%d,%d", evt.x, evt.y, evt.z))
+end)</code></pre>
+    <p><code>emit(source, name, payload)</code> 只在当前 Lua runtime 内分发，不会自动进入 C++ 事件总线、网络同步或存档。payload 必须是 Lua table；非 table payload 会被忽略并记录警告。</p>
+
+    <h2>清理订阅</h2>
+    <pre><code>-- 删除指定订阅
+local removed = engine.events.unsubscribe("copper_age:ore_found", handler_id)
+
+-- 删除某个事件的全部订阅（会影响同一 runtime 的其他 MOD）
+engine.events.clear("copper_age:ore_found")</code></pre>
+    <p><code>clear(name)</code> 是全局操作，除非确定事件由本 MOD 独占，否则优先使用 <code>unsubscribe</code>。</p>
+
+    <h2>常用内置事件</h2>
+    <table>
+      <thead><tr><th>事件</th><th>用途</th><th>payload 示例字段</th></tr></thead>
+      <tbody>
+        <tr><td><code>inventory:changed</code></td><td>实体背包变化</td><td>entity_id, item_id, item_key, delta, reason</td></tr>
+        <tr><td><code>stockpile:changed</code></td><td>库存区账本变化（CoreMod）</td><td>item_id, delta, count, reason</td></tr>
+        <tr><td><code>work:completed</code></td><td>工作实例完成</td><td>instance_id, worker, action, payload_id, tick</td></tr>
+        <tr><td><code>recipe:crafted</code></td><td>配方产物完成</td><td>entity_id, recipe_id, output_item_key, output_count</td></tr>
+        <tr><td><code>block:interacted</code></td><td>实体与方块交互</td><td>entity_id, x, y, z, action</td></tr>
+        <tr><td><code>block:placed</code> / <code>block:removed</code></td><td>世界方块变化</td><td>x, y, z, block_id</td></tr>
+        <tr><td><code>building:completed</code></td><td>建筑完成（CoreMod）</td><td>instance_id, def_id, x, y, z</td></tr>
+        <tr><td><code>research:started</code> / <code>research:completed</code></td><td>科技状态变化</td><td>tech_id, civilization_index</td></tr>
+        <tr><td><code>focus:chosen</code> / <code>focus:dismissed</code></td><td>焦点事件被选择或关闭</td><td>focus_id, instance_id, choice_id, tick</td></tr>
+        <tr><td><code>faction:spawned</code></td><td>阵营实例生成</td><td>instance_id, def_id, display_name, reason</td></tr>
+        <tr><td><code>day_changed</code> / <code>season_changed</code> / <code>year_changed</code></td><td>模拟日历变化</td><td>day/season/year, previous_*</td></tr>
+      </tbody>
+    </table>
+    <p>完整签名可在 <a href="mod-lua-api-reference.html">Lua API 速查</a> 的“事件”分组查看。内置事件的 payload 以当前引擎和 CoreMod 实现为准，MOD 不应假定未列出的字段长期稳定。</p>
+
+    <h2>与 on_tick 的选择</h2>
+    <p>对“某件事发生后才需要运行”的逻辑使用事件；只有需要按固定模拟 tick 轮询的逻辑才使用 <code>on_tick</code>。事件回调中避免修改正在遍历的同一业务集合，复杂操作可记录状态后交给下一 tick 处理。</p>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

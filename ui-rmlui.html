@@ -172,14 +172,14 @@
         <tr><td>人员 Colonists</td><td>lua-ui-bottom-bar slot</td><td>打开 Lua 注册的人员名单窗口（<code>colonists_panel.lua</code>）；名单中双击某位殖民者进入其角色菜单/装备/转职详情视图，详情内可用「返回人员列表」回到名单。</td></tr>
         <tr><td>制造 Craft</td><td>lua-ui-bottom-bar slot</td><td>打开 Lua 注册的制造菜单（<code>craft_menu.lua</code>）。</td></tr>
         <tr><td>科技 Research</td><td>lua-ui-bottom-bar slot</td><td>打开 Lua 注册的科技树窗口（<code>tech_tree.lua</code>）。</td></tr>
-        <tr><td>区域 Zone</td><td>lua-ui-bottom-bar slot</td><td>打开区域类型子菜单，包含储物、种植、挖掘和伐木；挖掘/伐木复用 <code>engine.zone.start_designate(core:mine | core:chop)</code> 专用指定通路（<code>zone_designate.lua</code>）。</td></tr>
-        <tr><td>指令 Commands</td><td>lua-ui-bottom-bar slot</td><td>点开下拉「采集 / 挖矿」，复用 <code>engine.zone.start_designate(core:chop | core:mine)</code> 底层通路（<code>commands_menu.lua</code>）。</td></tr>
+        <tr><td>区域 Zone</td><td>lua-ui-bottom-bar slot</td><td>打开区域类型子菜单，包含储物和种植；通过 <code>engine.selection.start(options)</code> 创建选区，再由 <code>engine.selection.confirm_zone()</code> 创建持久区域（<code>zone_designate.lua</code>）。</td></tr>
+        <tr><td>指令 Commands</td><td>lua-ui-bottom-bar slot</td><td>点开下拉「采集 / 挖矿」，通过通用 <code>engine.selection</code> 选区消费为一次性工作（<code>commands_menu.lua</code>）。</td></tr>
         <tr><td>视图 View</td><td>lua-ui-bottom-bar slot</td><td>切换视图模式窗口（<code>view_options.lua</code>）。</td></tr>
         <tr><td>战斗 Battle</td><td>lua-ui-bottom-bar slot</td><td>发 <code>core:combat.toggle_hud</code> 切换战斗 HUD（<code>commands_menu.lua</code> 发命令；命令处理与可见性状态由战斗 HUD 模块实现）。</td></tr>
         <tr><td>事件 Events</td><td>lua-ui-bottom-bar slot</td><td>打开事件列表窗口（<code>events_panel.lua</code>）。</td></tr>
       </tbody>
     </table>
-    <p>区域入口保留旧区域按钮子菜单心智模型，挖掘和伐木也能从这里启动；「指令」入口把采集 / 挖矿 designate 聚合成一个下拉。现有 <code>chop_designate</code> / <code>mine_designate</code> 独立按钮暂作兼容保留（共用同一条 designate 通路）。「战斗」入口在战斗 HUD 模块就绪前为占位：点击发出 <code>core:combat.toggle_hud</code> 命令，命令处理在数据桥 <code>command()</code> 注册后即生效。</p>
+    <p>区域入口负责持久区域；「指令」入口把采集 / 挖矿聚合成一次性通用选区。两类功能共享选区几何与预览，但确认后的生命周期不同：「战斗」入口在战斗 HUD 模块就绪前为占位。</p>
 
     <h2 id="main-menu">主菜单（Main Menu MVP）</h2>
     <p>主菜单直接画在 <code>main.rml</code> 内（不开新文档、不依赖已移除的即时模式 UI 或浏览器）。面板包在 <code>&lt;div id="main-menu" data-if="main_menu_visible"&gt;</code> 里：引擎进入世界后 <code>ui_phase</code> 变为 <code>"playing"</code>，<code>main_menu_visible</code> 变为 false，面板自动从文档布局中移除；回到主菜单（世界卸载）后又自动出现，无需额外开关。当前主菜单是右侧栏导航 + 左侧页面内容结构，提供 Create World、Load Game、Multiplayer、Settings、Mod Manager、Content Browser、Wiki、Credits 和 Exit。非世界态的主菜单及其所有二级页面在主循环末尾固定按 60 FPS 限帧；世界内继续使用 Graphics 设置里的 Render FPS Limit。</p>

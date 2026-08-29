@@ -102,7 +102,7 @@
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
         <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载并校验分类、前置、unlocks 和研究成本。详见 <a href="mod-techregistry.html">科技注册</a>。</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge planned">未完成</span></td><td>已有约定文档，但缺少自动打包、版本兼容检查和发布校验工具。</td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td>Windows 发布脚本会初始化 MSVC/Ninja 环境；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod。发布前使用 201 项测试与包内容校验。</td></tr>
       </tbody>
     </table>
 
@@ -131,7 +131,7 @@
 
     <h2>给 MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、群系、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为、UI 扩展和 MOD 打包发布仍不建议作为强依赖。
+      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、群系、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为和复杂 UI 扩展仍不建议作为强依赖；MOD 打包发布已有 Windows 流程。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

@@ -38,7 +38,7 @@
       <li><code>standable_y_at(x, z)</code> 等价于 <code>Engine::terrain_standable_y_at</code>。</li>
       <li><code>gpu_probe_occlusion</code> / <code>gpu_probe_sky_light</code> / <code>gpu_probe_fluid</code> 等价于 <code>Engine::gpu_probe_*</code>；GPU 关闭、渲染器未初始化或 chunk 无数据时返回 <code>false</code>。occlusion 探测会写入 renderer 高度缓存，因此方法为非 const。</li>
       <li>依赖：<code>ChunkManager</code>、<code>voxel::TerrainGenerator</code>、<code>worldmap::WorldMap</code>、<code>renderer::Renderer</code>、<code>simulation::GpuSimulationChunkRunner</code>、世界种子、GPU 模拟开关。其中世界种子与 GPU 模拟开关以引用注入而非拷贝快照：前者随世界创建/载入而变，后者由控制台命令在运行时切换，引用保证服务始终读到当前值，与被替代 facade 方法的实时读取语义一致。</li>
-      <li>区域格校验（<code>is_zone_cell_valid</code> / <code>is_zone_designate_cell_valid</code>）本轮未纳入：它们额外依赖 <code>ZoneSystem</code> 指定状态、mod registry 与方块分类谓词（可砍伐/可挖掘），更适合后续随 <code>ZoneSystem</code> 单独服务化；已可通过 <code>block_at()</code> 读取地形。</li>
+      <li>通用选取的目标校验由调用方提供声明式的方块/物品 ID 或 TAG 列表（<code>filter.blocks</code>、<code>filter.items</code> / <code>filter.tags</code>）；选取器只负责几何范围和匹配格子，不内置伐木或挖掘谓词。</li>
     </ul>
 
     <h2>UiCommandDispatcher</h2>

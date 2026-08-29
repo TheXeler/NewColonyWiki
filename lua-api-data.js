@@ -280,13 +280,13 @@ window.__LUA_API_DATA = {
         { "api": "engine.zone.find_zones_with_target(x, y, z, target)", "params": "integer, integer, integer, string", "returns": "table", "note": "查找覆盖指定坐标且包含目标类型的区域。" },
         { "api": "engine.zone.remove_at(x, y, z)", "params": "integer, integer, integer", "returns": "bool", "note": "删除指定坐标处的区域。" },
         { "api": "engine.zone.remove_cell(x, y, z)", "params": "integer, integer, integer", "returns": "bool", "note": "从区域系统中移除单个坐标格。" },
-        { "api": "engine.zone.start_designate(type_id)", "params": "data id", "returns": "-", "note": "开始区域拖拽指定。" },
-        { "api": "engine.zone.cancel_designate()", "params": "-", "returns": "-", "note": "取消区域拖拽指定。" },
-        { "api": "engine.zone.confirm_designate()", "params": "-", "returns": "bool", "note": "确认当前普通区域拖拽指定。" },
-        { "api": "engine.zone.designate_blocks()", "params": "-", "returns": "table", "note": "返回当前拖拽指定中的方块列表，每行包含 x、y、z、block_hash、block_id 和 solid。" },
-        { "api": "engine.zone.designate_state()", "params": "-", "returns": "table", "note": "返回当前拖拽指定状态、起点、当前点和 y_offset。" },
-        { "api": "engine.zone.confirm_mine_designate()", "params": "-", "returns": "table", "note": "确认 core:mine 三维指定，创建采矿区域并为实体方块发布 mine 工作；返回 { ok, count }。" },
-        { "api": "engine.zone.confirm_chop_designate()", "params": "-", "returns": "table", "note": "确认 core:chop 二维指定，为匹配 core:chop_wood 的树木方块发布 mine 工作；返回 { ok, count }。" },
+        { "api": "engine.selection.start(options)", "params": "table", "returns": "bool", "note": "开始一次性通用选取；shape 可为 2d 或 3d。2D 从鼠标命中表面的外侧格开始（顶面通常为 Y+1），3D 从命中的实际方块开始。调用方可通过 filter.blocks、filter.items（ID 别名）或 filter.tags 提供允许的方块 ID/TAG 列表。" },
+        { "api": "engine.selection.cancel()", "params": "-", "returns": "-", "note": "取消当前选区。" },
+        { "api": "engine.selection.confirm_zone()", "params": "-", "returns": "bool", "note": "将当前选区创建为持久区域。" },
+        { "api": "engine.selection.cells()", "params": "-", "returns": "table", "note": "返回当前选取的完整几何范围；预览范围不等于有效目标，实际目标由 start(options) 提供的 ID/TAG 过滤得到。每行包含 x、y、z、block_hash、block_id 和 solid。" },
+        { "api": "engine.selection.state()", "params": "-", "returns": "table", "note": "返回当前选区形状、起点、当前点、范围和深度偏移。" },
+        { "api": "engine.selection.confirm_mine()", "params": "-", "returns": "table", "note": "消费当前 3D 选取中匹配 filter 的方块并发布 mine 工作；选取随后结束，返回 { ok, count }。" },
+        { "api": "engine.selection.confirm_chop()", "params": "-", "returns": "table", "note": "消费当前 2D 选取中匹配 filter 的方块并发布 chop 工作；选取随后结束，返回 { ok, count }。" },
         { "api": "engine.zone.set_drag_active(active)", "params": "bool", "returns": "-", "note": "传 false 时取消当前区域拖拽指定。" },
         { "api": "engine.zone.is_drag_active()", "params": "-", "returns": "bool", "note": "当前是否处于区域拖拽指定状态。" },
         { "api": "engine.zone.set_setting(instance_id, key, value)", "params": "integer, string, string|bool|number|nil", "returns": "bool", "note": "写入区域实例的 settings 键值对（值会被转成字符串）；传 nil 删除该键。失败返回 false。" },
@@ -296,10 +296,12 @@ window.__LUA_API_DATA = {
     {
       "name": "事件",
       "items": [
-        { "api": "engine.events.subscribe(name, fn, priority)", "params": "string, function, integer?", "returns": "handler id", "note": "priority 越大越早执行。" },
-        { "api": "engine.events.unsubscribe(name, id)", "params": "string, handler id", "returns": "bool", "note": "取消订阅。" },
+        { "api": "engine.events.subscribe(source?, name, fn, priority?)", "params": "string?, string, function, integer?", "returns": "handler id", "note": "来源可省略；省略时监听所有来源。priority 越大越早执行。" },
+        { "api": "engine.events.unsubscribe(source?, name, id)", "params": "string?, string, handler id", "returns": "bool", "note": "来源可省略；取消精确事件订阅。" },
         { "api": "engine.events.clear(name)", "params": "string", "returns": "-", "note": "[experimental] 清空某事件的所有处理器；会影响同一 runtime 的其他 MOD。" },
-        { "api": "engine.events.emit(name, payload)", "params": "string, any", "returns": "-", "note": "发送自定义 Lua 事件，不会进入 C++ 系统。" },
+        { "api": "engine.events.subscribe_prefix(source?, prefix, fn, priority?)", "params": "string?, string, function, integer?", "returns": "handler id", "note": "按冒号层级匹配嵌套事件；来源可省略。" },
+        { "api": "engine.events.unsubscribe_prefix(id)", "params": "handler id", "returns": "bool", "note": "取消前缀订阅。" },
+        { "api": "engine.events.emit(source, name, payload)", "params": "string, string, table", "returns": "-", "note": "来源置于最前；引擎使用 e，CoreMod 使用 core，UI 使用 ui。" },
         { "api": "inventory:changed（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、reason、block_id、block_key、delta。" },
         { "api": "stockpile:changed（事件）", "params": "-", "returns": "payload", "note": "CoreMod 库存区账本变更；字段：item_hash、item_id、delta、count、reason。" },
         { "api": "ui:data:changed（事件）", "params": "-", "returns": "payload", "note": "UI 聚合快照脏通知；字段：domain、source、event。domain 如 colony/resources、work/orders、research/tech、events/focuses。" },
@@ -357,7 +359,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.ui.rml.clear(mod_id?)", "params": "string?", "returns": "-", "note": "清空已注册面板；传 mod_id 只清该 MOD，省略则清空全部。" },
         { "api": "engine.ui.rml.reload(mod_id?)", "params": "string?", "returns": "bool", "note": "强制热重载面板文档：递增内部 reload_epoch，runtime 在下一帧 lua_ui_rml_panels 快照中检测到变化即 Close+LoadDocument，即使 .rml 路径未变也会重新读取磁盘内容。传 mod_id 只重载该 MOD，返回是否有面板被标记。" },
         { "api": "engine.ui.data.resources()", "params": "-", "returns": "table", "note": "资源快照，汇总 stockpile 账本和殖民者手持物品，返回 totals 和 rows。" },
-        { "api": "engine.ui.data.colonists()", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、基础属性及经验、工作属性、战斗属性(hit_rate/attack_range/attack_frequency)、background、equipment_slots、inventory、class_tree。" },
+        { "api": "engine.ui.data.colonists()", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、基础属性及经验、工作属性、战斗属性(hit_rate/attack_range/attack_frequency)、background、equipment.item、inventory、class_tree。" },
         { "api": "engine.ui.data.work()", "params": "-", "returns": "table", "note": "工作/订单快照，包含工作池实例，以及可建造定义和可制造配方列表。" },
         { "api": "engine.ui.data.research()", "params": "-", "returns": "table", "note": "科技快照，包含当前文明研究状态、科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。" },
         { "api": "engine.ui.data.events()", "params": "-", "returns": "table", "note": "事件/焦点快照，包含 instance_id、severity、详情和可执行 actions。" },
@@ -448,10 +450,10 @@ window.__LUA_API_DATA = {
     {
       "name": "装备",
       "items": [
-        { "api": "engine.equipment.equip(entity, slot, item_hash, count, two_handed)", "params": "entity, string, hashed id, integer, bool?", "returns": "bool", "note": "装备到固定槽位 MainHand、OffHand、Armor 或 Accessory；双手物品只能放 MainHand。" },
+        { "api": "engine.equipment.equip(entity, slot, item_hash, count)", "params": "entity, \"Equipment\", hashed id, integer", "returns": "bool", "note": "将物品装备到唯一 Equipment 槽。" },
         { "api": "engine.equipment.unequip(entity, slot)", "params": "entity, string", "returns": "table", "note": "从栏位卸下物品，返回 item_id 和 count；无效槽位返回 0。" },
-        { "api": "engine.equipment.get_equipment(entity)", "params": "entity id", "returns": "table", "note": "返回 MainHand、OffHand、Armor、Accessory 的 item_id、count、two_handed。" },
-        { "api": "engine.equipment.get_slot(entity, slot)", "params": "entity, string", "returns": "table", "note": "返回指定固定槽位的 item_id、count、two_handed。" }
+        { "api": "engine.equipment.get_equipment(entity)", "params": "entity id", "returns": "table", "note": "返回唯一 Equipment 槽的 item_id 和 count。" },
+        { "api": "engine.equipment.get_slot(entity, slot)", "params": "entity, \"Equipment\"", "returns": "table", "note": "返回唯一 Equipment 槽的 item_id 和 count。" }
       ]
     },
     {

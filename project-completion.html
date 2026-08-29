@@ -22,7 +22,7 @@
         <tr><td>模拟玩法闭环</td><td><span class="badge partial">中高</span></td><td>职业、配方、文明、焦点、阵营、建筑、区域、天气、心情、AI 调度和体素世界都有实现；殖民者长期行为、社交、紧急行为和多阶段施工仍是 Alpha 级。</td></tr>
         <tr><td>渲染与世界表现</td><td><span class="badge partial">中</span></td><td>Vulkan 管线、Chunk 网格、纹理图集、实体可视网格、SSAO、天空与地形生成存在；地形生成 pipeline 已有专门审计和 wiki 页面，复杂模型兼容、性能边界和美术资产完整度仍需实测。</td></tr>
         <tr><td>工程质量</td><td><span class="badge partial">中</span></td><td>Debug 构建通过，CMake 源文件覆盖完整，单元测试有 8 个文件；测试集中在 ECS、网络协议、寻路、纹理图集、阵营、天气和区域，缺少渲染、存档、ModLoader 大规模集成和端到端玩法验证。</td></tr>
-        <tr><td>发布准备</td><td><span class="badge planned">不足</span></td><td>已有 post-build 复制 wiki、工具和运行时 DLL 的步骤，但缺少自动打包、发布校验、回归流水线和构建信息输出。</td></tr>
+        <tr><td>发布准备</td><td><span class="badge done">完成</span></td><td>Windows 发布脚本会自动初始化 MSVC/Ninja 环境；CMake 安装规则包含可执行文件、运行库、glslang、引擎资源和 CoreMod，并通过 201 项回归测试与包内容校验。</td></tr>
       </tbody>
     </table>
 

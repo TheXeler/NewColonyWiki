@@ -67,6 +67,7 @@ const WIKI_NAV = [
     links: [
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
       ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
+      ["mod-events", "Lua 事件系统", "mod-events.html"],
       ["mod-lua-data-components", "数据组件 API", "mod-lua-data-components.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["ui-rmlui", "游戏内 RmlUI", "ui-rmlui.html"],

@@ -111,7 +111,7 @@ local work_id = engine.work.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0,
     <p>Craft 工作完成时，引擎会先尝试用 <code>payload_id</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>work:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
     <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
     <p>寻路失败会被记为 error；AI 不再因导航目标不可达而生成原地 fallback 工作。</p>
-    <p>如果 AI 在执行中被中断（例如崩溃状态或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同阵营 AI 重新领取。</p>
+    <p>如果 AI 在执行中被中断（例如殖民者倒地、死亡、低需求触发个人需求，或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同阵营 AI 重新领取。恍惚只影响命中率，不会单独中断工作。</p>
 
     <h2>事件</h2>
     <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
@@ -136,28 +136,25 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
         <tr><td><code>focus:dismissed</code></td><td>focus_id, instance_id, tick</td></tr>
       </tbody>
     </table>
-    <p>也可以用 <code>engine.events.emit("name", payload)</code> 发送自定义 Lua 事件。</p>
+    <p>也可以用 <code>engine.events.emit("core", "name", payload)</code> 发送自定义 Lua 事件；来源必须放在事件名前面。</p>
 
     <h2>装备系统</h2>
-    <p>装备组件使用固定槽位：<code>MainHand</code>、<code>OffHand</code>、<code>Armor</code>、<code>Accessory</code>。当前没有 Lua API 用来注册新装备槽；如果只是给 UI 增加按钮，使用 <code>engine.ui.bottom_bar.register_slot</code>。</p>
+    <p>装备组件只有一个固定槽位：<code>Equipment</code>。Lua API 使用 <code>equipment.item</code> 表示当前装备，不支持旧的主手、副手、护甲、饰品槽，也没有双手占槽规则。</p>
     <pre><code>local item_hash = engine.util.data_id_hash("core:wooden_sword")
 
--- 将物品装备到固定槽位
-engine.equipment.equip(entity_id, "MainHand", item_hash, 1)
-
--- 双手物品只能装备到 MainHand，会占用 OffHand
-engine.equipment.equip(entity_id, "MainHand", item_hash, 1, true)
+-- 将物品装备到唯一装备槽
+engine.equipment.equip(entity_id, "Equipment", item_hash, 1)
 
 -- 从栏位卸下
-local removed = engine.equipment.unequip(entity_id, "MainHand")
+local removed = engine.equipment.unequip(entity_id, "Equipment")
 engine.log.info("removed item: " .. tostring(removed.item_id))
 
 -- 查询实体所有栏位
 local eq = engine.equipment.get_equipment(entity_id)
-engine.log.info("main hand: " .. tostring(eq.MainHand.item_id))
+engine.log.info("equipment: " .. tostring(eq.Equipment.item_id))
 
 -- 查询单个栏位
-local held = engine.equipment.get_slot(entity_id, "MainHand")
+local held = engine.equipment.get_slot(entity_id, "Equipment")
 if held.item_id ~= 0 then
   engine.log.info("equipped item: " .. tostring(held.item_id))
 end</code></pre>

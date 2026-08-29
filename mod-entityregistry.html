@@ -51,7 +51,7 @@
         <tr><td><code>Position</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>世界坐标。</td></tr>
         <tr><td><code>Speed</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>移动速度向量。</td></tr>
         <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (integer)</td><td>生命值；未声明时会根据 <code>Stats.max_hp</code> 推导。</td></tr>
-        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>需求值。hunger 越高越饿，fatigue 越高越累。两项均随时间上升，AI 会根据需求自动寻求满足。</td></tr>
+        <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>剩余饱食度和精力值。两项随时间下降；低于阈值后 AI 会生成进食或休息需求，归零后开始累积对应负面状态。</td></tr>
         <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情值。JSON 中写 <code>"Mood": { "mood_value": 50.0 }</code>。</td></tr>
         <tr><td><code>ColonistTag</code></td><td>（无字段）</td><td>标记为殖民者。拥有此组件的实体参与殖民者相关的 AI 逻辑和统计。</td></tr>
         <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 状态。behavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率。</td></tr>
@@ -60,7 +60,7 @@
         <tr><td><code>Job</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
         <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
         <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品。<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为空。</td></tr>
-        <tr><td><code>Equipment</code></td><td><code>MainHand</code>, <code>OffHand</code>, <code>Armor</code>, <code>Accessory</code></td><td>固定装备栏。每个槽可写 <code>{"id": "core:tool", "count": 1}</code>；空对象表示有装备组件但初始为空。</td></tr>
+        <tr><td><code>Equipment</code></td><td><code>item</code></td><td>单一装备栏。原型中写 <code>{"Equipment": {"id": "core:tool", "count": 1}}</code>；省略或写空对象表示没有装备。</td></tr>
         <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>基础属性。加载、生成、读档或通过 Lua 修改基础属性后会重新计算派生属性；导航实体会使用派生移动速度。</td></tr>
         <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
         <tr><td><code>Backstory</code></td><td><code>data</code> 或 <code>value</code> (string)</td><td>角色经历文本。人员界面的角色菜单会通过聚合接口展示该字段。</td></tr>
