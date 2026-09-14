@@ -69,7 +69,6 @@
         <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。默认 <code>scripts/bootstrap.lua</code>；当前加载流程会要求入口文件存在，纯数据 MOD 也应提供一个返回空表的入口脚本，或显式把 <code>entry</code> 指向存在的空脚本。</td></tr>
         <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
         <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
-        <tr><td><code>lua.permissions.io</code></td><td>否</td><td>兼容字段。当前沙箱会读取该声明但不会开放 Lua <code>io</code> 库；脚本文件访问应改由受控引擎 API 提供。</td></tr>
         <tr><td><code>dependencies</code></td><td>否</td><td>必须在这个 MOD 之前加载的其他 MOD。数组格式，每项包含 <code>name</code>（MOD ID）、可选的 <code>minVer</code> 和 <code>maxVer</code>（均为包含边界）。示例：<code>[{"name":"core", "minVer":"0.1.0", "maxVer":"1.0.0"}]</code>。</td></tr>
         <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>

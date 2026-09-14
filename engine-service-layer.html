@@ -17,7 +17,7 @@
     <ul>
       <li>三个服务类已落地，加入 <code>NewColonyEngine</code> 静态库源列表，可独立编译。</li>
       <li><strong>方块修改 / 地形查询已接线</strong>：<code>Engine</code> 持有 <code>BlockEditService</code>、<code>TerrainQueryService</code> 实例，<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_occlusion</code> / <code>gpu_probe_sky_light</code> / <code>gpu_probe_fluid</code> 均改为委托，行为与原实现逐行等价。</li>
-      <li><strong>UI 命令分发 facade 已接线，handler 迁移已启动</strong>：<code>Engine</code> 持有 <code>UiCommandDispatcher</code> 成员，<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前先调用 <code>dispatcher.dispatch(cmd)</code>。已迁移 target <code>core:menu.quit</code>、<code>core:time.speed</code>，均注册为 handler 并从 if-链删除，作为后续逐 target 拆分的样板；其余 <code>core:*</code> handler 待迁移，未命中仍落回原 if-链与 <code>ScriptEngine</code> 回退。旧静态底栏面板已移除，<code>core:panel.toggle</code> 不再作为游戏内菜单入口。</li>
+      <li><strong>UI 命令分发 facade 已接线</strong>：<code>Engine</code> 持有 <code>UiCommandDispatcher</code> 成员，<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前先调用 <code>dispatcher.dispatch(cmd)</code>。<code>core:menu.quit</code> 是已迁移 handler；时间控制由 Lua 数据桥转为 Host <code>UiCommand</code>，并通过 <code>save_state:time_control</code> 回传客户端。其余未命中命令落回现有 if-链与 <code>ScriptEngine</code>。旧静态底栏面板已移除，<code>core:panel.toggle</code> 不再作为游戏内菜单入口。</li>
       <li>依赖通过引用注入，服务自身不持有任何子系统生命周期，也不 include <code>Engine.hpp</code>，避免循环依赖。</li>
       <li>接线后 <code>Engine.cpp</code> 中只服务于被替代方法的 file-scope helper（<code>chunk_coord_key</code>、<code>floor_mod</code>、<code>entity_block_id_is_clear_for_feet</code>）已删除；仍有其他调用点的 <code>floor_div</code>、<code>mark_light_radius_dirty</code>、<code>entity_block_id_is_solid</code> 保留原处。</li>
     </ul>
@@ -35,10 +35,10 @@
     <p>位置：<code>Engine/Voxel/TerrainQueryService.hpp</code>。职责：地形只读查询与 GPU 地形探测。已由 <code>Engine</code> 持有，地形查询与 GPU 探测 facade 方法委托给它。</p>
     <ul>
       <li><code>block_at(x, y, z)</code> 等价于 <code>Engine::terrain_block_at</code>：优先读 <code>ChunkDataStore</code>，未加载列回退到确定性程序化生成（带 thread-local 128 项缓存）。</li>
-      <li><code>standable_y_at(x, z)</code> 等价于 <code>Engine::terrain_standable_y_at</code>。</li>
+      <li><code>standable_y_at(x, z)</code> 查询可变高度区块列；已加载但完全空的列返回无结果，Lua 侧得到 <code>nil</code>，不会回退到已被移除的程序地形。</li>
       <li><code>gpu_probe_occlusion</code> / <code>gpu_probe_sky_light</code> / <code>gpu_probe_fluid</code> 等价于 <code>Engine::gpu_probe_*</code>；GPU 关闭、渲染器未初始化或 chunk 无数据时返回 <code>false</code>。occlusion 探测会写入 renderer 高度缓存，因此方法为非 const。</li>
       <li>依赖：<code>ChunkManager</code>、<code>voxel::TerrainGenerator</code>、<code>worldmap::WorldMap</code>、<code>renderer::Renderer</code>、<code>simulation::GpuSimulationChunkRunner</code>、世界种子、GPU 模拟开关。其中世界种子与 GPU 模拟开关以引用注入而非拷贝快照：前者随世界创建/载入而变，后者由控制台命令在运行时切换，引用保证服务始终读到当前值，与被替代 facade 方法的实时读取语义一致。</li>
-      <li>通用选取的目标校验由调用方提供声明式的方块/物品 ID 或 TAG 列表（<code>filter.blocks</code>、<code>filter.items</code> / <code>filter.tags</code>）；选取器只负责几何范围和匹配格子，不内置伐木或挖掘谓词。</li>
+      <li>通用选取的目标校验由调用方提供声明式的方块/物品 ID 或 TAG 列表（<code>filter.blocks</code>、<code>filter.items</code> / <code>filter.tags</code>）；选取器只负责几何范围和匹配格子，不内置伐木或采掘谓词。</li>
     </ul>
 
     <h2>UiCommandDispatcher</h2>
@@ -55,7 +55,7 @@
     <h2>接线状态</h2>
     <ul>
       <li><strong>已完成</strong>：<code>Engine</code> 以可选成员形式持有 <code>BlockEditService</code> 与 <code>TerrainQueryService</code>，在 <code>Engine::init</code> 末尾、模拟线程启动之前按依赖注入构造；<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_*</code> 已委托。被替代的 <code>Engine.cpp</code> 方法体与只服务于它们的 file-scope helper 已删除。</li>
-      <li><strong>已完成（facade 接线 + handler 样板）</strong>：<code>Engine</code> 以直接成员形式持有 <code>UiCommandDispatcher</code>（该类默认构造可用，无需 <code>std::optional</code>）。<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前调用 <code>m_ui_command_dispatcher.dispatch(cmd)</code>；命中返回 <code>Outcome::Handled</code> 提前返回，未命中落回原 if-链与 <code>ScriptEngine</code> 回退。handler 在 <code>Engine::init</code> 调用的 <code>register_ui_command_handlers()</code> 中注册；<code>core:menu.quit</code>（<code>NC_INFO</code> + <code>request_exit()</code>）、<code>core:time.speed</code>（解析 <code>speed</code> 载荷并设倍率/取消暂停/关暂停遮罩/回主页，越界载荷 <code>NC_WARN</code> 忽略）已迁移为 handler，其原 if-链分支均已删除。</li>
+      <li><strong>已完成（facade 接线 + handler 样板）</strong>：<code>Engine</code> 以直接成员形式持有 <code>UiCommandDispatcher</code>。<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前调用 <code>m_ui_command_dispatcher.dispatch(cmd)</code>；命中返回 <code>Outcome::Handled</code> 提前返回，未命中落回原 if-链与 <code>ScriptEngine</code>。当前 handler 样板为 <code>core:menu.quit</code>。<code>core:time.pause</code> / <code>core:time.speed</code> 则统一进入 Host 权威 Lua 命令桥，只接受暂停、1x、2x、4x、无限速五态。</li>
       <li><strong>待办（其余 handler 迁移）</strong>：逐 target 把剩余 <code>core:*</code> if-链分支体注册为 handler，每注册一个并验证等价后删除 <code>Engine::dispatch_rml_ui_command</code> 对应分支，避免双处理。<code>lua_ui:</code> fast-path 不经 dispatcher，优先级不变。后续低风险候选：<code>core:menu.wiki</code>/<code>wiki_cancel</code>/<code>wiki_confirm</code>、<code>core:content_browser.category</code>。高风险（依赖 <code>ScriptEngine</code> 返回值、位于 <code>run_ui_command</code> 之后）：<code>core:combat.toggle_hud</code>，暂不迁移。</li>
     </ul>
 

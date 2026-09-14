@@ -1,127 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NPC 阵营注册 · NewColony Wiki</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body data-page="mod-factionregistry">
-<div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>NPC 阵营注册</div></div>
-  <div class="content">
-    <h1>NPC 阵营注册</h1>
-    <p class="subtitle">NPC 派系定义放在 <code>data/factions/</code> 下，用 JSON 描述外部势力类型。世界初始化时会由派系定义生成城邦实例；派系决定名称和倾向，城邦实例保存地图位置、资源、等级和外交状态。</p>
-
-    <h2>JSON 格式</h2>
-    <pre><code>{
-    "id": "my_mod:merchant_house",
-    "name_template": {
-        "en-us": "${random_name} Merchant House",
-        "zh-cn": "${random_name}商馆"
-    },
-    "initial_relation": 15,
-    "max_relation": 100,
-    "min_relation": -60,
-    "inclination": "commercial",
-    "demand": "trade",
-    "name_pools": ["core:generic"]
-}</code></pre>
-
-    <h2>字段说明</h2>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。短 ID 会由加载器补成本 MOD 的完整 ID。</td></tr>
-        <tr><td><code>name_template</code></td><td>string 或 object</td><td>否</td><td>阵营实例名称模板。可以直接写字符串，也可以写 locale 到模板的对象。模板中的 <code>${random_name}</code> 会从 <a href="mod-namepoolregistry.html">名称池</a>中抽词替换。省略时使用 <code>id</code> 作为名称。</td></tr>
-        <tr><td><code>initial_relation</code></td><td>int</td><td>否</td><td>生成实例时对玩家或其他系统的初始关系值，默认 <code>0</code>。读取后会被夹在 <code>min_relation</code> 和 <code>max_relation</code> 之间。</td></tr>
-        <tr><td><code>max_relation</code></td><td>int</td><td>否</td><td>关系值上限，默认 <code>100</code>。</td></tr>
-        <tr><td><code>min_relation</code></td><td>int</td><td>否</td><td>关系值下限，默认 <code>-100</code>。</td></tr>
-        <tr><td><code>inclination</code></td><td>string</td><td>否</td><td>阵营倾向标签，默认 <code>neutral</code>。内置内容使用 <code>warlike</code>、<code>pragmatic</code>、<code>commercial</code>、<code>raider</code>、<code>scholarly</code> 等值；脚本和外交事件可以按该字符串分组。</td></tr>
-        <tr><td><code>demand</code></td><td>string</td><td>否</td><td>派系诉求占位标签。生成城邦时复制到 <code>current_demand</code>，当前只展示，不驱动 AI。</td></tr>
-        <tr><td><code>name_pools</code></td><td>string[]</td><td>否</td><td>可用于生成名称的名称池基础 ID，例如 <code>core:generic</code>。运行时会按当前 locale 选择 <code>&lt;pool_id&gt;/&lt;locale&gt;</code>，缺失时回退到 <code>en-us</code> 或任意可用池。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>名称模板</h2>
-    <p><code>name_template</code> 支持两种写法。单字符串适合不做本地化的 MOD；对象形式适合每种界面语言使用不同语序或后缀。</p>
-    <pre><code>{
-    "name_template": "${random_name} Guild"
-}
-
-{
-    "name_template": {
-        "en-us": "${random_name} Guild",
-        "zh-cn": "${random_name}公会"
-    }
-}</code></pre>
-    <p><code>${random_name}</code> 是阵营命名系统的占位符，不是通用本地化占位符。它只在生成阵营实例名称时被替换。</p>
-
-    <h2>内置阵营</h2>
-    <p>CoreMod 当前注册了 5 个阵营定义：</p>
-    <table>
-      <thead><tr><th>ID</th><th>倾向</th><th>初始关系</th><th>范围</th><th>用途</th></tr></thead>
-      <tbody>
-        <tr><td><code>core:barbarian_tribe</code></td><td><code>warlike</code></td><td>-10</td><td>-100 到 30</td><td>偏敌对的部落势力。</td></tr>
-        <tr><td><code>core:mercenary_company</code></td><td><code>pragmatic</code></td><td>0</td><td>-80 到 80</td><td>中立雇佣兵势力。</td></tr>
-        <tr><td><code>core:merchant_guild</code></td><td><code>commercial</code></td><td>20</td><td>-50 到 100</td><td>偏贸易的友好势力。</td></tr>
-        <tr><td><code>core:pirate_band</code></td><td><code>raider</code></td><td>-30</td><td>-100 到 50</td><td>偏掠夺的敌对势力。</td></tr>
-        <tr><td><code>core:scholar_order</code></td><td><code>scholarly</code></td><td>40</td><td>-30 到 100</td><td>偏研究的友好势力。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>运行时行为</h2>
-    <ul>
-      <li><code>data/factions/</code> 注册的是阵营定义，不是已经存在于存档中的阵营实例。</li>
-      <li>新世界启动时，阵营实例可由 spawn rule 或 Lua 调用生成；实例会保存显示名称、关系值、倾向和生成 tick。</li>
-      <li>阵营实例生成时会分配外交地图要素：<code>map_q</code>、<code>map_r</code>、<code>influence_radius</code> 和 <code>map_color</code>。这些字段属于运行时实例状态，会进入 <code>factions.json</code>；它们不是 <code>data/factions/</code> 定义字段。</li>
-      <li>关系值修改会按该实例定义中的 <code>min_relation</code> / <code>max_relation</code> 夹取。</li>
-      <li>每个城邦实例还会生成 <code>settlement_type</code>、<code>population</code>、<code>wood</code>、<code>stone</code>、<code>minerals</code>、<code>food</code>、<code>gold</code>、<code>military_strength</code>、<code>development</code>、<code>development_required</code> 和 <code>level</code>。这些字段属于存档状态，不写在派系定义中。</li>
-      <li><code>core:player</code> 是玩家城邦实例。双边关系会保存 <code>neutral</code>、<code>war</code> 或 <code>alliance</code> 状态及条约 ID；当前内置条约为 <code>trade_permission</code>。</li>
-      <li>基础提案为 <code>declare_war</code>、<code>make_peace</code> 和 <code>trade_permission</code>。贸易许可积分为 <code>min(0, relation - 35) + offered_score</code>，总分大于等于 0 才接受。</li>
-      <li>外交事件可以比较两个阵营实例的 <code>inclination</code>，例如挑选倾向不同的势力对来改变关系。</li>
-      <li>事件界面复用 <code>data/focuses/</code>。与阵营关系相关的事件可通过 Lua focus 条件触发，并在玩家选择详情操作时调用外交/贸易脚本。</li>
-    </ul>
-
-    <h2>城邦生成规则</h2>
-    <p><code>data/faction_spawn_rules/</code> 中每条规则支持以下字段：</p>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>faction_def_id</code></td><td>string</td><td>要生成的派系定义 ID。</td></tr>
-        <tr><td><code>min_count</code> / <code>max_count</code></td><td>uint</td><td>该派系城邦数量边界。</td></tr>
-        <tr><td><code>density_per_100_chunks</code></td><td>float</td><td>每 100 个世界图区块的目标城邦数；省略或为 0 时在数量边界中随机。</td></tr>
-        <tr><td><code>minimum_distance</code></td><td>int</td><td>与玩家或其他已放置城邦的最小地图距离，默认 8。</td></tr>
-      </tbody>
-    </table>
-
-    <div class="callout info">
-      <code>data/faction_spawn_rules/</code> 也是加载器支持的数据目录，但它不在 <code>mod-directory.html</code> 列出的 17 个通用注册目录中。本页只覆盖 <code>data/factions/</code>；生成规则可通过控制台或 Lua 的 <code>engine.factions.list_spawn_rules()</code> 检查。
-    </div>
-    <h2>外交提议与谈判</h2>
-    <p><code>data/diplomacy_proposals/</code> 中的 JSON 定义提议的 <code>effect</code>、前置外交状态、关系计分偏移、强制执行和条约 ID。运行时谈判会保存发起方、目标、提议、代价积分以及 pending/countered/accepted/rejected 状态；Lua 可使用 <code>engine.factions.begin_negotiation</code>、<code>accept_negotiation</code>、<code>counter_negotiation</code> 和 <code>reject_negotiation</code> 操作。AI 城邦会周期性生成贸易提议，关系过低时宣战；城邦发展度也会随模拟时间增长并推动等级升级。</p>
-
-    <h2>文件放置规则</h2>
-    <ul>
-      <li>放在 <code>data/factions/</code> 下，支持子目录。</li>
-      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
-      <li>引用其他 MOD 的名称池时写完整 ID，例如 <code>other_mod:noble_houses</code>。</li>
-    </ul>
-
-    <h2>验证命令</h2>
-    <p>在控制台（按物理 Grave/反引号键）中确认阵营注册：</p>
-    <pre><code>list_data factions              -- 列出所有已注册的 NPC 阵营定义
-data core:merchant_guild        -- 查看单个阵营定义的完整 JSON
-list_factions                   -- 查看运行时阵营定义和已生成实例
-list_name_pools                 -- 查看名称池是否可用于命名
-faction_relation &lt;city_id&gt; 10  -- 修改玩家与城邦关系
-faction_diplomacy &lt;city_id&gt; declare_war
-faction_diplomacy &lt;city_id&gt; make_peace
-faction_diplomacy &lt;city_id&gt; trade_permission 15</code></pre>
-
-    <div class="footer">NewColony Wiki · UTF-8</div>
-  </div>
-</div>
-<script src="wiki.js"></script>
-</body>
-</html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>阵营注册 · NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="mod-factionregistry"><div class="main">
+<div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>阵营注册</div></div>
+<div class="content">
+  <h1>阵营与其他殖民地接口</h1>
+  <p class="subtitle"><code>data/factions/</code>、<code>data/faction_spawn_rules/</code> 和 <code>data/diplomacy_proposals/</code> 保留注册 schema；CoreMod 当前三个目录均为空。</p>
+  <h2>已定义边界</h2>
+  <ul>
+    <li><code>core:player</code> 是运行时玩家归属/阵营身份，不需要 CoreMod 内容记录。</li>
+    <li>其他殖民地可保存稳定实例 ID、世界地图位置、归属和与玩家的关系状态。</li>
+    <li>其他殖民地是商队和敌对实体的来源接口，不模拟完整建筑、生产或库存。</li>
+    <li>阵营实例、双边关系、空谈判状态、存档和 Host 同步接口继续保留。</li>
+  </ul>
+  <h2>未定义边界</h2>
+  <p>没有贸易外交专项文档，因此不生成阵营类型、倾向、需求、初始关系、关系上下限、生成数量、密度、最小距离、发展、自动提案、条约或谈判积分。外交与世界地图界面只显示接口未定和已有状态摘要。</p>
+  <div class="callout warn">旧 CoreMod 的部落、海盗、佣兵、商会、学会和随机生成规则包含私有数值与玩法，已删除。</div>
+  <div class="footer">NewColony Wiki · UTF-8</div>
+</div></div><script src="wiki.js"></script></body></html>

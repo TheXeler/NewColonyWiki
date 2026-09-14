@@ -33,16 +33,18 @@
   my_custom_block.png        -- 自定义方块贴图</code></pre>
 
     <h2>物品纹理</h2>
-    <p>物品图标纹理放在 <code>assets/textures/item/</code> 下。</p>
-    <pre><code>assets/textures/item/
+    <p>物品图标可以放在 <code>assets/textures/items/</code> 下，并由物品或方块记录的 <code>icon</code> 字段以相对 <code>assets/</code> 的路径引用。</p>
+    <pre><code>assets/textures/items/
   iron_ingot.png             -- 物品图标
   stone_chunk.png            -- 物品图标</code></pre>
+    <p>具有物品形态的方块若省略 <code>icon</code>，启动资源预处理会优先复制 <code>assets/textures/block/&lt;name&gt;.png</code>，否则从方块模型选择代表纹理；优先级为 <code>top</code>、<code>all</code>、<code>layer0</code>、<code>side</code>、<code>particle</code>、<code>bottom</code>。结果写入运行目录的 <code>generate/&lt;mod_id&gt;/item_icons/</code>；显式 <code>icon</code> 始终优先。</p>
 
     <h2>多元素方块模型纹理</h2>
-    <p>使用 Blockbench/Minecraft 风格模型的方块可以有更大的纹理图，通过模型 JSON 中的 <code>texture_size</code> 字段指定尺寸（如 64×64）。纹理仍会按 16×16 tile 切分，模型中的 UV 像素坐标会映射到对应 tile。详见 <a href="mod-assets-model.html">模型格式</a>。</p>
-    <pre><code>assets/textures/block/NewColonyTextures/
-  grass.png                  -- 64×64 纹理图（配合 grass.json 模型使用）
-  lantern.png                -- 配合 lantern.json 模型使用
+    <p>使用 Blockbench/Minecraft 风格模型的方块可以有更大的纹理图，通过模型 JSON 中的 <code>texture_size</code> 字段指定尺寸（如 64×64）。纹理仍会按 16×16 tile 切分，模型中的 UV 像素坐标会映射到对应 tile。模型声明的尺寸必须与实际 PNG 尺寸一致，否则 UV 可能索引到缺失纹理。详见 <a href="mod-assets-model.html">模型格式</a>。</p>
+    <pre><code>assets/textures/block/
+  grass.png                  -- 16×16 顶面纹理
+  grass_side.png             -- 16×16 侧面纹理
+  lantern.png                -- 可由模型引用的纹理
 assets/models/block/
   grass.json                 -- Blockbench 模型文件
   lantern.json               -- Blockbench 模型文件</code></pre>

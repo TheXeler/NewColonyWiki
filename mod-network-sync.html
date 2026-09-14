@@ -14,12 +14,14 @@
     <p class="subtitle">理解 NewColony 的主机-客户端架构、Mod 数据如何在网络间传输，以及 Lua 脚本怎样在联机环境中正确工作。</p>
 
     <h2>网络模型概览</h2>
-    <p>NewColony 采用 <strong>主机-客户端（Host-Client）</strong> 架构。一名玩家作为主机（Host），同时运行游戏逻辑和服务器；其他玩家作为客户端（Client）连接到主机。</p>
+    <p>NewColony 采用 <strong>主机-客户端（Host-Client）</strong> 架构。Host 唯一推进游戏逻辑；普通单机也会建立进程内逻辑 Host/Client 回环并复用协议编码、解码、命令和快照路径，不另设可绕过 Host 的单机写入模式。联机时一名玩家作为 Host，其他 Client 连接到该 Host。</p>
+    <p><code>NetworkSystem</code> 对象本身随 Engine 存活，但活动网络会话属于世界生命周期：创建或读取世界时，<code>WorldLifecycleCoordinator</code> 使用该世界 seed 和当前 Registry 指纹启动 Loopback/Host/Client 会话；返回主菜单时关闭会话并把模式重置为 <code>disabled</code>。主菜单的 Host/Join 操作只记录下一世界的连接配置，不会在尚无世界时提前创建会话；Disconnect 同时清除该配置。这样再次进入世界时不会复用上一个世界的已关闭会话。</p>
     <table>
       <thead><tr><th>角色</th><th>职责</th><th>典型操作</th></tr></thead>
       <tbody>
+		<tr><td>Loopback</td><td>进程内同时承担逻辑 Host/Client；只有 Host 推进模拟</td><td>普通单机默认自动启用</td></tr>
         <tr><td>Host</td><td>运行完整游戏逻辑、广播快照、处理命令</td><td>控制台执行 <code>net_host 7777</code></td></tr>
-        <tr><td>Client</td><td>发送命令、接收快照、预测与回滚</td><td>控制台执行 <code>net_join 127.0.0.1 7777</code></td></tr>
+        <tr><td>Client</td><td>发送 Host 命令、接收快照与命令结果</td><td>控制台执行 <code>net_join 127.0.0.1 7777</code></td></tr>
       </tbody>
     </table>
     <div class="callout info">
@@ -35,20 +37,19 @@
         <tr><td>Position</td><td>x, y, z</td></tr>
         <tr><td>Speed</td><td>x, y, z</td></tr>
         <tr><td>Rotation</td><td>yaw, pitch</td></tr>
-        <tr><td>Health</td><td>current, max</td></tr>
-        <tr><td>HeldItem</td><td>item_id, count</td></tr>
-        <tr><td>Equipment</td><td>单一 <code>Equipment</code> 槽，包含 item_id 和 count</td></tr>
+        <tr><td>Health</td><td>current, max, base_max</td></tr>
+        <tr><td>Equipment</td><td>装备权威位于统一物品领域快照；ECS 单槽仅为从装备位置实例重建的查询缓存，新 Host 实体快照不再发送第二份装备值。</td></tr>
         <tr><td>Needs</td><td>hunger, fatigue</td></tr>
         <tr><td>Mood</td><td>mood_value, broken_down, breakdown_timer, thought_count</td></tr>
-        <tr><td>Job</td><td>job_id, level</td></tr>
+        <tr><td>Job</td><td>job_id, rank, level, xp</td></tr>
         <tr><td>Name</td><td>data</td></tr>
         <tr><td>Scale</td><td>x, y, z</td></tr>
         <tr><td>AIState</td><td>behavior_tree_id, current_node, lod_level, busy, current_work_instance</td></tr>
-        <tr><td>WorkerPriorityConfig</td><td>所有 category_priorities</td></tr>
+        <tr><td>WorkerPriorityConfig</td><td>六类工作计划开关、24 小时排班、模板 ID 和个人覆盖掩码</td></tr>
         <tr><td>Civilization</td><td>civilization_id</td></tr>
         <tr><td>BlockInteractor</td><td>target_block(x,y,z), action_type</td></tr>
         <tr><td>NavAgent</td><td>路径数据（path_count, waypoints, target）</td></tr>
-        <tr><td>Stats</td><td>strength, dexterity, intelligence + 派生属性</td></tr>
+        <tr><td>ColonistAttributes</td><td>文档定义的基础、工作和战斗属性</td></tr>
         <tr><td>PrototypeRef</td><td>data（实体原型 ID）</td></tr>
       </tbody>
     </table>
@@ -56,6 +57,7 @@
 
     <h3>增量快照</h3>
     <p>当启用增量快照（默认开启）时，主机只发送与上一次快照<strong>有差异的实体</strong>和<strong>被删除的实体</strong>。这显著减少了带宽。客户端负责将增量合并到本地完整状态中。</p>
+	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、焦点定义运行态/活动焦点、经营日志、持续问题和 Host 时间控制；只有内容变化的通道进入增量包。已知 Host 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Host 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
 
     <h3>插值</h3>
     <p>客户端在两个快照之间可以对 Position 组件做线性插值（lerp），使移动看起来更平滑。</p>
@@ -65,16 +67,13 @@
     <table>
       <thead><tr><th>命令</th><th>参数</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td>MoveEntity</td><td>entity_id, x, y, z</td><td>移动实体</td></tr>
-        <tr><td>BuildBlock</td><td>x, y, z, block_id</td><td>放置方块</td></tr>
-        <tr><td>MineBlock</td><td>x, y, z</td><td>挖掘方块</td></tr>
-        <tr><td>AssignJob</td><td>entity_id, job_id, level</td><td>分配职业</td></tr>
-        <tr><td>GiveBlock</td><td>entity_id, block_id, count</td><td>给予方块物品</td></tr>
-        <tr><td>PostWork</td><td>work_tag, faction_id, x, y, z, duration, payload_id</td><td>发布工作到主机 WorkPool</td></tr>
+		<tr><td>PostWork</td><td>work_tag, faction_id, x, y, z, duration, payload_id, priority, designated_worker</td><td>只接受一次性采掘和采集确认产生的规范 Mine/Chop；Host 会重新校验玩家阵营、目标方块与产出配置、碰撞、优先级、指定者资格和实际路径，其它工作必须从对应来源系统建立。</td></tr>
+		<tr><td>UiCommand</td><td>target, payload_json</td><td>把已注册的经营操作提交给 Host 数据桥校验和结算。</td></tr>
       </tbody>
     </table>
     <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>
     <p>每条命令携带一个递增的序列号。主机收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
+	<p>经营界面写操作使用同一协议中的 <code>UiCommand</code>，携带稳定 target 和 JSON payload。Client/单机逻辑 Client 只提交命令；Host 调用 CoreMod 数据桥结算，并以 <code>CommandResult</code> 返回原序号和实际结果 JSON。生产、治疗、招募、研究、仓储、区域和地面回收等已定义玩法走该链路。贸易外交当前仅显示接口状态，不发送玩法命令。纯 Client 的基础 ECS、世界方块、Lua data component、runtime state 和统一物品写接口也有底层权限屏障，不能用脚本绕过数据桥。面板开关、筛选、镜头与设计预览等纯本地表示不发送给 Host。</p>
 
     <h2>Chunk Terrain Sync</h2>
     <p>主机维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
@@ -82,13 +81,13 @@
 
     <h2>握手流程</h2>
     <ol class="step-list">
-      <li><strong>Client → Hello</strong>：客户端发送 peer_name、world_seed、shared_secret、last_applied_tick。</li>
-      <li><strong>Host → Welcome</strong>：主机验证密钥，返回 world_seed、server_tick、authenticated 标志。</li>
-      <li><strong>Host → ModList + ModDataManifest</strong>：认证通过后，主机发送 Mod 列表（含校验码）和所有 Mod 数据的哈希清单。</li>
+      <li><strong>Client → Hello</strong>：客户端发送 peer_name、world_seed、shared_secret、last_applied_tick，以及按 Registry 分类排序的分类 hash 和逐条目 hash。</li>
+      <li><strong>Host → Welcome</strong>：主机验证密钥、世界 seed 和 Registry 指纹，返回 world_seed、server_tick、authenticated、Host 指纹及明确拒绝原因。分类或条目缺失、条目内容不同都会在进入正常同步前拒绝，并报告具体分类/条目。</li>
+      <li><strong>Host → ModList + ModDataManifest</strong>：握手完全匹配后，主机发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
       <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向主机请求这些记录。</li>
       <li><strong>Host → Records</strong>：主机发送请求的 Mod 数据原始 JSON。</li>
     </ol>
-    <p>握手完成后，客户端进入正常快照接收循环。收到 <code>Records</code> 后，客户端会用 reload 语义写入本地 Mod 注册表，并刷新实体原型、配方、职业、地形数据、建筑、区域和渲染世界资源等由注册表派生的运行时缓存。</p>
+    <p>只有协议版本、世界 seed 和 Registry 分类/条目指纹全部匹配时，客户端才进入正常快照接收循环。当前未发布协议重置为 v1，只包含现行实体字段、专项 Mine/Chop <code>PostWork</code>、Host <code>UiCommand</code> 和领域快照；背包、装备和物品位置只走统一物品领域快照。协议版本由包头严格校验；seed 或 Registry 不一致不会通过后续记录交换掩盖。</p>
 
     <h2>Mod 列表与校验码</h2>
     <h3>side 字段</h3>
@@ -108,23 +107,16 @@
 
     <h2>Lua 脚本在网络中的行为</h2>
     <h3>主机上的 Lua</h3>
-    <p>作为主机的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。<code>spawn_prototype</code> 创建的实体会出现在快照中。</p>
+    <p>作为主机的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。领域系统创建的实体会进入 Host 快照；Lua 不提供通用原型生成入口。</p>
 
     <h3>客户端上的 Lua</h3>
-    <p>客户端的 Lua 脚本同样会运行，但游戏状态由主机快照驱动。客户端对组件的本地修改会被下一次快照<strong>覆盖</strong>。客户端应该通过命令请求主机执行操作，而不是直接修改本地状态。</p>
+    <p>纯客户端不推进本地玩法模拟，游戏状态由主机快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、焦点、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Host 权威玩法状态。</p>
 
     <h3>区分主机和客户端</h3>
-    <pre><code>function M.on_tick(tick, dt)
-  local mode = engine.network.mode()   -- "host", "client" 或 "disabled"
-  if mode == "host" or mode == "disabled" then
-    engine.ecs.set_position(entity, x, y, z)
-  elseif mode == "client" then
-    engine.network.send_move(entity, x, y, z)
-  end
-end</code></pre>
+    <p><code>engine.network.mode()</code> 返回 <code>host</code>、<code>client</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不执行玩法 <code>on_tick</code>；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Host 权威 target 编码成 <code>UiCommand</code>。</p>
 
     <div class="callout warn">
-      <strong>常见错误：</strong>在客户端 <code>on_tick</code> 中直接修改 Position、Health、Inventory 等同步组件。这些修改会被快照覆盖，导致"闪烁"或状态丢失。
+      <strong>常见错误：</strong>尝试直接发移动、方块或给物命令，或直接写组件。此类入口不存在；玩法请求必须使用已注册、由 Host 处理的专项 <code>UiCommand</code>。
     </div>
 
     <h2>重连与恢复</h2>

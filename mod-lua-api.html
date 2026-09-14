@@ -18,11 +18,11 @@
     </div>
 
     <div class="callout info">
-      <strong>MOD API 版本</strong>：当前公共脚本 API 版本可读 <code>engine.api_version</code>，也可读 <code>engine.version.api</code>。旧入口 <code>engine.api.version()</code> 暂时保留用于兼容，但新脚本不要再依赖它。
+      <strong>MOD API 版本</strong>：当前公共脚本 API 版本可读 <code>engine.api_version</code>，也可读 <code>engine.version.api</code>。
     </div>
 
     <div class="callout info">
-      <strong>API 稳定性</strong>：速查页按 <code>stable</code>、<code>experimental</code>、<code>deprecated</code> 标记接口。稳定接口用于普通内容 MOD 和 CoreMod 路径，兼容性优先；实验接口通常是低级 ECS、世界修改、网络命令、编辑器或运行时注册能力，可用但后续可能收窄权限；废弃接口只为兼容保留。
+      <strong>API 稳定性</strong>：速查页按 <code>stable</code> 和 <code>experimental</code> 标记接口。稳定接口用于普通内容 MOD 和 CoreMod 路径；实验接口通常是低级 ECS、世界修改、网络命令、编辑器或运行时注册能力，可用但后续可能收窄权限。
     </div>
 
     <div class="callout warn">
@@ -52,7 +52,7 @@ return M</code></pre>
 
     <p>四个生命周期函数的用途：</p>
     <ul>
-      <li><strong>on_load</strong> —— 适合订阅事件、注册 焦点 条件、读取配置。此时数据已注册完毕，但世界还没生成。</li>
+      <li><strong>on_load</strong> —— 适合订阅事件、注册焦点条件、读取配置和恢复非世界领域状态。此时数据与完整领域 API 已绑定，但世界还没生成。</li>
       <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore/feature。此时地形 API 已可用。</li>
       <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
       <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
@@ -66,15 +66,10 @@ if debug_logs then
   engine.log.info("[copper_age] debug logging enabled")
 end</code></pre>
 
-    <h2>创建和操作实体</h2>
-    <p>如果在 <code>data/entities</code> 里写了实体原型，优先用 <code>spawn_prototype</code>。如果只是临时测试，也可以手动创建实体并逐个设置组件。</p>
-    <pre><code>local id = engine.ecs.spawn_prototype("core:colonist")
-if id ~= 0 then
-  engine.ecs.set_position(id, 16, 65, 16)
-  engine.ecs.set_name(id, "Copper Scout")
-  engine.ecs.give_item(id, "copper_age:copper_ore", 4)
-end
-
+    <h2>读取和操作实体</h2>
+	<p>不提供通用实体创建、任意销毁或逐项写入生命、需求、心情、AI、交互意图、原型身份和装备组件的低级入口。物品、殖民者、生产、掉落、治疗和招募必须经过各自的 Host 权威事务；生态系统只能用已注册 <code>animal_distributions</code> 规则 ID 生成对应动物。引擎定义的物理属性可通过 <code>engine.ecs.get_gravity_enabled(entity)</code> 和 <code>engine.ecs.get_collision_enabled(entity)</code> 查询，并由 Host 权威脚本调用对应的 <code>set_gravity_enabled</code>、<code>set_collision_enabled</code> 动态修改。</p>
+    <pre><code>local id = (engine.ecs.query_with_health() or {})[1]
+if not id then return end
 local hp = engine.ecs.get_health(id)
 engine.log.info("health: " .. tostring(hp.current) .. "/" .. tostring(hp.max))</code></pre>
 
@@ -86,32 +81,33 @@ engine.data.set(id, "quest.flags.met_elder", true)
 local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
 
     <h2>合成和职业</h2>
-    <p>配方和职业本体写在 JSON 里，Lua 只负责触发或响应结果。</p>
-    <pre><code>local ok = engine.jobs.assign(id, "core:worker", 1)
-if ok and engine.crafting.craft(id, "core:craft_stick") then
-  engine.log.info("crafted sticks")
-end
-
-for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
+    <p>配方和职业本体写在 JSON 里。公开直通制作和职业分配入口均已禁用；Lua 可以查询配方，并通过 CoreMod 生产订单和装备换装事务创建实际工作。</p>
+    <pre><code>for _, recipe_id in ipairs(engine.crafting.list_recipes()) do
   local recipe = engine.crafting.get_recipe(recipe_id)
   if recipe then
     engine.log.info("recipe: " .. recipe.id .. " -> " .. recipe.output.id)
   end
 end</code></pre>
-    <p><code>engine.crafting.craft</code> 是低级直接制作接口，只检查实体当前单个 <code>HeldItem</code> 是否满足输入。CoreMod 的菜单制作走 <code>systems.crafting.queue</code>，会从 stockpile 账本预留材料并在 <code>work:completed</code> 后发放产物。</p>
+    <p>CoreMod 菜单通过 <code>systems.production.queue</code> 建立可重复或维持库存的订单，再由 <code>systems.crafting.queue</code> 预留 stockpile 材料并在 <code>work:completed</code> 后结算；Lua 不提供直接制作入口。</p>
+	<p><code>engine.designs</code> 提供锻造基型和不可变设计方案接口。<code>list_item_bases()</code>/<code>get_item_base(id, civilization_index?)</code> 返回基型、科技解锁状态、属性/词条等级、容量、材料与配置错误；<code>preview(base, attributes, affixes)</code> 只计算方案；<code>save(...)</code> 仅允许已解锁基型并始终创建新 design ID，即使方案因容量或选择错误而无效。<code>list()</code>/<code>get(id)</code> 返回已保存方案。方案没有名称或批量数量字段。</p>
 
     <h2>工作池</h2>
     <p>发布工作时必须指定工作所属阵营。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己阵营一致的工作。</p>
     <p>工作系统内部有 WorkTag、WorkCategory、WorkTargetKind、WorkAction 和 WorkPayloadKind，但当前 Lua 只公开发布工作实例的兼容入口，没有公开的工作类型注册 API。</p>
-    <p><code>engine.work.post(type, faction_id, x, y, z, duration, payload_id)</code> 中的 <code>type</code> 支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>mine</code>/<code>dig</code>/<code>gather</code>、<code>chop</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>research</code>、<code>guard</code> 和 <code>patrol</code>；未知字符串会落回 Build。这个兼容入口默认发布 Block 目标工作，其中 <code>mine</code>/<code>chop</code> 使用 Destroy，其它标签使用 Interact。<code>duration</code> 是无修正基础时长；非零 <code>payload_id</code> 会作为 Custom payload 保存，常用于配方 ID 或目标数据哈希。脚本驱动 work 主要通过 <code>work:completed</code> 处理完成逻辑；只有显式 Block payload 的 Block+Interact 会触发底层 block interaction。实际完成时长可以再由工人属性、职业、工具或后续系统修正。</p>
+    <p><code>engine.work.post(type, faction_id, x, y, z, duration, payload_id, target_entity)</code> 中的 <code>type</code> 支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>use_medicine</code>/<code>medicine</code>/<code>use_potion</code>、<code>transfer_patient</code>/<code>carry_patient</code>、<code>job_change</code>/<code>change_class</code>、<code>treat</code>/<code>treatment</code>/<code>heal</code>、<code>feed_patient</code>/<code>patient_feed</code>、<code>first_aid</code>/<code>stabilize</code>、<code>battlefield_treat</code>/<code>medical_pack</code>、<code>guard</code> 和 <code>patrol</code>。未知类型、缺失或非正数 <code>duration</code> 固定返回 0。<code>target_entity</code> 是可选实体目标；非零 <code>payload_id</code> 作为 Custom payload 保存。一次性 Mine/Chop 只能由指定工具确认后经 Host 命令创建；研究工作只由 <code>engine.research.begin</code> 已成功开启且支付材料的研究项目派生。通用 <code>engine.work.post</code> 不接受这三类来源工作。</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
-local recipe_hash = engine.util.data_id_hash("core:craft_stick")
-local work_id = engine.work.post("craft", player_faction, 16.5, 65.0, 16.5, 3.0, recipe_hash)</code></pre>
+local work_id = engine.work.post("haul", player_faction, 16.5, 65.0, 16.5, 3.0, 0)</code></pre>
     <p>底层执行不再查找数据驱动 action 注册表。引擎根据目标类型、Interact/Destroy、工作标签和 payload 语义处理方块交互、规划方块放置、实体攻击或脚本事件。</p>
-    <p>Craft 工作完成时，引擎会先尝试用 <code>payload_id</code> 作为配方哈希执行一次 C++ 直接制作，然后再发出 <code>work:completed</code> 给 Lua。使用 CoreMod 的 stockpile 预留队列时，要避免同一个工人手中同时持有匹配输入导致直接制作和 Lua 队列都产出。</p>
-    <p>如果 AI 找不到通往已分配任务的寻路路径，该任务会解除 worker 绑定并回到工作池；该殖民者会在 100 tick 内跳过同一个任务实例，避免立刻重复承接。</p>
+    <p>订单元数据可用 <code>engine.work.set_metadata(work_id, source_id, priority, designated_worker?)</code> 写入；普通优先级范围为 1-9，0 保留为特殊优先级。<code>engine.work.set_qualification</code> 可要求指定职业和等级。需要物品的工作还必须调用 <code>engine.work.set_item_requirements(work_id, rows)</code> 声明领取时材料资格；每行使用 <code>count</code> 加具体 <code>instance_id</code>，或 <code>item_id</code>/<code>candidates</code> 候选集合。同一实例数量会在整组要求间统一核算，领取只检查当前玩家仓储中可达、启用、未保留且未预留的数量，不提前占有；真正的 <code>reserve</code>/<code>reserve_instance</code> 仍只在 <code>work:activated</code> 后执行。<code>set_available/available/reserved/reserve/commit_reservation/release_reservation</code> 暴露共享资源预留账本。</p>
+	<p>公共工作先进入殖民者个人队列，领取本身不触发预留。领取初选和未激活队列继续执行共用职业、工作计划、状态、路径与当前材料可满足性条件。调度器每轮按稳定殖民者顺序让每名空闲且合格的殖民者至多认领一项；后一名殖民者只会从前者尚未认领的工作中选择，因此优先形成 A、B、C 的均匀分配，不再先填满某一人的队列。个人队列上限仍为 20 项。AI 每 5 tick（250 ms）检查一次公共池，已有个人工作时不会补领或被更高优先级工作抢占。</p>
+	<p>队列中的一项真正激活后才触发 <code>work:activated</code>，制作等经营系统在此时申请资源和位置预留。激活检查失败时可调用 <code>engine.work.activation_failed(work_id)</code>，它会把该项退回公共池、清理导航并阻塞 20 tick；执行者随后尝试队列下一项。<code>engine.work.set_locked(work_id, true)</code> 复用同一个 <code>blocked_until_tick</code> 字段写入永久阻塞哨兵，任务继续存在但不能被领取；传入 <code>false</code> 会把阻塞时间恢复到当前 tick 并立即解锁。完成结算与下一项激活分属不同 tick，避免下一项在上一项提交前抢先预留。</p>
+	<p>取消和中断分别触发 <code>work:cancelled</code> 与 <code>work:interrupted</code>。<code>engine.work.interrupt_all(worker)</code> 会把当前激活项和整条个人队列全部退回，释放激活项未提交预留；其他殖民者可立即领取，原殖民者在 20 tick 内跳过这些工作。</p>
+	<p>搬运是唯一允许同批多项同时激活的类型。CoreMod 只合并来源坐标、物品堆叠键、来源位置和目标仓储位置都兼容的项，并按背包格、单格堆叠与搬运容量截断。<code>engine.work.claimed(worker)</code> 提供该人尚未激活的队列，<code>engine.work.activate_claimed_haul(work_id, worker)</code> 只允许激活其中的 Haul 项；各项仍独立保存来源、数量、目标格和预留，并由 AI 逐项导航结算。合成系统在成功创建每个产物实例后立即调用搬运系统的幂等入库入口发布 Haul 工作，周期扫描仅作为遗漏恢复。没有有效仓储目的地时自动搬运任务仍会发布，但使用永久冷却哨兵锁定；目的地出现后自动解锁。拆分物品堆时，原始来源实例会保持占用到当前批次交付完成，防止携带者被同一堆的新取货任务抢走；交付结算后立即扫描剩余来源并发布下一批，不等待周期扫描。</p>
     <p>寻路失败会被记为 error；AI 不再因导航目标不可达而生成原地 fallback 工作。</p>
-    <p>如果 AI 在执行中被中断（例如殖民者倒地、死亡、低需求触发个人需求，或 AI 状态被外部清空），已申领但未完成的工作会自动解除 worker 绑定并回到工作池，之后可被同阵营 AI 重新领取。恍惚只影响命中率，不会单独中断工作。</p>
+	<p>如果 AI 在执行中被中断（例如殖民者倒地、死亡、低需求触发个人需求，或 AI 状态被外部清空），当前激活项和未激活个人队列都会返回工作池；只有激活项可能持有预留。恍惚只影响命中率，不会单独中断工作。</p>
+	<p><code>engine.economy_log.record(spec)</code> 向统一经营日志追加结构化正常/异常记录；<code>engine.economy_log.entries(filter?)</code> 只读查询并支持 <code>worker</code>、<code>source_id</code>、<code>source_object_id</code>、<code>item_id</code>、<code>work_tag</code> 和 <code>problem_id</code> 筛选。<code>engine.problems.report(spec)</code> 按来源与问题 ID 上报或刷新持续问题，<code>list(filter?)</code>/<code>alerts()</code> 返回局部问题和同类聚合警报，<code>resolve(instance_id)</code> 解除并自动写日志。个人进食工作按殖民者保持唯一；暂时找不到或无法预留食物时只冷却并重试同一工作，不记录逐次激活失败，也不上报普通缺粮问题。殖民者进入会持续损失生命的严重饥饿阶段后，才产生按人数聚合的全局持续警报。问题 API 只表达文档已有的阻塞/失效反馈，不应创建新的玩法规则。</p>
+	<p><code>systems.work_policy</code> 保存工作计划和排班模板、殖民者分配及个体覆盖。六个工作计划开关依次为搬运、建造、维修、制作、采集、职业；排班的 24 个小时槽取值为 0=睡眠、1=工作、2=自由。工作时段可领取普通工作，自由时段只领取特级工作并允许社交/娱乐，睡眠时段不领取普通工作；进食、休息、逃跑、紧急急救和即时威胁响应不受这些开关限制。模板修改会重新计算全部使用者的有效策略。没有工作策略组件或尚未配置六类开关时，普通工作固定拒绝；网络实体载荷也不提供全开启缺省值。</p>
+	<p><code>engine.colonists.work_policy(entity)</code> 返回有效开关、小时表、模板 ID 和覆盖掩码；<code>engine.colonists.set_work_policy(entity, spec)</code> 是模板系统写入有效状态的低级接口。玩家界面通过 <code>work_policy_state</code> 快照及 <code>core:work_plan.*</code>、<code>core:schedule.*</code>、<code>core:work_policy.*</code> 命令管理模板，不直接修改 AI 内部类别优先级。</p>
 
     <h2>事件</h2>
     <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
@@ -123,7 +119,7 @@ end, 10)
 
 engine.events.unsubscribe("inventory:changed", handler)</code></pre>
 
-    <p>引擎内置了七个事件，此外 CoreMod 的游戏系统也会发出自定义事件：</p>
+    <p>常用引擎事件如下；CoreMod 游戏系统还会发出 stockpile、production、treatment 等自定义事件：</p>
     <table>
       <thead><tr><th>事件名</th><th>payload 字段</th></tr></thead>
       <tbody>
@@ -132,6 +128,8 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
         <tr><td><code>job:assigned</code></td><td>entity_id, job_id, level</td></tr>
         <tr><td><code>block:interacted</code></td><td>entity_id, x, y, z, action_type, action</td></tr>
         <tr><td><code>work:completed</code></td><td>instance_id, worker, tag, category, target_kind, action, payload_kind, payload_id, faction_id, x, y, z, target_entity, tick</td></tr>
+        <tr><td><code>work:cancelled</code> / <code>work:interrupted</code></td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
+        <tr><td><code>colonist:death</code></td><td>entity_id, name, tick, x, y, z；死亡实体随后会被销毁，并可通过 <code>engine.colonists.memorials()</code> 查询纪念记录。</td></tr>
         <tr><td><code>focus:chosen</code></td><td>focus_id, instance_id, choice_id, choice_action, tick</td></tr>
         <tr><td><code>focus:dismissed</code></td><td>focus_id, instance_id, tick</td></tr>
       </tbody>
@@ -140,14 +138,12 @@ engine.events.unsubscribe("inventory:changed", handler)</code></pre>
 
     <h2>装备系统</h2>
     <p>装备组件只有一个固定槽位：<code>Equipment</code>。Lua API 使用 <code>equipment.item</code> 表示当前装备，不支持旧的主手、副手、护甲、饰品槽，也没有双手占槽规则。</p>
-    <pre><code>local item_hash = engine.util.data_id_hash("core:wooden_sword")
+    <pre><code>-- 将玩家仓储中的具体实例换入唯一装备槽
+engine.ui.command.run("core:colonists.change_equipment", { entity_id = entity_id, instance_id = instance_id })
 
--- 将物品装备到唯一装备槽
-engine.equipment.equip(entity_id, "Equipment", item_hash, 1)
-
--- 从栏位卸下
-local removed = engine.equipment.unequip(entity_id, "Equipment")
-engine.log.info("removed item: " .. tostring(removed.item_id))
+-- 已进入职业后不能单独卸装；这里只读取当前装备
+local current = engine.equipment.get_slot(entity_id, "Equipment")
+engine.log.info("current item: " .. tostring(current.item_id))
 
 -- 查询实体所有栏位
 local eq = engine.equipment.get_equipment(entity_id)
@@ -158,7 +154,40 @@ local held = engine.equipment.get_slot(entity_id, "Equipment")
 if held.item_id ~= 0 then
   engine.log.info("equipped item: " .. tostring(held.item_id))
 end</code></pre>
-    <p>物品 ID 使用 <code>engine.util.data_id_hash("core:wooden_sword")</code> 格式的 FNV-1a 哈希值。</p>
+    <p>物品 ID 可使用 <code>engine.util.data_id_hash("example:item")</code> 计算稳定哈希。</p>
+
+    <h2>统一物品与玩家仓储</h2>
+    <p><code>engine.items</code> 访问 C++ 权威物品实例。<code>total/available/reserved(item_hash)</code> 查询玩家仓储数量；只有露天仓储和储存体素会被计入。<code>storage_snapshot()</code> 返回按物品汇总的数量，<code>instances()</code> 返回带稳定 instance ID、位置、品质和载荷的实例快照。</p>
+    <p>统一资源预留排除不可达、禁用及实例/仓储保留策略，并按仓储取用优先级和路径成本选择。<code>storage_policies</code>、<code>set_storage_policy</code> 和 <code>remove_storage_policy</code> 管理物品/分类/标签过滤及存取优先级；储存体素策略还声明坐标、格数、最终单格容量与冷藏状态。搬运通过 <code>reserve_storage_destination</code> 在激活时同时锁定来源数量和目标格，到达来源后把数量移入统一背包实例，完成目标阶段时提交；中断/取消时释放。由采掘/砍伐结算产生且带 <code>recovery_authorized</code> 的背包物品会先生成指定原持有者、特殊优先级的入库工作，释放真实背包格后再领取地面搬运；地面搬运激活前必须存在空背包格。直接存取和直接移动仓储入口已移除，普通玩法只能通过工作和经营事务改变库存。<code>create(table)</code> 不是通用造物入口：它只在引擎派发真实 Craft 或 MineOperation 完成事件期间接受调用，位置必须是当前工作的 <code>output_buffer</code>，<code>location_id</code> 和 <code>compatible_work_id</code> 必须分别匹配当前工作点和工作 ID，所有权必须是玩家；其他调用固定返回 0。<code>place_player_output(...)</code> 也不是通用造物入口，只在真实 Mine/Chop 完成结算或 Host 正在处理 <code>recruitment.cancel</code> 退款时开放。成品可通过 <code>payload</code> 保存 JSON 兼容载荷。Lua 不应维护第二份 stockpile 数量表。</p>
+    <pre><code>local item = engine.util.data_id_hash("example:item")
+local available = engine.items.available(item)</code></pre>
+    <p><code>engine.items.reservation_sources(item_hash)</code> 返回 reservation ID、来源、目标及具体实例分配。<code>engine.work.commit_reservations(rows)</code> 会在全部预留均有效时一次性消费所有实例；任一项无效时不消费任何一项。提交后不要再次调用库存扣除。</p>
+    <p><code>engine.work.move_reservation_to_input(reservation_id, work_point_id, work_id)</code> 将已预留实例送入兼容工作的无限输入暂存。<code>engine.buildings.work_points()</code>、<code>work_point_status</code> 和 <code>find_available_work_point</code> 提供生产所需的入口道路、内部路径、占用和输出阻塞状态。<code>engine.manufacturing.quality_thresholds()</code> 按全局制造规则的配置顺序返回品质阈值，生产过滤界面必须使用该顺序，不应另设硬编码品质等级表。</p>
+    <p>物品腐坏和地面消失由引擎 tick 推进。引擎发出 <code>item:spoiled</code>、<code>item:ground_despawned</code> 和 <code>reservation:invalidated</code>；预留物腐坏无法换绑时，来源工作会进入 20 tick 阻塞。</p>
+
+    <h2>生存、饮食和治疗</h2>
+    <p><code>engine.colonists.detail(entity)</code> 返回 condition、injuries 和死亡/倒地状态；<code>engine.colonists.survival_configuration()</code> 返回唯一 <code>colonist_survival_rules</code> 记录的有效状态与稳定错误 ID，CoreMod 的 <code>systems.survival</code> 将无效状态登记为全局持续问题。需求消耗、状态转换、压力/崩溃/恍惚、属性倍率、状态伤害、饱食恢复和濒死均不使用代码平衡默认值。MoodSystem 只保留由事件或内容明确加入的心情印象和配置驱动的状态贡献，不再按饱食、疲劳或心情阈值生成固定数值/持续时间的内置印象，也不把心情作为未定义的职业经验倍率。进食仅可通过 <code>engine.colonists.apply_nutrition</code> 在匹配的 Eat 工作完成派发期间提交；急救、正式治疗、病号喂食和战场治疗只可通过 <code>apply_treatment_result</code> 在工作 ID、类型和患者均匹配时提交。CoreMod <code>systems.food</code> 管理进食方案，从 <code>engine.items.instances()</code> 返回的玩家露天仓储和储存体素实例中按允许/禁用物品、分类、标签、品质、腐坏、营养溢出和路径长度选择具体实例。新建和默认方案的允许过滤初始为空，不会隐式放行整个 food 分类；玩家明确配置后普通进食和治疗点喂食才会在工作激活时通过 <code>engine.work.reserve_instance</code> 预留，并在完成时提交。<code>engine.navigation.path_length</code> 返回两个世界位置之间的寻路长度；不可达时返回正无穷。<code>systems.treatment</code> 管理治疗模板、治疗点容量与 Treat 工作；模板按每种已启用伤病/状态分别保存食物、药品和医疗包，资源不会跨状态共享。这些状态通过 <code>runtime_states.json</code> 随世界存档。</p>
+    <p><code>engine.colonists.set_medicine_slot_capacity</code> 是系统应用个人通用药剂 CD 槽上限的低级入口；<code>reserve_medicine_slot</code>、<code>commit_medicine_slot</code> 和 <code>release_medicine_slot</code> 分别对应药剂使用工作激活、成功和失败/中断。<code>medicine_slots</code> 返回总数、预留数、占用数、药剂物品 ID 和剩余秒数。CoreMod 从唯一 <code>medicine_slot_rules</code> 数据记录读取基础容量和科技增量；<code>systems.medicine.slot_capacity_state(entity)</code> 返回期望/实际容量、预留、占用、逐槽状态、容量来源和配置错误。CoreMod 当前基础容量为 2，状态显示在人员界面的个人信息中；记录缺失时仍保留 <code>medicine_slot_rules_missing</code> 屏障。</p>
+    <p><code>engine.json.decode(text)</code> 在基础 Lua API 绑定阶段注册，因此 MOD 的 <code>on_load</code> 可以把 <code>engine.modding.get_data_json(type, id)</code> 返回的原始 JSON 解码为 Lua 值；空字符串或无效 JSON 返回 <code>nil</code>。<code>engine.runtime_state.set(key, table)</code> 和 <code>get(key)</code> 提供按稳定 key 保存 JSON 兼容 Lua 值的低级状态仓。状态仓可由异步存档线程安全快照；系统应在状态变化后写入，并在 <code>on_world_init</code> 中恢复。玩法领域载荷必须保存当前 <code>schema_version = 1</code> 并拒绝明确的未知版本；项目尚未发布，不维护旧领域结构的兼容读取。函数、userdata 和循环表不能作为持久化值。</p>
+    <p><code>engine.colonists.memorials()</code> 返回死亡殖民者的实体 ID、姓名、职业、等级、死亡 tick 和位置；纪念记录会写入 <code>world.json</code>。建筑治疗点 API 详见<a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
+	<p><code>engine.buildings.raid_target()</code> 返回当前袭击目标的 <code>valid</code>、稳定错误 ID、建筑实例/定义、角色、价值、位置和当前难度 <code>raid_multiplier</code>。选择顺序固定为已完成城镇大厅优先，否则最高价值玩家建筑；该接口不创建袭击，也不定义额外的袭击公式。</p>
+	<p><code>engine.buildings.repair_status(instance_id)</code> 和 <code>repair_statuses()</code> 返回耐久、配置上限、授权、材料、职业、工作量、单元恢复量和稳定问题 ID。<code>damage</code> 是战斗/事故提交建筑伤害的低级接口；<code>set_repair_authorized</code> 是 Host 授权入口，<code>apply_repair_unit(work_id, instance_id)</code> 只在匹配该建筑 payload 的 Repair 工作完成派发期间结算。CoreMod <code>systems.repair</code> 负责 Repair 工作、激活预留、原子提交、取消释放和经营日志；玩家操作走 <code>building.repair_authorize</code> Host 命令及 <code>building/repairs</code> 数据通道。</p>
+	<p><code>engine.buildings.storage_points()</code> 和 <code>storage_point_status(id)</code> 返回稳定位置 ID、建筑/定义、坐标、容量、冷藏、存在/可用及永久失效原因。CoreMod <code>systems.building_storage</code> 将可用点安装成通用 <code>storage_voxel</code> 策略并进入 <code>building/storage_points</code> 通道；损毁/拆除时通过 <code>engine.items.drop_storage_contents</code> 将内容转为授权地面实例，并清理关联预留。</p>
+	<p><code>engine.buildings.instances()</code> 返回所有权威建筑实例的稳定 ID、定义 ID、状态和原点，供需要按完整建筑集合恢复派生索引的系统使用。CoreMod <code>systems.world_components</code> 维护多体素部件的稳定实例 ID、类型、定义、owner、逐格坐标/hash 和产出表引用；只读通道 <code>world/components</code> 返回 <code>{ schema_version, instances }</code>。当前自然树生成是单格对象，因此首次交互只注册目标格；系统不会以相邻同类方块推断同一对象。真正的多体素生成器必须在创建时提交明确 cell 集合。</p>
+	<p><code>engine.terrain.ecology_chunks()</code> 返回当前强加载区块的坐标、主群落、基础/最终温度和树木统计；<code>engine.terrain.ecology_animals()</code> 返回实际存活动物实体、原型、攻击性和位置。CoreMod <code>systems.ecology</code> 按两类生态内容表推进刷新，并通过 <code>core:ecology</code> 运行态保存资源点索引和逐规则/区块的下次检查 tick；<code>snapshot()</code>、<code>resource_point_at(x,y,z)</code> 和统一 <code>ecology/state</code> 数据通道提供只读接口。空内容表不扫描世界并报告稳定配置问题。</p>
+	<p>CoreMod <code>systems.world_locations</code> 保存玩家指定的唯一贸易点；<code>world/locations</code> 通道返回位置、是否已配置和 <code>caravan_arrival_allowed</code>。玩家通过 Host 命令 <code>location.trade_point.set</code> 在当前可站立位置设置，或用 <code>location.trade_point.clear</code> 清除。未设置时明确返回 <code>trade_point_missing</code> 并阻止商队到达接口；系统不在缺少贸易专项规则时生成商队、价格或交易结算。</p>
+	<p><code>engine.visibility.configuration()</code> 返回唯一视野规则的配置状态；<code>state_at(cx,cz)</code> 返回 <code>unexplored/explored/visible</code>，<code>chunks()</code> 返回全部探索记忆与当前可见标记。未探索区块不提交地形渲染；已探索但不可见区块只保留地形记忆，不提交活动实体；当前可见区块显示地形和实体。待登记新人不作为视野源。探索记忆写入 <code>world.json</code> 并沿 <code>save_state:world</code> Host 通道复制。</p>
+    <p>职业等级按节点独立保存在 <code>CareerProgress</code>；切换职业会保存原节点等级并恢复目标节点既有等级。<code>engine.colonists.career_tree(entity).levels</code> 返回全部已有职业等级，<code>equipment_options</code> 返回目标职业当前可选择的具体玩家仓储装备实例。<code>engine.jobs.set_career_level</code> 只接受尚未登记且当前仍为无等级初始职业的候选人，用于一次性写入候选履历，不能修改正式殖民者职业。</p>
+	<p>待登记新人带有 <code>PendingRegistration</code> 状态。<code>engine.colonists.find_recruitment_entry</code> 遍历当前已加载区块，使用 <code>VisibilitySystem</code> 的真实三态视野选择距当前可见区最远且实际可寻路到大厅的位置；它不把强/半加载半径解释为玩家视野。待登记实体不扩展可见区、不领取工作、不推进生存伤害并按中立目标处理。抵达大厅后由招募系统解除该状态。</p>
+    <p><code>systems.potion</code> 只从注册表读取 <code>medicinal_herbs</code> 与 <code>potion_trait_effects</code>，并由效果记录的公共区间边界构建四项独立效果表。系统另提供剂型固定材料、科技/容量许可、设计预览和保存。六种剂型倍率及 0-4 级基础 CD 由设计文档固定；药材和效果内容为空时不会生成默认条目，也不能保存无效果配置的药剂设计。<code>configuration()</code> 及 <code>snapshot().configuration</code> 返回 <code>valid/errors/herb_count/interval_count/registered_trait_effect_count/missing_effect_ids</code>，<code>snapshot().trait_effects</code> 暴露加载结果和来源路径。空表分别报告 <code>potion_herbs_missing</code> 和 <code>potion_trait_intervals_missing</code>；缺少 Lua 生命周期定义时按具体效果 ID 报告 <code>potion_effect_definition_missing</code>。<code>configure_form_material(form, item_id, count, recipe_id)</code> 将剂型关联到固定配方；秘粉的 <code>item_id=nil/count=0</code>，其他剂型固定材料数量必须为 1。关联配方必须使用成败模式。</p>
+	<p>已保存药剂设计通过生产订单进入兼容工作点，激活时统一预留逐味药材和剂型固定材料、送入输入暂存，完成时使用配方的标准成败/产出表并原子提交。目标剂型物品的成品载荷严格只写效果表和最终 CD，不写药材序列、计算过程或设计名称；重复效果 ID 原样保留。失败会消耗材料但不生成受制造模式影响的目标。</p>
+	<p><code>systems.medicine.queue(user, target, instance_id, duration, faction_id)</code> 发布隐藏的药品使用行为。激活时通过 <code>engine.work.reserve_instance</code> 预留指定载荷实例，并预留目标的空药品 CD 槽；完成后消费一个实例、应用载荷效果并用载荷 <code>final_cd</code> 占槽。失败、中断或取消释放实例和槽，其他进食行为不受没有空槽影响。治疗模板同样按具体药剂实例读取最终 CD，不再允许模板另填 CD。NCDOCS 尚未定义用药动作本身的工作时长，因此 <code>duration</code> 缺失或非正数时固定返回 <code>medicine_work_duration_undefined</code>，不会回退到私有的 1 秒默认值；治疗、急救、病号喂食和患者转移使用同样的显式屏障。</p>
+	<p><code>systems.effects</code> 通过 <code>register_definition(effect_id, definition)</code> 注册 <code>instant</code>、<code>modifier_start</code>、<code>modifier_tick</code> 和 <code>modifier_end</code>。每次成功用药建立独立效果组；组记录药品实例、目标、CD 槽、组内剩余时间、JSON 状态和已解析修饰器。回调上下文只提供 <code>set_modifier(stat, "add"|"base_percent", value)</code>、<code>change_health(amount)</code>、<code>get_state(key)</code> 和 <code>set_state(key, value)</code>。属性最终值统一为初始值加固定加值总和，再加初始值乘比例总和。Client 可读取同步的 <code>snapshot()</code>，但不执行生命周期回调。</p>
+	<p><code>systems.block_placement</code> 管理逐格方块放置工作、运行态恢复、物品预留和失败释放。UI 通过通用 2D selection 选择空位并提交 <code>core:block_placement.confirm</code>；<code>engine.block_placement.settle</code> 是受限 Host 结算入口，只接受当前正在派发的匹配 Build 完成事件、相同 payload 方块和单个对应物品预留，并再次校验 <code>placeable</code>、空位、支撑与碰撞。系统也会持久化带 <code>growth_target</code>/<code>growth_ticks</code> 的已放置方块，到期后通过权威世界方块写入链路完成变换。</p>
+	<p><code>systems.building_design</code> 是建筑设计工作区与建造工作之间的桥。工作区草稿以绝对世界坐标记录，因此提交时不需要额外的锚点步骤；<code>core:building_design.build</code>（工作区"开始建筑"按钮）把草稿单元交给 <code>systems.block_placement</code>，由后者统一负责工作发布、物品预留和结算。只有支撑已经存在于世界中的单元会被提交，其余保留在队列里并按 20 tick 的节拍重试，因此多层设计自下而上逐层成型，而不是在提交时就把上层单元全部判为缺少支撑。每轮最多校验并提交 512 个单元（放置校验会按殖民者逐个复查单元），窗口在整轮无进展时轮转，避免一段无法建造的单元永久遮蔽后面的单元。已经排入工作池、或世界方块已经等于设计方块的单元视为已完成，会同时离开队列和草稿；被其它方块占用、超出世界范围、或缺少可放置定义的单元保留在草稿中并作为原因上报，不会静默丢弃。提交被接受后工作区会自动关闭（等同按下退出设计），把玩家交回运行中的世界；被拒绝的提交（草稿为空或无效）保持工作区打开以便修正，已经接管的单元离开草稿，因此下次进入工作区只会看到仍在等待建造的部分。</p>
+	<p><code>engine.building_design.draft()</code> 返回 <code>active/valid/errors/cells</code>（单元含 <code>block_id/block_hash/x/y/z/direction</code>，自下而上排序），<code>engine.building_design.remove_cells(cells)</code> 删除对应单元并刷新工作区。</p>
+	<p>远端客户端走同一条命令：工作区草稿是本地引擎状态，因此客户端在 <code>payload.cells</code> 中附带自己的草稿单元，Host 用同一套提交流程建造；<code>systems.building_design.submit(remote_cells)</code> 在 <code>remote_cells</code> 非 nil 时按该列表提交且不修改 Host 本地草稿，返回结果的 <code>cells</code> 字段列出 Host 已接管的单元，客户端据此清理自己的虚影。Host 回包由 C++ 在独立锁下交接、并在主线程应用，因为设计工作区归主线程所有；客户端正是靠这份回包关闭自己的工作区。</p>
+	<p>蓝图文件库不在 Lua 侧：<code>core:building_design.new/name/new_folder/folder/folder_up/save/save_as/rename/delete_entry/open_file</code> 由引擎在主线程直接处理，工作区面板自己就是文件浏览器（文件夹行进入子目录、蓝图行打开并等待落点、每行自带删除按钮），**不调用系统文件对话框**；这些命令不经过命令桥的 <code>building_design.*</code> 转发，也不返回"未实现"占位原因。<code>core:building_design.build</code> 仍然走原有转发路径。蓝图文件存放在可执行文件旁的 <code>blueprints/</code>，保存时坐标以最小角为原点相对化，打开后需要点击地面选择落点，蓝图才会写入草稿。</p>
 
     <h2>世界操作</h2>
     <p>对体素世界进行方块级别的操作。CoreMod 的挖矿、搬运、建造系统使用这些 API。</p>
@@ -176,7 +205,7 @@ end</code></pre>
 
     <h2>工具函数</h2>
     <pre><code>-- 计算 data ID 的哈希值（用于物品/方块 ID 与 inventory/equipment 交互）
-local hash = engine.util.data_id_hash("core:wooden_sword")</code></pre>
+local hash = engine.util.data_id_hash("example:item")</code></pre>
 
     <h2>定时器</h2>
     <p>定时器按模拟 tick 执行，不是按真实时间。</p>
@@ -193,11 +222,13 @@ timer_id = engine.timers.every(100, function(tick)
 end)</code></pre>
 
     <h2>天气</h2>
-    <p>天气由世界 seed、世界地图气候和模拟 tick 确定性推进。MOD 可以读取当前天气，用于作物、事件、音效或 UI 展示。</p>
+    <p>天气由版本化动态天气区域状态提供。MOD 可以读取当前天气和指定区块的局部天气、最终温度、战斗环境及表现接口，用于作物、事件、音效或 UI 展示；未在文档中定义的区域移动/切换公式不会由 API 猜测。</p>
     <pre><code>local weather = engine.weather.get()
 if weather.precipitating then
   engine.log.info("weather: " .. weather.type .. " intensity=" .. tostring(weather.intensity))
-end</code></pre>
+end
+local local_weather = engine.weather.at_chunk(chunk_x, chunk_z)</code></pre>
+    <p>专项规则需要直接切换已存在区域时，可调用 <code>engine.weather.set_region(region_id, weather_id, intensity_level)</code>；天气定义、强度档位和区域必须已经由 MOD 数据注册，API 不生成默认天气规则。</p>
 
     <h2>确定性随机</h2>
     <p><code>math.random</code> 在脚本环境中会报错——这是有意为之，确保跨平台和跨存档确定性。需要脚本随机数时使用 <code>engine.random</code>，它会在引擎初始化、新世界和读档时用世界 seed 重置。</p>
@@ -230,68 +261,28 @@ engine.events.subscribe("focus:chosen", function(evt)
 end)</code></pre>
 
     <h2>地形扩展</h2>
-    <p>地形 API 通常在 <code>on_world_init</code> 使用。core 脚本里已经演示了注册 biome 和 ore 的方式；地物也可以通过 <code>data/features</code> 或 <code>engine.terrain.register_feature()</code> 注册。</p>
+    <p>地形 API 提供世界初始化后的只读查询。群系和地物只能通过 <code>data/biomes</code> 与 <code>data/features</code> 注册；世界生成由 C++ <code>TerrainGenerator</code> 加载 JSON 数据，不存在 Lua worldgen 注册旁路。旧普通矿脉注册入口已移除，矿物由 <code>mine_rules</code> 的区块矿井契约提供。</p>
     <pre><code>function M.on_world_init()
-  engine.terrain.register_ore({
-    block = "my_mod:copper_ore_chunk",
-    replace_block = "core:stone",
-    noise_scale = 0.08,
-    threshold = 0.55,
-    min_y = 10,
-    max_y = 60
-  })
-
   local h = engine.terrain.height_at(0, 0)
   engine.log.info("height at origin: " .. tostring(h))
 end</code></pre>
 
     <h2>NPC 阵营</h2>
-    <p>阵营定义和名称池优先写在 <code>data/factions</code>、<code>data/name_pools</code>，自动生成规则写在 <code>data/faction_spawn_rules</code>（开新世界时引擎会按规则批量 spawn）。Lua 适合在事件发生时生成实例、修改关系或生成调试名称。</p>
-    <pre><code>local faction = engine.factions.spawn("core:merchant_guild", 1234)
-if faction.id ~= "" then
-  engine.log.info("spawned faction: " .. faction.display_name)
-  engine.factions.modify_relation(faction.id, 5)
-end
+    <p><code>data/factions</code>、<code>data/faction_spawn_rules</code> 和 <code>data/diplomacy_proposals</code> 只保留注册 schema。NCDOCS 尚未定义其他殖民地的生成、关系变化、提案结算或谈判推进规则，因此 CoreMod 的这些内容目录为空，新世界不会随机生成 NPC 阵营。</p>
+    <pre><code>local defs = engine.factions.list_defs()
+local instances = engine.factions.list_instances()
+local relations = engine.factions.pair_relations()
+local proposals = engine.factions.proposal_defs() -- CoreMod 当前为空
 
--- 手动重放开局批量生成（可选 seed；不传则用世界种子）
-local batch = engine.factions.spawn_initial()
-for _, f in ipairs(batch) do
-  engine.log.info("initial faction: " .. f.display_name)
-end
-
--- 查看当前已注册的自动生成规则
-local rules = engine.factions.list_spawn_rules()
-for _, r in ipairs(rules) do
-  engine.log.info(string.format("rule %s: %d..%d", r.faction_def_id, r.min_count, r.max_count))
-end
-
--- 订阅阵营生成事件（自动 spawn、控制台 spawn、Lua spawn 都会触发）
-engine.events.subscribe("faction:spawned", function(evt)
-  engine.log.info(string.format("faction spawned: %s (%s) reason=%s relation=%d",
-    evt.display_name, evt.def_id, evt.reason, evt.relation))
-end)
-
-local name = engine.factions.generate_name("${random_name} Guild", {"core:generic"}, 42)
-engine.log.info("sample name: " .. name)
-
--- 玩家城邦对目标城邦发起谈判。先评估可显示谈判积分，再执行。
-local preview = engine.factions.evaluate_proposal(faction.id, "trade_permission", 0)
-if preview.valid and not preview.accepted then
-  local counter_score = math.max(0, -preview.score)
-  local result = engine.factions.execute_proposal(faction.id, "trade_permission", counter_score)
-  engine.log.info(string.format("accepted=%s score=%d status=%s",
-    tostring(result.accepted), result.score, result.status))
-end
-
--- 其它基础提案；开战只要求当前不在战争，议和只要求当前处于战争。
-engine.factions.execute_proposal(faction.id, "declare_war", 0)
-engine.factions.execute_proposal(faction.id, "make_peace", 0)
-local status = engine.factions.diplomatic_status(faction.id)
-local can_trade = engine.factions.has_treaty(faction.id, "trade_permission")</code></pre>
-    <p>完整谈判 API：<code>engine.factions.list_negotiations()</code> 返回待处理和历史谈判；<code>begin_negotiation(target, proposal, offered_score)</code> 创建玩家提议；收到 AI 提议后可调用 <code>accept_negotiation(id)</code>、<code>counter_negotiation(id, offered_score)</code> 或 <code>reject_negotiation(id)</code>。谈判状态会随城邦存档保存。</p>
+for _, faction in ipairs(instances) do
+  local status = engine.factions.diplomatic_status(faction.id)
+  engine.log.info(faction.display_name .. ": " .. status)
+end</code></pre>
+    <p>Lua 当前只公开定义、实例、双边关系、提案 schema、谈判记录和外交状态的读取接口，以及名称模板工具。没有 <code>spawn</code>、<code>spawn_initial</code>、关系修改、提案执行或谈判写入 API；玩家可见界面固定显示“接口未定”。其他殖民地实例只能由未来有文档依据的专项规则显式加入。</p>
 
     <h2>网络命令</h2>
     <p>网络 API 用于联机和命令同步。内容型 MOD 不建议把核心玩法依赖放在网络回调里。详情见<a href="mod-network-sync.html">网络同步</a>。</p>
+	<p><code>engine.network.send_ui(target, payload)</code> 是经营数据桥的低级 Host 提交入口，返回 pending 状态；<code>engine.network.is_handling_command()</code> 只用于数据桥识别 Host 正在执行已接收命令并防止递归提交。普通 MOD 应调用 <code>engine.ui.command.run</code>，由 CoreMod 自动区分本地表示操作与 Host 权威玩法操作。</p>
     <pre><code>if engine.network.is_connected() then
   engine.log.info("network mode: " .. engine.network.mode())
 end</code></pre>

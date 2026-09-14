@@ -11,103 +11,48 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>项目完成度审计</div></div>
   <div class="content">
     <h1>项目完成度审计</h1>
-    <p class="subtitle">本页记录对当前工作树的审计结果，用来判断 NewColony 距离可长期开发、可对外发布和可扩展 MOD 平台还差什么。结论基于源码、CMake、CoreMod 数据、测试目录、Wiki 文档核对和 Debug 构建验证；本次未运行游戏或测试。</p>
+    <p class="subtitle">本页记录当前源码树相对 NCDOCS 的对齐状态，不把旧示例内容、历史构建结果或尚未运行的测试当作完成证据。</p>
 
-    <h2>总体结论</h2>
+    <h2>当前结论</h2>
     <table>
-      <thead><tr><th>领域</th><th>完成度</th><th>判断</th></tr></thead>
+      <thead><tr><th>范围</th><th>状态</th><th>当前事实</th></tr></thead>
       <tbody>
-        <tr><td>引擎主干</td><td><span class="badge done">高</span></td><td>C++20 静态库、可执行入口、Vulkan/GLFW/RmlUI/Lua/simdjson 等依赖、线程与运行时路径已形成完整主流程。</td></tr>
-        <tr><td>内容与 MOD 数据</td><td><span class="badge done">高</span></td><td>ModLoader 自动扫描 17 类 JSON 数据；CoreMod 已提供约 340 个 JSON 数据文件，覆盖方块、配方、群系、建筑、区域、职业、文明、阵营等核心内容。</td></tr>
-        <tr><td>模拟玩法闭环</td><td><span class="badge partial">中高</span></td><td>职业、配方、文明、焦点、阵营、建筑、区域、天气、心情、AI 调度和体素世界都有实现；殖民者长期行为、社交、紧急行为和多阶段施工仍是 Alpha 级。</td></tr>
-        <tr><td>渲染与世界表现</td><td><span class="badge partial">中</span></td><td>Vulkan 管线、Chunk 网格、纹理图集、实体可视网格、SSAO、天空与地形生成存在；地形生成 pipeline 已有专门审计和 wiki 页面，复杂模型兼容、性能边界和美术资产完整度仍需实测。</td></tr>
-        <tr><td>工程质量</td><td><span class="badge partial">中</span></td><td>Debug 构建通过，CMake 源文件覆盖完整，单元测试有 8 个文件；测试集中在 ECS、网络协议、寻路、纹理图集、阵营、天气和区域，缺少渲染、存档、ModLoader 大规模集成和端到端玩法验证。</td></tr>
-        <tr><td>发布准备</td><td><span class="badge done">完成</span></td><td>Windows 发布脚本会自动初始化 MSVC/Ninja 环境；CMake 安装规则包含可执行文件、运行库、glslang、引擎资源和 CoreMod，并通过 201 项回归测试与包内容校验。</td></tr>
+        <tr><td>经营与工作事务</td><td><span class="badge done">已实现</span></td><td>统一物品实例、仓储、预留、工作来源、个人队列、生产、研究、治疗、招募和经营日志使用 Host 权威事务；旧直接制作、直接研究、直接给物和即时招募入口不可结算。</td></tr>
+        <tr><td>职业与殖民者</td><td><span class="badge done">结构完成</span></td><td>66 个职业节点对齐职业表；经历、药材和性状内容允许为空。基础生命、需求、心情和属性没有文档数值时，殖民者生成返回配置屏障。</td></tr>
+        <tr><td>世界与内容</td><td><span class="badge partial">配置待补</span></td><td>可变高度区块列、六类群落接口、区域、建筑功能点、生态、天气、视野和矿井契约已建立；未给出具体形状、数值或内容的 CoreMod 表保持为空或阻止入口。</td></tr>
+        <tr><td>贸易外交与战斗</td><td><span class="badge partial">接口未定</span></td><td>只保留文档要求的地点、归属、关系和状态摘要。无人口/资源/发展/关系边界、外交周期、战斗命中/伤害/阵型/压制或区域法力公式；玩法命令无副作用拒绝。</td></tr>
+        <tr><td>保存与网络</td><td><span class="badge partial">静态完成</span></td><td>领域状态使用当前 schema 并拒绝缺失或未知版本；项目未发布，不维护旧开发存档兼容。当前网络握手协议重置为 v1。Windows MinGW Debug 完整构建与增量链接已经成功；未执行测试、程序运行、活体存档或网络往返，因此不能宣称运行验证通过。</td></tr>
       </tbody>
     </table>
 
-    <h2>审计证据</h2>
+    <h2>CoreMod 当前数据规模</h2>
+    <table>
+      <thead><tr><th>类型</th><th>条目</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>jobs</code></td><td>66</td><td>NCDOCS 职业节点表；新世界的初始殖民者实例以通用殖民者职业等级 1 开始。</td></tr>
+        <tr><td><code>blocks</code></td><td>10</td><td>世界文档可解释的地形、水、树木/木材和墓碑；无私有掉落、硬度或水流数值。</td></tr>
+        <tr><td><code>biomes</code></td><td>6</td><td>森林、平原、山地、水域、雪地、荒漠。具体生成参数未定义，当前以配置屏障阻止新建世界。</td></tr>
+        <tr><td><code>entities</code></td><td>1</td><td>通用殖民者原型；不填写无文档来源的基础数值或背景经历。</td></tr>
+        <tr><td><code>items</code></td><td>1</td><td>独立物品树苗；测试殖民地初始物资为 50 个木板和 5 棵树苗。</td></tr>
+        <tr><td><code>zones</code></td><td>2</td><td>种植区和露天仓储区；采集、采掘与狩猎是一次性指令。</td></tr>
+        <tr><td><code>terrain</code></td><td>1</td><td>只引用基础石材和水体；涉水默认深度为 0。</td></tr>
+        <tr><td><code>name_pools</code></td><td>2 个语言文件</td><td>显示名称素材；不触发 NPC 阵营生成或外交玩法。</td></tr>
+        <tr><td><code>audio</code></td><td>7</td><td>表现层注册条目，不定义玩法规则。</td></tr>
+        <tr><td><code>buildings / crops / recipes / features</code></td><td>0</td><td>具体形状、材料、工期、种植循环、配方和地物形状未定义。</td></tr>
+        <tr><td><code>civilizations / techs / focuses / factions / faction_spawn_rules / diplomacy_proposals / combat / ores / tags</code></td><td>0</td><td>无专项文档或旧内容已删除；矿物通过可空矿井规则存在，不作为普通矿石体素。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>静态验收边界</h2>
     <ul>
-      <li><code>Engine/CMakeLists.txt</code> 将引擎主体编译为 <code>NewColonyEngine</code> 静态库；源码覆盖检查显示 <code>Engine/Main.cpp</code> 是唯一不在静态库内的 <code>.cpp</code>，它由根 <code>CMakeLists.txt</code> 作为 <code>NewColony</code> 可执行入口编译。</li>
-      <li><code>cmake --build build -- -j1</code> 在 2026-06-14 通过，输出 <code>bin/NewColony.exe</code> 和 <code>bin/NewColonyTests.exe</code>。构建仍有两个警告：<code>BuildingSystem.cpp</code> 未用参数，以及 <code>LuaBindings.cpp</code> 忽略 simdjson 返回值。</li>
-      <li><code>TERRAIN_PIPELINE_AUDIT.md</code> 和 <a href="engine-terraingeneration.html">地形生成流程</a> 已记录地形生成 pipeline 审查：删除未调用的 <code>find_nearest_tile_for_chunk</code>，并在 <code>ChunkManager</code> 中用 <code>thread_local</code> 缓存减少世界地图气候采样重复计算。</li>
-      <li><a href="mod-lua-api-reference.html">Lua API 速查</a> 已按 <code>ScriptEngine.cpp</code>、<code>LuaBindings.cpp</code> 和 <code>Engine.cpp</code> 复核，补齐 settings、time、buildings、zone、world block data、HeldItem/Stats 和 NPC 阵营双边关系接口，并移除未绑定的装备槽注册条目。</li>
-      <li><a href="mod-network-sync.html">网络同步与 Mod 数据</a> 已按 <code>NetworkProtocol.hpp</code> 复核命令名，确认当前命令类型为 MoveEntity、BuildBlock、MineBlock、AssignJob、GiveBlock、PostWork；旧的 GiveItem 文案已更正。ChunkDelta 现在按 <code>ChunkSnapshot</code> 与原始地形对比，跳过一致 sub-chunk，并用连续相同 <code>BlockState{id,data}</code> run 压缩长段修改。</li>
-      <li><a href="engine-save-system.html">存档系统状态</a> 已按 <code>SaveSystem.cpp</code> 和 <code>RegionFile.cpp</code> 更新：当前保存 world、entities、regions、mods、factions、jobs、focuses、manifest，其中 <code>regions/*.ncr</code> 用 region offset table 写出已加载 chunk 的 uniform/palette/dense sub-chunk payload，并把 light overlay 单独写入 chunk payload；payload 可用内置 RLE 压缩，读档和后续 chunk streaming 会从当前 slot 的 region payload 恢复 snapshot，targeted read 会缓存 region header/table 并只读取目标 payload，新 v2 region 会写入 block id dictionary 并在加载时按当前 MOD registry remap，运行时 far chunk unload 已对 terrain/light dirty chunk 做异步 region 写回。</li>
-      <li><a href="mod-assets-texture.html">纹理格式</a>、<a href="mod-assets-model.html">模型格式</a> 和 <a href="mod-assets-shader.html">着色器格式</a> 已按 <code>TextureAtlas.cpp</code>、<code>BlockTextureRegistry.cpp</code>、<code>ModPreprocessor.cpp</code> 和 <code>VulkanPipeline.cpp</code> 复核：PNG 必须按 16×16 tile 切分，模型是 Blockbench/Minecraft 风格 JSON 子集，shader 会预编译但当前只由固定内置管线加载。</li>
-      <li><a href="mod-assets-audio.html">音乐和音效格式</a> 已按 <code>AudioSystem.cpp</code>、<code>SoundBank.cpp</code> 和 <code>Engine.cpp</code> 复核：<code>data/audio/*.json</code> 已通过 MOD 注册表加载到 SoundBank，Lua <code>engine.audio</code> 提供播放、停止、音量和 listener 位置接口。</li>
-      <li><a href="mod-localization.html">本地化与翻译</a> 已按 <code>LocalizationManager.cpp</code>、<code>LuaBindings.cpp</code>、<code>ScriptEngine.cpp</code> 和 <code>Engine.cpp</code> 复核：本体 <code>assets/lang/</code> 与 CoreMod/MOD <code>lang/</code> 均可合并，Lua 同时暴露查询、切换、列表、热重载和文件加载接口；MOD 翻译合并发生在入口脚本加载之后，且相同 category/key 会按加载顺序覆盖。</li>
-      <li><a href="mod-ui-api.html">UI 框架</a>、<a href="mod-ui-theme.html">UI CSS 主题</a> 和 <a href="mod-assets-ui.html">UI 图片资源</a> 已按 <code>LuaUi.cpp</code>、<code>UiTheme.cpp</code>、<code>CssParser.cpp</code>、<code>MainMenu.cpp</code> 和 <code>ModLoader.cpp</code> 复核：玩家可见 UI 统一走 RmlUI；Lua UI 兼容 API 仅保留注册入口；主题系统只记录旧配置选择，不再应用到渲染层；主菜单背景由 <code>mod.json</code> 的 <code>ui</code> 字段声明，当前选择策略只支持 <code>first</code>。</li>
-      <li><a href="mod-console.html">MOD 调试控制台</a> 和 <a href="mod-configfiles.html">配置文件</a> 已按 <code>DevConsole.cpp</code>、<code>EngineConsoleCommands.cpp</code>、<code>EnginePaths.cpp</code>、<code>InputManager.cpp</code> 和 <code>KeyBindings.cpp</code> 复核：控制台支持 help/搜索/补全/权限/别名，配置路径固定在 <code>mods/core/config/</code>，别名目标只能是命令名，键位绑定读取 CoreMod 配置并在缺失时回退到 C++ 默认。</li>
-      <li><a href="mod-manifest.html">mod.json</a> 和 <a href="mod-guide.html">MOD 是怎样加载的</a> 已按 <code>ModLoader.cpp</code> 和 <code>ModLoader.hpp</code> 复核：当前只要求清单 <code>id</code>，但入口脚本默认 <code>scripts/bootstrap.lua</code> 且必须存在；<code>enabled</code> 是加载器保留布尔设置，非 core MOD 默认禁用。</li>
-      <li><a href="mod-entityregistry.html">实体注册</a> 和 <a href="mod-lua-data-components.html">数据组件 API</a> 已按 <code>EntityPrototypeFactory.cpp</code>、<code>StandardComponents.hpp</code> 和 <code>ScriptEngine.cpp</code> 复核：实体原型 JSON 当前解析 Position、Speed、Health、Needs、Mood、Name、ColonistTag、AIState、Job、HeldItem、Equipment、Stats、Visual、Animation 和 HeadVisual；Rotation/Scale 是 Lua 可添加组件但不从原型 JSON 读取。</li>
-      <li><a href="mod-reciperegistry.html">配方注册</a>、<a href="mod-jobregistry.html">职业注册</a>、<a href="mod-civilizationregistry.html">文明注册</a> 和 <a href="mod-focusregistry.html">焦点注册</a> 已按对应 Simulation 系统复核：直接 RecipeSystem 制作只支持单 HeldItem 槽，职业前置是“任一当前职业匹配”，文明的 starting_buildings/leader/traits/bonuses 尚未进入 CivilizationDef，Lua 焦点条件回调使用上下文表。</li>
-      <li><a href="mod-data.html">数据类型总览</a> 和 <a href="mod-lua-api.html">Lua API 指南</a> 已按 <code>WorkDefs.hpp</code>、<code>WorkPool.cpp</code>、<code>AISystem.cpp</code>、<code>LuaBindings.cpp</code>、<code>Engine.cpp</code> 以及 CoreMod 的 crafting/construction/hauling/farming/mining 脚本复核：Lua 通过 <code>engine.work</code> 发布 build/mine/chop/haul/craft/research 等工作；工作完成事件包含 worker/tag/category/target/action/payload/tick；Craft 完成时仍由配方 payload 驱动产出。</li>
-      <li><a href="mod-blockregistry.html">方块注册</a>、<a href="mod-featureregistry.html">地物注册</a> 和 <a href="mod-cropregistry.html">作物注册</a> 已按 <code>ModLoader.cpp</code>、<code>ModRegistry.cpp</code>、<code>LuaBindings.cpp</code>、<code>TerrainGenerator.cpp</code>、<code>Engine.cpp</code> 以及 CoreMod farming/mining 脚本复核：方块 drops 支持字符串和对象，block_class/material 会影响遮挡与通行；作物阶段 ticks 当前被 CoreMod 加总为成熟时间，不会逐阶段替换方块；feature JSON 与 Lua 注册均会进入 TerrainGenerator。</li>
-      <li>引擎源码按子系统分布约 191 个 C++ 源/头文件：Renderer 35、Core 28、Simulation 26、AI 16、UI 16、Voxel 14、Modding 10、ECS 9，以及 Audio、Input、Network、Save、WorldMap 等模块。</li>
-      <li><code>CoreMod/data</code> 当前有 19 个数据目录，<code>data/audio</code> 已作为 <code>audio</code> 类型进入通用 ModLoader 注册表，并由音频系统加载为 sound bank。</li>
-      <li>测试目录包含 19 个 GoogleTest 单元测试文件；原集中在 <code>test_ecs.cpp</code> 的覆盖已按主题拆到 <code>test_ai_system.cpp</code>、<code>test_core_utilities.cpp</code>、<code>test_ecs.cpp</code>、<code>test_ecs_system_manager.cpp</code>、<code>test_modding.cpp</code>、<code>test_save_system.cpp</code>、<code>test_scripting.cpp</code>、<code>test_simulation_systems.cpp</code>、<code>test_tick_manager.cpp</code> 和 <code>test_voxel_terrain.cpp</code> 等文件；各拆分文件已按实际使用裁剪 include，三处重复的临时目录 helper 收口到共享头 <code>TestHelpers.hpp</code>。</li>
-      <li>本项目源码没有发现大量显式 <code>TODO</code>、<code>FIXME</code> 或 <code>not implemented</code> 标记；搜索命中主要来自第三方 <code>miniaudio.h</code> 和占位符字符串处理。</li>
+      <li>权威规则索引：<code>NCDOCS/实现对齐规则核对表.md</code>。</li>
+      <li>实施状态：<code>NCDOCS/实现对齐实施计划.md</code>。</li>
+      <li>内容 JSON 必须可解析，源码差异必须通过 <code>git diff --check</code>。</li>
+      <li>Codebase Memory 自动监听没有失效证据时不手动重绘；服务不可连接只记录为覆盖限制。</li>
+      <li>构建、CTest、测试二进制、存档往返和网络往返留给用户显式执行；在执行前均属于未验证，而不是失败或通过。</li>
     </ul>
-
-    <h2>模块状态</h2>
-    <table>
-      <thead><tr><th>模块</th><th>状态</th><th>已具备</th><th>主要缺口</th></tr></thead>
-      <tbody>
-        <tr><td>Core / ECS</td><td><span class="badge done">可用</span></td><td>类型、数学、内存、日志、性能采样、线程、实体世界、Archetype、组件查询。</td><td>需要更多负载测试和长时间运行诊断。</td></tr>
-        <tr><td>Modding / Scripting</td><td><span class="badge done">可用</span></td><td>清单、依赖排序、科技和音频在内的多类数据注册、交叉引用校验、Lua 生命周期、事件、定时器、多组 engine API。</td><td>公共 API 边界仍需固化。</td></tr>
-        <tr><td>Simulation</td><td><span class="badge partial">部分完成</span></td><td>Tick、确定性 RNG、配方、职业、文明、焦点、阵营、建筑、区域、心情、天气、CoreMod 系统。</td><td>直接制作路径仍受单 HeldItem 槽限制，Craft 工作与 CoreMod stockpile 队列存在双路径产出风险，文明部分字段只校验不消费；殖民者生活循环、经济平衡、失败恢复和多阶段玩法还需要端到端验证。</td></tr>
-        <tr><td>AI</td><td><span class="badge partial">部分完成</span></td><td>WorkPool、WorkRegistry、方块 Action、物品 Action、Pathfinder、NavMesh、BehaviorTree、默认行为。</td><td>Lua 工作发布 API 只暴露 build/mine/haul/craft/research，内部 Social/Patrol/Emergency 尚未作为脚本扩展点公开；巡逻、社交、应急、战斗和复杂任务规划仍需完善。</td></tr>
-        <tr><td>Voxel / WorldMap</td><td><span class="badge partial">部分完成</span></td><td>Chunk 数据、地形、群系、矿物、地物、流体、光照、方块更新、星球坐标和世界地图。</td><td>世界生成规则仍在收敛，需要当前存档格式、性能和边界地形测试。</td></tr>
-        <tr><td>Renderer</td><td><span class="badge partial">实验</span></td><td>Vulkan 设备/交换链/管线、ChunkMesh、ChunkMesher、纹理图集、方块模型子集、实体视觉、SSAO、shader/model 预处理。</td><td>跨 GPU 稳定性、资源热重载、通用 MOD 方块模型接入、复杂模型兼容和视觉验收仍不足。</td></tr>
-        <tr><td>UI / Input</td><td><span class="badge partial">部分完成</span></td><td>RmlUI 主菜单、HUD、暂停/设置、开发控制台、建造/研究/制造/殖民者面板、小地图/区域入口、help/补全/权限/别名、设置保存、主菜单背景资源、选择与按键绑定。</td><td>通用控件 DSL、可访问性、键鼠冲突、第三方 MOD 配置合并和完整游戏内面板仍需整理；Lua UI 兼容层不再提供可见渲染。</td></tr>
-        <tr><td>Network / Save</td><td><span class="badge partial">部分完成</span></td><td>TCP Host/Client、快照、客户端命令、预测/补偿、MOD 数据交换、存档列表、原子写入、实体/天气/阵营/Job/焦点/chunk 方块状态恢复、ChunkDelta run 压缩、region offset table、RLE payload、targeted region header/table cache、region v2 block id dictionary/remap、far chunk 异步 dirty writeback 和 light-only dirty region 持久化。</td><td>多人长期同步、断线恢复边界、建筑/区域实例存档、palette-aware delta 与 region 编码复用、已删除/重命名 block 的迁移规则和 MOD 自定义数据存档策略仍需加强。</td></tr>
-        <tr><td>Audio / Localization</td><td><span class="badge partial">部分完成</span></td><td>miniaudio 后端、SoundBank、<code>data/audio</code> 注册表、音量配置、Lua audio API、本体与 MOD 语言文件、参数化翻译、Lua locale API 和 locale 控制台命令。</td><td>音频内容量和播放策略仍未达到完整发布级；本地化 key 冲突策略和入口脚本前翻译可见性需要 MOD 作者注意。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>CoreMod 数据规模</h2>
-    <table>
-      <thead><tr><th>类型</th><th>数量</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>blocks</code></td><td>151</td><td>方块、物品、工具、食物、作物阶段和建筑物品。</td></tr>
-        <tr><td><code>recipes</code></td><td>94</td><td>合成、烹饪、冶炼、农田和装备配方。</td></tr>
-        <tr><td><code>biomes</code></td><td>17</td><td>海洋、浅海、海滩、河流、冻原、雪原、冰川、针叶林、雪林、干草原、平原、森林、沙漠、稀树草原、丛林、沼泽、高山。</td></tr>
-        <tr><td><code>buildings</code></td><td>12</td><td>工作台、熔炉、床、储物和职业建筑。</td></tr>
-        <tr><td><code>jobs</code></td><td>10</td><td>工人、农民、厨师、矿工、木工、铁匠等职业链。</td></tr>
-        <tr><td><code>entities</code></td><td>10</td><td>殖民者和职业实体原型。</td></tr>
-        <tr><td><code>crops</code></td><td>8</td><td>小麦、玉米、土豆、南瓜、稻米、甘蔗、棉花、草药。</td></tr>
-        <tr><td><code>features</code></td><td>7</td><td>森林、沼泽、热带、寒带、山地等地物树种。</td></tr>
-        <tr><td><code>actions</code></td><td>6</td><td>进食、饮水、砍树、收获、挖矿、放置方块。</td></tr>
-        <tr><td><code>ores</code></td><td>6</td><td>铜、金、银、钻石、黏土、石块等矿物或采掘产物。</td></tr>
-        <tr><td><code>zones</code></td><td>5</td><td>库存、居住、种植、砍伐、采矿区域。</td></tr>
-        <tr><td><code>factions</code></td><td>5</td><td>商人公会、海盗、雇佣兵、蛮族、学者等 NPC 阵营。</td></tr>
-        <tr><td><code>focuses</code></td><td>3</td><td>早期殖民者和阵营事件。</td></tr>
-        <tr><td><code>civilizations</code></td><td>2</td><td>农业和洞穴文明开局。</td></tr>
-        <tr><td><code>name_pools</code></td><td>1（含 2 个语言词条文件）</td><td>通用名称池，按语言拆为 en-us 与 zh-cn 词条。</td></tr>
-        <tr><td><code>tags</code></td><td>1</td><td>矿物词典聚合表。</td></tr>
-        <tr><td><code>terrain</code></td><td>1</td><td>默认地形、洞穴、河流、矿物、地物参数。</td></tr>
-        <tr><td><code>audio</code></td><td>1</td><td>音频 sound bank；作为 <code>audio</code> 类型进入通用注册表，并由音频系统加载。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>必须补齐的发布门槛</h2>
-    <ol>
-      <li>建立固定验证命令：Debug 构建、单元测试、至少一个无头或脚本化启动检查、CoreMod 数据完整性检查。</li>
-      <li>补充 ModLoader、当前存档格式、世界生成、建筑/库存/AI 闭环和网络同步的集成测试。</li>
-      <li>在当前 region chunk 存档、targeted header/table cache、region v2 block id dictionary、far chunk 异步 writeback 和 light-only dirty 写回上补齐 BuildingSystem 实例、ZoneSystem 实例、已删除/重命名 block 的迁移规则和 MOD 自定义运行时状态，否则读档无法证明完整恢复玩家修改过的世界。</li>
-      <li>补充 Craft 工作回归：验证 <code>systems.crafting.queue</code> 的 stockpile 预留路径不会和 C++ <code>RecipeSystem::craft</code> 直接路径重复发放产物。</li>
-      <li>把“实验”“部分可用”“稳定可依赖”的 API 边界继续同步到 <a href="mod-status.html">当前能力状态</a> 和各注册表页面。</li>
-      <li>整理发布流水线：生成可分发目录、复制运行时依赖、验证 shader 工具、校验 wiki、输出构建信息和变更清单。</li>
-    </ol>
-
-    <div class="callout warn">
-      本页不是“已发布完成”的证明。它说明当前代码已经具备可玩的引擎和 MOD 平台骨架，但发布级质量仍取决于运行验证、回归测试、性能测试、当前存档格式和内容平衡。
-    </div>
-
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
-<script src="wiki.js"></script>
+<script src="nav.js"></script>
 </body>
 </html>

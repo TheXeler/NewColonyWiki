@@ -14,18 +14,23 @@
     <p class="subtitle">本页按 <code>Engine/Save/SaveSystem.cpp</code> 的当前实现整理，用来判断哪些状态会被保存、哪些只是占位或仍需补齐。</p>
 
     <h2>入口和文件布局</h2>
-    <p>控制台命令 <code>save [name]</code>、<code>load [name]</code> 和 <code>save_list</code> 通过 <code>Engine::save_world</code>、<code>Engine::load_world</code> 调用 <code>SaveSystem</code>。保存槽 ID 只能包含字母、数字、下划线和短横线。窗口关闭或退出游戏时，如果世界仍处于活动状态，引擎会先暂停模拟、取消未开始的后台 chunk 工作，并同步保存当前槽后再释放资源。</p>
+    <p>控制台命令 <code>save [name]</code>、<code>load [name]</code> 和 <code>save_list</code> 通过 <code>Engine::save_world</code>、<code>Engine::load_world</code> 调用 <code>SaveSystem</code>。保存槽 ID 只能包含字母、数字、下划线和短横线。RmlUI 的读档按钮会先显示世界加载遮罩，再执行同步存档恢复；只有逻辑服务器、存档状态、MOD 世界回调、初始殖民地、相机可见区块、实体渲染快照和 RmlUI 世界数据全部就绪后，<code>ui_phase</code> 才会切换到 <code>playing</code>。加载中途失败会丢弃半初始化世界并关闭其会话，不会把它保存为正常存档。直接调用 <code>Engine::load_world</code> 的控制台/程序接口仍保持同步语义。窗口关闭或退出游戏时，如果世界仍处于活动状态，引擎会先暂停模拟、取消未开始的后台 chunk 工作，并同步保存当前槽后再释放资源。</p>
     <table>
       <thead><tr><th>文件</th><th>当前内容</th><th>加载行为</th></tr></thead>
       <tbody>
         <tr><td><code>manifest.json</code></td><td>engine_version、slot_id、world_name、world_seed、tick、mod_list_checksum、last_written。</td><td>必须存在；版本不等于当前 <code>0.1.0</code> 时拒绝加载。</td></tr>
-        <tr><td><code>world.json</code></td><td>world_seed、tick、terrain_sea_level、WorldMap 配置和 tile 列表、天气状态。</td><td>恢复世界 seed、tick、世界地图配置、海平面和天气。</td></tr>
+        <tr><td><code>world.json</code></td><td>world_seed、tick、terrain_sea_level、WorldMap 配置和 tile 列表、动态天气区域状态、文明研究实例、建筑实例/工作点运行态与殖民者纪念记录。</td><td>恢复世界 seed、tick、世界地图配置、海平面、天气区域覆盖与状态、文明研究、建筑状态/施工进度/治疗容量占用/工作点连接与占用，以及死亡殖民者记录。</td></tr>
         <tr><td><code>entities.json</code></td><td>实体 ID 和一组标准 ECS 组件。</td><td>清空 ECS World 后按原 ID 重建实体和组件。</td></tr>
-        <tr><td><code>regions/*.ncr</code></td><td>按 32×32 chunk region 写出已加载 chunk。文件头包含 magic/version、region 坐标、header size、1024 项 chunk offset/size/flags table 和 v2 block id 字典；chunk payload 保存 sub-chunk uniform/palette/dense <code>BlockState{id,data}</code> 表示和独立 <code>lights</code> overlay。payload 使用内置 RLE 压缩，压缩后不变小时自动保留未压缩数据。</td><td>读档会读取 region 文件并恢复成 <code>ChunkSnapshot</code>；运行时 chunk streaming 会按目标 chunk 坐标定向打开对应 <code>r.x.z.ncr</code>，优先从当前 slot 的 region payload 加载 snapshot，缺失时才重新生成地形。targeted streaming 会缓存 region header/table，并按 offset 只读取目标 chunk payload。v2 region 会通过保存的 block id 字典把已知字符串 id 重新映射到当前 MOD registry hash，缺失 block 保留原 numeric fallback。far chunk unload 会复制 terrain/light-dirty snapshot 后排入后台 region 写回任务，再卸载运行时 chunk。</td></tr>
+		<tr><td><code>regions/*.ncr</code></td><td>当前 v1 按 4×4 chunk region 写出已加载 chunk。文件头包含 magic/version、region 坐标、header size、16 项 chunk offset/size/flags table 和 block id 字典；chunk payload 按有符号 <code>sub_y</code> 保存任意数量的 sub-chunk uniform/palette/dense <code>BlockState{id,data}</code> 表示和对应独立光照 overlay。payload 使用内置 RLE 压缩，压缩后不变小时自动保留未压缩数据。</td><td>读档只接受当前 v1 region 文件并恢复成可变高度 <code>ChunkSnapshot</code>。运行时 chunk streaming 会按目标 chunk 坐标定向打开对应 <code>r.x.z.ncr</code>，优先从当前 slot 的 region payload 加载 snapshot，缺失时才重新生成地形。保存的 block id 字典必须全部解析到当前 MOD registry；任何缺失 ID 都会拒绝该 region，不保留旧 numeric 值。</td></tr>
         <tr><td><code>mods.json</code></td><td>已加载 MOD 的 id、name、version、side。</td><td>用于 MOD 差异诊断；不会自动下载、启用或重排 MOD。</td></tr>
-        <tr><td><code>factions.json</code></td><td>NPC 阵营实例、外交地图坐标/影响半径/颜色和阵营对关系。</td><td>恢复实例、关系值、倾向、外交地图要素和 last_changed_tick。</td></tr>
-        <tr><td><code>works.json</code></td><td>WorkPool 活跃 work 和 next_id。</td><td>清空当前 WorkPool 后恢复活跃工作。</td></tr>
-        <tr><td><code>focuses.json</code></td><td>焦点触发状态、活跃焦点和 next_instance_id。</td><td>恢复已触发状态和仍在显示的焦点。</td></tr>
+		<tr><td><code>factions.json</code></td><td>当前 schema v1；其他殖民地实例的稳定身份、地图坐标、归属和表现色，以及阵营对关系、条约和空谈判状态。</td><td>缺失、损坏或非当前 schema 均拒绝，不读取旧开发结构。</td></tr>
+		<tr><td><code>works.json</code></td><td>当前 schema v1；保存 WorkPool 活跃 work、next_id、来源/优先级/指定工人、职业资格表达式、领取时物品要求/步骤、个人队列所有者与顺序、当前激活者、原执行者跳过窗口，以及每笔资源 reservation 对应的物品实例和数量分配清单。</td><td>清空当前 WorkPool 后恢复公共工作、个人队列、激活工作、未提交预留和材料资格；缺失、损坏或非当前 schema 均拒绝。</td></tr>
+		<tr><td><code>economy_log.json</code></td><td>schema v1；结构化保存正常结算与异常日志的稳定 ID、tick、殖民者、来源、物品投入/结果、效果、修正来源、经验和原因。</td><td>该文件是当前存档必需项；日志只读，不恢复或重放内部工作。</td></tr>
+		<tr><td><code>economy_problems.json</code></td><td>schema v1；保存尚未解除的局部问题、来源身份、首次/最近 tick、位置、关联物品/工作、全局警报标记和解决入口。</td><td>恢复后继续按来源和稳定问题 ID 去重；解除时删除持续状态并向统一日志追加解除记录。</td></tr>
+        <tr><td><code>items.json</code></td><td>当前 schema v1 保存物品实例、仓储策略和目标位置预留。策略包含稳定位置 ID、过滤、入库/取用优先级和保留；储存体素另保存坐标、格数、最终单格容量与冷藏状态。目标预留保存来源工作、具体实例或待存数量、堆叠键和目标格。</td><td>世界激活后、Lua 收到 <code>world:restored</code> 前恢复；缺失、损坏或非当前 schema 均拒绝，不读取旧 hauling 账本。</td></tr>
+        <tr><td><code>designs.json</code></td><td>schema version、next design ID，以及每个不可变锻造方案的物品基型 ID、基础属性最终等级和词条最终等级。</td><td>世界激活后根据当前注册表重新计算容量、加工难度、材料汇总和有效性；该文件是当前存档必需项。</td></tr>
+		<tr><td><code>runtime_states.json</code></td><td>外层 schema v1；按稳定 key 保存的 JSON 状态快照。CoreMod 当前使用它保存制作/施工事务、生产订单、进食方案及其具体实例预留、治疗、装备换装、药剂设计、药品使用、活动效果/免疫、招募流程、初始地图 q/r 选址，以及工作计划/排班模板、分配和个体覆盖；仓储数量不再保存在这里。各玩法领域载荷使用各自当前 schema；方块放置为 v2，其余现有领域按各自源码声明。</td><td>未知版本、旧版本和损坏结构会拒绝加载，不执行字段迁移。在 MOD 的 <code>on_world_init</code> 前装入线程安全状态仓；各 Lua 系统在 <code>world:restored</code> 后与最终实体、建筑、物品和 WorkPool 状态核对。</td></tr>
+        <tr><td><code>focuses.json</code></td><td>schema v1；焦点触发状态、活跃焦点和 next_instance_id。</td><td>清理旧运行态后恢复已触发状态和仍在显示的焦点；未知 schema 拒绝。</td></tr>
       </tbody>
     </table>
 
@@ -33,8 +38,8 @@
     <p><code>entities.json</code> 当前覆盖以下标准组件。保存时尽量同时写字符串 ID 和哈希，加载时优先用字符串 ID 重新从当前注册表计算哈希。</p>
     <ul>
       <li>基础空间与生命：<code>Position</code>、<code>Speed</code>、<code>Rotation</code>、<code>Scale</code>、<code>Health</code>、<code>Name</code>。</li>
-      <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Job</code>、<code>Civilization</code>、<code>WorkerPriorityConfig</code>、<code>NavAgent</code>。</li>
-      <li>物品与交互：<code>HeldItem</code>、<code>Equipment</code>、<code>BlockInteractor</code>、<code>Stats</code>。</li>
+      <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistCondition</code>、<code>ColonistAttributes</code>、<code>ColonistBackground</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Job</code>、<code>Civilization</code>、<code>WorkerPriorityConfig</code>、<code>NavAgent</code>。</li>
+	  <li>物品与交互：<code>BlockInteractor</code>；背包、装备和地面/仓储物品统一保存在 <code>items.json</code>。当前存档不把 <code>Equipment</code> 或 <code>HeldItem</code> 作为第二份物品权威写入实体文件；加载后从装备位置实例重建只读 ECS 查询缓存。实体文件出现已删除的 <code>Equipment</code>、<code>HeldItem</code>、<code>Stats</code> 或 <code>Inventory</code> 时拒绝加载。</li>
       <li>实体原型和表现：<code>PrototypeRef</code>、<code>EntityVisual</code>、<code>EntityAnimation</code>、<code>HeadVisual</code>、<code>InterestPoint</code>。</li>
     </ul>
 
@@ -46,8 +51,8 @@
       <thead><tr><th>限制</th><th>影响</th></tr></thead>
       <tbody>
         <tr><td>engine_version 必须匹配</td><td>版本不匹配时直接拒绝加载。</td></tr>
-        <tr><td>region streaming writeback 仍需完善</td><td><code>regions/*.ncr</code> 已使用 offset table、sub-chunk representation、RLE payload compression 和 v2 block id dictionary；读档后的 chunk streaming 会定向读取当前 slot 的 region payload，并缓存 region header/table 来避免重复解析。far chunk unload 会把已标记修改的 terrain 或 light overlay chunk 复制为 snapshot 并异步写回 region，切换存档根目录、清理 pending work 和 shutdown 时会等待未完成写回；当前仍缺少更完整的数据迁移策略，例如已删除/重命名 block 的替换规则。</td></tr>
-        <tr><td>建筑和区域实例未单独序列化</td><td>BuildingSystem、ZoneSystem 的运行时实例不在当前存档文件中恢复。</td></tr>
+        <tr><td>region streaming writeback 仍需完善</td><td><code>regions/*.ncr</code> 当前格式使用 offset table、有符号垂直 sub-chunk representation、RLE payload compression 和 block id dictionary，并拒绝旧固定高度格式；读档后的 chunk streaming 会定向读取当前 slot 的 region payload，并缓存 region header/table 来避免重复解析。far chunk unload 会把已标记修改的 terrain 或 light overlay chunk 复制为 snapshot 并异步写回 region，切换存档根目录、清理 pending work 和 shutdown 时会等待未完成写回。</td></tr>
+        <tr><td>区域实例序列化</td><td>ZoneSystem 实例以 <code>zones_schema_version</code> 和 <code>zones</code> 写入 <code>world.json</code>，保存类型、形状、范围/体素、目标、过滤器和设置；加载世界和 Host 状态时按稳定实例 ID 恢复，未知 schema 版本会拒绝。</td></tr>
         <tr><td>Lua 数据组件不保存</td><td><code>engine.data</code> 是运行时 Lua 状态，不进入存档，也不参与网络复制。</td></tr>
         <tr><td>MOD 自定义组件没有扩展点</td><td>只有 C++ 已列出的标准组件会被 SaveSystem 显式保存。</td></tr>
         <tr><td>MOD 差异只诊断不修复</td><td>缺失 MOD、版本差异和新增 MOD 只会记录差异，仍需要用户或启动流程处理。</td></tr>
@@ -55,7 +60,7 @@
     </table>
 
     <div class="callout warn">
-      当前存档会保存实体、世界配置、天气、阵营、工作、焦点状态和已加载 chunk 的 region 数据；运行时 far chunk unload 已有异步 dirty region writeback，targeted region streaming 已缓存 header/table，纯 light overlay 变化也会触发 region 写回，新 region 文件会保存 block id dictionary 并在加载时按当前 MOD registry remap。建筑、区域、MOD 自定义运行时状态和更完整的数据迁移规则还需要补齐。
+      当前存档会保存实体、世界配置、动态天气区域、文明研究、建筑实例、殖民者纪念记录、阵营、工作及资源预留、统一物品实例、焦点状态、CoreMod 经营运行态和已加载 chunk 的 region 数据。天气区域通过版本化覆盖区块状态恢复；尚未定义的区域移动/切换公式不会由存档层推断。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

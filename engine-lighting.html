@@ -11,15 +11,16 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>引擎光照</div></div>
   <div class="content">
     <h1>引擎光照</h1>
-    <p class="subtitle">体素光照由区块数据、光源 registry 和 GPU/CPU 光照路径共同维护。</p>
+    <p class="subtitle">体素光照以 CPU 为权威：区块数据持有光照 overlay，<code>GpuLightRegistry</code> 在模拟线程上做稀疏传播。</p>
 
     <h2>运行时规则</h2>
     <ul>
-      <li>天空光和方块光使用 0 到 15 的 4 位光照等级。</li>
+      <li>天空光和方块光使用 0 到 15 的 4 位光照等级，并在顶点中分开传递；方块光不受昼夜变化影响。</li>
       <li>透明和半透明方块可以透光；不透明方块会阻挡光照。</li>
-      <li>网格生成会在目标区块周围计算或读取一个临时的 3x3 区块光照网格，因此边界面会采样新生成的邻近光照。</li>
+      <li>网格生成会保留 <code>ChunkDataStore</code> 中权威的跨区块 block light，并从相邻已加载列注入边界天空光；边界面会直接采样邻区光照。</li>
       <li><code>LightSystem::compute_all_overlay_with_accessor</code> 使用调用方输出 buffer，并复用 thread-local BFS 队列，避免 dirty mesh rebuild 时重复分配大块临时内存。</li>
-      <li>区块网格化会采样可见面前方可透光单元格的光照值，并将其乘以逐顶点环境光遮蔽。</li>
+      <li>区块网格化会分别采样可见面前方可透光单元格的天空光与方块光；不同光照组合的面不会被贪心网格合并。直接看见天空的表面不应用由一格高度差邻块造成的环境光遮蔽。</li>
+      <li>光照传播只读取方块的透光结果并传递 0 到 15 的等级，不触发方块更新、随机刻或其他游戏逻辑。区块内分布由独立的列扫描和六邻接队列计算，跨区块只读取相邻边界。</li>
       <li>影响发光或透光性的变更，会将受影响区块标记为需要重建。</li>
     </ul>
 
@@ -27,22 +28,18 @@
     <ul>
       <li>方块 JSON 的 <code>emission</code> 字段定义 block light 强度，合法范围为 <code>0</code> 到 <code>15</code>。</li>
       <li>所有 <code>emission &gt; 0</code> 的方块都会注册为光源，不限于火把。</li>
-      <li><code>GpuLightRegistry</code> 在 chunk load/unload 和 block change 时维护全局光源表。</li>
-      <li>新增光源会 seed GPU BFS frontier，mode 4 在 3x3 chunk volume 内传播 block light，并写入 <code>ChunkDataStore</code> 的 light overlay。</li>
+      <li><code>GpuLightRegistry</code> 在 chunk load/unload 和 block change 时维护已加载列的光源登记。</li>
+      <li>方块光传播是模拟线程上的 CPU 稀疏 BFS，结果写入 <code>ChunkDataStore</code> 的 light overlay。这是权威状态：它会被存档、被玩法（<code>VisibilitySystem</code>）读取，也会被 CPU 网格构建烘进顶点，因此不依赖 Vulkan，也没有 GPU 端权威副本。</li>
       <li>删除光源会按移除光源等级清理受影响范围，再用重叠区域内仍存在的光源重新 BFS，以避免旧光残留并减少不必要的 block light 写回。</li>
       <li>同一 tick 内的同位置 pending add/remove 会做保守合并：同强度替换会取消暗化，add 后 remove 会取消新增，同位置重复 add 会保留最后一次。</li>
-      <li>chunk unload 只从 registry 和 LightSSBO 中移除该 chunk 的光源，并清理相关 pending 队列；它不会触发暗化 BFS。下一次 tick 只上传 light table，日志会出现 <code>table_only=1</code>。</li>
+      <li>invalidation 是局部的：<code>CHUNK_SIZE</code>（16）大于 <code>MAX_LIGHT</code>（15），光照最多传播 14 格，因此不可能穿过一个完整区块列。卸载区块只为该列自身的光源排队清除；加载区块只重新播种它 3x3 邻域内的光源。两者都不再触发全世界重建。</li>
     </ul>
 
     <h2>LightBlock 调试日志</h2>
     <ul>
-      <li><code>[LightBlock] tick</code> 是每次 registry flush 的汇总日志，默认 DEBUG 等级。</li>
-      <li><code>upload</code> 和 <code>light_upload_bytes</code> 表示 LightSSBO 全量上传成本；如果该项高，下一步应做增量上传或 sparse slot。</li>
-      <li><code>clear</code> 表示删除光源时 CPU 清理受影响 block light 的耗时。</li>
-      <li><code>build</code> 表示构建 3x3 GPU BFS volume 的耗时。</li>
-      <li><code>bfs</code> 表示 mode 4 BFS dispatch 加同步等待的耗时；如果该项高，下一步应做异步 compute / 下帧 readback。</li>
-      <li><code>apply</code> 表示把 GPU 输出写回 <code>ChunkDataStore</code> overlay 的耗时。</li>
-      <li><code>frontier</code>、<code>final_frontier</code>、<code>capacity</code>、<code>overflow</code> 和 <code>max_observed_frontier</code> 用于判断 BFS frontier 是否被截断。</li>
+      <li><code>[LightBlock] cpu propagation</code> 是每次 registry flush 的汇总日志，默认 DEBUG 等级。</li>
+      <li><code>adds</code> / <code>removes</code> 是本 tick 消费的 pending 变更数，<code>queued</code> 是本次入队的 frontier 条目数，<code>remaining</code> 是仍未排空的 frontier。</li>
+      <li><code>remaining</code> 非零（并附加 <code>budget_hit=1</code>）表示本次撞到每 tick 体素预算，剩余部分由后续 tick 继续；<code>Engine</code> 每 tick 传入 <code>LIGHT_VOXEL_BUDGET_PER_TICK</code>。预算同时覆盖删除清除与 BFS 排空：删除批次会快照到独立容器，并按 y 层逐层切分，因此一次批量删除（例如卸载一个含多个光源的区块）不会独占一个 tick。批量化只改变到达不动点的时机，不改变结果：传播是单调 max 泛洪，收敛后的取值一致。</li>
       <li><code>changed_chunks</code> 表示本次 block light 写回导致的 mesh dirty fanout；后续 mesh rebuild 会通过 <code>[Chunks] dirty dispatch</code> 和 <code>[Chunks] dirty upload</code> 记录。</li>
       <li>存档会把动态光照保存为 chunk-level <code>lights</code> 数组，block payload 只保存 <code>[id,data]</code> state。</li>
     </ul>
@@ -57,17 +54,20 @@
 
     <h2>天空光</h2>
     <ul>
-      <li>天空光仍使用列扫描初始化和传播路径。</li>
+      <li>天空光使用列扫描初始化和六邻接传播。正上方无遮挡的可透光体素是直接天空源；离开直接天空列后，每传播一格等级减 1，降到 0 停止。</li>
+      <li>自然光源在 05:00 到 08:00 从 6 均匀增加到 15，在 08:00 到 16:00 保持 15，在 16:00 到 19:00 从 15 均匀降低到 6，其余时间保持 6。网格保存的是以 15 为基准的天空可达等级；着色器根据当前自然光强扣除源强差值，因此夜晚离源三格为 3，而不是对白天亮度做比例缩放。</li>
+      <li>昼夜变化只更新全局着色参数，不遍历体素或重建所有区块。放置、移除阻光方块，改变透光属性或加载区块时，才重新计算受影响区域的传播拓扑。</li>
+      <li>顶点分别携带原始天空光等级、原始方块光等级和表面明暗。着色器先根据时间换算天空光，再合并方块光并应用面朝向和环境光遮蔽，避免表面明暗被误当成传播距离。</li>
       <li>天空光的隐式光源是天空柱，不使用 block light 的光源列表优化。</li>
     </ul>
 
     <h2>当前限制</h2>
     <ul>
-      <li><code>ChunkDataStore::set_block_light()</code> 当前写入 per-column light overlay，不再修改 sub-chunk 内的 <code>BlockState</code> voxel storage，因此 GPU block light 更新不会打散 uniform/palette sub-chunk。</li>
+      <li><code>ChunkDataStore::set_block_light()</code> 当前写入 per-column light overlay，不再修改 sub-chunk 内的 <code>BlockState</code> voxel storage，因此 block light 写回不会打散 uniform/palette sub-chunk。</li>
       <li><code>Block</code> 本体只保留 <code>id/data</code> 状态；<code>LightData</code> 不再是 block 字段。</li>
       <li><code>ChunkDataStore::ChunkSnapshot</code> 的 uniform、palette 和 dense payload 使用 <code>BlockState{id,data}</code>；region 存档 payload 也只写 state payload，动态光照保留在独立 <code>lights</code> overlay。</li>
       <li>GPU pack 路径现在显式接收 <code>BlockState</code> 和 <code>LightData</code>。mesh 构建对已加载 chunk 和临时 dense chunk 都通过 light accessor 采样 overlay；旧的 dense <code>Block.light</code> 写回和读取兼容路径已删除。</li>
-      <li>跨 chunk mesh 边界光照通过显式 <code>neighbor_light(wx,y,wz)</code> accessor 读取已加载 neighbor snapshot 的 light overlay；生成但未加载的临时 neighbor 没有 overlay 时返回空光照。</li>
+      <li>跨 chunk mesh 边界光照通过显式 <code>neighbor_light(wx,y,wz)</code> accessor 读取已加载 neighbor snapshot 的 block-light overlay，并根据邻区列遮挡补充直接天空光。</li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

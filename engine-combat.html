@@ -3,56 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>战斗规则 · NewColony Wiki</title>
+  <title>战斗接口 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="engine-combat">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>战斗规则</div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>战斗接口</div></div>
   <div class="content">
-    <h1>战斗规则</h1>
-    <p class="subtitle">2026-07-20 V2 版本只实现近战小队的基础战斗，不接入远程、法术、压制和区域法力规则。施法栏目前只保留 HUD 布局占位。</p>
+    <h1>战斗接口</h1>
+    <p class="subtitle">NCDOCS 当前没有战斗专项规则；玩家可见范围只保留跳转入口和状态摘要。</p>
 
-    <h2>小队交战</h2>
-    <p>小队以队长实体为锚点，虚拟士兵人数存在 <code>Squad.member_count</code>。战斗系统会生成 <code>SquadSoldierVisual</code> 临时实体来显示士兵方阵，保存世界时会跳过这些显示实体。两个敌对近战小队的任一队长/士兵模型接触时进入战斗态；敌方死亡、双方脱离接触或不再敌对时回到和平态。</p>
-    <p>敌对关系优先读取 <code>NpcFactionSystem</code> 的双边关系，关系低于阈值时敌对。文明 ID 到 NPC 阵营实例 ID 的桥接未完成时，当前接入点可选择不同阵营即敌对的严格 fallback。</p>
+    <h2>当前边界</h2>
+    <p>职业、装备许可、战斗属性、伤病、倒地、濒死和死亡继续按殖民者文档工作。<code>Squad</code> 只保留身份、成员数/上限和战斗状态摘要；运行时不推进小队移动、接敌、命中、伤害、冷却、压制或方阵。区域法力没有专项文档，因此不存在对应系统或组件。</p>
+    <p>战斗职业不由代码自动创建带有 20 人、100 生命、10 攻击、5 秒冷却等私有数值的小队。当前存档只保存当前战斗组件结构。</p>
 
-    <h2>碰撞与移动</h2>
-    <p>战斗态小队被视为阻挡单位；和平态小队可轻微穿行并降低移动速度。导航系统可以通过 <code>CombatSystem::is_blocking()</code> 和 <code>CombatSystem::move_modifier()</code> 接入。战斗模式指令由 <code>CombatSystem</code> 直接推动队长朝移动目标或攻击目标靠近，移动时会避免穿过其他小队的接触范围。</p>
+    <h2>界面</h2>
+    <p><code>CoreMod/assets/ui/rml/battle_hud.rml</code> 保留战斗入口，面板固定显示“战斗专项规则未定义”。未定义的移动、攻击、原地防御、方阵和选兵命令不作为玩家玩法开放。</p>
 
-    <h2>命中、伤害与冷却</h2>
-    <table>
-      <thead><tr><th>规则</th><th>公式</th></tr></thead>
-      <tbody>
-        <tr><td>队长命中率</td><td><code>hit - dodge + 35</code>，结果按百分比夹到 5 到 95。</td></tr>
-        <tr><td>队长伤害</td><td><code>base_attack + equipment_bonus</code>；装备加成等待物品系统接入。</td></tr>
-        <tr><td>士兵伤害</td><td>每名士兵固定 1 点，不做命中判定。</td></tr>
-        <tr><td>攻击冷却</td><td>使用隐藏值 <code>Squad.attack_cooldown</code>，V2 测试小队默认 5 秒一次。</td></tr>
-        <tr><td>移动速度</td><td>V2 测试小队基础战斗移动速度为 1；战斗态再由移动接入点降低。</td></tr>
-      </tbody>
-    </table>
-    <p>命中随机使用确定性随机种子，由 tick、攻击者、目标和本 tick 攻击序号混合得到，不依赖实体遍历顺序。</p>
-
-    <h2>多队战斗</h2>
-    <p>第三支小队加入战斗时仍使用同一套队长命中和士兵固定伤害逻辑。V2 不产生夹击压制，也不读取武器克制或压制规则 JSON。</p>
-
-    <h2>T5 查询语义</h2>
-    <table>
-      <thead><tr><th>C++ 查询</th><th>返回用途</th></tr></thead>
-      <tbody>
-        <tr><td><code>CombatSystem::list_squads(world)</code></td><td>战斗 HUD 小队列表：生命、人数、目标、战斗态、阵营和兼容用武器粗分类。</td></tr>
-        <tr><td><code>CombatSystem::is_in_combat(world, leader)</code></td><td>小队是否处于战斗态。</td></tr>
-        <tr><td><code>CombatSystem::is_commandable(world, leader)</code></td><td>普通移动指令是否可用；战斗态应走战斗指令。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>测试命令</h2>
-    <p>开发者控制台命令 <code>combat_test_arena [squads x y z half_size] [sx sy sz player|enemy ...]</code> 会创建封闭平整区域、把摄像机移动到中心，并放置 V2 测试小队。未提供显式坐标时会在中心两侧自动排布；提供每队 <code>x y z side</code> 时按指定位置和玩家/敌方归属生成，玩家方会自动选中。测试小队属性为人数 20/20、生命 100、攻击 10、攻击冷却 5、命中 20%、闪避 20%、移动速度 1、射程 0。</p>
-
-    <h2>战斗 HUD 与输入</h2>
-    <p><code>CoreMod/assets/ui/rml/battle_hud.rml</code> 是独立 RML 文档，由 <code>CoreMod/scripts/ui/combat_hud.lua</code> 通过 <code>engine.ui.rml.register_panel</code> 注册。底部栏战斗入口和 RML 内关闭按钮都发 <code>core:combat.toggle_hud</code>；模块切换面板可见性、维护 UI 侧 <code>battle_mode</code>，并回写 <code>core:combat_entry</code> 的 active 状态。</p>
-    <p>战斗快捷键：<code>battle_select_squad_1..10</code> 绑定数字键 1-0，按花名册顺序直接选中第 1-10 个小队（战斗模式专属占用，速度键 1-4 在战斗模式下让位；Ctrl+数字 仍用于保存 control group）；R/P/D/Z/S/Y/A/U 对应全选、编队、原地防御、移动、停止、镜头跟随、攻击、选近战。上一/下一小队循环（Q/E）默认未绑定，可在设置中自行绑定。A/S/D/E 与相机按键重叠；战斗模式下 <code>InputManager</code> 压制 A/S/D/E（以及 SetSpeed1..4）对应的动作，右键长按用于移动目标，横向拖动累计为方阵宽度变化，鼠标位置作为朝向来源。右键相机拖动在战斗模式下被压制，新增中键 <code>CameraOrbit</code> 绑定作为镜头拖动 fallback。进入战斗模式时底部游戏内菜单暂时隐藏（hud.rml 的 <code>#bottom-bar-slot</code> 以 <code>battle_hud_view.visible</code> 为条件），退出后恢复。</p>
-    <p><code>SelectionManager</code> 保留旧单选接口，并新增多选集合、框选矩形、Shift 追加、十个 control group、上一/下一小队循环、全选小队、近战/远程过滤接入点，以及双击小队请求镜头跳转的一次性信号。世界点击队长或士兵显示实体都会映射回队长；世界双击和 HUD 行双击都会把镜头移动到小队队长。HUD 行点击会在命令分发时读取当前 Shift 状态来追加或取消选择。</p>
+    <h2>后续接入</h2>
+    <p>只有在 NCDOCS 增加战斗专项规则，明确小队结构、目标关系、移动、命中、伤害、冷却、结算和界面操作后，才能重新启用对应运行时；不得从旧 V2 原型值恢复默认玩法。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

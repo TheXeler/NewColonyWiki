@@ -113,21 +113,24 @@
     <pre><code>local handle = engine.ui.window.register({
     id = "core:craft_menu_window",
     title = { key = "ui.core:craft_menu.window_title" },
-    size_hint = { w = 720, h = 460 },
-    position = { x = 72, y = 112 },
+    size_hint = { w = 1040, h = 620 },
+    position = { x = 40, y = 70 },
     background_argb = "0xe815191d",
     draggable = true,
     flags = { "movable", "closable", "resizable", "scrollable" },
     render = function(ctx)
         return {
             kind = "tabs_table",
+            tab_selector = "dropdown",
+            button_columns = 4,
+            buttons_position = "top",
             tabs = {
                 {
                     id = "core:worker",
                     label = { key = "jobs.core:worker" },
                     columns = { "产出", "输入", "配方", "等级" },
                     rows = {
-                        { id = "core:craft_stick", columns = { "木棍 x4", "木板 x2", "core:craft_stick", "1" } }
+                        { id = "my_mod:example_recipe", columns = { "目标物品", "材料", "my_mod:example_recipe", "1" } }
                     },
                     reserve_footer = 46.0
                 }
@@ -144,7 +147,8 @@
     end
 })</code></pre>
 
-    <p>表格行支持 <code>on_click(row)</code> 和 <code>on_double_click(row)</code>。双击很适合打开二级窗口，例如派系列表里双击某一行后打开单独的外交面板。按钮支持 <code>label</code>、<code>tooltip</code>、<code>enabled</code> 和 <code>on_click(button)</code>。按钮的 <code>label</code>、<code>tooltip</code>、窗口 <code>title</code>、分页 <code>label</code> 和单元格都可以直接传字符串、函数，或 <code>{ key = "category.id", params = {...} }</code> 翻译引用。窗口 <code>render()</code> 返回表时可以提供 <code>content_rml</code> 原始 RML 片段，用于地图等非表格布局。窗口可选 <code>background_argb</code>，默认使用小地图同款半透明背景 <code>0xe815191d</code>；也支持 <code>#15191de8</code> 或 <code>rgba(...)</code>。窗口可选 <code>draggable</code>，缺省时由 <code>flags</code> 中是否包含 <code>"movable"</code> 决定；拖动手柄是窗口标题栏。</p>
+    <p>表格行支持 <code>on_click(row)</code> 和 <code>on_double_click(row)</code>。双击很适合打开二级窗口，例如派系列表里双击某一行后打开单独的外交面板。按钮支持 <code>label</code>、<code>tooltip</code>、<code>enabled</code> 和 <code>on_click(button)</code>。按钮的 <code>label</code>、<code>tooltip</code>、窗口 <code>title</code>、分页 <code>label</code> 和单元格都可以直接传字面字符串、函数，或 <code>{ key = "category.id", params = {...} }</code> 翻译引用；字面字符串只解析其中显式的 <code>${category.id}</code> 模板，不会因包含句号而被再次当作翻译键。<code>tabs_table</code> 默认将分页渲染为按钮；设置 <code>tab_selector = "dropdown"</code> 后改用 RmlUi <code>select</code> 下拉框，适合职业等选项很多的筛选器。内容表可用正整数 <code>button_columns</code> 指定按钮组每行列数，用 <code>buttons_position = "top"</code> 将按钮组放到表格上方；缺省时按钮组位于表格下方。<code>column_widths</code> 是各列的相对权重，兼容窗口会按窗口内容宽度换算为固定像素列宽。窗口 <code>render()</code> 返回表时可以提供 <code>content_rml</code> 原始 RML 片段，用于地图等非表格布局。窗口可选 <code>background_argb</code>，默认使用小地图同款半透明背景 <code>0xe815191d</code>；也支持 <code>#15191de8</code> 或 <code>rgba(...)</code>。窗口可选 <code>draggable</code>，缺省时由 <code>flags</code> 中是否包含 <code>"movable"</code> 决定；拖动手柄是窗口标题栏。</p>
+    <p>经营问题界面使用固定四列的“全部 / 错误 / 警告 / 日志”按钮行。问题、原因、来源种类和解决入口分别查询 <code>ui.core:economy.problem.*</code>、<code>reason.*</code>、<code>source.*</code>、<code>solution.*</code> 翻译键；未知 MOD 标识会转成去命名空间、以下划线分词的可读文本。配置来源不显示仅供内部关联使用的哈希 <code>source_id</code>。</p>
     <p><code>engine.ui.window.unregister(handle_or_id)</code> 注销窗口；<code>engine.ui.window.update(handle_or_id, patch)</code> 局部更新；<code>engine.ui.window.is_open(handle_or_id)</code> 查询打开状态；<code>engine.ui.window.clear(mod_id)</code> 清理指定 MOD 的窗口。</p>
 
     <h2>经营数据桥</h2>
@@ -163,10 +167,10 @@
         <tr><td><code>engine.ui.data.snapshot("construction_active")</code></td><td>已下单施工入口：<code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("craft_recipes")</code></td><td>制造配方入口。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("combat_state")</code></td><td>战斗面板占位状态：<code>colonists</code>、<code>threats</code>、<code>alert_level</code>。</td></tr>
-        <tr><td><code>engine.ui.data.snapshot("battle_hud")</code></td><td>战斗 HUD Lua 通道：<code>visible</code>、<code>battle_mode</code>、<code>squads</code>、<code>selected_squad</code>、<code>mana</code> 和可用指令。该通道由 <code>combat_hud.lua</code> 包装数据桥提供；要作为 RML typed view 直接绑定，还需要宿主层把 <code>battle_hud</code> 加入快照白名单。</td></tr>
+        <tr><td><code>engine.ui.data.snapshot("battle_hud")</code></td><td>战斗接口状态通道：<code>visible</code>、<code>interface_defined=false</code>、<code>status="combat_interface_undefined"</code> 和空 <code>commands</code>。不提供小队、阵型、法力或战斗数值。</td></tr>
         <tr><td><code>engine.ui.data.resources()</code></td><td>返回 <code>colony/resources</code> 快照，汇总 stockpile 账本和殖民者手持资源。</td></tr>
         <tr><td><code>engine.ui.data.colonists()</code></td><td>返回人员界面所需的名称、状态、职业等级/经验、心情 thoughts、基础/工作/战斗属性、单一 <code>equipment.item</code>、物品栏和转职树。</td></tr>
-        <tr><td><code>engine.ui.data.work()</code></td><td>返回当前工作池实例、建造定义和制造配方入口。</td></tr>
+		<tr><td>人员工作数据</td><td><code>colonist_list</code> 返回当前激活工作和该人的已领取队列；底栏工作池窗口通过只读 <code>engine.work.list()</code> 列出当前玩家殖民地的全部活动工作。</td></tr>
         <tr><td><code>engine.ui.data.research()</code></td><td>返回科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。</td></tr>
         <tr><td><code>engine.ui.data.events()</code></td><td>返回事件/焦点列表、严重度、详情和可执行动作。</td></tr>
         <tr><td><code>engine.ui.data.snapshot(name)</code></td><td>按名称读取单个快照；留空时返回完整经营快照。</td></tr>
@@ -178,31 +182,33 @@ for _, colonist in ipairs(data.rows) do
     engine.log.info(colonist.name .. " / " .. tostring(colonist.Job.id))
 end</code></pre>
 
-    <p>统一命令入口是 <code>engine.ui.command.run(target, payload)</code>。RmlUI 文档层（及过渡期 HTML 参考）传入 <code>core:*</code> target；Lua UI 仍可用旧短名。返回值统一为 <code>{ ok, target, reason?, status?, changed_channels? }</code>；失败 reason 稳定为 <code>invalid_payload</code>、<code>unknown_command</code>、<code>research_unavailable</code>、<code>event_not_found</code>、<code>invalid_view_mode</code>、<code>build_definition_not_found</code>、<code>placement_required</code>、<code>craft_recipe_not_found</code>。</p>
+    <p>统一命令入口是 <code>engine.ui.command.run(target, payload)</code>。RmlUI 文档层（及过渡期 HTML 参考）传入 <code>core:*</code> target；Lua UI 仍可用旧短名。返回值统一为 <code>{ ok, target, reason?, reason_key?, reason_text?, status?, changed_channels? }</code>。<code>reason</code> 是供协议、逻辑判断和联机同步使用的稳定机器码；<code>reason_key</code> 是对应的本地化键，<code>reason_text</code> 是当前 locale 下的玩家可见文本。UI 必须显示 <code>reason_text</code>，不得直接向玩家显示 <code>reason</code>。未知错误统一回退到通用错误翻译。稳定 reason 包括 <code>invalid_payload</code>、<code>unknown_command</code>、<code>research_unavailable</code>、<code>event_not_found</code>、<code>invalid_view_mode</code>、<code>build_definition_not_found</code>、<code>placement_required</code>、<code>craft_recipe_not_found</code>。</p>
     <table>
       <thead><tr><th>target</th><th>落点</th></tr></thead>
       <tbody>
-        <tr><td><code>core:bottombar.*</code></td><td><code>panel.toggle</code>，并广播 <code>ui:data:changed</code>。</td></tr>
         <tr><td><code>core:orders.start</code></td><td><code>engine.selection.start(options)</code>。</td></tr>
         <tr><td><code>core:colonists.select</code></td><td><code>engine.selection.select_entity</code>。</td></tr>
-        <tr><td><code>core:colonists.change_class</code></td><td><code>engine.jobs.assign</code>。</td></tr>
-        <tr><td><code>core:colonists.resign_class</code></td><td><code>engine.jobs.resign</code>，返回父职业或 <code>core:colonist</code>。</td></tr>
+        <tr><td><code>core:colonists.change_class</code></td><td>载荷必须包含目标 <code>job_id</code> 和玩家仓储中的装备 <code>instance_id</code>；发布指名紧急换装工作，激活时预留实例，完成时原地交换装备并更新职业。</td></tr>
+        <tr><td><code>core:colonists.change_equipment</code></td><td>载荷包含当前职业允许的装备 <code>instance_id</code>；沿用同一换装事务但不改变职业节点。</td></tr>
+        <tr><td><code>core:storage.policy.set</code></td><td>设置露天仓储或储存体素的过滤、入库/取用优先级和保留策略；储存体素同时提交坐标、格数、最终单格容量与冷藏字段。</td></tr>
         <tr><td><code>core:colonists.sort</code> / <code>core:colonists.filter</code></td><td>更新人员面板名单排序和职业筛选，并刷新 <code>colonist_list</code>。</td></tr>
-        <tr><td><code>core:research.start</code></td><td><code>engine.research.start</code>。</td></tr>
+        <tr><td><code>core:research.start</code></td><td>建立开题付款预览；确认后由 <code>core:research.confirm_start</code> 在 Host 原子提交材料并调用受限的研究开题接口。</td></tr>
+		<tr><td><code>core:world_map.select_start_site</code></td><td>由 Client 提交给 Host；协议边界会将公开目标规范化为 <code>world_map.select_start_site</code>，受控初始生成权限检查将两种名称视为同一命令。验证并持久化预生成地图中的 q/r，然后在原点附近确定性搜索脚部/头部为空气且脚下为非植物固体的安全位置，使用 <code>initial_colony.lua</code> 内明确标注的临时测试表生成 3 名测试殖民者及木材、石材各 20。实体 ID 0 保留为空句柄，不会再把首个新实体误判为失败。loopback 新世界创建会等待 Host 的实际结算结果；成功后刷新世界地图和 <code>colonist_list</code>。结算失败保留警报和具体原因。</td></tr>
+		<tr><td><code>core:diplomacy.*</code></td><td>当前没有外交玩法写命令；外交窗口和世界地图城邦标记只显示状态摘要与 <code>diplomacy_interface_undefined</code>。</td></tr>
         <tr><td><code>core:view.set_mode</code> / <code>core:view.toggle_xray</code></td><td><code>engine.view.set_mode</code> / <code>engine.view.toggle_terrain_xray</code>。</td></tr>
         <tr><td><code>core:events.act</code> / <code>core:events.dismiss</code></td><td><code>engine.focuses.choose</code> / <code>engine.focuses.dismiss</code>。</td></tr>
         <tr><td><code>core:build.begin</code></td><td><code>systems.construction.order</code>（有坐标时）或 <code>engine.buildings.begin_placement</code>。无坐标 <code>{ id }</code> 只启动 placement 并返回 <code>status="placement_started"</code>；带 <code>{ id, x, y, z }</code> 才创建施工订单，缺料时仍返回 <code>ok=true,status="waiting_materials"</code>。</td></tr>
         <tr><td><code>core:craft.queue</code></td><td><code>systems.crafting.queue</code>；无 worker 时退回发布 craft job。</td></tr>
-        <tr><td><code>core:combat.toggle_hud</code></td><td><code>combat_hud.lua</code> 切换 <code>battle_hud.rml</code> 可见性并更新底栏战斗按钮 active 状态。</td></tr>
-        <tr><td><code>core:combat.command</code></td><td><code>combat_hud.lua</code> 接收战斗 HUD 按钮指令；当前返回 <code>combat_system_pending</code>，等待 T4 CombatSystem 命令 API 接通。</td></tr>
+        <tr><td><code>core:combat.toggle_hud</code></td><td><code>combat_hud.lua</code> 切换 <code>battle_hud.rml</code> 可见性；战斗不注册独立经营底栏入口。</td></tr>
         <tr><td><code>core:locale.set</code></td><td>记录 UI locale；当前引擎未暴露运行时切换 locale API 时返回 <code>{ ok=true, status="stored", reason="runtime_locale_switch_unavailable" }</code>。</td></tr>
       </tbody>
     </table>
     <pre><code>engine.ui.command.run("core:research.start", { nodeId = "core:basic_crafting" })
 engine.ui.command.run("core:colonists.select", { id = 12 })
-engine.ui.command.run("core:craft.queue", { id = "core:craft_stick", entity_id = 12 })</code></pre>
+engine.ui.command.run("core:craft.queue", { id = "my_mod:example_recipe", entity_id = 12 })</code></pre>
 
     <p>桥接层通过现有 <code>engine.events</code> 推送刷新信号：库存、stockpile、工作、科技和焦点变化会广播 <code>ui:data:changed</code>；payload 至少包含 <code>channel</code>。建造下单会刷新 <code>build_defs</code> 和 <code>construction_active</code>；stockpile 变化会刷新 <code>resource_snapshot</code> 和 <code>build_defs</code>，施工系统随后在材料重试事件中刷新 <code>construction_active</code>。命令执行会广播 <code>ui:command</code>，并把命令返回 JSON 写入 <code>command_result</code> 快照通道，页面可轮询该通道显示 toast 或错误。命令返回 <code>changed_channels</code> 时，C++ 会优先刷新这些通道；约 5 Hz 的全量刷新仍保留为兜底。</p>
+	<p><code>engine.selection.start(options)</code> 的 2D/3D 选区支持 <code>preview_mode = "transparent"</code>（默认的整体透明范围）和 <code>preview_mode = "block_fill"</code>（逐格半透明方块填充）。单格放置复用 <code>shape = "3d"</code>，并设置 <code>hover_follows_cursor = true</code>、<code>click_to_confirm = true</code>；目标随鼠标悬停更新，左键释放发出通用 <code>selection:click_confirmed</code> 事件并立即提交，不引入独立放置形状。</p>
 
     <h2>浮动提示 API</h2>
     <p>浮动提示用于短生命周期的屏幕提示、教程提示和告警。当前稳定模式是 <code>mode = "screen"</code>；<code>mode = "world"</code> 字段已预留，但 <code>LuaUi.cpp</code> 还没有做世界坐标投影，只会把提示放到屏幕中心附近并应用偏移。</p>
@@ -262,7 +268,7 @@ engine.ui.command.run("core:craft.queue", { id = "core:craft_stick", entity_id =
     x = 24,
     y = 120,
     title = "殖民者已抵达",
-    body = "为他安排采矿、搬运或建造工作。",
+    body = "为他安排采掘、搬运或建造工作。",
     severity = "success",
     ttl_ticks = engine.time.tps * 6
 })</code></pre>
@@ -406,7 +412,7 @@ return M</code></pre>
 
     <h2 id="rml-ui-host">游戏内 RmlUI 宿主层（目标主 UI 路线）</h2>
     <p>UI 技术路线已从旧即时模式 UI / 外部浏览器（ExternalBrowser + 本地 HTTP server）转向游戏内 <strong>RmlUI</strong>：HTML/CSS 风格、进程内渲染、合成进 Vulkan 画面。引擎不再启动本地 HTTP server，不再以外部浏览器作为 UI 验收路径；旧即时模式 UI 依赖已完全移除。玩家构建固定使用真实 RmlUI backend，宿主层完整生命周期、数据桥、命令通道和 Vulkan 合成都由 <code>RmlUiHost</code> / <code>RealRmlUiRuntime</code> 驱动。Null stub 只保留为显式诊断/失败回退路径，启用时不会渲染文档并会记录错误级日志。</p>
-    <p>新增复杂玩家界面应以独立 RML 为结构源，并链接 <code>CoreMod/assets/ui/rml/shared/base.rcss</code>、<code>layout.rcss</code> 和 <code>components.rcss</code>。<code>engine.ui.window.register</code> 保留给单表格、短按钮组和临时选择器等兼容窗口，不应继续承载多视图、双栏详情、嵌套对话框等业务结构。策划契约模板见 <code>docs/ui-design-brief-template.md</code>，迁移边界见 <code>docs/ui-window-migration-assessment.md</code>。</p>
+    <p>复杂玩家界面可继续以 RML 文件作为结构源，并链接 <code>CoreMod/assets/ui/rml/shared/base.rcss</code>、<code>layout.rcss</code> 和 <code>components.rcss</code>。<code>engine.ui.window.register</code> 保留 Lua 兼容 API；真实 RmlUI runtime 在 HUD 的 <code>#lua-ui-window-layer</code> 下为每个窗口维护独立元素，不再用单个 <code>data-rml</code> 字符串整体重建全部窗口。快照只重建内容发生变化的单个窗口，并保留其位置；适合高频变化的正式界面字段仍应使用 RmlUi data model 并只对变化的顶层变量调用 <code>DirtyVariable()</code>。窗口继续使用 HUD 的背景、层级、回调、拖动和关闭语义。策划契约模板见 <code>docs/ui-design-brief-template.md</code>，迁移边界见 <code>docs/ui-window-migration-assessment.md</code>。</p>
 
     <h3>三层结构</h3>
     <table>
@@ -438,13 +444,13 @@ return M</code></pre>
         <tr><td><code>construction_active</code></td><td><code>systems.construction.active()</code></td><td>已接通；建造面板显示已下单施工，支持 <code>waiting_materials</code>。</td></tr>
         <tr><td><code>craft_recipes</code></td><td><code>engine.crafting.list_recipes/get_recipe</code></td><td>已接通</td></tr>
         <tr><td><code>combat_state</code></td><td>殖民者生命汇总（取自人员快照）</td><td><strong>部分接通</strong>：包含 <code>colonists</code>、空 <code>threats</code>、<code>alert_level</code>；威胁列表待战斗系统补全。</td></tr>
-        <tr><td><code>command_result</code></td><td><code>Engine::dispatch_rml_ui_command()</code> 写入最近一次命令返回 JSON，并追加 <code>sequence</code></td><td>事件式通道；不在 5 Hz 全量刷新列表内，仅命令执行后更新；序号用于区分连续同形结果。</td></tr>
+		<tr><td><code>command_result</code></td><td><code>Engine::dispatch_rml_ui_command()</code> 写入最近一次命令返回 JSON，并追加 <code>sequence</code>；Lua 桥同时提供稳定 <code>reason</code>、本地化 <code>reason_key</code> 与玩家可见 <code>reason_text</code></td><td>事件式通道；不在 5 Hz 全量刷新列表内，仅命令执行后更新；序号用于区分连续同形结果。文档和 toast 显示 <code>reason_text</code>。</td></tr>
       </tbody>
     </table>
     <p>除统一刷新入口外，<code>RmlUiHost</code> 仍保留 <code>push_resource_snapshot/push_colonist_list/push_event_list/push_world_info/push_tech_tree/push_view_modes</code> 等便捷方法，以及通用 <code>push(channel, json)</code> 转发器，供需要单通道直推的调用方使用；文档侧只认通道名字符串。</p>
 
     <h3>文档 → C++：命令队列</h3>
-    <p>文档以 <code>{ target, payload }</code> 形式向引擎发指令。引擎每帧 <code>drain_commands()</code> 取出，先经 <code>handle_host_command()</code> 过滤宿主保留命令，其余调用 <code>ScriptEngine::run_ui_command(target, json_payload)</code> 转交 Lua 数据桥。<code>ScriptEngine</code> 保存最近一次命令结果，<code>RmlUiBridge</code> 同步暴露 <code>command_result</code> 快照；若结果含 <code>changed_channels</code>，引擎只刷新这些通道，否则回退全量刷新。宿主保留命令包括 <code>core:rmlui.reload</code>、DEBUG UI Lab 场景，以及 Tech Tree 的分类/选择展示状态；这些展示命令不修改业务数据。<code>core:research.start</code> 仍进入 Lua 数据桥和正式研究系统。</p>
+    <p>文档以 <code>{ target, payload }</code> 形式向引擎发指令。引擎每帧 <code>drain_commands()</code> 取出，先经 <code>handle_host_command()</code> 过滤宿主保留命令，其余调用 <code>ScriptEngine::run_ui_command(target, json_payload)</code> 转交 Lua 数据桥。<code>ScriptEngine</code> 保存最近一次命令结果，<code>RmlUiBridge</code> 同步暴露 <code>command_result</code> 快照；其中 <code>reason</code> 仅供机器读取，玩家反馈读取 <code>reason_text</code>。若结果含 <code>changed_channels</code>，引擎只刷新这些通道，否则回退全量刷新。宿主保留命令包括 <code>core:rmlui.reload</code>、DEBUG UI Lab 场景，以及 Tech Tree 的分类/选择展示状态；这些展示命令不修改业务数据。<code>core:research.start</code> 仍进入 Lua 数据桥和正式研究系统。</p>
 
     <h3>渲染接入点</h3>
     <div class="callout info">
@@ -466,7 +472,7 @@ return M</code></pre>
     <p>Fallback：<code>RmlUiHost::init</code> 调用真实 backend 的 <code>init()</code>，若失败会 <code>shutdown</code> 该 backend 并用 <code>make_null_rml_ui_runtime()</code> 替换，宿主层照常运行，同时日志明确指出没有可见 UI。</p>
 
     <h3 id="integrate-real-rmlui">接入真 RmlUI backend</h3>
-    <p><code>vcpkg.json</code> 已声明 <code>rmlui</code> 端口（v6.1，默认 feature <code>freetype</code>，CMake 目标 <code>RmlUi::RmlUi</code>）。普通构建会编译真实 backend；只有设置 <code>NC_UI_BACKEND=null</code> 或真实 backend 初始化失败时才走诊断 stub。资源入口、stub 与真 backend 边界统一见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。要点：</p>
+    <p><code>vcpkg.json</code> 已声明 <code>rmlui</code> 端口（v6.3，默认 feature <code>freetype</code>，CMake 目标 <code>RmlUi::RmlUi</code>）。普通构建会编译真实 backend；只有设置 <code>NC_UI_BACKEND=null</code> 或真实 backend 初始化失败时才走诊断 stub。资源入口、stub 与真 backend 边界统一见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。要点：</p>
     <ol>
       <li>Release configure 使用 <code>cmake --preset export-release</code>：构建系统会 <code>find_package(RmlUi CONFIG REQUIRED)</code>、把 <code>Engine/UI/RmlUiRealRuntime.cpp</code> 加入编译、链接 <code>RmlUi::RmlUi</code>；<code>make_rml_ui_runtime()</code> 默认返回 <code>RealRmlUiRuntime</code>（<code>is_real_backend()==true</code>）。</li>
       <li>真实 backend 的 <code>render(VkCommandBuffer)</code> 通过 RmlUI 6.1 <code>RenderInterface</code> 录制 UI 几何、纹理和 scissor，并由 renderer 的 UI 命令缓冲合成到游戏窗口。</li>
@@ -478,7 +484,7 @@ return M</code></pre>
     </div>
 
     <h3>与旧 Lua UI 的关系</h3>
-    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）的即时模式实现已移除，但兼容 API 现在会生成 RmlUI-backed 可见界面；保留的 C++ 类负责注册仓库、RML 片段生成、回调命令和数据通道。DevConsole、MainMenu、HUD、Pause/Settings、小地图和全局提示仍由静态 RML/RCSS 文档驱动。Tech Tree 已通过 <code>engine.ui.rml.register_panel</code> 迁移到独立 <code>tech_tree.rml</code>，仍复用原底栏入口、<code>tech_tree</code> 通道和 <code>core:research.start</code>；旧 table 仅作为注册失败回退。Build、Crafting、Colonists 后续按同一边界逐步迁移。</p>
+    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）的即时模式实现已移除，但兼容 API 现在会生成 RmlUI-backed 可见界面；保留的 C++ 类负责注册仓库、逐窗口 RML 元素生成、回调命令和数据通道。DevConsole、MainMenu、HUD、Pause/Settings、小地图和全局提示仍由静态 RML/RCSS 文档驱动。Tech Tree 的结构仍来自 <code>tech_tree.rml</code>，并通过 <code>engine.ui.window.register({ document = ... })</code> 进入与日志、仓储相同的 HUD 兼容窗口元素管理路径；科技数据通道和 <code>core:research.start</code> 不变。</p>
 
     <h3>文档侧数据契约</h3>
     <p>文档侧按通道名读取快照、以 <code>{ target, payload }</code> 发命令，与 <code>RmlUiBridge</code> 对接。通道名字符串、命令 target 命名、<code>command_result</code> 反馈通道均为稳定契约，不随后端实现变化。当前玩家可见 UI 文档都维护在 <code>CoreMod/assets/ui/rml/</code>。</p>

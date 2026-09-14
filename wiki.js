@@ -42,7 +42,6 @@ const WIKI_NAV = [
           ["mod-factionregistry", "NPC 阵营注册", "mod-factionregistry.html"],
           ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
           ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
-          ["mod-oreregistry", "矿物分布注册", "mod-oreregistry.html"],
           ["mod-cropregistry", "作物注册", "mod-cropregistry.html"],
           ["mod-buildingregistry", "建筑蓝图注册", "mod-buildingregistry.html"],
           ["mod-terrainregistry", "地形配置注册", "mod-terrainregistry.html"],
@@ -57,7 +56,9 @@ const WIKI_NAV = [
           ["engine-terraingeneration", "地形生成流程", "engine-terraingeneration.html"],
           ["engine-combat", "战斗规则与法力", "engine-combat.html"],
           ["engine-lighting", "引擎光照", "engine-lighting.html"],
-          ["engine-save-system", "存档系统状态", "engine-save-system.html"]
+          ["engine-save-system", "存档系统状态", "engine-save-system.html"],
+          ["engine-resource-io", "资源 IO / UTF-8 路径", "engine-resource-io.html"],
+          ["engine-service-layer", "引擎服务层", "engine-service-layer.html"]
         ]
       }
     ]

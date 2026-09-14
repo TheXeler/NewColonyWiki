@@ -85,7 +85,7 @@
 ├── main.rml      # 入口文档（RmlUiHost 默认加载 main.rml）
 └── main.rcss     # main.rml 链接的 RCSS 样式
 </code></pre>
-    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。HUD 的右上角时间条由 <code>hud.rml</code>/<code>hud.rcss</code> 渲染，并包含 <code>core:time.speed</code> 的 1x/2x/3x/Max 模拟速度按钮。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
+    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。HUD 的右上角时间条由 <code>hud.rml</code>/<code>hud.rcss</code> 渲染，并包含暂停、1x、2x、4x、无限速按钮。暂停使用 <code>core:time.pause</code>，其余倍率使用 <code>core:time.speed</code>。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
     <div class="callout info">
       字体：CoreMod 和发行包不包含字体文件。真 backend 只加载操作系统的 Unicode 字体，并以统一的 <code>Unicode</code> 家族名提供给 RML/RCSS；缺少系统候选字体不会阻止启动。
     </div>
@@ -94,7 +94,7 @@
     <ul>
       <li>入口：<code>RmlUiHost::init()</code> 默认加载 <code>main.rml</code>。</li>
       <li>热重载：页面发 <code>core:rmlui.reload</code> 命令，或开发期调用 <code>engine.rml_ui().reload()</code>。</li>
-      <li>世界加载后 Host 触发 <code>on_world_init()</code> 重载页面并重推 <code>world_info</code>。</li>
+      <li>创建或读取世界时，<code>main.rml</code> 先显示复用启动视觉的加载进度条；只有相机可见半径内的区块全部达到可渲染状态后，Host 才触发 <code>on_world_init()</code> 并重推 <code>world_info</code>。</li>
     </ul>
 
     <div class="callout info">

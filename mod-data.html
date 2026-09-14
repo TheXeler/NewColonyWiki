@@ -20,8 +20,22 @@
       <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎支持 21 种数据类型：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>combat</code>、<code>audio</code>、<code>zones</code>。</li>
+      <li>当前引擎注册类型包含 <code>items</code>、<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>manufacturing_rules</code>、<code>quality_tables</code>、<code>output_tables</code>、<code>item_bases</code>、<code>experiences</code>、<code>medicinal_herbs</code>、<code>potion_trait_effects</code>、<code>hunting_rules</code>、<code>medicine_slot_rules</code>、<code>colonist_survival_rules</code>、<code>career_progression_rules</code>、<code>wild_food_rules</code>、<code>animal_distributions</code>、<code>weather_definitions</code>、<code>dynamic_weather_regions</code>、<code>visibility_rules</code>、<code>mine_rules</code>、<code>difficulty_rules</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>combat</code>、<code>zones</code>、<code>audio</code>；旧 <code>professions</code> 目录会存入 <code>jobs</code> 注册类型。</li>
     </ul>
+	<p><code>medicine_slot_rules</code> 是可选的单记录全局表：<code>base_capacity</code> 必须为 1-16，<code>technology_bonuses</code> 为 <code>{"technology_id":"mod:tech","slots":N}</code> 数组，同一科技不可重复，基础值加全部科技增量不得超过 16。槽位是每个人都有的通用药剂属性，不限于治疗用途，并显示在人员界面的个人信息中。CoreMod 当前提供两个基础槽位；其他 MOD 若缺少此表，仍保留 <code>medicine_slot_rules_missing</code> 配置屏障。</p>
+	<p><code>colonist_survival_rules</code> 是单记录生存规则表。需求与状态转换字段为 <code>hunger_depletion_per_second</code>、<code>fatigue_depletion_per_second</code>、<code>need_work_duration_seconds</code>、<code>fatigue_recovery_per_second</code>、<code>depleted_stage_seconds</code>、<code>recovery_stage_seconds</code>、<code>temperature_stage_seconds</code>、<code>stress_mood_threshold</code>、<code>stress_recovery_mood_threshold</code>、<code>stress_stage_seconds</code>、<code>stress_recovery_stage_seconds</code>、<code>dazed_duration_seconds</code>、<code>well_fed_healing_per_second</code>、<code>dying_limit</code> 和 <code>dying_per_second</code>。精力消耗使用统一字段，不自行增加昼夜差速或时间边界。需求工作时长与休息恢复速度必须来自该记录；缺失时不会回退到旧的 3 秒或每秒 6 点。压力在低心情或存在负面心情印象时恶化，只有心情达到恢复阈值且不存在负面印象时恢复；崩溃触发配置时长的恍惚，结束后压力降低一级。</p>
+	<p><code>career_progression_rules</code> 是单记录职业成长规则表。<code>work_experience</code> 是成功完成一次可结算工作的基础经验，<code>level_requirements</code> 必须恰好包含四个正数，依次表示 1→2、2→3、3→4 和 4→5 级需求。NCDOCS 没有给出具体数值，因此 CoreMod 可暂时不提供记录；缺失时 <code>engine.jobs.progression_configuration()</code> 返回 <code>career_progression_rules_missing</code>，工作不会采用旧的 25/15 经验或每级 100 的公式。</p>
+	<p><code>status_effects</code> 必须覆盖饥饿、极饿、营养不良、疲劳、过劳、昏睡、压力、崩溃、冻僵、冻伤、炎热、酷暑、恍惚、腿部骨折、手臂骨折和内伤的稳定英文 ID。每项通过 <code>work_efficiency_multiplier</code>、<code>move_speed_multiplier</code>、<code>work_precision_multiplier</code>、<code>care_precision_multiplier</code>、<code>crafting_speed_multiplier</code>、<code>repair_speed_multiplier</code>、<code>melee_hit_multiplier</code>、<code>ranged_hit_multiplier</code>、<code>melee_block_multiplier</code>、<code>ranged_block_multiplier</code>、<code>attack_speed_multiplier</code>、<code>combat_move_speed_multiplier</code>、<code>vision_range_multiplier</code>、<code>ranged_range_multiplier</code>、<code>max_health_multiplier</code>、<code>mood_offset</code> 和 <code>damage_per_second</code> 表达文档列出的效果；除可为负数的 <code>mood_offset</code> 外均不得为负。脑震荡不另设效果行，而是在运行时对腿伤和臂伤效果做去重并集；温度链冻伤与伤病冻伤也是同一效果。缺失、多记录或字段无效时保留稳定配置屏障，不回退到代码平衡值。CoreMod 可以暂不提供该内容记录。</p>
+	<p><code>wild_food_rules</code> 每条记录声明具体资源点 <code>block_id</code>、食材 <code>category</code>、非空且不重复的 <code>biomes</code>、0-1 的 <code>temperature_min/temperature_max</code>、正整数 <code>max_points_per_chunk</code>、<code>refresh_interval_ticks</code>、<code>spawn_attempts</code> 和固定生命周期 <code>post_harvest:"remove_and_refresh"</code>。资源点方块必须引用现有产出表，才能通过一次性采集结算。<code>animal_distributions</code> 每条记录声明动物 <code>entity_id</code>、与原型一致的 <code>aggression</code>、群落/温度条件、<code>base_cap_per_chunk</code>、<code>tree_cap_per_tree</code>、<code>max_cap_per_chunk</code>、检查间隔、候选次数和 <code>death_handling:"drop_and_refresh"</code>；动物原型必须带 <code>animal:true</code> 和有效死亡产出表。两类内容表允许为空，但分别保留稳定全局配置屏障，不生成默认食材、动物、上限或刷新速度。</p>
+	<p>生态系统只检查强加载区块。区块加载与渲染范围以相机的绝对世界位置为中心，不使用环绕相机的观察目标代替相机位置。用户配置的渲染距离是地形绘制的硬外边界；线性 LOD 只在加载距离与渲染距离之间逐级降低细节，不额外扩大驻留或绘制范围。渲染距离内已驻留区块组成稳定聚合网格，相机高度、俯仰或旋转只更新视图参数并由 GPU 改写间接绘制可见性，不重新拼接或全量上传网格。卸载在渲染边界外保留两区块滞回，但滞回区块不会被绘制。强模拟集合进一步只包含已经提交到权威区块存储的驻留区块，并在卸载发生前发布；离开该集合的实体先冻结位移、碰撞和行走动画，新区块真正驻留后才解冻，因此缺失地形不会被物理系统解释为空气并触发坠落。区块提供主群落、基础温度、叠加当前天气修正后的最终温度和树木统计；动物上限按 <code>min(max_cap_per_chunk, floor(base_cap_per_chunk + tree_count * tree_cap_per_tree))</code> 计算，因此伐木和植树会在后续检查改变上限。系统只补足低于上限的数量，不因上限下降删除现存动物；击杀后实体死亡产出照常结算，后续检查再补充。资源点是实际方块，动物是实际实体，均由既有区块/实体存档和网络路径保存；检查时重新核算当前对象。刷新候选由世界 seed、规则 ID、区块、检查代次和候选序号稳定决定。</p>
+	<p><code>visibility_rules</code> 是可空的单记录视野规则表。它声明正整数 <code>update_interval_ticks</code>，非负 <code>colonist_radius_multiplier</code> 和 <code>building_radius_multiplier</code>，以及恰好 16 项的非负 <code>light_multipliers</code>（建筑索引对应合并光照 0-15）。天气的局部光照和视野影响来自 <code>weather_definitions</code> 对应区域状态，不在视野规则中重复声明。殖民者基础半径来自 <code>ColonistAttributes.vision_range</code> 并叠加状态及局部天气倍率；其当前视野是只使用绝对 XZ 坐标的 RTS 圆形范围，不读取 Y 坐标、所在高度光照或体素遮挡。建筑可用非负 <code>vision_radius</code> 提供玩家视野。镜头渲染距离内的地形始终提交；当前无视野时在体素光照、距离雾和颜色调整后保留色相并降低亮度。迷雾内实体保留权威数据但不生成模型。加载距离独立决定定位实体是否继续 AI、生存、心情、视野和物理模拟，处于只渲染外圈的实体保持冻结。记录缺失、多记录或无效时保留稳定全局屏障，不以加载或渲染半径作为玩法视野默认值。</p>
+	<p>视野距离、状态、地形明暗和实体模型剔除统一使用原始绝对 XZ 显示区块坐标；规范化星球坐标只负责区块数据和网格驻留。同一存储网格在不同环绕显示位置分别读取各自的绝对 XZ 视野状态。</p>
+	<p>新区块提交到权威区块存储后会对自身及光照传播半径内的已加载邻居安排一次最终光照网格重建。该过程不依赖生态资源点放置或其他后续方块修改，因此动物分布不会决定区块是否获得正常光照。</p>
+	<p><code>weather_definitions</code> 按天气类型提供光照倍率、温度修正、视野倍率、战斗环境接口、表现接口和强度档位；类型严格为 <code>clear</code>、<code>cloudy</code>、<code>rain</code>、<code>snow</code>、<code>fog</code>。<code>dynamic_weather_regions</code> 提供稳定区域 ID、天气定义、覆盖区块集合、移动/切换策略和强度档位。运行时按区块查询区域天气、基础温度和最终温度；区域状态写入世界存档并随 Host 世界状态复制。文档未定义移动或切换公式时，配置屏障保留接口，不生成代码默认公式。</p>
+	<p><code>mine_rules</code> 是单记录矿井规则表，声明矿井工作点类型、职业/等级、单次工作量、基础产量、每次基础耗减单位、矿物候选及权重、丰度档位权重/初始单位/产量倍率，以及按最低剩余比例选择的衰减产量倍率表。衰减表必须包含零阈值；引擎不内置最低产量倍率。<code>difficulty_rules</code> 也是单记录表，但不直接保存一套当前数值：<code>dimensions</code> 分别列出资源丰度、矿井衰减/耗尽、环境状态、需求速度、袭击、死亡和恢复窗口的稳定选项，<code>presets</code> 用选项 ID 组合预设，<code>default_preset</code> 指定数据定义的默认预设。预设和选项可用 <code>label_key</code> 提供本地化名称，并以 <code>label</code> 作为缺失翻译时的回退。倍率、矿井模式和死亡开关只来自所选选项；预设与选项引用会在加载时交叉校验。两表缺失或多记录时保留稳定配置屏障，不生成代码默认矿物、丰度、产量或难度。CoreMod 当前只有一组用于贯通系统的中性测试难度，不代表正式数值平衡。矿物物品引用必须存在。</p>
+	<p>旧 <code>ores</code> 体素矿脉目录不再加载。矿物不会作为普通矿物体素随机散布；世界种子和区块坐标稳定决定天然可见的矿物类型与丰度档位。带有 <code>mine_rules.work_point_type</code> 的建筑按工作点世界坐标实施每区块唯一约束，交互式放置预览会以 <code>chunk_unique_work_point_conflict</code> 拒绝第二座矿井。连续产物先进入该工作点输出暂存再由搬运清运。</p>
+	<p>地面物品即使由玩家殖民者行动、生产溢出或殖民者死亡产生，也保持 <code>unowned</code> 世界对象归属，只设置 <code>recovery_authorized</code>。搬运完成并进入露天仓储或储存体素时才原子改为玩家归属；当前存档直接保存这一结构。</p>
+	<p>每个地面物品实例同时进入只读渲染快照，并显示其中物品自身的缩小方块模型；没有完整模型时使用物品自身的方块贴图或图标生成代理，只有缺少这些资源时才回退到特殊方块 <code>core:item_pile</code>。该方块没有物品形态、不能由玩家放置，也不会写入或覆盖地形；物品种类、数量、归属和权威坐标仍只由 <code>ItemSystem</code> 管理。同一格的不同物品堆使用由实例 ID 决定的稳定偏移和朝向，不会逐帧抖动。</p>
 
     <h2>方块（blocks）</h2>
     <p>方块是体素世界的基本构成单位，放在 <code>data/blocks/</code> 下。<code>stack_size</code> 表示一个背包格子能堆叠多少个，范围 1~999。<code>category</code> 用来分类，可以取 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</p>
@@ -32,12 +46,12 @@
   "category": "material"
 }</code></pre>
 
-    <p>方块既是世界中的体素单元，也是库存中的物品——没有单独的"物品"类型。<code>hardness</code> 决定挖掘所需时间，<code>drops</code> 里的 ID 必须指向已注册的方块。</p>
+    <p>方块是体素单元。新物品独立放在 <code>data/items/</code>，不需要成为可放置方块。可采方块的正数 <code>hardness</code> 直接表示一次性采掘/伐木工作时长秒数；缺失或无效时目标进入配置屏障。产物必须引用统一 <code>output_table</code>，旧 <code>drops</code> 不再属于当前 schema。</p>
     <pre><code>{
   "id": "copper_age:copper_ore_block",
   "name": "Copper Ore",
   "hardness": 3.0,
-  "drops": ["copper_age:copper_ore"]
+  "output_table": "copper_age:copper_ore_output"
 }</code></pre>
     <p>工作台类的方块（如 <code>workbench</code>、<code>stone_furnace</code>）还会声明关联的配方类型或可用操作。</p>
 
@@ -70,7 +84,7 @@
     </div>
 
     <h2>实体原型（entities）</h2>
-    <p>实体原型用于 <code>spawn_proto</code> 控制台命令和 <code>engine.ecs.spawn_prototype</code>。放在 <code>data/entities/</code> 下。一个实体由多个组件拼成，每个组件描述一种能力或属性。</p>
+	<p>实体原型放在 <code>data/entities/</code> 下，一个实体由多个组件拼成。运行时只安装原型明确声明的组件，不会给普通动物补默认 <code>Needs</code>、<code>AIState</code> 或 <code>Job</code>。殖民者必须通过初始殖民地或招募登记链创建，动物必须由已注册的 <code>animal_distributions</code> 规则驱动；<code>spawn_proto</code> 只保留为开发者控制台诊断命令。</p>
     <p>当前实体原型 JSON 解析器只读取下表中的组件；有些 ECS 组件虽然可在运行时存在，但不会从原型 JSON 直接读取。</p>
     <table>
       <thead><tr><th>组件</th><th>描述</th></tr></thead>
@@ -80,33 +94,28 @@
         <tr><td><code>Health</code></td><td>生命值 (current, max)</td></tr>
         <tr><td><code>Needs</code></td><td>两项需求 (hunger, fatigue)</td></tr>
         <tr><td><code>Mood</code></td><td>心情值 (mood_value, 0~100)</td></tr>
-        <tr><td><code>HeldItem</code></td><td>手持物品 (item_id, count)</td></tr>
-        <tr><td><code>Equipment</code></td><td>单一装备栏，数据字段为 <code>item</code>，包含当前装备的物品 ID 和数量。</td></tr>
-        <tr><td><code>Job</code></td><td>职业 ID 和等级 (1-6)</td></tr>
+        <tr><td><code>Equipment</code></td><td>旧原型兼容输入。当前装备权威是统一物品系统中的单一装备位置实例，ECS 组件只作查询缓存。</td></tr>
+        <tr><td><code>Job</code></td><td>职业 ID 和等级 (1-5)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
         <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤）</td></tr>
         <tr><td><code>AIState</code></td><td>AI 状态（行为树 ID, 当前节点, LoD 层级, busy 标志）</td></tr>
-        <tr><td><code>Stats</code></td><td>力量、敏捷、智力、耐力和工艺等属性。</td></tr>
+        <tr><td><code>ColonistAttributes</code></td><td>文档定义的基础、工作和战斗属性；不包含力量、敏捷、智力或由它们计算的派生公式。</td></tr>
         <tr><td><code>Visual</code></td><td>实体渲染模型和贴图。</td></tr>
         <tr><td><code>Animation</code></td><td>biped 程序动画参数。</td></tr>
         <tr><td><code>HeadVisual</code></td><td>头部纹理和朝向数据。</td></tr>
       </tbody>
     </table>
-    <p><code>Rotation</code> 和 <code>Scale</code> 是 Lua/运行时组件，可用 <code>engine.ecs.set_rotation</code> 和 <code>engine.ecs.set_scale</code> 添加；<code>AIState</code> 原型生成实体时会自动附加 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业；<code>PrototypeRef</code> 由原型生成流程自动记录。</p>
+    <p><code>Rotation</code> 和 <code>Scale</code> 是 Lua/运行时组件，可用 <code>engine.ecs.set_rotation</code> 和 <code>engine.ecs.set_scale</code> 添加；<code>AIState</code> 原型生成实体时会自动附加 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业；<code>PrototypeRef</code> 由原型生成流程自动记录。寻路只计算并保存路线；实体 locomotion 层自行读取路线、推进路径点、决定速度与朝向，并维护 <code>EntityAnimation</code> 的播放状态和时钟。渲染器只采样该状态，并用当前 tick 内的视觉前瞻做平滑显示。</p>
 
-    <p>下面是一个殖民者的实体原型示例：</p>
+    <p>下面是一个可由原型接口直接创建的非殖民者实体示例：</p>
     <pre><code>{
-  "id": "copper_age:copper_worker",
+  "id": "copper_age:pack_animal",
   "components": {
     "Position": { "x": 0, "y": 64, "z": 0 },
     "Speed": { "x": 0, "y": 0, "z": 0 },
     "Health": { "current": 100, "max": 100 },
-    "Needs": { "hunger": 40, "fatigue": 20 },
-    "ColonistTag": {},
     "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
-    "Job": { "id": "copper_age:coppersmith", "level": 1 },
-    "Name": { "data": "Copper Worker" },
-    "HeldItem": { "id": "core:stone_chunk", "count": 1 }
+	"Name": { "data": "Pack Animal" }
   }
 }</code></pre>
 
@@ -115,28 +124,40 @@
     <table>
       <thead><tr><th>概念</th><th>来源</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>WorkTag</code></td><td>C++ 枚举</td><td>细粒度工作标签，包含 Build、Mine、Chop、Haul、Craft、Research、Rest、Sleep 等。</td></tr>
+        <tr><td><code>WorkTag</code></td><td>C++ 枚举</td><td>细粒度工作标签，包含 Build、Mine、Chop、Haul、Craft、Research、JobChange、Treat、Rest、Sleep 等。</td></tr>
         <tr><td><code>WorkCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
         <tr><td><code>WorkTargetKind</code></td><td>C++ 枚举</td><td>目标类型：Entity、Block 或 PlannedBlock。</td></tr>
         <tr><td><code>WorkAction</code></td><td>C++ 枚举</td><td>硬编码底层动作：Interact 或 Destroy；不再有数据驱动 action 注册表。</td></tr>
         <tr><td><code>WorkPayloadKind</code></td><td>C++ 枚举</td><td>payload_id 的语义类型：None、Block、Item、Recipe、Building、Zone 或 Custom。</td></tr>
       </tbody>
     </table>
-    <p>当前公开的 Lua 发布入口仍是兼容形式 <code>engine.work.post(type, faction_id, x, y, z, duration, payload_id)</code>。<code>type</code> 支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>mine</code>/<code>dig</code>/<code>gather</code>、<code>chop</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>research</code>、<code>guard</code> 和 <code>patrol</code>；未知字符串会落回 Build。这个入口默认发布 Block 目标工作，其中 <code>mine</code>/<code>chop</code> 使用 Destroy，其它标签使用 Interact；非零 <code>payload_id</code> 作为 Custom payload 保存。脚本驱动 work 主要通过 <code>work:completed</code> 处理完成逻辑；只有显式 Block payload 的 Block+Interact 会触发底层 block interaction。目前没有公开的 Lua 工作类型注册 API。</p>
-    <p>工作完成时引擎会发出 <code>work:completed</code> 事件，payload 包含 <code>instance_id</code>、<code>worker</code>、<code>tag</code>、<code>category</code>、<code>target_kind</code>、<code>action</code>、<code>payload_kind</code>、<code>payload_id</code>、<code>faction_id</code>、坐标、<code>target_entity</code> 和 <code>tick</code>。</p>
+    <p>当前公开的 Lua 发布入口是 <code>engine.work.post(type, faction_id, x, y, z, duration, payload_id, target_entity?)</code>。支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>use_medicine</code>/<code>medicine</code>/<code>use_potion</code>、<code>transfer_patient</code>/<code>carry_patient</code>、<code>job_change</code>/<code>change_class</code>、<code>treat</code>/<code>treatment</code>/<code>heal</code>、<code>feed_patient</code>/<code>patient_feed</code>、<code>first_aid</code>/<code>stabilize</code>、<code>battlefield_treat</code>/<code>medical_pack</code>、<code>guard</code> 和 <code>patrol</code>。未知类型、缺失或非正数时长固定返回 0，不创建其它类型工作。非零 <code>payload_id</code> 作为 Custom payload 保存，<code>target_entity</code> 可指定实体目标。一次性 Mine/Chop 只能由指定工具确认后经 Host 命令创建，研究工作只由已开启且已支付材料的研究项目派生；这些来源工作不能通过通用发布入口伪造。生产制作应通过生产订单，不应调用直通制作接口。目前没有公开的 Lua 工作类型注册 API。</p>
+    <p>工作完成时引擎会发出 <code>work:completed</code> 事件，payload 包含 <code>instance_id</code>、<code>worker</code>、<code>tag</code>、<code>category</code>、<code>target_kind</code>、<code>action</code>、<code>payload_kind</code>、<code>payload_id</code>、<code>faction_id</code>、坐标、<code>target_entity</code> 和 <code>tick</code>。工作取消或中断时分别发出 <code>work:cancelled</code> 或 <code>work:interrupted</code>，并包含 <code>instance_id</code>、<code>worker</code>、<code>payload_id</code>、<code>faction_id</code>、<code>source_id</code> 和 <code>tick</code>。</p>
 
     <h2>配方（recipes）</h2>
-    <p>配方放在 <code>data/recipes/</code> 下。声明输入、输出和可选的职业要求。写了 <code>Job</code> 后，只有满足职业与等级要求的实体能制作。</p>
+    <p>固定配方放在 <code>data/recipes/</code> 下。声明输入、目标物品、产出表、兼容工作点和可选职业要求。实际结果及数量只由产出表决定；目标物品用于展示和维持库存统计。写了 <code>Job</code> 后，只有满足职业与等级要求的实体能制作。</p>
     <pre><code>{
-  "id": "copper_age:smelt_copper",
+  "id": "core:craft_wood_plank",
   "inputs": [
-    { "id": "copper_age:copper_ore", "count": 2 }
+    { "id": "core:wood", "count": 1 }
   ],
-  "Job": { "id": "copper_age:coppersmith", "level": 1 },
-  "output": { "id": "copper_age:copper_ingot", "count": 1 }
+	"target_item": "core:wood_plank",
+	"manufacturing_mode": "none",
+	"work_amount": 5,
+	"processing_difficulty": 0,
+	"output_table": "core:wood_plank_output",
+	"output_table_executions": 1,
+	"compatible_work_points": ["core:workbench"]
 }</code></pre>
-    <p>合成成功时会触发 <code>recipe:crafted</code> 事件，你可以在 Lua 里订阅它来响应。底层 <code>engine.crafting.craft</code> 仍是直接检查实体单个 <code>HeldItem</code> 的低级接口，多种输入或不同槽位输入不会在这条路径里自动汇总。</p>
-    <p>CoreMod 的制作菜单通过 <code>systems.crafting.queue</code> 下单：优先从 stockpile 账本预留输入材料，工作完成后把产物放入工人手中或存回账本。使用 stockpile 预留时 Craft 工作的 <code>data</code> 会置为 <code>0</code>，因此 C++ 工作完成路径不会再调用 <code>RecipeSystem::craft</code> 重复消耗或产出；只有未预留、依赖工人手持材料的低级制作才继续走 C++ 直接制作路径。</p>
+	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时仍会受到工人的制作速度乘数影响。CoreMod 工作台配方为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
+    <p>生产完成时会触发 <code>recipe:crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
+    <p>生产订单支持目标次数、维持库存、优先级、指定工人、暂停、恢复和取消。创建生产订单不等于已经创建具体工作：只有材料、合格工人和兼容工作点条件满足时，订单才会向 WorkPool 发布 Craft 工作；命令结果通过 <code>work_created</code>、<code>status</code> 和 <code>waiting_reason</code> 区分两种状态，界面不再显示误导性的“已加入工作池”成功通知。工作激活后才通过统一物品与预留系统绑定材料实例并送入工作点输入暂存；完成时原子提交材料，把产出表结果写入输出暂存。取消或中断会释放预留并安排输入材料返还。</p>
+	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Host 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
+
+	<h2>锻造物品基型（item_bases）</h2>
+	<p>物品基型放在 <code>data/item_bases/</code>。基型 ID 就是目标物品 ID，不再重复配置目标；目标必须存在于 <code>items</code> 或兼容方块物品注册表。基型声明 <code>base_values</code>、<code>base_processing_difficulty</code>、<code>base_materials</code>、<code>attributes</code>、<code>affixes</code>、<code>max_capacity</code>、<code>manufacturing_mode</code>、<code>quality_table</code> 与 <code>compatible_work_points</code>。</p>
+	<p>每个属性等级直接声明最终增强值 <code>value</code>、<code>capacity_cost</code> 和该等级额外 <code>materials</code>，不会累加前级。词条等级同样声明容量与材料，并可携带 <code>effects</code>、<code>modifiers</code>、<code>manufacturing_events</code> 和 <code>display</code>。具体内容表可以为空；引擎不会填入默认容量、材料、难度或词条。</p>
+	<p>科技通过 <code>unlocks</code> 中的 <code>item_base:&lt;完整基型 ID&gt;</code> 解锁基型。保存方案只记录基型以及属性/词条的最终等级；修改方案始终生成新的稳定 design ID。无效方案仍可保存并返回具体错误，但不能进入锻造生产。</p>
 
     <h2>建筑蓝图（buildings）</h2>
     <p>建筑定义放在 <code>data/buildings/</code> 下。建造菜单列出这些建筑蓝图；施工完成后，<code>blueprint</code> 中声明的方块会按建筑原点偏移放入世界。蓝图支持单点 <code>pos</code>，也支持闭区间长方体 <code>from</code>/<code>to</code>。</p>
@@ -145,48 +166,61 @@
   "name": "Wood Hut",
   "size": [5, 5, 5],
   "materials": [
-    { "item_id": "core:wood_plank", "count": 72 }
+    { "item_id": "copper_age:building_material", "count": 72 }
   ],
   "construction_ticks": 240,
   "blueprint": [
-    { "from": [0, 0, 0], "to": [4, 0, 4], "block": "core:wood_floor" },
-    { "from": [0, 1, 0], "to": [4, 3, 0], "block": "core:wood" },
-    { "pos": [2, 1, 0], "block": "core:wooden_door" }
+    { "from": [0, 0, 0], "to": [4, 0, 4], "block": "copper_age:floor" },
+    { "from": [0, 1, 0], "to": [4, 3, 0], "block": "copper_age:wall" },
+    { "pos": [2, 1, 0], "block": "copper_age:door" }
   ]
 }</code></pre>
     <p><code>materials[].item_id</code> 和 <code>blueprint[].block</code> 都必须引用已注册方块/物品；所有蓝图坐标都必须在 <code>size</code> 范围内。完整说明见 <a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
+	<p>建筑可用 <code>parts</code> 声明内部多体素部件。每项必须包含建筑内唯一的非空 <code>id</code>、非空 <code>type</code> 和非空 <code>cells</code> 坐标数组；坐标必须在建筑 <code>size</code> 内、必须被 <code>blueprint</code> 覆盖，且不同部件不能占用同一格。建筑完成时，CoreMod 以建筑稳定实例 ID 作为 owner 注册部件；每个部件保存稳定实例 ID、定义 ID、实际方块集合和逐格方块 hash，并随版本化运行态及 Host 快照恢复。部件按整体交互和整体移除，不能把各格当作独立对象重复结算。</p>
+	<pre><code>"parts": [
+  { "id": "bed", "type": "bed", "cells": [[0, 0, 0], [0, 0, 1]] }
+]</code></pre>
     <p>CoreMod 施工入口 <code>systems.construction.order(def_id, x, y, z)</code> 会创建建筑订单；材料足够时立即从 stockpile 账本预留并推进施工，材料不足时返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code> 并等待后续库存补足。等待订单会在 <code>stockpile:changed</code> 后立即重试预留，并每 60 tick 做一次兜底检查。<code>systems.construction.preview_materials(def_id)</code> 可用于只预览材料可用性，不会作为硬阻止。</p>
     <p>HTML 建造面板读取 <code>build_defs</code> 快照，行结构为 <code>{ id, label, label_key, category, size, cost, materials, missing, available, can_order, status }</code>；已下单建筑读取 <code>construction_active</code> 快照，行结构为 <code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>。页面发送 <code>core:build.begin { id }</code> 时进入 placement；只有带 <code>x/y/z</code> 时才实际下单。</p>
 
+    <h2>殖民者经历（experiences）</h2>
+    <p>经历定义放在 <code>data/experiences/</code>。每条记录声明稳定 ID、名称、质量档位、抽取权重，以及可选的图标、叙事、属性修正、初始职业、工作/战斗/心情/事件反应倾向、初始状态和互斥经历。初始职业与互斥经历会做跨注册表校验。CoreMod 当前可以不提供任何经历条目；引擎不会生成默认经历。</p>
+    <p>招募生成配置将 0-3 个经历的数量权重作为全局独立分布保存；每个招募等级只提供质量权重、职业总等级下限及高于下限的概率。候选生成前会预检配置，配置无效时不会扣除招募资源。经历附带状态只在候选实体首次创建时施加，招募后经历 ID 与完整候选资料保持持久化。</p>
+
+    <h2>药材与性状效果（medicinal_herbs / potion_trait_effects）</h2>
+    <p><code>data/medicinal_herbs/</code> 每条记录包含 <code>id</code>、<code>name</code>、<code>fire</code>、<code>wind</code>、<code>water</code> 和 <code>earth</code>。<code>data/potion_trait_effects/</code> 每条记录包含稳定 <code>id</code>、<code>trait</code>（fire/wind/water/earth）、<code>minimum</code>、<code>maximum</code>、<code>effect_id</code>、<code>value</code>、<code>duration</code> 和布尔 <code>positive</code>。两类目录均可为空，不生成默认内容。</p>
+    <p><code>effect_id</code> 是生命周期、日志和免疫使用的效果类型标识，不声明覆盖关系。每瓶药创建独立效果组，所有组无条件叠加。效果 ID 必须由 Lua 注册生命周期定义；缺少定义时配置状态在 <code>missing_effect_ids</code> 中给出具体 ID，并报告 <code>potion_effect_definition_missing</code>。</p>
+
     <h2>职业（jobs）</h2>
-    <p>职业定义放在 <code>data/jobs/</code> 下，旧 MOD 的 <code>data/professions/</code> 会兼容注册为 jobs。职业声明转职需要的方块、前置职业、允许接取的 <code>allowed_work_tags</code> 和到达特定等级后解锁的配方；旧字段 <code>allowed_work_types</code> / <code>allowed_job_types</code> 也会作为迁移别名读取。等级范围 1-6，工作标签可使用 <code>gather</code>、<code>mine</code>、<code>dig</code>、<code>build</code>、<code>plant</code>、<code>haul</code>、<code>craft</code>、<code>manufacture</code>、<code>cook</code>、<code>guard</code>、<code>patrol</code> 等需求文档用语。完成玩家显式工作后按 <code>100 * 当前等级</code> 的阈值累计职业经验并升级，心情会把经验效率调整到 50%-150%。<code>bonuses</code> 会进入人员 UI 聚合属性；当前实际模拟已接入工作时长、搬运容量和作物收获成功率：<code>mining_speed</code> 影响挖矿/采集 work，<code>construction_speed</code> 或 <code>work_speed</code> 影响建造 work，<code>crafting_speed</code> 或 <code>work_speed</code> 影响制作 work，<code>hauling_speed</code> 或 <code>carry_move_speed</code> 影响搬运 work 进度，<code>carry_capacity</code> 影响搬运拾取掉落物时的一次携带数量，<code>work_success_rate</code> 影响成熟作物收获时每种产出额外 +1 的概率。战斗属性目前仍只保证展示。</p>
+	<p>职业定义放在 <code>data/jobs/</code> 下。每项是一个唯一职业树节点，必须声明稳定 <code>career_id</code>、1-5 的 <code>rank</code>、节点前置、工作 tag 和恰好五项 <code>level_abilities</code>；初始 <code>colonist</code> 是无 LEVEL 的特例。普通父链、交叉前置和仅继承不参与转职的 <code>inherited_nodes</code> 分开保存。装备以 <code>equipment:true + supported_jobs</code> 支持具体节点。经验值与四段升级需求只读取唯一 <code>career_progression_rules</code>，内容缺失时不生成公式或心情倍率。</p>
     <pre><code>{
-  "id": "copper_age:coppersmith",
-  "name": "Coppersmith",
-  "category": "work",
-  "max_level": 6,
-  "required_block": { "id": "copper_age:copper_hammer", "count": 1 },
+  "id": "copper_age:coppersmith_3",
+  "career_id": "coppersmith",
+  "rank": 3,
+  "name": "Coppersmith Apprentice",
+  "parent": "core:crafter_2",
+  "max_level": 5,
   "prerequisites": [
-    { "id": "core:worker", "level": 1 }
+    { "id": "core:crafter_2", "level": 5 }
   ],
-  "unlocks_recipes": [
-    { "id": "copper_age:smelt_copper", "level": 1 }
-  ],
-  "bonuses": [
-    { "stat": "crafting_speed", "value": 0.10, "mode": "add_mult" }
+  "allowed_work_tags": ["craft"],
+  "level_abilities": [
+    { "id": "copper_age:coppersmith_3_level_1", "source_text": "..." },
+    { "id": "copper_age:coppersmith_3_level_2", "source_text": "..." },
+    { "id": "copper_age:coppersmith_3_level_3", "source_text": "..." },
+    { "id": "copper_age:coppersmith_3_level_4", "source_text": "..." },
+    { "id": "copper_age:coppersmith_3_level_5", "source_text": "..." }
   ]
 }</code></pre>
-    <p>分配职业成功时会触发 <code>job:assigned</code> 事件。<code>category:"combat"</code> 表示战斗职业；成功分配后会建立 <code>Squad</code> 和 <code>CombatState</code>。2026-07-20 V2 战斗不再为法师建立 <code>ManaReserve</code>。</p>
+    <p>分配职业成功时会触发 <code>job:assigned</code> 事件。<code>category:"combat"</code> 只标识文档中的战斗职业方向；战斗专项规则未定义时不会自动创建带私有数值的 <code>Squad</code> 或 <code>CombatState</code>，也不存在未定义的区域法力组件。</p>
 
     <h2>战斗规则数据（combat）</h2>
-    <p>战斗相关的非玩家设置默认值仍可放在 <code>data/combat/</code> 下，作为 <code>combat</code> 类型进入通用数据注册表。2026-07-20 V2 战斗只实现近战基础循环，CoreMod 不再提供武器克制和压制规则表。</p>
+    <p><code>data/combat/</code> 仍可作为通用注册目录，但 CoreMod 当前保持为空。专项文档建立前不放入命中、伤害、冷却、压制、法力或外交启动默认值。</p>
 
-    <h2>启动脚本默认值</h2>
-    <p>CoreMod 的 Lua 启动脚本会读取 <code>data/combat/bootstrap_defaults.json</code> 中的 <code>core:bootstrap_defaults</code> 记录，用于不属于玩家设置、但适合随 MOD 内容版本调整的启动默认值。当前字段包括阵营关系事件的日长 tick、触发时刻、概率、关系变化量、随机 salt，以及初始殖民者生成的 x/z 坐标。缺少该记录或缺少单个字段时，<code>bootstrap.lua</code> 会回退到脚本内默认值，保持旧版启动行为。</p>
-    <p>运行时交战规则、命中公式、攻击冷却和测试命令说明见 <a href="engine-combat.html">战斗规则</a>。</p>
+    <p>战斗接口边界见 <a href="engine-combat.html">战斗接口</a>。</p>
 
     <h2>文明（civilizations）</h2>
-    <p>文明用来把职业、开局选项和配方限制组织在一起。放在 <code>data/civilizations/</code> 下。目前建议保持简单：声明可用职业、一个开局选项，需要时再加配方限制。</p>
+	<p><code>data/civilizations/</code> 保留注册和运行时接口。NCDOCS 当前没有文明专项玩法和内容表，因此 CoreMod 目录保持为空，不提供私有开局职业、资源、配方加成或文明数值。</p>
     <pre><code>{
   "id": "copper_age:copper_clan",
   "name": "Copper Clan",
@@ -221,34 +255,17 @@
 }</code></pre>
 
     <h2>NPC 阵营（factions）</h2>
-    <p>阵营定义放在 <code>data/factions</code>。<code>name_template</code> 可以包含 <code>${random_name}</code>，生成实例时会从指定的名称池里取词；关系值会被限制在 <code>min_relation</code> 和 <code>max_relation</code> 之间。</p>
-    <pre><code>{
-  "id": "copper_age:merchant_guild",
-  "name_template": "${random_name} Merchant Guild",
-  "initial_relation": 10,
-  "max_relation": 100,
-  "min_relation": -100,
-  "name_pools": ["copper_age:metals"]
-}</code></pre>
+	<p><code>data/factions/</code> 保留其他殖民地定义 schema；<code>data/name_pools/</code> 保留名称模板词池。NCDOCS 尚未定义关系上下限、初始关系、影响半径或实例生成规则，因此 CoreMod 当前不提供 NPC 阵营定义，不能把旧示例数值当作稳定玩法契约。</p>
 
     <h2>阵营自动生成规则（faction_spawn_rules）</h2>
-    <p>开新世界时引擎会按 <code>data/faction_spawn_rules/</code> 下的规则文件批量 spawn AI 阵营实例，让世界开局就存在若干 NPC 势力。每个文件包含一个 <code>id</code>（信息字段）和一个 <code>rules</code> 数组；每条规则指定一个 <code>faction_def_id</code> 和 <code>[min_count, max_count]</code> 区间，引擎用世界种子派生的独立随机流在每个区间内取一个数，按数量 spawn 该阵营。引用未知 def 的规则会被跳过并警告。<code>max_count=0</code> 的规则不生效。Lua API：<code>engine.factions.spawn_initial(seed?)</code>、<code>engine.factions.list_spawn_rules()</code>；控制台命令：<code>spawn_initial_factions [seed]</code>。</p>
-    <pre><code>{
-  "id": "core:default",
-  "rules": [
-    { "faction_def_id": "core:barbarian_tribe", "min_count": 1, "max_count": 2 },
-    { "faction_def_id": "core:pirate_band", "min_count": 0, "max_count": 1 },
-    { "faction_def_id": "core:merchant_guild", "min_count": 1, "max_count": 2 },
-    { "faction_def_id": "core:scholar_order", "min_count": 0, "max_count": 1 }
-  ]
-}</code></pre>
-    <p>每个阵营实例加入世界时（自动 spawn、控制台 <code>spawn_faction</code> / <code>spawn_initial_factions</code>、Lua <code>engine.factions.spawn</code> / <code>spawn_initial</code>）都会发布 <code>faction:spawned</code> 事件，payload 字段：<code>instance_id</code>、<code>def_id</code>、<code>faction_hash</code>、<code>display_name</code>、<code>relation</code>、<code>min_relation</code>、<code>max_relation</code>、<code>inclination</code>、<code>spawned_tick</code>、<code>reason</code>。reason 取值：<code>initial</code>（开局自动 spawn）、<code>console</code>（控制台命令）、<code>script</code>（Lua API）、<code>spawned</code>（缺省）。Lua 订阅示例：<code>engine.events.subscribe("faction:spawned", function(evt) ... end)</code>。</p>
+	<p><code>data/faction_spawn_rules/</code> 保留注册目录，但 NCDOCS 未定义数量、密度、距离或位置生成公式。CoreMod 目录为空，新世界不随机生成 NPC 阵营；旧 Lua/控制台生成入口已移除。</p>
+	<p>未来有文档依据的专项规则显式加入阵营实例时可发布 <code>faction:spawned</code> 事件；CoreMod 当前不会产生该事件。</p>
 
     <h2>外交提议（diplomacy_proposals）</h2>
-    <p>外交提议放在 <code>data/diplomacy_proposals/</code>。每个文件定义一个 <code>id</code>、<code>effect</code>、<code>required_status</code> 和可选的 <code>relation_offset</code>、<code>maximum_base_score</code>、<code>treaty_id</code>、<code>forced</code>。提议可在谈判 API 中被反议、接受或拒绝。</p>
+    <p>外交提议 schema 放在 <code>data/diplomacy_proposals/</code>。每个文件可定义一个 <code>id</code>、<code>effect</code>、<code>required_status</code> 和可选的 <code>relation_offset</code>、<code>maximum_base_score</code>、<code>treaty_id</code>、<code>forced</code>。当前 NCDOCS 未定义具体外交玩法，CoreMod 目录保持为空，引擎不生成默认提案或积分。</p>
 
     <h2>名称池（name_pools）</h2>
-    <p>名称池给 NPC 阵营生成名称使用。放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过。</p>
+    <p>名称池为未来显式加入的其他殖民地提供名称模板词汇，放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过；名称工具不会自行生成阵营实例。</p>
     <pre><code>{
   "id": "copper_age:metals",
   "words": ["Copper", "Bronze", "Tin", "Verdigris"]
@@ -271,14 +288,14 @@ data type:name_pools
 list_factions
 list_name_pools
 gen_name ${random_name}_guild 42
-spawn_proto copper_age:copper_worker</code></pre>
+spawn_proto copper_age:pack_animal</code></pre>
 
     <h2>实体视觉组件</h2>
     <p>实体原型可以声明 <code>Visual</code> 和 <code>Animation</code>。这两个组件用于客户端渲染，不改变职业、AI、背包等玩法数据。</p>
     <table>
       <thead><tr><th>组件</th><th>字段</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td><code>model</code> 支持 <code>box</code> 和 <code>biped</code>。贴图路径相对 <code>assets/</code>。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和 <code>_south/_east/_west/_north</code> 朝向贴图路径。</td></tr>
+        <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td><code>model</code> 支持 <code>box</code> 和 <code>biped</code>。贴图路径相对 <code>assets/</code>。</td></tr>
         <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>当前为 biped 程序动画，按实体水平速度驱动行走摆动。</td></tr>
       </tbody>
     </table>

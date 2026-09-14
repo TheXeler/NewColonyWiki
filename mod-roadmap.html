@@ -16,11 +16,11 @@
     <h2>已经公开的能力</h2>
     <ul>
       <li>数据驱动内容：方块、实体、配方、职业、文明、焦点、NPC 阵营和名称池。</li>
-      <li>职业与配方：职业 1-6 级，支持前置职业、转职方块、工作类型限制和配方解锁。</li>
+      <li>职业与配方：职业 1-5 级，支持前置职业、具体装备实例换装、工作类型限制、配方解锁和生产订单。</li>
       <li>焦点：面向玩家的焦点信息，支持条件、冷却、一次性触发和选项。</li>
       <li>Lua 扩展：日志、事件、定时器、数据查询、实体操作、焦点、地形、阵营、本地化和网络命令。</li>
       <li>调试控制台：多个命令，涵盖 MOD 加载、数据注册、配方、实体、背包、阵营、网络、Lua 热重载等。</li>
-      <li>网络同步：TCP Host/Client、快照广播、客户端预测、延迟补偿、MOD 数据交换。</li>
+      <li>网络同步：TCP Host/Client、快照广播、Host 权威命令结果、重连和 MOD 数据交换。</li>
       <li>AI 系统：需求驱动、优先级任务分配、A* 寻路、行为树（Sequence/Selector/Decorator）、Blackboard 共享状态。</li>
     </ul>
 
@@ -32,18 +32,17 @@
       <li>示例覆盖方块、职业、文明开局、配方、焦点和 Lua 入口脚本，MOD 可按 <code>CoreMod/</code> 结构参照编写。</li>
       <li>文明数据会校验开局配置和配方规则字段，交叉引用失败时报告缺失目标。</li>
       <li>新增了定时器 <code>engine.timers</code>。</li>
-      <li>新增了 7 个内置事件（<code>inventory:changed</code>、<code>recipe:crafted</code>、<code>job:assigned</code>、<code>block:interacted</code>、<code>work:completed</code>、<code>focus:chosen</code>、<code>focus:dismissed</code>）。</li>
+      <li>工作生命周期事件已扩展为 completed、cancelled 和 interrupted；殖民者死亡会发出 <code>colonist:death</code> 并生成可存档的纪念记录。</li>
       <li>新增了 <code>data/factions</code>、<code>data/name_pools</code> 和 <code>engine.factions</code> 阵营系统。</li>
       <li>新增了 <code>data/crops</code> 数据类型。</li>
       <li>补充了 <code>engine.network</code>、<code>engine.terrain</code>、<code>engine.locale</code> 的完整绑定和文档。</li>
-      <li>网络同步全面升级（增量快照、客户端预测、延迟补偿、重连恢复）。</li>
     </ul>
 
     <h2>近期方向</h2>
     <ul>
-      <li>梳理 Craft 工作完成路径，避免 C++ 直接制作和 CoreMod stockpile 队列对同一工作重复产出。</li>
-      <li>补齐 <code>data/techs</code> 的公开注册或明确保持为专用系统输入。</li>
-      <li>补齐存档中的 chunk overrides、建筑实例、区域实例和 MOD 自定义运行时状态。</li>
+      <li>继续完善生产订单持久化、品质/失败制造模式和加工难度结算；公开直通制作入口已禁用，stockpile 制作统一走 reservation ledger。</li>
+      <li>完善 <code>data/techs</code> 的开题材料、工作站、职业要求和研究暂停/恢复规则。</li>
+      <li>继续补齐 chunk overrides、已删除内容的迁移规则和 MOD 自定义组件存档；建筑实例、区域实例和 CoreMod 运行态已有版本化恢复链路。</li>
     </ul>
 
     <h2>中期方向</h2>

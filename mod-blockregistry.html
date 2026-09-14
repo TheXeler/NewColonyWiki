@@ -11,20 +11,19 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块注册</div></div>
   <div class="content">
     <h1>方块注册</h1>
-    <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。方块既是世界中的体素单元，也是库存中的物品——没有单独的"物品"类型。</p>
+    <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。存量方块记录会派生同 ID 的兼容物品定义；不需要成为体素的新物品应放在 <code>data/items/</code>。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
   "id": "copper_age:copper_ore",
   "name": "Copper Ore",
+  "icon": "textures/items/copper_ore.png",
   "stack_size": 64,
   "hardness": 3.0,
   "emission": 0,
   "category": "material",
-  "drops": [
-    "copper_age:copper_ore",
-    { "item": "core:stone_chunk", "min": 1, "max": 2 }
-  ]
+  "output_table": "copper_age:copper_ore_outputs",
+  "output_table_executions": 1
 }</code></pre>
 
     <h2>字段说明</h2>
@@ -33,43 +32,38 @@
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。允许字符：小写字母、数字、下划线、短横线、冒号。省略前缀时引擎自动补全为 <code>&lt;mod_id&gt;:&lt;名称&gt;</code>。</td></tr>
         <tr><td><code>name</code></td><td>string</td><td>否</td><td>显示名称。</td></tr>
+        <tr><td><code>icon</code></td><td>string</td><td>否</td><td>物品形态使用的图标，源数据中的路径相对当前 MOD 的 <code>assets/</code>。运行时会附带所属 MOD 身份解析，不依赖 UI 文档的相对目录。省略时，启动资源预处理会从同名方块纹理或方块模型引用的纹理派生临时图标。</td></tr>
         <tr><td><code>stack_size</code></td><td>int</td><td>否</td><td>背包每格最大堆叠数，范围 1~999。不填默认为 1（不可堆叠）。</td></tr>
-        <tr><td><code>hardness</code></td><td>float</td><td>否</td><td>挖掘硬度，决定挖掘所需时间。</td></tr>
+        <tr><td><code>hardness</code></td><td>positive float</td><td>可采对象必填</td><td>一次性采掘/伐木工作的时长秒数；缺失、零或无效时目标显示配置屏障，不使用代码默认时长。</td></tr>
         <tr><td><code>emission</code></td><td>int</td><td>否</td><td>方块光源强度，范围 <code>0</code> 到 <code>15</code>。省略或为 <code>0</code> 时不发光；大于 <code>0</code> 的任意方块都会作为 block light 光源注册，不限于火把。</td></tr>
-        <tr><td><code>drops</code></td><td>array</td><td>否</td><td>挖掘后掉落的物品列表。元素可以是字符串 ID，也可以是 <code>{ "item": "...", "min": 1, "max": 2 }</code> 对象；引用必须指向已注册的方块 ID。</td></tr>
+        <tr><td><code>output_table</code></td><td>data id</td><td>可采对象必填</td><td>采掘、伐木或采集完成时执行的统一产出表。缺失或无效时对象保留并报告稳定配置错误。</td></tr>
+        <tr><td><code>output_table_executions</code></td><td>int</td><td>否</td><td>本次完成执行产出表的次数，默认 1，必须大于 0。</td></tr>
+		<tr><td><code>ground_despawn_ticks</code></td><td>int</td><td>否</td><td>该方块兼容物品形态落地后的消失 tick；0 或省略表示不计时。有效搬运来源预留会暂停计时。</td></tr>
         <tr><td><code>category</code></td><td>string</td><td>否</td><td>分类标签，如 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</td></tr>
         <tr><td><code>material</code></td><td>string</td><td>否</td><td>材质类型，如 <code>rock</code>、<code>earth</code>、<code>wood</code>、<code>plant</code>、<code>metal</code>、<code>fluid</code>、<code>glass</code>。</td></tr>
         <tr><td><code>food_value</code></td><td>int</td><td>否</td><td>食物饱腹值，正整数。当前由数据和脚本/界面读取，不会单独自动生成可执行进食逻辑。</td></tr>
         <tr><td><code>equip_type</code></td><td>string</td><td>否</td><td>装备类型标记。装备物品统一使用 <code>Equipment</code>；该字段不注册额外槽位。</td></tr>
-        <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>。设为 <code>false</code> 时 Lua <code>get_block_info</code> 不暴露 drops；加载器会警告这些 drops 将被忽略。</td></tr>
+        <tr><td><code>has_item_block</code></td><td>bool</td><td>否</td><td>是否具有物品形态，默认 <code>true</code>；不改变产出表结算。</td></tr>
+        <tr><td><code>placement_support</code></td><td>string</td><td>可放置方块可选</td><td><code>below</code> 表示候选格必须有下方支撑。候选格始终沿命中面的外法线取相邻空格：顶面在上方、底面在下方、侧面在对应外侧，不会强制改到命中方块顶部。</td></tr>
+        <tr><td><code>placement_support_blocks</code></td><td>data id array</td><td>否</td><td>限制下方支撑的允许方块 ID；仅与 <code>placement_support: "below"</code> 配合使用。树苗使用 <code>["core:dirt", "core:grass"]</code>，所以点击其他方块侧面时，只要侧边候选格下方是泥土或草方块仍可放置。</td></tr>
+        <tr><td><code>choppable</code></td><td>bool</td><td>否</td><td>显式声明方块可作为伐木目标。地形树特征仍会自动视为可伐木；独立放置或生长产生的树方块应声明此字段，CoreMod 的 <code>core:tree</code> 使用 <code>true</code>。</td></tr>
         <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块占用与遮挡分级：<code>opaque</code> 不透明，遮挡相邻面且不可通行；<code>translucent</code> 半透明，不遮挡相邻面但不可通行；<code>transparent</code> 透明，不遮挡相邻面且可通行。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。</td></tr>
         <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>旧版半透明标记，默认 <code>false</code>。新内容优先使用 <code>block_class</code>；该字段仍会让方块不遮挡相邻可见面，但导航上仍不可通行。</td></tr>
-        <tr><td><code>random_tick</code></td><td>object</td><td>否</td><td>Minecraft 风格的随机方块刻规则。引擎每 tick 在每个加载的 chunk 里随机采样若干个方块，被采中的方块若声明了 <code>random_tick</code> 就按概率执行转化。详见下方"随机方块刻"小节。</td></tr>
       </tbody>
     </table>
-
-    <h2>随机方块刻</h2>
-    <p><code>random_tick</code> 对象支持以下字段：</p>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>action</code></td><td>string</td><td>是</td><td>规则类型：<code>decay_unless_in_zone</code>（不在指定 zone 内时退化）或 <code>spread_from_neighbor</code>（周围一圈一格高度差内有指定方块时扩散）。</td></tr>
-        <tr><td><code>to</code></td><td>data id</td><td>是</td><td>转化目标方块 ID。</td></tr>
-        <tr><td><code>probability_permille</code></td><td>int</td><td>是</td><td>每次被采样命中时触发的概率，单位千分比（0~1000）。</td></tr>
-        <tr><td><code>zone</code></td><td>data id</td><td><code>decay_unless_in_zone</code> 必填</td><td>豁免退化的 zone type id；方块只要位于该类型的任一实例内就不退化。</td></tr>
-        <tr><td><code>require_air_above</code></td><td>bool</td><td>否</td><td><code>decay_unless_in_zone</code> 专用。设为 <code>true</code> 时，只有当正上方是空气才允许退化（用于让耕地上面有作物时不退化）。</td></tr>
-        <tr><td><code>neighbor</code></td><td>data id</td><td><code>spread_from_neighbor</code> 必填</td><td>扩散源方块 ID；周围一圈（4 个水平邻居）的一格高度差范围内出现此方块就允许扩散。正上正下不参与扩散。</td></tr>
-      </tbody>
-    </table>
-    <p>CoreMod 内置两条规则：</p>
-    <ul>
-      <li><code>core:farmland</code> 在自身正上方一格不属于 <code>core:growing</code> 区域、且正上方为空气时，按 100/1000 的概率退化为 <code>core:dirt</code>。这模拟了 Minecraft 中无人维护的耕地逐渐干裂变回泥土。判定时探测上方一格是因为 growing 区域 2D 模式下圈的是作物层，而 farmland 实际位于其下方一格。</li>
-      <li><code>core:dirt</code> 在 4 个水平邻居（同层或上下各一层）中出现 <code>core:grass</code> 时，按 300/1000 的概率扩散为 <code>core:grass</code>。</li>
-    </ul>
 
     <div class="callout info">
-      方块和物品是同一个概念。放在背包里就是物品，放在世界里就是方块。<code>stack_size</code> 控制了物品形态下的堆叠行为，<code>hardness</code> 和 <code>drops</code> 控制方块形态下的交互行为；CoreMod 的挖矿脚本会按 <code>drops</code> 的字符串或对象配置发放产物。
+      存量方块可派生同 ID 的兼容物品定义，但世界对象产出只能读取统一产出表。伐木、采石和野采会先填执行者统一背包，溢出在目标位置形成自动回收授权地面实例；不会直接写入仓储或旧 HeldItem。
     </div>
+
+    <h2>物品图标推导</h2>
+    <p>方块物品的图标按以下顺序选择：</p>
+    <ol>
+      <li>方块或同 ID 独立物品记录显式声明的 <code>icon</code>。</li>
+      <li><code>assets/textures/block/&lt;name&gt;.png</code>。</li>
+      <li><code>assets/models/block/&lt;name&gt;.json</code> 中能解析到 PNG 的代表纹理，依次优先 <code>top</code>、<code>all</code>、<code>layer0</code>、<code>side</code>、<code>particle</code>、<code>bottom</code>，最后再尝试其他纹理。</li>
+    </ol>
+    <p>第 2、3 项在启动预处理阶段复制到 <code>generate/&lt;mod_id&gt;/item_icons/</code>，属于可重建缓存，不应提交到 MOD。<code>models/item/</code> 中仅通过 <code>parent</code> 引用方块模型的记录不包含可直接交给 RmlUI 的位图，因此仍从被引用方块的代表纹理派生。没有显式图标且找不到可用方块 PNG 时保持无图标；程序生成的运行时方块颜色不能反向生成源图片。</p>
 
     <h2>ID 规则</h2>
     <ul>
@@ -77,7 +71,7 @@
       <li>推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>，例如 <code>copper_age:copper_ore</code>。</li>
       <li>如果省略冒号前缀（只写 <code>copper_ore</code>），引擎自动补全为 <code>&lt;当前mod_id&gt;:copper_ore</code>。</li>
       <li>以冒号开头（<code>:copper_ore</code>）同样自动补全。</li>
-      <li>引用其他方块（<code>drops</code>）时必须写完整 ID（含 mod 前缀），否则跨引用校验失败会导致加载报错。</li>
+      <li><code>output_table</code> 引用缺失或引用的表无效时，方块定义仍注册，但采集入口排除该目标并显示带来源路径的配置屏障；旧 <code>drops</code> 字段不再属于当前 schema。</li>
     </ul>
 
     <h2>文件放置规则</h2>
@@ -99,6 +93,7 @@ data copper_age:copper_ore        —— 查看单个方块的完整 JSON</code>
       <li><code>stack_size</code> 被独立解析存入 <code>m_block_stack_limit</code> 表，库存系统直接查询哈希表获取堆叠上限。</li>
       <li><code>emission</code> 会在世界初始化时注册到体素光照系统，所有 <code>emission &gt; 0</code> 的方块都会被光源 registry 扫描和增量跟踪。</li>
       <li><code>block_class</code> 和旧 <code>translucent</code> 字段会在世界初始化时写入体素遮挡/通行分类；未显式设置时，<code>material=fluid</code> 或 <code>material=plant</code> 会被推导为 transparent。</li>
+	  <li><code>core:item_pile</code> 是地面物品实例专用的渲染代理方块。它使用半格模型、没有物品形态且不可放置；渲染时不会把代理方块写入地形。</li>
       <li>热重载时旧元数据自动清理，新元数据重新填入。</li>
     </ul>
 

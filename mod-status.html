@@ -18,19 +18,20 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖与加载顺序（<code>dependencies</code>/<code>load_after</code>/<code>load_before</code>，支持 <code>load_before: ["*"]</code>）、<code>side</code>、<code>conflicts</code>、<code>settings</code>、用户设置覆盖和 MOD 翻译合并均已接入。<code>lua.permissions.io</code> 只保留为兼容声明，当前不会打开 Lua <code>io</code> 库。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 当前稳定加载 21 类 JSON：<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>actions</code>、<code>features</code>、<code>ores</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>audio</code>、<code>zones</code>。</td></tr>
+        <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖与加载顺序（<code>dependencies</code>/<code>load_after</code>/<code>load_before</code>，支持 <code>load_before: ["*"]</code>）、<code>side</code>、<code>conflicts</code>、<code>settings</code>、用户设置覆盖和 MOD 翻译合并均已接入。脚本沙箱不提供通用文件系统 IO 权限。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 稳定加载基础内容、经营规则、生态、动态天气、视野和难度等多类 JSON；<code>professions</code> 是 jobs 别名。</td></tr>
         <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、无效字段、配方/职业/文明/作物/方块引用错误会报告明确来源。</td></tr>
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持 <code>after</code>、<code>every</code>、<code>cancel</code>、<code>clear</code>。</td></tr>
         <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code> 使用 Xoshiro256** 确定性 RNG。</td></tr>
-        <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业等级、转职方块、前置职业、配方输入输出、职业要求、文明配方限制和解锁均已从注册表初始化。</td></tr>
-        <tr><td>文明</td><td><span class="badge done">可用</span></td><td>文明定义、初始方块/职业、配方修正规则和 TechTree 入口已接入；当前 CoreMod 有 2 个文明。</td></tr>
-        <tr><td>焦点系统</td><td><span class="badge done">可用</span></td><td>玩家可见焦点事件支持 tick、实体数量、殖民者需求、Lua 条件和选项。</td></tr>
-        <tr><td>派系、城邦与外交</td><td><span class="badge done">可用</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、模板命名、城邦资源/等级、密度与最小间隔、双边关系、战争状态、贸易许可、谈判积分、反议/接受/拒绝、AI 周期外交和存档已接入；世界地图标记及城邦列表可进入外交面板。</td></tr>
+        <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业 1-5 级、装备实例许可、前置职业、配方输入、职业要求、文明配方限制和解锁均已从注册表初始化。公开直通制作已禁用，CoreMod 制作统一走带资源预留的生产订单；固定制作结果由产出表决定。</td></tr>
+        <tr><td>文明</td><td><span class="badge partial">接口</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
+        <tr><td>焦点系统</td><td><span class="badge partial">接口</span></td><td>焦点 schema、运行态和存档接口保留；CoreMod 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。</td></tr>
+        <tr><td>派系、城邦与外交</td><td><span class="badge partial">接口</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、双边关系和空的提案/谈判 schema 可用；世界地图与外交页只显示状态摘要。专项文档未建立前不生成城邦资源/发展、默认提案、贸易积分或 AI 周期外交。</td></tr>
+        <tr><td>战斗</td><td><span class="badge partial">接口</span></td><td>职业战斗属性、伤病/倒地/死亡和小队身份/成员状态摘要保留；专项文档未建立前不推进小队移动、接敌、命中、伤害、冷却、压制、阵型或区域法力，所有战斗命令无副作用拒绝，HUD 只显示接口未定。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
-        <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和 26 种标准组件可用。</td></tr>
-        <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>TCP Host/Client、快照广播、客户端命令、客户端预测、延迟补偿、重连恢复、增量快照和 MOD 数据交换已实现。</td></tr>
+        <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和标准组件集可用；组件集合会随殖民者生存、选择和渲染状态继续演进，不以旧固定数量作为兼容承诺。</td></tr>
+        <tr><td>网络同步</td><td><span class="badge partial">部分</span></td><td>TCP Host/Client、Host 权威 UiCommand、命令结果、重连恢复、增量快照和 MOD 数据交换已实现；活体网络往返仍待显式验证。</td></tr>
         <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册约 80 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
       </tbody>
     </table>
@@ -43,26 +44,26 @@
         <tr>
           <td>AI 行为</td>
           <td><span class="badge partial">部分</span></td>
-          <td>需求驱动、WorkPool、WorkRegistry、A*、NavMesh/NavAgent、行为树、Blackboard、默认殖民者树和战斗树。</td>
-          <td>挖矿、搬运入库、建造材料预留、施工推进、农业产出和手持物品动作已接入 WorkPool/Lua 事件闭环；巡逻、社交和紧急行为仍需继续完善。</td>
+		  <td>WorkPool、WorkRegistry、A*、NavMesh/NavAgent、行为树、个人队列和来源结算接口。导航推进层只向实体下发局部 <code>MovementTarget</code>；实体运动层生成 <code>MovementIntent</code> 并据局部目标更新 Rotation；物理层消费意图后使用 <code>PhysicsCollider</code> 独立处理速度、体素/实体碰撞和权威位置。</td>
+          <td>搬运、施工、生产、饮食和治疗已接入事务闭环；未有专项规则的农业、巡逻、社交和战斗行为不生成默认玩法。</td>
         </tr>
         <tr>
           <td>作物与农业</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/crops</code> 已由加载器校验和注册；CoreMod 有 8 个作物定义；Lua farming 系统会读取 crop registry 生成耕地、播种、成熟和收获任务。</td>
-          <td>多作物产出已进入库存账本；温度、湿度和 UI 反馈仍待继续数据驱动。</td>
+          <td><code>data/crops</code> schema 与加载接口保留；CoreMod 内容为空。种植专项循环未定义时不生成作物、生长阶段、成熟或收获规则。</td>
+          <td>当前只保留接口；不会声称存在作物产出、温湿度或收获循环。</td>
         </tr>
         <tr>
           <td>区域系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td>ZoneSystem、Lua <code>engine.zone</code>、矩形/3D 区域创建、查询、删除和 CoreMod 区域脚本已存在；<code>data/zones</code> 已由 ModLoader 自动加载。</td>
-          <td>库存区已作为 CoreMod 账本物流入口使用；居住区高层行为仍较薄。</td>
+          <td>ZoneSystem、Lua <code>engine.zone</code>、矩形/3D 区域创建、查询、删除和版本化存档已存在；CoreMod 只注册露天仓储区和种植区。</td>
+          <td>露天仓储区已接入统一物品系统；种植专项循环未定义，旧居住、收获和采掘持续区域不存在。</td>
         </tr>
         <tr>
           <td>建筑系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/buildings</code> 已作为标准 mod_data 加载、校验并由 BuildingSystem 读取；建筑材料和文明 <code>starting_buildings</code> 会做注册表交叉校验。</td>
-          <td>建造订单会等待库存材料，预留成功后发布施工任务并推进 BuildingSystem；运行时建筑实例不进入当前存档，且多阶段施工表现仍是 Alpha 级实现。</td>
+          <td><code>data/buildings</code> schema、BuildingSystem、施工事务、工作点、存储点、治疗点、耐久、维修和版本化实例存档已接入。</td>
+          <td>NCDOCS 未给出具体建筑形状、材料或工期，CoreMod 内容为空；加入完整定义后才会开放对应建造入口。</td>
         </tr>
         <tr>
           <td>音频</td>
@@ -79,8 +80,8 @@
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、阵营、Job、焦点状态和 MOD 差异诊断。详见<a href="engine-save-system.html">存档系统状态</a>。</td>
-          <td>建筑/区域实例、MOD 依赖自动解析策略和自定义组件序列化还未完成。</td>
+          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、文明研究、殖民者纪念记录、阵营、Job、工作资源预留、焦点状态和 MOD 差异诊断。详见<a href="engine-save-system.html">存档系统状态</a>。</td>
+          <td>完整活体往返、已删除/重命名内容的迁移规则、MOD 自定义组件序列化仍需完善；无限高度已迁移区块列、存档、网络、细分网格、导航、光源传播和 GPU/CPU 流体分片，自然地形生成及开发者 GPU 探针保留有限工作带；多体素部件已有稳定实例、明确体素集合、owner、建筑 parts 与版本化 Host 运行态，具体树形和门形仍等待专项文档定义。</td>
         </tr>
         <tr>
           <td>渲染与方块模型</td>
@@ -91,7 +92,7 @@
         <tr>
           <td>体素地形与群系</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/biomes</code>、<code>data/ores</code>、<code>data/terrain</code> 已作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、地图颜色、矿物替换目标和默认地形方块。</td>
+          <td><code>data/biomes</code> 和 <code>data/terrain</code> 作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、地图颜色和默认地形方块。旧 <code>data/ores</code> 已移除，矿物由矿井规则提供。</td>
           <td>世界生成整体仍属实验层，复杂装饰和脚本扩展契约还在收敛。</td>
         </tr>
       </tbody>
@@ -101,8 +102,8 @@
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载并校验分类、前置、unlocks 和研究成本。详见 <a href="mod-techregistry.html">科技注册</a>。</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td>Windows 发布脚本会初始化 MSVC/Ninja 环境；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod。发布前使用 201 项测试与包内容校验。</td></tr>
+        <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载分类、前置、unlocks 和研究成本；运行时还读取开题材料、工作站、职业要求及暂停状态。详见 <a href="mod-techregistry.html">科技注册</a>。</td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td><code>export-release</code> 预设使用 MSVC/Ninja；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod，<code>bash/Export.bat</code>/<code>Export.sh</code> 负责复制既有输出。Windows MinGW Debug 已完整构建，并通过 <code>bash/DebugOutput.bat build-mingw</code> 导出到 <code>game/</code>；Release 包、测试和运行态内容仍未验证。</td></tr>
       </tbody>
     </table>
 
@@ -110,21 +111,21 @@
     <table>
       <thead><tr><th>模块</th><th>文件数</th><th>核心类</th></tr></thead>
       <tbody>
-        <tr><td>Core</td><td>29</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
-        <tr><td>ECS</td><td>9</td><td>World, Archetype, SystemManager, 26 种标准组件</td></tr>
-        <tr><td>Simulation</td><td>34</td><td>TickManager, DeterministicRNG, RecipeSystem, JobSystem, CivilizationSystem, FocusSystem, NpcFactionSystem, TechTree, BuildingSystem, ZoneSystem</td></tr>
-        <tr><td>AI</td><td>16</td><td>AISystem, WorkPool, WorkRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
+        <tr><td>Core</td><td>32</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
+        <tr><td>ECS</td><td>11</td><td>World, Archetype, SystemManager 和标准组件</td></tr>
+        <tr><td>Simulation</td><td>44</td><td>TickManager, RecipeSystem, JobSystem, CivilizationSystem, TechTree, BuildingSystem, ZoneSystem, ReservationSystem</td></tr>
+        <tr><td>AI</td><td>17</td><td>AISystem, WorkPool, WorkRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
         <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
         <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
-        <tr><td>Renderer</td><td>42</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>
+        <tr><td>Renderer</td><td>44</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>
         <tr><td>Scripting</td><td>5</td><td>ScriptEngine, LuaBindings</td></tr>
         <tr><td>Modding</td><td>9</td><td>ModLoader, ModRegistry, ModPreprocessor, EntityPrototypeFactory, DataId</td></tr>
-        <tr><td>Voxel</td><td>16</td><td>TerrainGenerator, VoxelRaycast, PerlinNoise</td></tr>
+        <tr><td>Voxel</td><td>20</td><td>TerrainGenerator, VoxelRaycast, PerlinNoise, BlockEditService, TerrainQueryService</td></tr>
         <tr><td>Input</td><td>6</td><td>InputManager, KeyBindings, SelectionManager</td></tr>
         <tr><td>Camera</td><td>2</td><td>OrbitCamera</td></tr>
         <tr><td>Localization</td><td>2</td><td>LocalizationManager</td></tr>
         <tr><td>Save</td><td>4</td><td>SaveSystem</td></tr>
-        <tr><td>UI</td><td>16</td><td>DevConsole, LuaUi, MainMenu, Minimap, CssParser, UiTheme</td></tr>
+        <tr><td>UI</td><td>43</td><td>RmlUiHost/Runtime/Bridge/DataViews/PanelRegistry、DevConsole、LuaUi、MainMenu</td></tr>
         <tr><td>WorldMap</td><td>2</td><td>WorldMap</td></tr>
       </tbody>
     </table>

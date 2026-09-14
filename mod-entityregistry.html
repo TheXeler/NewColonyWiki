@@ -19,14 +19,15 @@
     "components": {
         "Position": { "x": 0, "y": 64, "z": 0 },
         "Speed": { "x": 0, "y": 0, "z": 0 },
+		"PhysicsCollider": { "affected_by_gravity": true },
         "Needs": { "hunger": 50.0, "fatigue": 20.0 },
         "ColonistTag": {},
         "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
         "Job": { "id": "my_mod:hunter", "level": 1 },
         "Name": { "data": "Hunter" },
         "Backstory": { "data": "Former trail scout with steady hands." },
-        "Stats": { "strength": 12.0, "dexterity": 14.0, "intelligence": 8.0 },
-        "HeldItem": {},
+		"Health": { "current": 80, "max": 80 },
+		"ColonistAttributes": { "work_efficiency": 1.0, "backpack_slots": 1, "backpack_stack_capacity": 8 },
         "Equipment": {}
     }
 }</code></pre>
@@ -37,8 +38,15 @@
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。遵循标准 ID 规则。</td></tr>
         <tr><td><code>components</code></td><td>object</td><td>是</td><td>组件表。键为组件名，值为组件初始数据。必须是一个非空对象。</td></tr>
+		<tr><td><code>death_output_table</code></td><td>data id</td><td>否</td><td>实体死亡时执行的统一产出表。省略时不产生定义级死亡掉落。</td></tr>
+        <tr><td><code>death_output_table_executions</code></td><td>positive integer</td><td>否</td><td>死亡时执行产出表的次数；声明产出表但省略本字段时为 1。</td></tr>
+		<tr><td><code>animal</code></td><td>boolean</td><td>否</td><td>标记原型是可被狩猎指定的动物。不会自动把普通实体视为动物。</td></tr>
+		<tr><td><code>aggression</code></td><td>enum</td><td>动物必填</td><td><code>passive</code>、<code>neutral</code> 或 <code>aggressive</code>，用于狩猎预览。</td></tr>
       </tbody>
     </table>
+	<p>生命值降到 0 的非殖民者实体会直接在当前位置执行死亡产出表并移除，不创建尸体。结果写入统一地面物品实例，自动允许玩家回收，但进入仓储前不计入玩家仓储资源。产出表缺失或结构无效时原型保留，<code>engine.modding.get_entity_info(id)</code> 返回稳定屏障原因及来源路径；不会用默认掉落代替。</p>
+	<p>狩猎只接受当前被单选或多选的具体 <code>animal=true</code> 实体，并要求有效死亡产出表。面板显示每个目标的攻击性、可达性和合格执行者数量。确认后每个动物对应一个独立 Hunt 工作；动物移动时工作目标随之更新，死亡、消失或玩家从目标来源取消后授权结束。系统不创建持续狩猎区，也不会把后续刷新的动物加入旧指定。</p>
+	<p>狩猎工作量由唯一的 <code>data/hunting_rules/</code> 记录提供，例如 <code>{ "id": "mod:hunting", "work_amount": 100 }</code>。该内容表可以为空；缺失时入口显示配置屏障，不使用代码默认值。职业通过 <code>allowed_work_tags: ["hunt"]</code> 声明资格。</p>
 
     <div class="callout info">
       实体原型的核心是组件拼装——你不需要写代码，只需在 JSON 中声明这个实体有哪些组件、初始值是什么。引擎根据组件列表创建 ECS 实体并填充数据。
@@ -50,18 +58,18 @@
       <tbody>
         <tr><td><code>Position</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>世界坐标。</td></tr>
         <tr><td><code>Speed</code></td><td><code>x</code>, <code>y</code>, <code>z</code> (float)</td><td>移动速度向量。</td></tr>
-        <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (integer)</td><td>生命值；未声明时会根据 <code>Stats.max_hp</code> 推导。</td></tr>
+        <tr><td><code>Health</code></td><td><code>current</code>, <code>max</code> (integer)</td><td>生命值。殖民者原型必须显式提供有效值；不会由另一组属性推导。</td></tr>
         <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>剩余饱食度和精力值。两项随时间下降；低于阈值后 AI 会生成进食或休息需求，归零后开始累积对应负面状态。</td></tr>
         <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情值。JSON 中写 <code>"Mood": { "mood_value": 50.0 }</code>。</td></tr>
         <tr><td><code>ColonistTag</code></td><td>（无字段）</td><td>标记为殖民者。拥有此组件的实体参与殖民者相关的 AI 逻辑和统计。</td></tr>
         <tr><td><code>AIState</code></td><td><code>behavior_tree_id</code> (int), <code>current_node</code> (int), <code>lod_level</code> (int)</td><td>AI 状态。behavior_tree_id 决定使用哪个行为树，lod_level 控制更新频率。</td></tr>
-        <tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代理。</td></tr>
-        <tr><td><code>Speed</code> runtime</td><td><code>fall_distance</code>, <code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状态。实体会受重力影响，下落超过 4 格后受伤；在水中忽略摔落伤害，并会受流体推动。</td></tr>
+		<tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代理。寻路只写入路线；实体 locomotion 层把局部目标转换为有水平和垂直极值的三维移动矢量，跳跃也通过垂直速度实现。物理层只积分矢量并解算碰撞；动画依据碰撞解算后的实际水平速度播放。</td></tr>
+        <tr><td><code>Speed</code> runtime</td><td><code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状态，用于重力、落地和流体碰撞处理。NCDOCS 未定义摔落伤害或水流推动实体，因此引擎不提供这些隐式玩法。</td></tr>
+		<tr><td><code>PhysicsCollider</code></td><td><code>half_width</code>, <code>height</code>, <code>half_depth</code>, <code>collision_enabled</code>, <code>affected_by_gravity</code></td><td>引擎定义的权威物理属性，Mod 只能配置初始值，不能替换其语义或碰撞规则。位置表示脚底中心，碰撞箱向上延伸；<code>collision_enabled</code> 控制体素碰撞以及静止实体间的重叠分离，<code>affected_by_gravity</code> 控制重力，两者默认均为 true。移动中的实体不会互相阻挡，但仍与地形碰撞；两者静止且碰撞箱重叠时会互相挤开。物理层每 tick 重新检查脚下支撑，并处理墙面滑动、落地及流体接触。组件随存档保存。</td></tr>
         <tr><td><code>Job</code></td><td><code>id</code> (string), <code>level</code> (int, 1~5)</td><td>职业。id 必须指向已注册的职业。</td></tr>
-        <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=挖掘, 2=放置, 3=交互。</td></tr>
-        <tr><td><code>HeldItem</code></td><td><code>id</code> (string), <code>count</code> (u32)</td><td>手持物品。<code>id</code> 会被哈希为运行时 <code>item_id</code>；空对象表示有手持槽但初始为空。</td></tr>
+        <tr><td><code>BlockInteractor</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加方块交互器。运行时 action_type: 1=采掘, 2=放置, 3=交互。</td></tr>
         <tr><td><code>Equipment</code></td><td><code>item</code></td><td>单一装备栏。原型中写 <code>{"Equipment": {"id": "core:tool", "count": 1}}</code>；省略或写空对象表示没有装备。</td></tr>
-        <tr><td><code>Stats</code></td><td><code>strength</code>, <code>dexterity</code>, <code>intelligence</code> (float)</td><td>基础属性。加载、生成、读档或通过 Lua 修改基础属性后会重新计算派生属性；导航实体会使用派生移动速度。</td></tr>
+        <tr><td><code>ColonistAttributes</code></td><td>文档属性字段</td><td>直接声明基础、工作和战斗属性；运行时不会从力量、敏捷或智力推导。省略背包格数时为 0，不能携带物品；仅单格容量允许按经营文档缺省为 8。</td></tr>
         <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
         <tr><td><code>Backstory</code></td><td><code>data</code> 或 <code>value</code> (string)</td><td>角色经历文本。人员界面的角色菜单会通过聚合接口展示该字段。</td></tr>
         <tr><td><code>PrototypeRef</code></td><td>自动生成</td><td>引用创建该实例的原型 ID。实体原型 JSON 不需要声明。</td></tr>
@@ -75,24 +83,8 @@
       <code>Rotation</code> 和 <code>Scale</code> 是运行时 ECS/Lua 可用组件，但当前实体原型解析器不会从 JSON 中读取它们。需要旋转或缩放时，可在 Lua 里调用 <code>engine.ecs.set_rotation</code> 或 <code>engine.ecs.set_scale</code>。
     </div>
 
-    <h2>基础属性与派生属性</h2>
-    <p><code>Stats</code> 只在实体原型 JSON 中声明三项基础属性：<code>strength</code>、<code>dexterity</code> 和 <code>intelligence</code>。运行时会由 <code>Stats.recompute()</code> 推导其他属性。</p>
-    <table>
-      <thead><tr><th>基础属性</th><th>派生属性</th><th>公式</th><th>当前影响</th></tr></thead>
-      <tbody>
-        <tr><td><code>strength</code></td><td><code>max_hp</code></td><td><code>50 + strength * 5</code></td><td>未显式声明 <code>Health</code> 时用于生成初始最大生命。</td></tr>
-        <tr><td><code>strength</code></td><td><code>mining_speed</code></td><td><code>0.5 + strength * 0.05</code></td><td>预留给挖掘效率。</td></tr>
-        <tr><td><code>strength</code></td><td><code>carry_move_speed</code></td><td><code>0.5 + strength * 0.05</code></td><td>带有 <code>HeldItem</code> 且正在手持物品的 <code>NavAgent</code> 使用该倍率移动。</td></tr>
-        <tr><td><code>strength</code></td><td><code>melee_damage</code></td><td><code>1 + strength * 0.3</code></td><td>预留给近战伤害。</td></tr>
-        <tr><td><code>dexterity</code></td><td><code>move_speed</code></td><td><code>1 + dexterity * 0.04</code></td><td>空手 <code>NavAgent</code> 使用该倍率移动；不要求实体是殖民者。</td></tr>
-        <tr><td><code>dexterity</code></td><td><code>dodge_rate</code></td><td><code>min(dexterity * 0.01, 0.5)</code></td><td>预留给闪避。</td></tr>
-        <tr><td><code>dexterity</code></td><td><code>ranged_damage</code></td><td><code>1 + dexterity * 0.3</code></td><td>预留给远程伤害。</td></tr>
-        <tr><td><code>intelligence</code></td><td><code>work_speed</code></td><td><code>0.5 + intelligence * 0.05</code></td><td>预留给通用工作效率。</td></tr>
-        <tr><td><code>intelligence</code></td><td><code>work_success_rate</code></td><td><code>min(0.5 + intelligence * 0.02, 1)</code></td><td>预留给工作成功率。</td></tr>
-        <tr><td><code>intelligence</code></td><td><code>spell_damage</code></td><td><code>1 + intelligence * 0.4</code></td><td>预留给法术伤害。</td></tr>
-      </tbody>
-    </table>
-    <p>没有 <code>Stats</code> 的导航实体默认速度为 <code>0</code>，不会获得隐含移动速度。拥有 <code>Stats</code> 的实体空手时直接使用 <code>move_speed</code> 作为导航速度；如果正在手持物品，则改用 <code>carry_move_speed</code>。</p>
+    <h2>殖民者属性</h2>
+    <p><code>ColonistAttributes</code> 直接表达设计文档中的初始属性、工作属性和战斗属性。职业、殖民者状态和药剂进入同一修饰器汇总：最终值等于初始值加全部固定加值，再加初始值乘全部比例；来源顺序不产生复利。只读聚合入口是 <code>engine.jobs.aggregate_attributes(entity)</code>。</p>
 
     <h2>人员界面聚合接口</h2>
     <p>HTML/Lua UI 可通过 <code>engine.colonists</code> 读取页面所需数据：</p>
@@ -101,37 +93,31 @@
       <tbody>
         <tr><td><code>engine.colonists.list(Job_filter?, sort_key?)</code></td><td>返回殖民者列表摘要，字段包含名称、职业 ID/名称、等级、经验和心情；<code>sort_key</code> 支持 <code>name</code>、<code>Job</code>、<code>level</code>、<code>xp</code>、<code>mood</code>。</td></tr>
         <tr><td><code>engine.colonists.detail(entity)</code></td><td>返回角色菜单数据：名称、职业、职业等级/经验、经历、心情、thoughts、基础/工作/战斗属性分组。</td></tr>
-        <tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回装备槽、装备属性、HeldItem/Inventory 物品栏，并提供 <code>sort_keys</code> 与 <code>filter_keys</code>。</td></tr>
+		<tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回统一装备槽、统一背包物品实例及筛选/排序字段。</td></tr>
       </tbody>
     </table>
 
     <h2>内置实体原型</h2>
-    <p>CoreMod 只注册 1 个殖民者实体原型。职业不是实体类型；矿工、木匠、铁匠等都应生成为 <code>core:colonist</code>，再通过 <code>Job</code> 数据组件或 <code>engine.jobs.assign</code> 分配职业。</p>
+    <p>CoreMod 只注册 1 个殖民者实体原型。职业不是实体类型；矿工、木匠、铁匠等都从 <code>core:colonist</code> 开始，进入世界后通过指定装备实例的换装事务转入职业。</p>
     <table>
-      <thead><tr><th>原型</th><th>ID</th><th>默认职业</th><th>力量/敏捷/智力</th><th>行为树</th></tr></thead>
+      <thead><tr><th>原型</th><th>ID</th><th>初始职业</th><th>行为树</th></tr></thead>
       <tbody>
-        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>colonist (Lv.1)</td><td>10 / 10 / 10</td><td>0</td></tr>
+        <tr><td>殖民者</td><td><code>core:colonist</code></td><td>colonist（无等级）</td><td>0</td></tr>
       </tbody>
     </table>
 
     <h3>殖民者 <code>core:colonist</code></h3>
-    <p>通用殖民者原型，全属性 10，使用通用行为树（ID 0）。作为文明开局的基础单位，后续可转职为其他职业。</p>
+    <p>通用殖民者原型使用通用行为树（ID 0），初始职业无等级。NCDOCS 尚未给出基础生命、需求、心情和属性数值，因此 CoreMod 当前不填写这些数值。新世界先报告 <code>initial_site_selection_required</code>；玩家通过 Host 权威命令选择预生成地图中的 q/r 后，选址写入 <code>core:initial_colony</code> schema v1，并改报 <code>initial_roster_and_supplies_undefined</code>。固定坐标初始生成入口已删除，初始 roster、物资和散布规则不采用代码默认值；招募待登记实体也会在基础属性缺失时拒绝。</p>
 
     <h2>生成实体</h2>
-    <p>通过 Lua API 从原型生成实体，并按需分配职业：</p>
-    <pre><code>-- 在指定位置生成一个殖民者并分配矿工职业
-local id = engine.ecs.spawn_prototype("core:colonist")
-engine.ecs.set_position(id, 10, 70, 20)
-engine.jobs.assign(id, "core:miner", 1)</code></pre>
-    <p>或在控制台中：</p>
-    <pre><code>spawn_proto core:colonist       -- 在玩家附近生成一个殖民者实体</code></pre>
+    <p>运行时 Lua 不提供通用原型生成入口。殖民者必须走初始生成或招募登记链；生态动物由 <code>animal_distributions</code> 规则驱动，并通过 <code>engine.ecology.spawn_animal_at(rule_id, x, y, z)</code> 解析该规则声明的动物原型。开发者诊断仍可在控制台中使用：</p>
+    <pre><code>spawn_proto my_mod:pack_animal</code></pre>
 
     <h2>生成时自动补全</h2>
     <ul>
       <li>生成实体总会写入 <code>PrototypeRef</code>，值为原型 ID。</li>
-      <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code> 和默认职业 <code>core:worker</code>（如果 JSON 没有声明 <code>Job</code>）。</li>
-      <li>声明 <code>Needs</code> 但未声明 <code>Mood</code> 时，会自动添加默认 <code>Mood</code>。</li>
-      <li>声明 <code>Stats</code> 时会重新计算派生属性；未声明 <code>Health</code> 时，生命值会用派生 <code>max_hp</code>。</li>
+	  <li>声明 <code>AIState</code> 的原型会自动获得 <code>WorkerPriorityConfig</code>、<code>NavAgent</code>、<code>BlockInteractor</code>；殖民者原型未声明 <code>Job</code> 时使用无等级初始节点 <code>core:colonist</code>。</li>
+      <li>殖民者原型必须显式声明 <code>Health</code>、<code>Needs</code>、<code>Mood</code> 和 <code>ColonistAttributes</code>；缺少任一项时初始生成和招募入场返回 <code>colonist_base_attributes_undefined</code>，不会补代码默认值。</li>
     </ul>
 
     <h2>文件放置规则</h2>
@@ -143,10 +129,10 @@ engine.jobs.assign(id, "core:miner", 1)</code></pre>
     <h2>验证命令</h2>
     <pre><code>list_data entities               -- 列出所有已注册的实体原型
 data core:colonist               -- 查看殖民者原型的完整 JSON
-spawn_proto core:colonist        -- 在世界中生成一个殖民者实体</code></pre>
+spawn_proto my_mod:pack_animal   -- 在世界中生成非殖民者实体</code></pre>
 
     <h2>实体模型与动画</h2>
-    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为石质摩尔庄园风格的 Q 版三头身模型——大头、小身体、浮动的手脚（脚与身体之间保留较小间隙，整体控制在实体高度内）。RimWorld/RimColony pawn 语义由 RimColonyCompact 的 Lua converter 转换成普通 NewColony 实体视觉数据；converter 可解析 RimWorld 风格 <code>texPath</code> 和朝向贴图路径。</p>
+    <p>实体渲染由 <code>Visual</code> 和 <code>Animation</code> 组件驱动。没有声明 <code>Visual</code> 的原型仍会使用默认 <code>box</code> 外观；声明 <code>model: "biped"</code> 后会渲染为石质摩尔庄园风格的 Q 版三头身模型——大头、小身体、浮动的手脚（脚与身体之间保留较小间隙，整体控制在实体高度内）。</p>
     <pre><code>"Visual": {
   "model": "biped",
   "texture": "textures/entities/colonist.png",

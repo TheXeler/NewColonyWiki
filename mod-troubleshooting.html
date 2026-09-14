@@ -32,15 +32,15 @@ data copper_age:copper_ore</code></pre>
     <h2>配方不能制作</h2>
     <ul>
       <li>输入物品和输出物品的 ID 是否注册成功。</li>
-      <li>stockpile 账本或实体手持物里有没有足够的输入物品，实体手中有没有输出空间。</li>
+	  <li>露天仓储或储存体素中是否有足够、可达、未保留且符合过滤条件的统一物品实例，兼容工作点的输入/输出暂存是否可用。</li>
       <li>配方是否声明了职业要求，实体的职业等级是否满足。</li>
-      <li><code>engine.crafting.craft</code> 只检查实体当前单个 <code>HeldItem</code>；多输入制作通常应走 CoreMod 的 <code>systems.crafting.queue</code> stockpile 队列。</li>
-      <li>Craft 工作完成时 C++ 会先尝试直接制作，然后 Lua 才收到 <code>work:completed</code>。如果工人手持输入物且队列也预留了 stockpile 材料，要检查是否发生双路径产出。</li>
-      <li>用 <code>inventory &lt;entity&gt;</code> 和 <code>data &lt;recipe_id&gt;</code> 在控制台查看实际状态。</li>
+      <li>Lua 不提供直接制作入口；制作必须走 CoreMod 生产订单或 <code>systems.crafting.queue</code>。</li>
+      <li>检查生产订单的 <code>status</code>、指定工人、库存可用量和 reservation 数量。取消订单应释放预留；中断工作后订单需要重新派发。</li>
+      <li>在生产订单/工作点面板查看具体实例、输入与输出暂存；用 <code>data recipes &lt;recipe_id&gt;</code> 在控制台核对配方注册数据。</li>
     </ul>
 
-    <h2>进食或饮水动作没有执行</h2>
-    <p><code>inventory_block_action</code> 会进入 held-item 动作执行表。若动作没有执行，优先检查 colonist 是否拥有对应 <code>HeldItem</code>、物品分类是否匹配、以及动作消耗数量是否大于手持数量。</p>
+	<h2>进食或用药动作没有执行</h2>
+	<p>优先检查进食方案/治疗模板过滤、物品营养或药品载荷、统一实例是否可达和未预留，以及个人药品 CD 槽。普通进食、药品和医疗包互不作为后备行为。</p>
 
     <h2>焦点 没有触发</h2>
     <ul>

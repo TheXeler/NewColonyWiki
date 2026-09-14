@@ -41,12 +41,14 @@ generate/core/shaders/block.vert.spv
     <h2>着色器版本</h2>
     <p>使用 <code>#version 450</code> 或更高版本。渲染后端为 Vulkan，不支持 <code>#version 330</code> 等 OpenGL 版本。</p>
 
-    <h2>方块管线绑定点</h2>
+    <h2>主渲染描述符绑定点</h2>
     <table>
       <thead><tr><th>绑定</th><th>类型</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>binding = 0</code></td><td>UBO</td><td>主 UniformBufferObject；具体字段需与内置 shader 和 C++ UBO 保持一致。</td></tr>
         <tr><td><code>binding = 1</code></td><td>sampler2D</td><td>方块/实体运行时纹理图集采样器。</td></tr>
+        <tr><td><code>binding = 2</code></td><td>sampler2D</td><td>内置天空通道的太阳纹理。</td></tr>
+        <tr><td><code>binding = 3</code></td><td>sampler2D</td><td>内置天空通道的月相纹理图集。</td></tr>
       </tbody>
     </table>
 
@@ -86,7 +88,7 @@ void main() {
       <thead><tr><th>着色器</th><th>文件</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td>方块渲染</td><td><code>block.vert</code> + <code>block.frag</code></td><td>体素方块的标准渲染管线。</td></tr>
-        <tr><td>天空盒</td><td><code>skybox.vert</code> + <code>skybox.frag</code></td><td>天空盒渲染。不使用深度测试和深度写入。</td></tr>
+        <tr><td>天空盒</td><td><code>skybox.vert</code> + <code>skybox.frag</code></td><td>全屏无限远天空渲染；包含大气散射、昼夜星空、天气遮蔽，以及沿昼夜轨迹移动的太阳和月亮贴图。不使用深度测试和深度写入。</td></tr>
         <tr><td>GPU 调试几何</td><td><code>debug.vert</code> + <code>debug.frag</code></td><td>绘制带深度测试的调试线框和半透明调试面。</td></tr>
         <tr><td>SSAO</td><td><code>ssao.vert</code> + <code>ssao.frag</code></td><td>屏幕空间环境光遮蔽。</td></tr>
         <tr><td>SSAO 模糊</td><td><code>ssao_blur.vert</code> + <code>ssao_blur.frag</code></td><td>AO 结果模糊。</td></tr>
@@ -94,8 +96,8 @@ void main() {
         <tr><td>体积光模糊</td><td><code>volumetric_light_blur.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
         <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
         <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，会按 chunk AABB 与当前 frustum 写回 indirect command 的 instance count，并统计 GPU 可见 chunk/draw 数；关闭或不可用时渲染器会把当前帧 indirect instance count 重置为全可见。</td></tr>
-        <tr><td>模拟光照 Compute</td><td><code>sim_light.comp</code></td><td>模拟侧体素完整光照入口；GPU 在 3×3 区块邻域体积内完成 sky light 和 block light 传播，CPU 仅在 GPU 不可用时回退。</td></tr>
-        <tr><td>模拟流体 Compute</td><td><code>sim_fluid.comp</code></td><td>模拟侧流体候选更新入口；输出流向/移除候选标记和候选计数，CPU 仍负责权威提交、BUD 通知和脏区块标记。</td></tr>
+        <tr><td>模拟光照 Compute</td><td><code>sim_light.comp</code></td><td>天空光参考 kernel，只服务开发者探针（控制台 <code>gpu_probe_light</code>），保留列初始化与天空传播两个 mode。权威方块光传播是 CPU 稀疏 BFS，已无 GPU 光源表与 GPU BFS 路径；该 shader 不再声明 LightSSBO / frontier binding。</td></tr>
+        <tr><td>模拟流体 Compute</td><td><code>sim_fluid.comp</code></td><td>模拟侧流体候选更新入口；每个实际含流体的 16 高有符号垂直子区块独立进入 batch，并以 <code>origin_y</code> 写回世界坐标。上下边界和未完成 batch 由 CPU 队列衔接；CPU 仍负责权威提交、BUD 通知和脏区块标记。</td></tr>
         <tr><td>模拟遮挡 Compute</td><td><code>sim_occlusion.comp</code></td><td>模拟侧区块高度/遮挡辅助入口；失败或关闭时回退到 CPU 高度扫描。</td></tr>
       </tbody>
     </table>

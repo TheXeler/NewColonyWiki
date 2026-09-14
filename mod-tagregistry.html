@@ -1,114 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tag 注册 · NewColony Wiki</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body data-page="mod-tagregistry">
-<div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Tag 注册</div></div>
-  <div class="content">
-    <h1>Tag 注册（矿物词典）</h1>
-    <p class="subtitle">Tag 是 Forge OreDictionary / Minecraft 1.13+ tag 的等价物。一个 tag 是若干方块的"别名"（如 <code>c:ingots</code> = 所有金属锭），配方输入可以用 tag 替代具体方块 ID，让不同 MOD 的同类方块互相等价。</p>
-
-    <h2>命名约定</h2>
-    <p>Tag 字符串是任意非空字符串，引擎不强制规则。社区约定：</p>
-    <ul>
-      <li><code>c:</code> 前缀：跨 MOD 通用 tag，如 <code>c:ingots/iron</code>、<code>c:ores/copper</code>、<code>c:planks</code>。</li>
-      <li>带斜杠的层级路径：父 tag（<code>c:ingots</code>）和子 tag（<code>c:ingots/iron</code>）是独立 tag，互不自动包含；如果想继承需要在两边都声明。</li>
-      <li>MOD 私有 tag 使用 <code>my_mod:</code> 前缀避免冲突。</li>
-    </ul>
-    <p>Tag 字符串内部按 FNV-1a 哈希索引，与方块 ID 共用同一套哈希。两个完全相同的 tag 字符串被视作同一个 tag。</p>
-
-    <h2>声明方式</h2>
-    <p>有两条路径，结果会合并到同一个 tag 字典。</p>
-
-    <h3>方式一：就地声明（推荐用于小批量）</h3>
-    <p>在 block JSON 顶层加 <code>tags</code> 字段：</p>
-    <pre><code>{
-  "id": "core:iron_ingot",
-  "name": "Iron Ingot",
-  "stack_size": 64,
-  "tags": ["c:ingots/iron", "c:ingots", "c:metals"]
-}</code></pre>
-
-    <h3>方式二：独立 tag 文件（推荐用于集中扩展）</h3>
-    <p>在 <code>data/tags/*.json</code> 下声明。Schema：</p>
-    <pre><code>{
-  "tag": "c:ingots",
-  "values": [
-    "core:iron_ingot",
-    "core:copper_ingot",
-    "core:gold_ingot",
-    "core:silver_ingot"
-  ],
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>标签数据 - NewColony Wiki</title><link rel="stylesheet" href="wiki.css"></head>
+<body><div class="page-shell"><div class="content">
+<h1>标签数据</h1>
+<p>标签用于让配方、过滤和资格表达式引用一组稳定数据 ID。标签是数据分组，不产生物品、配方或掉落内容。</p>
+<h2>格式</h2>
+<pre><code>{
+  "tag": "example:materials",
+  "values": ["example:item_a", "example:item_b"],
   "replace": false
 }</code></pre>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>tag</code></td><td>string</td><td>是</td><td>声明的 tag 字符串。非空。</td></tr>
-        <tr><td><code>values</code></td><td>array</td><td>是</td><td>方块 ID 数组。每个 ID 必须指向已注册的方块，加载时会交叉校验。</td></tr>
-        <tr><td><code>replace</code></td><td>bool</td><td>否</td><td>默认 <code>false</code>，追加到现有 tag。设为 <code>true</code> 时先清空该 tag 的所有声明再重新填充——用于让某个 MOD 完全覆盖其他 MOD 对该 tag 的定义。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>使用 tag 的配方输入</h2>
-    <p>配方 <code>inputs[]</code> 元素的 <code>id</code> 字段可以替换为 <code>tag</code> 字段（两者互斥，必须二选一）：</p>
-    <pre><code>{
-  "id": "core:compress_ingot",
-  "inputs": [
-    { "tag": "c:ingots", "count": 2 }
-  ],
-  "output": { "id": "core:iron_ingot", "count": 1 }
-}</code></pre>
-    <p>运行时匹配规则：手持的 <code>HeldItem.item_id</code> 只要出现在 <code>c:ingots</code> tag 的方块集合中即视为匹配。手持 2×铁锭 / 2×铜锭 / 2×金银锭（甚至 1×铁 + 1×铜）都能触发该配方。</p>
-
-    <div class="callout warn">
-      配方输出（<code>output</code>）目前<strong>不支持</strong> tag——产出必须是具体方块 ID。设计上"生产出来的东西"必须是确定的。
-    </div>
-
-    <div class="callout info">
-      RecipeSystem 的 <code>HeldItem</code> 槽当前是单物品多次消耗模型（详见 <a href="mod-reciperegistry.html">配方注册</a> 的注意事项）。多输入配方只在所有输入都匹配同一种手持方块时才能成功。Tag 输入也遵循这条规则：必须手持 N 个都属于该 tag 的同一种方块。
-    </div>
-
-    <h2>查询 API（Lua）</h2>
-    <p>引擎在 <code>engine.tags</code> 命名空间下暴露只读查询函数：</p>
-    <pre><code>engine.tags.has(block, tag)         -- bool；block 可传 hash 或 string id
-engine.tags.blocks(tag)            -- 返回 { {hash=..., id=...}, ... }
-engine.tags.list()                 -- 返回所有已声明 tag 的字符串数组
-engine.tags.of_block(block)        -- 返回该 block 拥有的 tag 字符串数组</code></pre>
-    <p>Tag 字典不暴露注册接口——注册只走 JSON 数据。Lua 只能查询。</p>
-
-    <h2>内置 tag 示例</h2>
-    <p>CoreMod 内置示例（见 <code>CoreMod/data/blocks/</code> 与 <code>CoreMod/data/tags/</code>）：</p>
-    <table>
-      <thead><tr><th>Tag</th><th>包含的方块</th></tr></thead>
-      <tbody>
-        <tr><td><code>c:ingots</code></td><td><code>core:iron_ingot</code> / <code>core:copper_ingot</code> / <code>core:gold_ingot</code> / <code>core:silver_ingot</code>（独立 tag 文件 <code>data/tags/ingots.json</code> + block JSON 内联声明，两种路径协同）</td></tr>
-        <tr><td><code>c:ingots/iron</code> 等</td><td>各金属锭在自身 block JSON 内联声明</td></tr>
-        <tr><td><code>c:ores</code> / <code>c:ores/&lt;metal&gt;</code></td><td>各类矿石</td></tr>
-        <tr><td><code>c:gems</code></td><td><code>core:diamond_ore</code></td></tr>
-        <tr><td><code>c:planks</code> / <code>c:wooden</code></td><td><code>core:wood_plank</code></td></tr>
-        <tr><td><code>c:bricks</code></td><td><code>core:brick</code></td></tr>
-      </tbody>
-    </table>
-
-    <h2>加载顺序</h2>
-    <p>blocks 在 RecipeSystem 初始化前全部注册到 ModRegistry（<code>Engine.cpp</code> 中 <code>load_all()</code> → <code>recipe_system.init_from_registry()</code>）。RecipeSystem 初始化时：</p>
-    <ol>
-      <li>清空 tag 字典。</li>
-      <li>扫描所有 <code>type=="blocks"</code> 条目的 <code>tags</code> 字段，逐项注册。</li>
-      <li>扫描所有 <code>type=="tags"</code> 条目，按 <code>replace</code> 决定追加/覆盖。</li>
-      <li>再开始解析 recipes，让 recipe input 中的 <code>tag</code> 能查到。</li>
-    </ol>
-    <p>RecipeSystem 不被序列化，tag 字典随 RecipeSystem 重建——存档兼容零风险。</p>
-
-    <div class="footer">NewColony Wiki · UTF-8</div>
-  </div>
-</div>
-<script src="wiki.js"></script>
-</body>
-</html>
+<p><code>values</code> 中的 ID 必须存在于对应注册表；<code>replace</code> 决定覆盖还是合并已有标签。CoreMod 当前不提供具体物品标签内容，避免重新引入已删除的金属、木板或配方条目。</p>
+<h2>边界</h2>
+<ul>
+  <li>标签不能替代统一物品实例、预留或产出表。</li>
+  <li>方块采集结果只能来自 <code>output_table</code>，不能由标签推导。</li>
+  <li>空标签内容不会生成默认成员。</li>
+</ul>
+<div class="footer">NewColony Wiki · UTF-8</div></div></div><script src="wiki.js"></script></body></html>

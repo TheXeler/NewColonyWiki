@@ -66,12 +66,22 @@ engine.events.clear("copper_age:ore_found")</code></pre>
       <tbody>
         <tr><td><code>inventory:changed</code></td><td>实体背包变化</td><td>entity_id, item_id, item_key, delta, reason</td></tr>
         <tr><td><code>stockpile:changed</code></td><td>库存区账本变化（CoreMod）</td><td>item_id, delta, count, reason</td></tr>
-        <tr><td><code>work:completed</code></td><td>工作实例完成</td><td>instance_id, worker, action, payload_id, tick</td></tr>
+        <tr><td><code>item:spoiled</code></td><td>物品实例腐坏并替换为配置结果</td><td>instance_id, item_id, result_item_id, count, tick</td></tr>
+        <tr><td><code>item:ground_despawned</code></td><td>未被预留的地面物品计时结束并消失</td><td>instance_id, item_id, count, tick</td></tr>
+        <tr><td><code>reservation:invalidated</code></td><td>预留物腐坏且找不到替代实例，来源工作阻塞 20 tick</td><td>reservation_id, source_id, target_id, item_id, instance_id, reason, blocked_ticks</td></tr>
+        <tr><td><code>work:activated</code></td><td>工作由执行者激活；资源系统应在此时申请预留</td><td>instance_id, worker, tag/type, payload_id, faction_id, source_id, tick</td></tr>
+        <tr><td><code>work:completed</code></td><td>工作实例完成</td><td>instance_id, worker, tag/type, action, payload_id, tick</td></tr>
+        <tr><td><code>work:cancelled</code></td><td>工作被订单或脚本取消</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
+        <tr><td><code>work:interrupted</code></td><td>工人被解除当前工作，工作可重新调度</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
+        <tr><td><code>world:restored</code></td><td>实体、建筑、工作和运行时状态全部恢复完成</td><td>slot_id, tick</td></tr>
+        <tr><td><code>treatment:blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>work_id, patient, reason</td></tr>
+        <tr><td><code>recruitment:registered</code></td><td>新人完成城镇大厅登记</td><td>entity_id, candidate_id, town_hall_instance_id</td></tr>
         <tr><td><code>recipe:crafted</code></td><td>配方产物完成</td><td>entity_id, recipe_id, output_item_key, output_count</td></tr>
         <tr><td><code>block:interacted</code></td><td>实体与方块交互</td><td>entity_id, x, y, z, action</td></tr>
         <tr><td><code>block:placed</code> / <code>block:removed</code></td><td>世界方块变化</td><td>x, y, z, block_id</td></tr>
         <tr><td><code>building:completed</code></td><td>建筑完成（CoreMod）</td><td>instance_id, def_id, x, y, z</td></tr>
         <tr><td><code>research:started</code> / <code>research:completed</code></td><td>科技状态变化</td><td>tech_id, civilization_index</td></tr>
+        <tr><td><code>colonist:death</code></td><td>死亡殖民者写入纪念记录并销毁实体前通知</td><td>entity_id, name, tick, x, y, z</td></tr>
         <tr><td><code>focus:chosen</code> / <code>focus:dismissed</code></td><td>焦点事件被选择或关闭</td><td>focus_id, instance_id, choice_id, tick</td></tr>
         <tr><td><code>faction:spawned</code></td><td>阵营实例生成</td><td>instance_id, def_id, display_name, reason</td></tr>
         <tr><td><code>day_changed</code> / <code>season_changed</code> / <code>year_changed</code></td><td>模拟日历变化</td><td>day/season/year, previous_*</td></tr>

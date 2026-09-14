@@ -56,7 +56,7 @@ mods/my_mod/data/audio/ui/click.json</code></pre>
     <ul>
       <li>ModLoader 像处理其他注册表一样扫描 <code>data/audio/**/*.json</code>，每个文件生成一个 <code>type = "audio"</code> 的注册项。</li>
       <li>音频系统在引擎初始化阶段读取这些注册项，并把每个条目注册为一个可播放声音。</li>
-      <li>注册表格式已经去除 sound bank 外壳；旧版 <code>sounds[]</code> bank 仅保留为无注册项时的兼容回退，不应在新 MOD 中使用。</li>
+      <li>注册表格式只接受单音频记录，不接受 <code>sounds[]</code> 聚合外壳。</li>
       <li>如果多个 MOD 注册同一个音频 ID，通用数据注册表的覆盖/冲突规则与其他数据类型一致。</li>
     </ul>
 

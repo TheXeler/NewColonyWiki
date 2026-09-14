@@ -11,224 +11,40 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>名称池注册</div></div>
   <div class="content">
     <h1>名称池注册</h1>
-    <p class="subtitle">名称池（Name Pool）定义在 <code>data/name_pools/</code> 下，以 JSON 描述。名称池提供随机命名素材，NPC 阵营在实例化时从中抽取词语生成随机名称。名称池支持多语言——按语言子目录组织，引擎根据当前语言自动选择对应的词池。</p>
+    <p class="subtitle">名称池定义在 <code>data/name_pools/</code> 下，只提供本地化名称词汇。它不会自行创建其他殖民地、改变关系或推进外交事件。</p>
 
-    <h2>JSON 格式</h2>
-    <p>每个语言版本的名称池放在以基础池 ID 命名的子目录下，文件名为语言代码：</p>
+    <h2>目录与 JSON</h2>
     <pre><code>data/name_pools/
-  viking/
+  settlement/
     en-us.json
     zh-cn.json</code></pre>
-    <p>每个文件格式：</p>
     <pre><code>{
-    "id": "my_mod:viking",
-    "words": [
-        "Ragnar", "Bjorn", "Erik", "Sigurd", "Harald",
-        "Longship", "Shield", "Axe", "Fjord", "Saga"
-    ]
+  "id": "my_mod:settlement",
+  "words": ["North", "River"]
 }</code></pre>
-
-    <h2>字段说明</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>是</td><td>基础标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。同一 id 可有多个语言版本。</td></tr>
-        <tr><td><code>words</code></td><td>string[]</td><td>是</td><td>该语言的词汇列表。阵营从列表中随机抽取一个或多个词拼接为名称。</td></tr>
+        <tr><td><code>id</code></td><td>data id</td><td>是</td><td>基础池 ID；同一基础 ID 可按语言提供多个文件。</td></tr>
+        <tr><td><code>words</code></td><td>string[]</td><td>是</td><td>非空词汇数组；空字符串会被忽略，最终无可用词时该文件不注册。</td></tr>
       </tbody>
     </table>
 
-    <div class="callout info">
-      词汇数量没有上限，但建议保持 20~100 个以保证命名多样性。词汇越少，生成名称的重复率越高。
-    </div>
+    <h2>语言选择</h2>
+    <p>文件名表示语言代码。查询显式名称池时，引擎优先使用当前语言版本，其次使用 <code>en-us</code>，最后使用该基础池已有的任一语言版本。模板中的 <code>${random_name}</code> 会从明确传入的名称池抽取词汇；模板不含占位符时保持原文。显式池全部缺失时不会改用其他已注册池；招募候选生成会以 <code>candidate_name_pool_missing</code> 阻止。</p>
 
-    <h2>多语言支持</h2>
-    <p>名称池按语言子目录组织。文件名（去掉 <code>.json</code>）即为语言代码（如 <code>en-us</code>、<code>zh-cn</code>）。引擎内部将基础池 ID 与语言代码组合为 <code>pool_id/locale</code> 作为唯一标识。</p>
-    <p>示例目录结构：</p>
-    <pre><code>data/name_pools/
-  generic/
-    en-us.json    → {"id": "core:generic", "words": ["Iron", "Stone", ...]}
-    zh-cn.json    → {"id": "core:generic", "words": ["铁", "石", ...]}
-  viking/
-    en-us.json    → {"id": "my_mod:viking", "words": ["Ragnar", "Bjorn", ...]}
-    zh-cn.json    → {"id": "my_mod:viking", "words": ["拉格纳", "比约恩", ...]}</code></pre>
+    <h2>CoreMod 状态</h2>
+    <p>CoreMod 当前注册 <code>core:generic</code> 的 <code>en-us</code> 与 <code>zh-cn</code> 词汇文件，供需要显示候选人姓名的接口使用。CoreMod 不提供 NPC 阵营定义、阵营生成规则或外交提案；名称池存在不代表这些玩法已定义。</p>
 
-    <p>阵营定义中的 <code>name_pools</code> 引用基础池 ID（不带语言后缀），引擎根据当前语言自动解析：</p>
-    <pre><code>{
-    "id": "my_mod:viking_clan",
-    "name_template": {
-        "en-us": "${random_name} Clan",
-        "zh-cn": "${random_name}部落"
-    },
-    "name_pools": ["my_mod:viking"]
-}</code></pre>
-
-    <h3>语言解析规则</h3>
-    <p>生成名称时，引擎按以下顺序查找词池：</p>
-    <ol>
-      <li><code>pool_id/current_locale</code> — 精确匹配当前语言</li>
-      <li><code>pool_id/en-us</code> — 回退到英语</li>
-      <li>任意以 <code>pool_id/</code> 开头的池 — 取第一个</li>
-      <li>所有池 — 最终回退</li>
-    </ol>
-
-    <h3>name_template 多语言格式</h3>
-    <p><code>name_template</code> 支持两种格式：</p>
+    <h2>接口与诊断</h2>
     <ul>
-      <li><strong>字符串</strong>（向后兼容）：<code>"name_template": "${random_name} Clan"</code></li>
-      <li><strong>对象</strong>（多语言）：<code>"name_template": {"en-us": "${random_name} Clan", "zh-cn": "${random_name}部落"}</code></li>
+      <li><code>engine.factions.list_name_pools()</code>：列出已注册的语言变体。</li>
+      <li><code>engine.factions.generate_name(template, pool_ids, seed)</code>：按显式模板、池列表和种子生成显示名称。</li>
+      <li><code>data type:name_pools</code> / <code>list_name_pools</code>：在开发者控制台检查注册结果。</li>
     </ul>
-    <p>使用对象格式时，引擎根据当前语言选择对应模板；找不到则回退到第一个条目。</p>
-
-    <h2>与阵营的关系</h2>
-    <p>名称池被 NPC 阵营（<code>data/factions/</code>）引用。阵营定义中的 <code>name_template</code> 字段使用 <code>${random_name}</code> 占位符，<code>name_pools</code> 字段指定引用哪些名称池（使用基础 ID）：</p>
-    <pre><code>{
-    "id": "my_mod:viking_clan",
-    "name_template": {
-        "en-us": "${random_name} Clan",
-        "zh-cn": "${random_name}部落"
-    },
-    "initial_relation": 0,
-    "max_relation": 50,
-    "min_relation": -80,
-    "inclination": "warlike",
-    "name_pools": ["my_mod:viking"]
-}</code></pre>
-    <p>引擎在实例化阵营时，根据当前语言从对应词池中收集词汇，随机选取一个替换每个 <code>${random_name}</code>，生成如"Ironhide Clan"（英语）或"铁皮部落"（中文）这样的名称。</p>
-
-    <h2>使用案例</h2>
-
-    <h3>案例 1：单池单占位符</h3>
-    <p>最基础的用法：一个阵营引用一个名称池，模板中有一个 <code>${random_name}</code>。</p>
-    <p><strong>名称池（英语）</strong> <code>data/name_pools/viking/en-us.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:viking",
-    "words": ["Ragnar", "Bjorn", "Erik", "Sigurd", "Fjord", "Shield", "Axe"]
-}</code></pre>
-    <p><strong>名称池（中文）</strong> <code>data/name_pools/viking/zh-cn.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:viking",
-    "words": ["拉格纳", "比约恩", "埃里克", "西格德", "峡湾", "盾", "斧"]
-}</code></pre>
-    <p><strong>阵营</strong> <code>data/factions/viking_clan.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:viking_clan",
-    "name_template": {
-        "en-us": "${random_name} Clan",
-        "zh-cn": "${random_name}部落"
-    },
-    "initial_relation": -10,
-    "max_relation": 30,
-    "min_relation": -100,
-    "inclination": "warlike",
-    "name_pools": ["my_mod:viking"]
-}</code></pre>
-    <p>生成结果（英语）：<strong>"Ragnar Clan"</strong>、<strong>"Shield Clan"</strong>……</p>
-    <p>生成结果（中文）：<strong>"拉格纳部落"</strong>、<strong>"盾部落"</strong>……</p>
-
-    <h3>案例 2：多池合并</h3>
-    <p>一个阵营可以引用多个名称池，引擎会将所有池的词汇合并后再随机选取。</p>
-    <p><strong>名称池 A</strong> <code>data/name_pools/colors/en-us.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:colors",
-    "words": ["Crimson", "Azure", "Golden", "Silver", "Obsidian"]
-}</code></pre>
-    <p><strong>名称池 B</strong> <code>data/name_pools/animals/en-us.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:animals",
-    "words": ["Wolf", "Eagle", "Dragon", "Serpent", "Phoenix"]
-}</code></pre>
-    <p><strong>阵营</strong> <code>data/factions/beast_clan.json</code>：</p>
-    <pre><code>{
-    "id": "my_mod:beast_clan",
-    "name_template": {
-        "en-us": "${random_name} Clan",
-        "zh-cn": "${random_name}氏族"
-    },
-    "initial_relation": 0,
-    "max_relation": 60,
-    "min_relation": -60,
-    "inclination": "neutral",
-    "name_pools": ["my_mod:colors", "my_mod:animals"]
-}</code></pre>
-    <p>生成结果：从 colors + animals 共 10 个词中随机选，可能是 <strong>"Crimson Clan"</strong>、<strong>"Dragon Clan"</strong>、<strong>"Golden Clan"</strong>等。</p>
-
-    <h3>案例 3：多重占位符</h3>
-    <p>模板中可以使用多个 <code>${random_name}</code>，每次独立抽取（允许重复）。</p>
-    <pre><code>{
-    "id": "my_mod:ancient_order",
-    "name_template": "The ${random_name} ${random_name}",
-    "initial_relation": 20,
-    "max_relation": 100,
-    "min_relation": -30,
-    "inclination": "commercial",
-    "name_pools": ["core:generic"]
-}</code></pre>
-    <p>生成结果：<strong>"The Iron Wolf"</strong>、<strong>"The Storm Eagle"</strong>、<strong>"The Silver Silver"</strong>（可能重复）等。使用大池（如 <code>core:generic</code> 约 400 词）可以显著降低重复率。</p>
-
-    <h3>案例 4：使用 CoreMod 通用池</h3>
-    <p>不想创建自定义名称池时，可以直接引用内置的 <code>core:generic</code>。CoreMod 的所有阵营都这样做：</p>
-    <pre><code>{
-    "id": "core:merchant_guild",
-    "name_template": {
-        "en-us": "${random_name} Merchant Guild",
-        "zh-cn": "${random_name}商会"
-    },
-    "initial_relation": 20,
-    "max_relation": 100,
-    "min_relation": -50,
-    "inclination": "commercial",
-    "name_pools": ["core:generic"]
-}</code></pre>
-    <p>生成结果（英语）：<strong>"Ironhide Merchant Guild"</strong>……</p>
-    <p>生成结果（中文）：<strong>"铁皮商会"</strong>、<strong>"唤风暴商会"</strong>等。</p>
-
-    <h2>名称生成规则</h2>
-    <ul>
-      <li><code>${random_name}</code> 是唯一的占位符，大小写敏感。</li>
-      <li>每个 <code>${random_name}</code> 独立从合并后的词汇池中随机抽取，多次出现可能抽到同一个词。</li>
-      <li>引擎根据当前语言优先选择对应语言的词池，找不到时回退到 <code>en-us</code>，再回退到任意可用池。</li>
-      <li>如果 <code>name_pools</code> 中引用的基础池 ID 不存在（没有任何语言版本），该池被跳过；如果所有池都不存在，引擎回退使用当前语言的所有已注册名称池。</li>
-      <li>如果模板中没有 <code>${random_name}</code>，名称就是模板原文（静态名称）。</li>
-      <li>每个阵营实例的名称不同——同一个阵营定义被多次实例化时，每次独立生成。</li>
-    </ul>
-
-    <h2>内置名称池</h2>
-    <p>CoreMod 注册了 1 个通用名称池，提供英语和中文两个语言版本：</p>
-
-    <h3>通用 <code>core:generic</code></h3>
-    <p>包含约 400 个词汇，涵盖自然、金属、颜色、动物、地形、职业等类别。所有未指定专用名称池的阵营默认使用此名称池。</p>
-    <p>语言版本：<code>en-us</code>（英文词）、<code>zh-cn</code>（中文词）</p>
-    <p>词汇分类示例（英文）：</p>
-    <table>
-      <thead><tr><th>类别</th><th>示例词汇</th></tr></thead>
-      <tbody>
-        <tr><td>金属/材质</td><td>Iron, Copper, Bronze, Steel, Obsidian, Onyx</td></tr>
-        <tr><td>颜色</td><td>Crimson, Azure, Violet, Amber, Scarlet, Cobalt</td></tr>
-        <tr><td>动物</td><td>Wolf, Eagle, Raven, Dragon, Phoenix, Serpent</td></tr>
-        <tr><td>地形</td><td>Ridge, Hollow, Vale, Glen, Summit, Canyon</td></tr>
-        <tr><td>建筑</td><td>Fortress, Citadel, Tower, Bastion, Spire</td></tr>
-        <tr><td>职业</td><td>Smith, Weaver, Mason, Brewer, Fletcher, Cooper</td></tr>
-        <tr><td>复合词</td><td>Ironhide, Stormcaller, Moonshadow, Firebrand</td></tr>
-      </tbody>
-    </table>
-
-    <h2>文件放置规则</h2>
-    <ul>
-      <li>放在 <code>data/name_pools/</code> 下，按基础池 ID 创建子目录，每个语言一个 JSON 文件。</li>
-      <li>文件名（去掉 <code>.json</code>）即为语言代码，如 <code>en-us.json</code>、<code>zh-cn.json</code>。</li>
-      <li>JSON 内的 <code>id</code> 字段为基础池 ID，同一 ID 可以有多个语言版本。</li>
-      <li>引擎会自动扫描子目录中的所有 JSON 文件。</li>
-    </ul>
-
-    <h2>验证命令</h2>
-    <p>在控制台（按物理 Grave/反引号键）中确认名称池注册：</p>
-    <pre><code>list_name_pools                   -- 列出所有已注册的名称池（含语言变体）
-list_factions                     -- 列出所有阵营定义
-spawn_faction core:barbarian_tribe -- 实例化一个阵营，观察生成的名称</code></pre>
-
-    <div class="footer">NewColony Wiki · UTF-8</div>
+    <p>其他殖民地的实例生成、关系范围、外交周期和提案效果没有专项设计时保持接口未定；名称池不会为这些缺失规则提供默认值。</p>
   </div>
 </div>
-<script src="wiki.js"></script>
+<script src="nav.js"></script>
 </body>
 </html>

@@ -3,176 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>模型格式 · NewColony Wiki</title>
+  <title>方块模型格式 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="mod-assets-model">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>模型格式</div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块模型格式</div></div>
   <div class="content">
-    <h1>模型格式</h1>
-    <p class="subtitle">方块模型使用 Blockbench/Minecraft 风格 JSON 子集。当前引擎会在启动预处理阶段把 <code>assets/models/</code> 下的 JSON 编译为运行时 <code>.model</code> 缓存，渲染层再读取可用字段。</p>
+    <h1>方块模型格式</h1>
+    <p class="subtitle">世界方块模型采用 Minecraft Java 版方块烘焙模型 JSON 语义。实体和物品模型不属于本页范围。</p>
 
-    <h2>支持的格式</h2>
+    <div class="callout info">完整字段、默认值、必填标记、UV 公式和算法见 <code>docs/minecraft-java-block-model-technical-reference.md</code>。“必填”严格对应上游页面的星号标记；可选字段缺失时不得报错。</div>
+
+    <h2>目录与预处理</h2>
+    <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，纹理放在 <code>assets/textures/</code> 下并使用命名空间资源 ID 引用。启动预处理只编译 <code>models/block/</code>。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
+
+    <h2>根字段</h2>
     <table>
-      <thead><tr><th>格式</th><th>扩展名</th><th>说明</th></tr></thead>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>
       <tbody>
-        <tr><td>Blockbench JSON 子集</td><td><code>.json</code></td><td>支持 <code>texture_size</code>、<code>textures</code>、<code>elements</code>、<code>from</code>/<code>to</code>、<code>rotation</code>、<code>faces</code>、<code>uv</code> 和 <code>texture</code>。</td></tr>
-        <tr><td>glTF/GLB 静态实体模型</td><td><code>.gltf</code> / <code>.glb</code></td><td>实体 <code>Visual.model</code> 可引用 Blender 标准导出的静态三角网格。当前读取 position、normal、TEXCOORD_0、tangent、indices、多 primitive/submesh 和材质 baseColorFactor；baseColorTexture 会保存在独立实体模型材质结构中，但第一版渲染仍使用材质颜色因子 + 白色 fallback，不接入 TextureAtlas。</td></tr>
+        <tr><td><code>parent</code></td><td>string</td><td>否</td><td>无父模型</td></tr>
+        <tr><td><code>ambientocclusion</code></td><td>bool</td><td>否</td><td>继承；根模型为 <code>true</code></td></tr>
+        <tr><td><code>textures</code></td><td>object</td><td>否</td><td>与父表合并；根模型为空</td></tr>
+        <tr><td><code>elements</code></td><td>array</td><td>否</td><td>继承；根模型为空</td></tr>
       </tbody>
     </table>
 
-    <div class="callout info">
-      推荐使用 <strong>Blockbench</strong> 编辑器创建模型，但不要假设完整 Bedrock 规范都可用。引擎当前只解析本文列出的字段，未列出的动画、骨骼、display、材质属性等会被忽略。
-    </div>
+    <h2>纹理变量</h2>
+    <pre><code>"textures": {
+  "base": "core:block/stone",
+  "particle": "#base",
+  "glass": {
+    "sprite": "core:block/glass",
+    "force_translucent": true
+  }
+}</code></pre>
+    <p>字符串可以是纹理资源 ID 或 <code>#变量</code>。对象形式中的 <code>sprite</code> 条件必填，<code>force_translucent</code> 可选且默认为 <code>false</code>。父子变量合并后再解析别名。</p>
 
-    <h2>目录放置</h2>
-    <p>模型 JSON 放在 <code>assets/models/</code> 下；对应纹理放在 <code>assets/textures/</code> 的同名相对目录下。对 <code>assets/models/block/foo.json</code>，纹理引用 <code>"foo"</code> 会优先解析到 <code>assets/textures/block/foo.png</code>，找不到时才尝试模型文件旁边路径。</p>
-    <p>实体 glTF/GLB 推荐放在 <code>assets/models/entities/</code> 下；引用时可写 <code>"gltf:colonist.glb"</code>、<code>"colonist.glb"</code>，或省略扩展名写 <code>"gltf:colonist"</code>（运行时会尝试 <code>.glb</code> 再尝试 <code>.gltf</code>）。也可写相对 <code>assets/</code> 的路径，例如 <code>"models/entities/colonist.glb"</code>。实体 glTF/GLB 走独立 <code>entity_model</code> 管线，不使用方块 TextureAtlas、BlockVertex 或 block shader。</p>
-    <pre><code>assets/textures/block/NewColonyTextures/
-  grass.png                  -- 纹理图（64×64）
-  lantern.png                -- 纹理图
+    <h2>元素字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>
+      <tbody>
+        <tr><td><code>from</code></td><td>3-number array</td><td>是</td><td>无；每轴范围 <code>[-16,32]</code></td></tr>
+        <tr><td><code>to</code></td><td>3-number array</td><td>是</td><td>无；每轴范围 <code>[-16,32]</code></td></tr>
+        <tr><td><code>rotation</code></td><td>object</td><td>否</td><td>不旋转</td></tr>
+        <tr><td><code>shade</code></td><td>bool</td><td>否</td><td><code>true</code></td></tr>
+        <tr><td><code>light_emission</code></td><td>int</td><td>否</td><td><code>0</code>，范围 <code>[0,15]</code></td></tr>
+        <tr><td><code>faces</code></td><td>object</td><td>是</td><td>允许空对象</td></tr>
+      </tbody>
+    </table>
+    <p><code>from</code> 与 <code>to</code> 的先后顺序具有法线、面交换和 UV 语义，引擎不会擅自排序。坐标单位为方块的十六分之一。</p>
 
-assets/models/block/
-  grass.json                 -- Blockbench 模型定义
-  lantern.json               -- Blockbench 模型定义</code></pre>
-
-    <h2>模型 JSON 结构</h2>
-    <pre><code>{
-    "format_version": "1.21.11",
-    "credit": "Made with Blockbench",
-    "texture_size": [64, 64],
-    "textures": {
-        "0": "my_texture"
-    },
-    "elements": [
-        {
-            "from": [0, 0, 0],
-            "to": [16, 16, 16],
-            "rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
-            "faces": {
-                "north": {"uv": [0, 0, 4, 4], "texture": "#0"},
-                "east":  {"uv": [0, 4, 4, 8], "texture": "#0"},
-                "south": {"uv": [4, 0, 8, 4], "texture": "#0"},
-                "west":  {"uv": [4, 4, 8, 8], "texture": "#0"},
-                "up":    {"uv": [4, 12, 0, 8], "texture": "#0"},
-                "down":  {"uv": [12, 0, 8, 4], "texture": "#0"}
-            }
-        }
-    ]
+    <h2>元素旋转</h2>
+    <p><code>rotation</code> 出现时，三数值 <code>origin</code> 必填。单轴形式要求 <code>axis</code> 与 <code>angle</code>；多轴形式要求 <code>x</code>、<code>y</code>、<code>z</code>。两种形式同时出现时采用单轴形式。<code>rescale</code> 可选，默认为 <code>false</code>。</p>
+    <pre><code>"rotation": {
+  "origin": [8, 8, 8],
+  "axis": "y",
+  "angle": 22.5,
+  "rescale": true
 }</code></pre>
 
-    <h2>字段说明</h2>
+    <h2>面字段</h2>
     <table>
-      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>
       <tbody>
-        <tr><td><code>format_version</code></td><td>string</td><td>可保留给编辑器使用；当前运行时代码不依赖该字段。</td></tr>
-        <tr><td><code>texture_size</code></td><td>[number, number]</td><td>纹理图尺寸（像素），如 <code>[64, 64]</code>。UV 坐标基于此尺寸计算。缺省按 <code>[16, 16]</code> 处理。</td></tr>
-        <tr><td><code>textures</code></td><td>object</td><td>纹理引用表。键为纹理 ID（如 <code>"0"</code>、<code>"13"</code>），值为 PNG 文件名（不含扩展名）。</td></tr>
-        <tr><td><code>elements</code></td><td>array</td><td>模型元素数组。每个元素是一个长方体。一个模型可以有多个元素组成复杂形状。</td></tr>
+        <tr><td><code>texture</code></td><td>string</td><td>是</td><td>必须为非空 <code>#变量</code></td></tr>
+        <tr><td><code>uv</code></td><td>4-number array</td><td>否</td><td>按元素坐标和面方向推导</td></tr>
+        <tr><td><code>rotation</code></td><td>int</td><td>否</td><td><code>0</code>；只接受 0、90、180、270</td></tr>
+        <tr><td><code>tintindex</code></td><td>int</td><td>否</td><td><code>-1</code>，即不着色</td></tr>
+        <tr><td><code>cullface</code></td><td>string</td><td>否</td><td>不参与邻块剔除</td></tr>
       </tbody>
     </table>
+    <p>面名为 <code>up</code>、<code>down</code>、<code>north</code>、<code>south</code>、<code>west</code>、<code>east</code>。UV 始终使用 0 到 16 的逻辑坐标，与 PNG 实际分辨率无关。</p>
 
-    <h3>元素字段</h3>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>from</code></td><td>[float × 3]</td><td>长方体最小角坐标，范围 0~16（方块像素单位）。</td></tr>
-        <tr><td><code>to</code></td><td>[float × 3]</td><td>长方体最大角坐标，范围 0~16。</td></tr>
-        <tr><td><code>rotation</code></td><td>object</td><td>旋转参数。支持 <code>{"angle": N, "axis": "x|y|z", "origin": [...]}</code>，也支持直接写 <code>x</code>/<code>y</code>/<code>z</code> 角度和 <code>origin</code>。复杂旋转行为仍需在游戏中验证。</td></tr>
-        <tr><td><code>faces</code></td><td>object</td><td>六个面的 UV 和纹理引用。</td></tr>
-      </tbody>
-    </table>
-
-    <h3>面方向</h3>
-    <table>
-      <thead><tr><th>方向名</th><th>朝向</th></tr></thead>
-      <tbody>
-        <tr><td><code>north</code></td><td>-Z</td></tr>
-        <tr><td><code>south</code></td><td>+Z</td></tr>
-        <tr><td><code>east</code></td><td>+X</td></tr>
-        <tr><td><code>west</code></td><td>-X</td></tr>
-        <tr><td><code>up</code></td><td>+Y</td></tr>
-        <tr><td><code>down</code></td><td>-Y</td></tr>
-      </tbody>
-    </table>
-
-    <h3>面字段</h3>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>uv</code></td><td>[float × 4]</td><td>UV 坐标 <code>[u0, v0, u1, v1]</code>，以 <code>texture_size</code> 为基准的像素坐标。例如 <code>texture_size</code> 为 64 时，<code>[0, 0, 4, 4]</code> 表示纹理图左上角 4×4 像素区域。</td></tr>
-        <tr><td><code>texture</code></td><td>string</td><td>纹理引用，格式 <code>"#纹理ID"</code>（如 <code>"#0"</code>）。指向 <code>textures</code> 表中的条目。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>预处理缓存</h2>
-    <p>启动时 <code>ModPreprocessor</code> 会扫描每个 active MOD 的 <code>assets/models/</code> 目录，把 JSON 编译到运行目录的 <code>generate/&lt;mod_id&gt;/models/...</code>。源码 JSON 修改时间晚于缓存时会重新编译。</p>
-    <p>预处理失败会回退到运行时解析 JSON；但发布和开发时仍应修复预处理错误，因为缓存路径是正常启动流程的一部分。</p>
-
-    <h2>实体 glTF/GLB 使用方式</h2>
-    <p>实体定义的 <code>components.Visual</code> 可使用以下字段。保留 <code>model: "biped"</code> 或 <code>"box"</code> 时仍走旧程序化实体网格；当 <code>model</code> 以 <code>gltf:</code> 开头，或扩展名是 <code>.gltf/.glb</code> 时，会跳过 box/biped 网格并改由实体模型管线绘制。旧 <code>Visual.texture</code> 只对 box/biped fallback 有意义，glTF/GLB 实体不再兼容旧 atlas 材质路径。</p>
-    <pre><code>"Visual": {
-    "model": "gltf:colonist.glb",
-    "texture": "textures/entities/colonist.png",
-    "animation": "idle",
-    "skinned": false,
-    "model_scale": 1.0,
-    "width": 0.8,
-    "height": 1.8,
-    "depth": 0.8
-}</code></pre>
-    <table>
-      <thead><tr><th>字段</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>model</code></td><td><code>gltf:</code> 前缀或 <code>.gltf/.glb</code> 扩展名会启用 glTF 静态模型。无扩展名时按 <code>assets/models/entities/&lt;name&gt;.glb</code>、再 <code>.gltf</code> 查找。</td></tr>
-        <tr><td><code>animation</code></td><td>预留动画名字段，当前静态管线只保存和传递，不驱动骨骼动画。</td></tr>
-        <tr><td><code>skinned</code></td><td>预留蒙皮标记；当前基础管线仍按静态网格处理。</td></tr>
-        <tr><td><code>model_scale</code></td><td>实体模型实例缩放，默认 <code>1.0</code>。位置和朝向来自实体 Position/Rotation。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>当前接入边界</h2>
-    <div class="callout warn">
-      glTF/GLB 实体模型标准管线第一版已经独立于旧方块材质系统：不复用 <code>TextureAtlas</code>、<code>BlockVertex</code> 或 block shader。当前渲染使用 glTF 材质的 <code>baseColorFactor</code>；<code>baseColorTexture</code> 路径会被加载器记录，后续接入实体模型纹理描述符后再采样。旧 box/biped fallback 仍保留给没有 glTF/GLB 模型的实体。
-    </div>
-
-    <h2>示例：多元素灯笼模型</h2>
-    <p>灯笼由底座、灯柱、灯罩和火焰多个元素组成，每个元素有独立的 <code>from/to</code> 和 UV：</p>
-    <pre><code>{
-    "format_version": "1.21.11",
-    "textures": {
-        "13": "lantern_texture"
-    },
-    "elements": [
-        {
-            "from": [6.9, 1.45, 6.9],
-            "to": [9.1, 1.75, 9.1],
-            "rotation": {"angle": 0, "axis": "y", "origin": [5, 1, 5]},
-            "faces": {
-                "north": {"uv": [9, 12, 11, 12.5], "texture": "#13"},
-                "east":  {"uv": [11, 12, 13, 12.5], "texture": "#13"},
-                "south": {"uv": [12, 11, 14, 11.5], "texture": "#13"},
-                "west":  {"uv": [7, 13, 9, 13.5], "texture": "#13"},
-                "up":    {"uv": [9, 9, 7, 7], "texture": "#13"},
-                "down":  {"uv": [5, 8, 3, 10], "texture": "#13"}
-            }
-        },
-        {
-            "from": [7, 1.75, 7],
-            "to": [9, 5, 9],
-            "rotation": {"angle": 0, "axis": "y", "origin": [5, 1, 5]},
-            "faces": {
-                "north": {"uv": [3, 0, 5, 3.5], "texture": "#13"},
-                "east":  {"uv": [3, 4, 5, 7.5], "texture": "#13"},
-                "south": {"uv": [5, 0, 7, 3.5], "texture": "#13"},
-                "west":  {"uv": [5, 4, 7, 7.5], "texture": "#13"},
-                "up":    {"uv": [7, 10, 5, 8], "texture": "#13"},
-                "down":  {"uv": [2, 9, 0, 11], "texture": "#13"}
-            }
-        }
-    ]
-}</code></pre>
+    <h2>错误行为</h2>
+    <p>JSON 类型错误、缺少条件必填字段、坐标越界、非法旋转、父链循环或父模型缺失会记录明确日志并编译为统一无效模型。纹理变量缺失、循环或 PNG 缺失只替换相应纹理。合法的空 <code>elements</code> 或空 <code>faces</code> 保持不渲染。</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

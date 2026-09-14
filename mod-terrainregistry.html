@@ -11,24 +11,14 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形配置注册</div></div>
   <div class="content">
     <h1>地形配置注册</h1>
-    <p class="subtitle">地形配置放在 <code>data/terrain/</code> 下，用 JSON 提供默认地形方块和部分全局地形参数。它与 <a href="mod-biomeregistry.html">群系注册</a> 和 <a href="mod-oreregistry.html">矿物分布注册</a>配合使用：群系决定地表/次地表，矿物决定地下替换，地形配置提供基础方块、水方块和导航流体深度等全局选项。</p>
+    <p class="subtitle">地形配置放在 <code>data/terrain/</code> 下，用 JSON 提供默认地形方块和部分全局地形参数。它与<a href="mod-biomeregistry.html">群系注册</a>配合使用：群系决定地表/次地表，地形配置提供基础方块、水方块和导航流体深度等全局选项。矿物由矿井规则按区块提供，不作为普通地下矿物体素生成。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
     "id": "core:default",
     "base_block": "core:stone",
     "water_block": "core:water",
-    "max_navigable_fluid_depth": 0,
-    "cave": {
-        "enabled": true,
-        "noise_scale": 0.05,
-        "octaves": 3,
-        "persistence": 0.5,
-        "lacunarity": 2.0,
-        "threshold": 0.45,
-        "min_y": 5,
-        "max_y": 50
-    }
+    "max_navigable_fluid_depth": 1
 }</code></pre>
 
     <h2>字段说明</h2>
@@ -38,23 +28,7 @@
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识。当前 chunk 地形配置优先查找 <code>core:default</code>；如果没有这个 ID，则使用注册表中的第一个 terrain 条目。</td></tr>
         <tr><td><code>base_block</code></td><td>string</td><td>是</td><td>基础实心方块 ID，必须引用已注册方块。世界生成在没有群系覆盖时使用它作为默认地下方块。</td></tr>
         <tr><td><code>water_block</code></td><td>string</td><td>否</td><td>水体方块 ID，必须引用已注册方块。省略时使用运行时默认水方块。</td></tr>
-        <tr><td><code>max_navigable_fluid_depth</code></td><td>int</td><td>否</td><td>寻路可通过的最大流体深度，必须是非负整数。省略时保留引擎默认值。</td></tr>
-        <tr><td><code>cave</code></td><td>object</td><td>否</td><td>洞穴生成参数。省略时使用 <code>TerrainConfig</code> 默认值。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>洞穴字段</h2>
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>默认值</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>enabled</code></td><td>bool</td><td><code>true</code></td><td>是否启用洞穴生成。群系的 <code>has_caves</code> 也必须允许洞穴。</td></tr>
-        <tr><td><code>noise_scale</code></td><td>number</td><td><code>0.05</code></td><td>洞穴噪声采样尺度。</td></tr>
-        <tr><td><code>octaves</code></td><td>int</td><td><code>3</code></td><td>洞穴噪声 octaves。当前配置会被读入 <code>TerrainConfig</code>，具体使用取决于地形生成实现。</td></tr>
-        <tr><td><code>persistence</code></td><td>number</td><td><code>0.5</code></td><td>洞穴噪声 persistence。</td></tr>
-        <tr><td><code>lacunarity</code></td><td>number</td><td><code>2.0</code></td><td>洞穴噪声 lacunarity。</td></tr>
-        <tr><td><code>threshold</code></td><td>number</td><td><code>0.45</code></td><td>洞穴生成阈值。阈值越低，洞穴系统越容易出现。</td></tr>
-        <tr><td><code>min_y</code></td><td>int</td><td><code>5</code></td><td>洞穴最低高度。</td></tr>
-        <tr><td><code>max_y</code></td><td>int</td><td><code>50</code></td><td>洞穴最高高度。</td></tr>
+        <tr><td><code>max_navigable_fluid_depth</code></td><td>int</td><td>否</td><td>寻路可通过的最大流体深度，必须是非负整数。省略时为 0；0 表示不可涉水，1 表示可以穿过一格深的浅水。</td></tr>
       </tbody>
     </table>
 
@@ -62,12 +36,16 @@
     <ul>
       <li>引擎会先建立默认 <code>TerrainConfig</code>，其中海平面来自创建世界或存档中的世界设置。</li>
       <li>随后从 <code>data/terrain/</code> 注册表中选择 <code>core:default</code>；如果没有该 ID，则使用第一个 terrain 条目。</li>
-      <li>选中的 JSON 覆盖 <code>base_block</code>、<code>water_block</code>、<code>max_navigable_fluid_depth</code> 和 <code>cave</code> 子字段。</li>
+      <li>选中的 JSON 覆盖 <code>base_block</code>、<code>water_block</code> 和 <code>max_navigable_fluid_depth</code>。</li>
       <li>群系仍然负责每列的 <code>surface_block</code>、<code>subsurface_block</code>、气候匹配和高度轮廓；terrain 配置不是群系列表。</li>
     </ul>
 
     <div class="callout info">
-      CoreMod 当前的 <code>data/terrain/default.json</code> 只声明 <code>core:default</code>、<code>base_block</code> 和 <code>water_block</code>。没有写出的字段会使用引擎默认值。
+      当前世界生成只填充连续的地表和地下实心层，不执行地下洞穴雕刻；terrain 与 biome 数据均不提供洞穴开关或洞穴参数。
+    </div>
+
+    <div class="callout info">
+      CoreMod 当前的 <code>data/terrain/default.json</code> 将 <code>max_navigable_fluid_depth</code> 设为 1，因此殖民者可以穿过一格深的浅水。没有写出的字段会使用引擎默认值。
     </div>
 
     <h2>和其他注册表的关系</h2>
@@ -76,7 +54,6 @@
       <tbody>
         <tr><td><a href="mod-biomeregistry.html">群系注册</a></td><td>决定某个气候位置使用哪种表层方块、次表层方块、植被概率和高度修正。</td></tr>
         <tr><td><a href="mod-featureregistry.html">地物注册</a></td><td>在地表装饰阶段放置树木、石堆等地物。</td></tr>
-        <tr><td><a href="mod-oreregistry.html">矿物分布注册</a></td><td>在地下生成阶段按噪声替换基础方块。</td></tr>
         <tr><td><a href="mod-blockregistry.html">方块注册</a></td><td>提供 <code>base_block</code>、<code>water_block</code>、群系方块和矿物方块引用的实体数据。</td></tr>
       </tbody>
     </table>

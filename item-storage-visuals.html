@@ -1,0 +1,8 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Item storage visuals</title></head>
+<body>
+<h1>Item storage visuals</h1>
+<p>Items stored in an outdoor stockpile remain inventory instances owned by the player, but they are also included in the render snapshot as world item piles at their assigned stockpile cells. They use the same <code>core:item_pile</code> render-container path as loose ground items, including per-item models and deterministic offsets for multiple stacks in one cell.</p>
+<p>Storage voxels inside functional buildings remain enclosed storage and are not rendered as outdoor piles.</p>
+<p>Rendered inventory piles do not insert collision voxels or navigation obstacles. Hauling targets resolve storage coordinates to the actual walkable feet height. Movement preserves a required vertical jump when horizontal displacement is zero. An exhausted route that has not reached its destination is replanned; unreachable work is interrupted and released. A route with no positional or waypoint progress for four simulation seconds also releases its worker and records a diagnostic instead of leaving the worker permanently busy.</p>
+</body></html>

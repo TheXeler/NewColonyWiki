@@ -17,7 +17,7 @@
     <table>
       <thead><tr><th>格式</th><th>扩展名</th><th>特点</th><th>适用场景</th></tr></thead>
       <tbody>
-        <tr><td>WAV</td><td><code>.wav</code></td><td>无压缩，文件较大，加载快</td><td>短音效（挖掘、放置、点击）</td></tr>
+        <tr><td>WAV</td><td><code>.wav</code></td><td>无压缩，文件较大，加载快</td><td>短音效（采掘、放置、点击）</td></tr>
         <tr><td>MP3</td><td><code>.mp3</code></td><td>有损压缩，文件小</td><td>背景音乐、较长音效</td></tr>
         <tr><td>FLAC</td><td><code>.flac</code></td><td>无损压缩，音质最好，文件较大</td><td>高品质音乐</td></tr>
         <tr><td>Vorbis</td><td><code>.ogg</code></td><td>开源有损压缩，文件小且音质好</td><td>背景音乐、环境音</td></tr>
@@ -42,7 +42,9 @@
 <pre><code>my_mod/
   data/
     audio/
-      sounds.json             -- 音频注册清单
+	  title_theme.json
+	  pickaxe_hit.json
+	  wind.json
   assets/
     audio/
       music/
@@ -57,36 +59,17 @@
         birds.wav</code></pre>
 
     <h2>音频注册</h2>
-    <p>sound bank JSON 使用 <code>sounds</code> 数组注册音频文件：</p>
+    <p><code>data/audio/</code> 中每个 JSON 文件注册一个音频：</p>
     <pre><code>{
-    "sounds": [
-        {
-            "id": "my_mod:title_theme",
-            "file": "assets/audio/music/title_theme.ogg",
-            "category": "music",
-            "streaming": true,
-            "loop": true,
-            "volume": 0.8
-        },
-        {
-            "id": "my_mod:pickaxe_hit",
-            "file": "assets/audio/effects/pickaxe_hit.wav",
-            "category": "effect",
-            "streaming": false,
-            "volume": 0.6
-        },
-        {
-            "id": "my_mod:wind",
-            "file": "assets/audio/ambient/wind.ogg",
-            "category": "ambient",
-            "streaming": true,
-            "loop": true,
-            "volume": 0.4
-        }
-    ]
+    "id": "my_mod:title_theme",
+    "file": "assets/audio/music/title_theme.ogg",
+    "category": "music",
+    "streaming": true,
+    "loop": true,
+    "volume": 0.8
 }</code></pre>
 
-    <h2>sounds.json 字段</h2>
+    <h2>音频记录字段</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>默认值</th><th>说明</th></tr></thead>
       <tbody>
@@ -100,8 +83,7 @@
     </table>
 
     <h2>当前加载边界</h2>
-    <p><code>data/audio/</code> 已接入通用 ModLoader 注册表。每个 active MOD 的单音频 <code>data/audio/*.json</code> 都会注册为 <code>audio</code> 数据记录，并在启动阶段加载进 <code>SoundBank</code>。旧版 <code>sounds.json</code> 聚合清单会在注册表扫描时跳过；如果没有任何音频注册表记录，启动阶段会兜底读取核心 MOD 下的 <code>data/audio/sounds.json</code>。</p>
-    <p>sound bank 文件可以带顶层 <code>id</code>；省略时引擎会用 <code>mod_id:文件名</code> 作为注册表 ID。实际可播放的音频 ID 来自 <code>sounds[].id</code>。</p>
+    <p><code>data/audio/</code> 已接入通用 ModLoader 注册表。每个 active MOD 的单音频 <code>data/audio/*.json</code> 都会注册为 <code>audio</code> 数据记录，并在启动阶段加载进 <code>SoundBank</code>。当前格式不接受 <code>sounds[]</code> 聚合清单，也不存在核心 sound bank 回退。</p>
 
     <h2>Lua 播放接口</h2>
     <pre><code>-- 播放音效
