@@ -39,6 +39,7 @@ const WIKI_NAV = [
           ["mod-jobregistry", "职业注册", "mod-jobregistry.html"],
           ["mod-civilizationregistry", "文明注册", "mod-civilizationregistry.html"],
           ["mod-focusregistry", "焦点注册", "mod-focusregistry.html"],
+          ["mod-techregistry", "科技注册", "mod-techregistry.html"],
           ["mod-factionregistry", "NPC 阵营注册", "mod-factionregistry.html"],
           ["mod-namepoolregistry", "名称池注册", "mod-namepoolregistry.html"],
           ["mod-featureregistry", "地物注册", "mod-featureregistry.html"],
@@ -58,7 +59,10 @@ const WIKI_NAV = [
           ["engine-lighting", "引擎光照", "engine-lighting.html"],
           ["engine-save-system", "存档系统状态", "engine-save-system.html"],
           ["engine-resource-io", "资源 IO / UTF-8 路径", "engine-resource-io.html"],
-          ["engine-service-layer", "引擎服务层", "engine-service-layer.html"]
+          ["engine-service-layer", "引擎服务层", "engine-service-layer.html"],
+          ["engine-renderer-lod", "地形 LOD 渲染", "engine-renderer-lod.html"],
+          ["building-design-system", "建筑设计系统", "building-design-system.html"],
+          ["item-storage-visuals", "物品存储与搬运表现", "item-storage-visuals.html"]
         ]
       }
     ]
@@ -158,6 +162,187 @@ function createSidebar(activePage) {
   return sidebar;
 }
 
+function findNavLabel(pageId) {
+  let found = null;
+  function walk(links) {
+    for (const item of links) {
+      if (found) return;
+      if (Array.isArray(item)) {
+        if (item[0] === pageId) found = item[1];
+      } else if (item.children) {
+        walk(item.children);
+      }
+    }
+  }
+  for (const group of WIKI_NAV) walk(group.links);
+  return found;
+}
+
+// Normalizes legacy or incomplete pages so every document ends up with the
+// canonical `.main > (.topbar, .content)` shell and therefore gets a sidebar.
+function ensureShell() {
+  let content = document.querySelector(".content");
+  if (!content) {
+    content = document.createElement("div");
+    content.className = "content";
+    const movable = Array.from(document.body.childNodes).filter((node) => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent.trim() !== "";
+      if (node.nodeType !== Node.ELEMENT_NODE) return false;
+      const tag = node.tagName.toLowerCase();
+      return tag !== "script" && tag !== "link" && tag !== "style";
+    });
+    for (const node of movable) content.appendChild(node);
+  }
+
+  let main = content.closest(".main");
+  if (!main) {
+    main = document.querySelector(".main") || document.querySelector(".page-shell");
+    if (!main) {
+      main = document.createElement("div");
+      main.className = "main";
+      document.body.appendChild(main);
+    }
+    main.appendChild(content);
+  }
+
+  let topbar = main.querySelector(":scope > .topbar");
+  if (!topbar) {
+    topbar = document.createElement("div");
+    topbar.className = "topbar";
+    const crumb = document.createElement("div");
+    crumb.className = "breadcrumb";
+    const pageId = document.body.dataset.page || "index";
+    const label = findNavLabel(pageId);
+    const title = (document.title || "").split(/\s+[·-]\s+/)[0].trim();
+    const root = document.createElement("a");
+    root.href = "index.html";
+    root.textContent = "Wiki";
+    crumb.appendChild(root);
+    if (pageId !== "index" && (label || title)) {
+      const sep = document.createElement("span");
+      sep.className = "sep";
+      sep.textContent = "/";
+      crumb.appendChild(sep);
+      crumb.appendChild(document.createTextNode(label || title));
+    }
+    topbar.appendChild(crumb);
+    main.insertBefore(topbar, content);
+  }
+  return { main, topbar, content };
+}
+
+// Top-right search box that filters the page's own sections by heading name.
+function setupSectionSearch(topbar, content) {
+  if (!topbar || !content) return;
+
+  const blocks = [];
+  let current = null;
+  let currentH2 = null;
+
+  for (const el of Array.from(content.children)) {
+    const tag = el.tagName ? el.tagName.toLowerCase() : "";
+    const level = tag === "h2" ? 2 : (tag === "h3" ? 3 : 0);
+    if (level) {
+      current = {
+        level,
+        heading: el,
+        text: el.textContent.toLowerCase(),
+        body: [],
+        parent: level === 3 ? currentH2 : null,
+        match: false,
+        childMatch: false
+      };
+      if (level === 2) currentH2 = current;
+      blocks.push(current);
+    } else if (current && !el.classList.contains("footer")) {
+      current.body.push(el);
+    }
+  }
+
+  if (blocks.length === 0) return;
+
+  const box = document.createElement("div");
+  box.className = "section-search";
+
+  const input = document.createElement("input");
+  input.type = "search";
+  input.placeholder = "筛选章节名称";
+  input.setAttribute("aria-label", "按章节名称筛选");
+  input.autocomplete = "off";
+  input.spellcheck = false;
+
+  const count = document.createElement("span");
+  count.className = "section-search-count";
+  count.setAttribute("role", "status");
+  count.setAttribute("aria-live", "polite");
+
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "section-search-clear";
+  clear.textContent = "清除";
+  clear.hidden = true;
+
+  box.appendChild(input);
+  box.appendChild(count);
+  box.appendChild(clear);
+  topbar.appendChild(box);
+
+  const apply = () => {
+    const query = input.value.trim().toLowerCase();
+    box.classList.toggle("has-query", query !== "");
+    clear.hidden = query === "";
+
+    if (query === "") {
+      for (const b of blocks) {
+        b.heading.hidden = false;
+        for (const el of b.body) el.hidden = false;
+      }
+      count.textContent = "";
+      return;
+    }
+
+    for (const b of blocks) b.match = b.text.includes(query);
+    for (const b of blocks) {
+      if (b.level === 2) {
+        b.childMatch = blocks.some((c) => c.parent === b && c.match);
+      }
+    }
+
+    let visible = 0;
+    for (const b of blocks) {
+      const parentMatch = b.parent ? b.parent.match : false;
+      const showHeading = b.match || parentMatch || (b.level === 2 && b.childMatch);
+      const showBody = b.match || parentMatch;
+      b.heading.hidden = !showHeading;
+      for (const el of b.body) el.hidden = !showBody;
+      if (showHeading) visible += 1;
+    }
+    count.textContent = visible === 0 ? "无匹配章节" : visible + " 个章节";
+  };
+
+  input.addEventListener("input", apply);
+  clear.addEventListener("click", () => {
+    input.value = "";
+    apply();
+    input.focus();
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      input.value = "";
+      apply();
+      input.blur();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+    const active = document.activeElement;
+    const tag = active && active.tagName ? active.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || (active && active.isContentEditable)) return;
+    event.preventDefault();
+    input.focus();
+  });
+}
+
 function setupApiSearch() {
   const input = document.querySelector("[data-api-search]");
   const tables = Array.from(document.querySelectorAll("[data-lua-api-container] table"));
@@ -247,8 +432,10 @@ function renderLuaApiTable() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const activePage = document.body.dataset.page || "index";
+  const shell = ensureShell();
   document.body.prepend(createSidebar(activePage));
+  setupSectionSearch(shell.topbar, shell.content);
   renderLuaApiTable();
   setupApiSearch();
 });
-
+

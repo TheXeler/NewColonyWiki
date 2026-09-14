@@ -487,6 +487,83 @@ td { background: var(--color-bg); }
   white-space: nowrap;
 }
 
+/* ===== Section search (topbar, top-right) ===== */
+.section-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 210px;
+  padding: 3px 10px;
+  background: var(--color-search);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.section-search:focus-within {
+  border-color: var(--color-link);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, .25);
+}
+
+.section-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--color-heading);
+  font: inherit;
+  font-size: .84rem;
+  outline: none;
+}
+
+.section-search input::placeholder {
+  color: var(--color-muted);
+}
+
+/* Hide the native clear affordance; the 清除 button is the single clear path. */
+.section-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.section-search-count {
+  font-size: .72rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.section-search.has-query .section-search-count {
+  color: var(--color-accent-light);
+}
+
+.section-search-clear {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: .76rem;
+  cursor: pointer;
+}
+
+.section-search-clear:hover {
+  color: var(--color-heading);
+}
+
+/* Section filtering toggles the `hidden` attribute on real content nodes. */
+.content [hidden] {
+  display: none !important;
+}
+
+/* Safety net: legacy `.page-shell` pages still get the sidebar offset. */
+.page-shell {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+}
+
 /* ===== Badge ===== */
 .badge {
   display: inline-block;
@@ -515,7 +592,10 @@ td { background: var(--color-bg); }
 @media (max-width: 860px) {
   .sidebar { display: none; }
   .main { margin-left: 0; }
+  .page-shell { margin-left: 0; }
   .content { padding: 24px 20px 60px; }
+  .topbar { padding: 12px 20px; }
+  .section-search { min-width: 0; flex: 1; }
 }
 
 /* ===== Scrollbar ===== */

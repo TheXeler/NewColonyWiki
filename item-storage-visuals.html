@@ -1,8 +1,26 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Item storage visuals</title></head>
-<body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item storage visuals · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="item-storage-visuals">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>物品存储与搬运表现</div></div>
+  <div class="content">
 <h1>Item storage visuals</h1>
+
+<h2>Outdoor stockpile piles</h2>
 <p>Items stored in an outdoor stockpile remain inventory instances owned by the player, but they are also included in the render snapshot as world item piles at their assigned stockpile cells. They use the same <code>core:item_pile</code> render-container path as loose ground items, including per-item models and deterministic offsets for multiple stacks in one cell.</p>
+
+<h2>Enclosed storage</h2>
 <p>Storage voxels inside functional buildings remain enclosed storage and are not rendered as outdoor piles.</p>
+
+<h2>Collision, navigation and hauling</h2>
 <p>Rendered inventory piles do not insert collision voxels or navigation obstacles. Hauling targets resolve storage coordinates to the actual walkable feet height. Movement preserves a required vertical jump when horizontal displacement is zero. An exhausted route that has not reached its destination is replanned; unreachable work is interrupted and released. A route with no positional or waypoint progress for four simulation seconds also releases its worker and records a diagnostic instead of leaving the worker permanently busy.</p>
+  </div>
+</div>
+<script src="wiki.js"></script>
 </body></html>

@@ -1,6 +1,15 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Building design system</title></head>
-<body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building design system · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="building-design-system">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑设计系统</div></div>
+  <div class="content">
 <h1>Building design system</h1>
 <p>Building designs are sparse semantic documents compiled into authoritative block cells. Object order is significant: later objects replace earlier cells, deletions reveal the preceding object, and explicit cell overrides are applied last. A design has no editor canvas size limit.</p>
 <h2>Block metadata</h2>
@@ -22,4 +31,7 @@
 <p>Remote clients submit through the same command. The workspace holds local engine state, so a client sends its draft cells in the command payload and the Host runs the identical submission path; the reply lists the cells the Host took over, and the client applies that list to its own draft, so both sides converge on one ghost set. The reply is handed over under its own lock and applied on the main thread, which owns the design workspace; the same handling closes the submitting client's workspace once the Host accepts the submission.</p>
 <p><code>building_design.rml</code> is a dedicated full-screen RmlUi document. The ordinary bottom bar exposes a separate Building Design button. Entering switches to the <code>building_design</code> UI phase, hides ordinary playing documents, and pauses simulation. Exit or Escape restores the previous pause and speed state. A paused world still services queued network commands between ticks, so a Start Building press made inside the paused workspace is handled right away instead of waiting for unpause; that is also what keeps the draft readable while the Host handles the command.</p>
 <p>The document keeps the world viewport transparent and overlays definite-size panels: the tool rail and history actions are on the left, design status is at the top, blueprint actions are at the upper right, above the name field, the folder/blueprint list and the last file message, the property inspector grows upward from the lower right, and the block palette is along the bottom. The ordinary HUD remains visible so its existing clock and simulation-speed controls stay in their normal location; the design document does not create a second speed control. Its root fills the RmlUi context and uses the Unicode font family. Every visible label is supplied by the shared <code>ui_text</code> localization model.</p>
+  </div>
+</div>
+<script src="wiki.js"></script>
 </body></html>

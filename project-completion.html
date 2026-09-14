@@ -30,15 +30,19 @@
       <thead><tr><th>类型</th><th>条目</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>jobs</code></td><td>66</td><td>NCDOCS 职业节点表；新世界的初始殖民者实例以通用殖民者职业等级 1 开始。</td></tr>
-        <tr><td><code>blocks</code></td><td>10</td><td>世界文档可解释的地形、水、树木/木材和墓碑；无私有掉落、硬度或水流数值。</td></tr>
+        <tr><td><code>blocks</code></td><td>18</td><td>可采方块的正数 <code>hardness</code> 表示采掘/伐木工时秒数；采集结果统一通过 <code>output_table</code> 引用产出表，不使用私有 <code>drops</code>。</td></tr>
         <tr><td><code>biomes</code></td><td>6</td><td>森林、平原、山地、水域、雪地、荒漠。具体生成参数未定义，当前以配置屏障阻止新建世界。</td></tr>
-        <tr><td><code>entities</code></td><td>1</td><td>通用殖民者原型；不填写无文档来源的基础数值或背景经历。</td></tr>
-        <tr><td><code>items</code></td><td>1</td><td>独立物品树苗；测试殖民地初始物资为 50 个木板和 5 棵树苗。</td></tr>
+        <tr><td><code>entities</code></td><td>2</td><td>通用殖民者原型与 MVP 测试动物；不填写无文档来源的基础数值或背景经历。</td></tr>
+        <tr><td><code>items</code></td><td>0</td><td>独立物品目录为空；当前物品由方块物品派生。</td></tr>
         <tr><td><code>zones</code></td><td>2</td><td>种植区和露天仓储区；采集、采掘与狩猎是一次性指令。</td></tr>
         <tr><td><code>terrain</code></td><td>1</td><td>只引用基础石材和水体；涉水默认深度为 0。</td></tr>
+        <tr><td><code>recipes</code></td><td>4</td><td>木板、木棍、木地板和工作台的固定配方，见配方数据页；结果与数量只由产出表决定。</td></tr>
+        <tr><td><code>output_tables</code></td><td>14</td><td>方块采集与固定配方使用的有限无环产出表。</td></tr>
+        <tr><td><code>buildings</code></td><td>2</td><td>徒手制作点和工作台；其余建筑等待有文档来源的形状、材料和工期。</td></tr>
+        <tr><td><code>manufacturing_rules</code></td><td>1</td><td>唯一一条全局制造规则，提供锻造工时、成败/品质公式、六级阈值和产出树深度。</td></tr>
         <tr><td><code>name_pools</code></td><td>2 个语言文件</td><td>显示名称素材；不触发 NPC 阵营生成或外交玩法。</td></tr>
         <tr><td><code>audio</code></td><td>7</td><td>表现层注册条目，不定义玩法规则。</td></tr>
-        <tr><td><code>buildings / crops / recipes / features</code></td><td>0</td><td>具体形状、材料、工期、种植循环、配方和地物形状未定义。</td></tr>
+        <tr><td><code>crops / features</code></td><td>0</td><td>种植循环与地物形状尚无文档数值，内容表保持为空。</td></tr>
         <tr><td><code>civilizations / techs / focuses / factions / faction_spawn_rules / diplomacy_proposals / combat / ores / tags</code></td><td>0</td><td>无专项文档或旧内容已删除；矿物通过可空矿井规则存在，不作为普通矿石体素。</td></tr>
       </tbody>
     </table>
@@ -53,6 +57,6 @@
     </ul>
   </div>
 </div>
-<script src="nav.js"></script>
+<script src="wiki.js"></script>
 </body>
 </html>
