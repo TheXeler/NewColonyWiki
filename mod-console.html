@@ -39,14 +39,15 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
     <table>
       <thead><tr><th>命令</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>mods</code></td><td>查看已加载的 MOD 列表。</td></tr>
+        <tr><td><code>mods</code></td><td>查看已安装的 MOD 列表与其中真正加载的数量；禁用（或已启用但需重启）的条目会带 <code>[disabled]</code> / <code>[enabled, restart required]</code> 标记。</td></tr>
         <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
-        <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值。</td></tr>
+        <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值（禁用 MOD 的配置同样可查，条目会带 <code>[disabled]</code> 标记）。</td></tr>
         <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看注册表。type 可使用基础内容、经营规则、生态、动态天气、视野和难度等已注册类型；不写 type 时列出全部类型。</td></tr>
         <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
         <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。</td></tr>
         <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
         <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原型 ID 生成非殖民者实体；带 <code>ColonistTag</code> 的原型固定拒绝，自动补全也不会列出。</td></tr>
+        <tr><td><code>raid [list|status|&lt;raid_id&gt;]</code></td><td>列出已注册的袭击定义、查看进行中的袭击，或触发一场袭击。触发失败时会给出稳定原因（未知 ID、难度袭击倍率为 0、没有可用目标、生成失败）。</td></tr>
         <tr><td><code>inventory &lt;entity&gt;</code> / <code>inventory_page &lt;entity&gt;</code></td><td>只读查看殖民者的统一背包和单一装备位置实例。</td></tr>
         <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池。</td></tr>
         <tr><td><code>list_faction_instances</code></td><td>查看已经生成的 NPC 阵营实例。</td></tr>
@@ -73,7 +74,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
       <li><code>list_data blocks prefix=copper_age:</code> —— 检查方块是否注册。</li>
       <li><code>list_data jobs prefix=copper_age:</code> —— 检查职业是否注册。</li>
       <li><code>list_data civilizations prefix=copper_age:</code> —— 检查文明是否注册。</li>
-      <li><code>list_data focuses prefix=copper_age:</code> —— 检查 焦点 是否注册。</li>
+      <li><code>list_data focuses prefix=copper_age:</code> —— 检查 要闻 是否注册。</li>
       <li><code>data type:factions</code> —— 检查 NPC 阵营定义是否注册。</li>
       <li><code>data copper_age:copper_clan</code> —— 查看单条记录详情。</li>
       <li><code>list_recipes 1 20 prefix=copper_age:</code> —— 检查配方是否注册。</li>

@@ -152,7 +152,7 @@
     <p><code>engine.ui.window.unregister(handle_or_id)</code> 注销窗口；<code>engine.ui.window.update(handle_or_id, patch)</code> 局部更新；<code>engine.ui.window.is_open(handle_or_id)</code> 查询打开状态；<code>engine.ui.window.clear(mod_id)</code> 清理指定 MOD 的窗口。</p>
 
     <h2>经营数据桥</h2>
-    <p>经营页面不要直接散落调用 ECS、库存、工作池、科技树和焦点系统。CoreMod 在启动时注册 <code>engine.ui.data</code> 和 <code>engine.ui.command</code>，作为 Lua UI 与 RmlUI 文档层共用的数据桥。</p>
+    <p>经营页面不要直接散落调用 ECS、库存、工作池、科技树和要闻系统。CoreMod 在启动时注册 <code>engine.ui.data</code> 和 <code>engine.ui.command</code>，作为 Lua UI 与 RmlUI 文档层共用的数据桥。</p>
     <table>
       <thead><tr><th>接口</th><th>说明</th></tr></thead>
       <tbody>
@@ -172,7 +172,7 @@
         <tr><td><code>engine.ui.data.colonists()</code></td><td>返回人员界面所需的名称、状态、职业等级/经验、心情 thoughts、基础/工作/战斗属性、单一 <code>equipment.item</code>、物品栏和转职树。</td></tr>
 		<tr><td>人员工作数据</td><td><code>colonist_list</code> 返回当前激活工作和该人的已领取队列；底栏工作池窗口通过只读 <code>engine.work.list()</code> 列出当前玩家殖民地的全部活动工作。</td></tr>
         <tr><td><code>engine.ui.data.research()</code></td><td>返回科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。</td></tr>
-        <tr><td><code>engine.ui.data.events()</code></td><td>返回事件/焦点列表、严重度、详情和可执行动作。</td></tr>
+        <tr><td><code>engine.ui.data.events()</code></td><td>返回事件/要闻列表、严重度、详情和可执行动作。</td></tr>
         <tr><td><code>engine.ui.data.snapshot(name)</code></td><td>按名称读取单个快照；留空时返回完整经营快照。</td></tr>
       </tbody>
     </table>
@@ -207,7 +207,7 @@ end</code></pre>
 engine.ui.command.run("core:colonists.select", { id = 12 })
 engine.ui.command.run("core:craft.queue", { id = "my_mod:example_recipe", entity_id = 12 })</code></pre>
 
-    <p>桥接层通过现有 <code>engine.events</code> 推送刷新信号：库存、stockpile、工作、科技和焦点变化会广播 <code>ui:data:changed</code>；payload 至少包含 <code>channel</code>。建造下单会刷新 <code>build_defs</code> 和 <code>construction_active</code>；stockpile 变化会刷新 <code>resource_snapshot</code> 和 <code>build_defs</code>，施工系统随后在材料重试事件中刷新 <code>construction_active</code>。命令执行会广播 <code>ui:command</code>，并把命令返回 JSON 写入 <code>command_result</code> 快照通道，页面可轮询该通道显示 toast 或错误。命令返回 <code>changed_channels</code> 时，C++ 会优先刷新这些通道；约 5 Hz 的全量刷新仍保留为兜底。</p>
+    <p>桥接层通过现有 <code>engine.events</code> 推送刷新信号：库存、stockpile、工作、科技和要闻变化会广播 <code>ui:data:changed</code>；payload 至少包含 <code>channel</code>。建造下单会刷新 <code>build_defs</code> 和 <code>construction_active</code>；stockpile 变化会刷新 <code>resource_snapshot</code> 和 <code>build_defs</code>，施工系统随后在材料重试事件中刷新 <code>construction_active</code>。命令执行会广播 <code>ui:command</code>，并把命令返回 JSON 写入 <code>command_result</code> 快照通道，页面可轮询该通道显示 toast 或错误。命令返回 <code>changed_channels</code> 时，C++ 会优先刷新这些通道；约 5 Hz 的全量刷新仍保留为兜底。</p>
 	<p><code>engine.selection.start(options)</code> 的 2D/3D 选区支持 <code>preview_mode = "transparent"</code>（默认的整体透明范围）和 <code>preview_mode = "block_fill"</code>（逐格半透明方块填充）。单格放置复用 <code>shape = "3d"</code>，并设置 <code>hover_follows_cursor = true</code>、<code>click_to_confirm = true</code>；目标随鼠标悬停更新，左键释放发出通用 <code>selection:click_confirmed</code> 事件并立即提交，不引入独立放置形状。</p>
 
     <h2>浮动提示 API</h2>
@@ -436,7 +436,7 @@ return M</code></pre>
         <tr><td><code>world_info</code></td><td><code>engine.time.get_day/season/year</code> + 当前 locale</td><td>已接通</td></tr>
         <tr><td><code>resource_snapshot</code></td><td><code>systems.hauling</code> 账本 + 殖民者手持物汇总</td><td>已接通</td></tr>
         <tr><td><code>colonist_list</code></td><td><code>engine.ecs.query_colonists</code> + 职业/心情/属性/装备</td><td>已接通</td></tr>
-        <tr><td><code>event_list</code></td><td><code>engine.focuses.active</code> 焦点列表</td><td>已接通</td></tr>
+        <tr><td><code>event_list</code></td><td><code>engine.focuses.active</code> 要闻列表</td><td>已接通</td></tr>
         <tr><td><code>tech_tree</code></td><td><code>engine.research.list_techs/get_tech</code>，按分类分组</td><td>已接通</td></tr>
         <tr><td><code>view_modes</code></td><td><code>engine.view.state</code>（模式 + 地形透视）</td><td>已接通</td></tr>
         <tr><td><code>orders_kinds</code></td><td>采集/挖矿指令入口（静态目录）</td><td>已接通（静态目录）</td></tr>

@@ -11,76 +11,31 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI 图片资源</div></div>
   <div class="content">
     <h1>UI 图片资源</h1>
-    <p class="subtitle">MOD 可以通过 <code>mod.json</code> 的 <code>ui</code> 字段声明客户端 UI 图片。当前已支持主菜单背景图和背景图片池。</p>
+    <p class="subtitle">客户端 UI 图片由引擎按目录自动收集，<code>mod.json</code> 不再声明图片或图片池。当前唯一的自动资源池是主菜单背景图。</p>
 
-    <h2>文件位置</h2>
-    <p>UI 图片推荐放在 <code>assets/ui/</code> 下。当前只支持 PNG，路径必须相对 MOD 根目录，不能使用绝对路径或 <code>..</code> 跳出 MOD 目录。</p>
+    <h2>主菜单背景图（自动扫描）</h2>
+    <p>启用中的每个 MOD 都可以把背景图放进自己的 <code>assets/background/</code> 目录。引擎启动时递归扫描所有启用 MOD 的该目录，把找到的图片组成背景图池。不写任何 <code>mod.json</code> 配置。</p>
     <pre><code>my_theme/
   mod.json
   assets/
-    ui/
+    background/
       background001.png
-      background002.png</code></pre>
-
-    <h2>声明图片和图片池</h2>
-    <p><code>images</code> 是图片 ID 到 PNG 路径的映射。<code>image_pools</code> 是图片池，池成员可以引用 <code>images</code> 中的 ID，也可以直接写 PNG 相对路径。</p>
-    <pre><code>{
-  "id": "my_theme",
-  "side": "client",
-  "ui": {
-    "images": {
-      "main_menu_background_001": "assets/ui/background001.png",
-      "main_menu_background_002": "assets/ui/background002.png"
-    },
-    "image_pools": {
-      "main_menu_backgrounds": [
-        "main_menu_background_001",
-        "main_menu_background_002"
-      ]
-    }
-  }
-}</code></pre>
-
-    <h2>主菜单背景</h2>
-    <p>主菜单从 <code>ui.main_menu.background_pool</code> 指定的图片池中选择背景。当前选择策略只支持 <code>"first"</code>，也就是使用池中的第一张图片。</p>
-    <pre><code>{
-  "ui": {
-    "images": {
-      "main_menu_background_001": "assets/ui/background001.png"
-    },
-    "image_pools": {
-      "main_menu_backgrounds": ["main_menu_background_001"]
-    },
-    "main_menu": {
-      "background_pool": "main_menu_backgrounds",
-      "selection": "first",
-      "background_tint": [0.0, 0.0, 0.0, 0.35]
-    }
-  }
-}</code></pre>
-
-    <table>
-      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>ui.images</code></td><td>object</td><td>图片 ID 到 PNG 路径的映射。</td></tr>
-        <tr><td><code>ui.image_pools</code></td><td>object</td><td>图片池。每个池是字符串数组。</td></tr>
-        <tr><td><code>ui.main_menu.background_pool</code></td><td>string</td><td>主菜单背景使用的图片池 ID。</td></tr>
-        <tr><td><code>ui.main_menu.background_image</code></td><td>string</td><td>不使用图片池时的单张图片 ID 或 PNG 路径。</td></tr>
-        <tr><td><code>ui.main_menu.selection</code></td><td>string</td><td>当前只支持 <code>"first"</code>。</td></tr>
-        <tr><td><code>ui.main_menu.background_tint</code></td><td>array</td><td>覆盖在背景上的 RGBA 遮罩，四个数值范围为 0 到 1。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>多个 MOD 的合并规则</h2>
-    <p>同名 <code>image_pools</code> 会按 MOD 加载顺序合并。CoreMod 默认最早加载，因此 <code>core</code> 放入 <code>main_menu_backgrounds</code> 的图片会排在池子前面；后加载的 MOD 可以向同名池追加更多背景图。</p>
-    <p><code>ui.main_menu</code> 的配置本身仍按加载顺序覆盖，最后一个声明主菜单背景配置的 MOD 决定使用哪个池、哪种选择策略和遮罩颜色。当前选择策略只支持 <code>"first"</code>，因此会使用合并后池子的第一张可用 PNG。</p>
-
+      background002.png
+      deep_space/
+        nebula.jpg</code></pre>
+    <p>启动后引擎随机从池中抽一张作为主菜单背景，之后每 30 秒淡入淡出切换到池中另一张：旧图保持不透明，新图以 1.2 秒淡入覆盖上去。池中只有一张图时不切换；池为空时主菜单只显示 <code>#main-menu</code> 的底色。</p>
+    <p>支持的扩展名是 PNG、JPG/JPEG、BMP、TGA、GIF（大小写不敏感），由 RmlUI 的 stb_image 解码路径读取。子目录会被递归收集，文件名没有约定。</p>
+    <p>池的构造与 MOD 加载顺序无关：所有路径解析为绝对路径后排序并去重，所以同一批 MOD 和文件总是得到同一个池；只有“本次启动从哪张开始”和“下一张是谁”是随机的。</p>
     <div class="callout info">
-      UI 图片资源是客户端表现资源，不参与方块纹理图集。不要把全屏 UI 背景放进 <code>assets/textures/block/</code>。
+      背景图是客户端表现资源，不参与方块纹理图集，也不会写入 <code>generate/</code> 中间目录。不要把全屏 UI 背景放进 <code>assets/textures/block/</code>。
     </div>
+    <div class="callout warn">
+      旧的 <code>mod.json</code> <code>ui</code> 字段（<code>ui.images</code>、<code>ui.image_pools</code>、<code>ui.main_menu</code>）已删除，加载器现在完全忽略该字段。迁移方式只有一步：把图片移入 <code>assets/background/</code>。
+    </div>
+    <p>背景上的可读性遮罩由引擎固定（黑色 35% 不透明度），滑片间隔定义在 <code>Engine/UI/MainMenuBackground.hpp</code>（30 秒），淡入动画与遮罩样式定义在 <code>CoreMod/assets/ui/rml/main_menu/styles/base.rcss</code>。两者都不可由 MOD 覆盖。</p>
 
     <h2>RML/RCSS 文档资源（RmlUI 入口）</h2>
-    <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是当前<strong>正式玩家可见 UI 资源目录</strong>，与 <code>ui.images</code> 图片资源相互独立，不进方块纹理图集。</p>
+    <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是当前<strong>正式玩家可见 UI 资源目录</strong>，与 <code>assets/background/</code> 背景图池相互独立，不进方块纹理图集。</p>
 <pre><code>CoreMod/assets/ui/rml/
 ├── main.rml      # 入口文档（RmlUiHost 默认加载 main.rml）
 └── main.rcss     # main.rml 链接的 RCSS 样式

@@ -44,7 +44,8 @@ window.__LUA_API_DATA = {
         { "api": "engine.time.get_day()", "params": "-", "returns": "integer", "note": "当前年内日期。" },
         { "api": "engine.time.get_season()", "params": "-", "returns": "integer", "note": "当前季节索引。" },
         { "api": "engine.time.get_season_name()", "params": "-", "returns": "string", "note": "当前季节名。" },
-        { "api": "engine.time.get_year()", "params": "-", "returns": "integer", "note": "当前年份。" }
+        { "api": "engine.time.get_year()", "params": "-", "returns": "integer", "note": "当前年份。" },
+        { "api": "engine.time.now()", "params": "-", "returns": "number", "note": "自脚本引擎创建以来的单调秒数。沙箱没有 os 库，Lua 系统用它给自身计时（例如统计各系统在 on_tick 中的耗时）。" }
       ]
     },
     {
@@ -138,7 +139,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.modding.get_data_json(type, id)", "params": "data type, data id", "returns": "string", "note": "返回注册表中的原始 JSON，未找到时返回空字符串。" },
         { "api": "engine.json.decode(text)", "params": "JSON string", "returns": "Lua value or nil", "note": "基础 API；在 MOD on_load 前可用。解析无效或空 JSON 时返回 nil。" },
         { "api": "engine.modding.resolve_block_id(hash)", "params": "hashed id", "returns": "string", "note": "把方块哈希解析为数据 ID；未找到时返回空字符串。" },
-        { "api": "engine.modding.list_by_type(type)", "params": "blocks/combat 等", "returns": "table", "note": "列出指定数据类型的全部 ID；CoreMod 的 combat 内容当前为空。" },
+        { "api": "engine.modding.list_by_type(type)", "params": "blocks/raids 等", "returns": "table", "note": "列出指定数据类型的全部 ID。" },
         { "api": "engine.modding.get_block_info(hash)", "params": "integer", "returns": "table", "note": "返回 id/hash/exists、material、category、food_value、has_item_block、mineable/choppable/selectable、hardness 和统一产出表配置状态。" },
         { "api": "engine.modding.get_crop_info(crop_id)", "params": "data id", "returns": "table 或 nil", "note": "读取作物注册信息，包含 farmland、growth_stages、growth_ticks、crop_block 和 outputs。" },
         { "api": "engine.modding.get_setting(mod, key, fallback)", "params": "string, string, any", "returns": "any", "note": "读取配置，结合清单默认值和用户覆盖后的最终值。" }
@@ -197,8 +198,17 @@ window.__LUA_API_DATA = {
         { "api": "engine.jobs.aggregate_attributes(entity)", "params": "entity id", "returns": "table", "note": "返回按初始值统一汇总职业、状态和药剂修饰后的最终属性。" },
         { "api": "engine.jobs.xp_required_for_level(level)", "params": "integer", "returns": "number", "note": "读取 career_progression_rules 对应等级需求；配置缺失或没有后续等级时返回 0。" },
         { "api": "engine.jobs.progression_configuration()", "params": "-", "returns": "table", "note": "返回职业经验规则 valid/error、成功工作基础经验和四段升级需求。" },
-        { "api": "require(\"systems.combat_data\").weapon_counters()", "params": "-", "returns": "table", "note": "接口未定，返回空规则表。" },
-        { "api": "require(\"systems.combat_data\").suppression_rules()", "params": "-", "returns": "table", "note": "接口未定，返回空规则表。" },
+        { "api": "engine.raids.list()", "params": "-", "returns": "table", "note": "已注册的袭击定义 ID 列表。" },
+        { "api": "engine.raids.definition(id)", "params": "data id", "returns": "table", "note": "单条袭击定义的字段与 enemy_groups 行；不存在时 exists=false。" },
+        { "api": "engine.raids.active()", "params": "-", "returns": "table", "note": "进行中袭击的摘要：instance_id、def_id、faction_id、alert_level、wave_index、waves、alive、total_spawned、started_tick 和目标坐标。" },
+        { "api": "engine.raids.trigger(id)", "params": "data id", "returns": "instance id", "note": "触发一场袭击；返回 0 表示被拒绝（未知 ID、难度袭击倍率为 0、没有目标或无法生成），原因见 last_error()。客户端返回 0。" },
+        { "api": "engine.raids.last_error()", "params": "-", "returns": "string", "note": "最近一次触发的拒绝原因。" },
+        { "api": "engine.raids.configuration_error()", "params": "-", "returns": "string", "note": "袭击数据配置屏障原因，例如 raids_missing（CoreMod 数据未加载）。" },
+        { "api": "require(\"systems.raid_data\").definitions()", "params": "-", "returns": "table", "note": "已注册的袭击定义 ID 列表（转发 engine.raids.list）。" },
+        { "api": "require(\"systems.raid_data\").definition(id)", "params": "data id", "returns": "table 或 nil", "note": "单条袭击定义的字段与 enemy_groups 行；不存在时返回 nil。" },
+        { "api": "require(\"systems.raid_data\").active()", "params": "-", "returns": "table", "note": "进行中袭击的摘要列表（转发 engine.raids.active）。" },
+        { "api": "require(\"systems.raid_data\").trigger(id)", "params": "data id", "returns": "instance id, reason", "note": "触发袭击；失败时返回 0 加稳定原因字符串。" },
+        { "api": "require(\"systems.raid_data\").raw_json(id)", "params": "data id", "returns": "string", "note": "读取 raids 注册表的原始 JSON。" },
         { "api": "CombatSystem::list_squads(world)", "params": "C++", "returns": "SquadView[]", "note": "兼容状态查询入口；运行时不推进小队战斗玩法。" }
       ]
     },
@@ -246,33 +256,6 @@ window.__LUA_API_DATA = {
       ]
     },
     {
-      "name": "事件",
-      "items": [
-        { "api": "engine.events.subscribe(source?, name, fn, priority?)", "params": "string?, string, function, integer?", "returns": "handler id", "note": "来源可省略；省略时监听所有来源。priority 越大越早执行。" },
-        { "api": "engine.events.unsubscribe(source?, name, id)", "params": "string?, string, handler id", "returns": "bool", "note": "来源可省略；取消精确事件订阅。" },
-        { "api": "engine.events.clear(name)", "params": "string", "returns": "-", "note": "[experimental] 清空某事件的所有处理器；会影响同一 runtime 的其他 MOD。" },
-        { "api": "engine.events.subscribe_prefix(source?, prefix, fn, priority?)", "params": "string?, string, function, integer?", "returns": "handler id", "note": "按冒号层级匹配嵌套事件；来源可省略。" },
-        { "api": "engine.events.unsubscribe_prefix(id)", "params": "handler id", "returns": "bool", "note": "取消前缀订阅。" },
-        { "api": "engine.events.emit(source, name, payload)", "params": "string, string, table", "returns": "-", "note": "来源置于最前；引擎使用 e，CoreMod 使用 core，UI 使用 ui。" },
-        { "api": "inventory:changed（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、reason、block_id、block_key、delta。" },
-        { "api": "stockpile:changed（事件）", "params": "-", "returns": "payload", "note": "CoreMod 库存区账本变更；字段：item_hash、item_id、delta、count、reason。" },
-        { "api": "ui:data:changed（事件）", "params": "-", "returns": "payload", "note": "UI 聚合快照脏通知；字段：domain、source、event。domain 如 colony/resources、work/orders、research/tech、events/focuses。" },
-        { "api": "ui:command（事件）", "params": "-", "returns": "payload", "note": "UI 命令入口执行时广播；字段：name、payload。" },
-        { "api": "research:started（事件）", "params": "-", "returns": "payload", "note": "开始研究科技时触发；字段：tech_id、civilization_index。" },
-        { "api": "recipe:crafted（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、recipe_id、output_block_id、output_block_key、output_count。" },
-        { "api": "job:assigned（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、job_id、level。" },
-        { "api": "block:interacted（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、x、y、z、action_type、action。" },
-        { "api": "work:completed（事件）", "params": "-", "returns": "payload", "note": "字段：instance_id、worker、tag、category、target_kind、action、payload_kind、payload_id、faction_id、x、y、z、target_entity、tick。" },
-        { "api": "focus:chosen（事件）", "params": "-", "returns": "payload", "note": "字段：focus_id、instance_id、choice_id、choice_action、tick。" },
-        { "api": "focus:dismissed（事件）", "params": "-", "returns": "payload", "note": "字段：focus_id、instance_id、tick。" },
-		{ "api": "faction:spawned（事件）", "params": "-", "returns": "payload", "note": "字段：instance_id、def_id、faction_hash、display_name、relation、spawned_tick、reason。仅供未来有文档依据的专项规则显式加入阵营实例时发布；CoreMod 当前不产生该事件。" },
-        { "api": "tick（事件）", "params": "-", "returns": "payload", "note": "每个模拟 tick 触发；字段：tick、dt、tick_of_day、day、season、season_name、year。" },
-        { "api": "day_changed（事件）", "params": "-", "returns": "payload", "note": "日期变更时触发；字段：day、previous_day、season、season_name、year。" },
-        { "api": "season_changed（事件）", "params": "-", "returns": "payload", "note": "季节变更时触发；字段：season、previous_season、season_name、year。" },
-        { "api": "year_changed（事件）", "params": "-", "returns": "payload", "note": "年份变更时触发；字段：year、previous_year。" }
-      ]
-    },
-    {
       "name": "定时器",
       "items": [
         { "api": "engine.timers.after(ticks, fn)", "params": "integer, function", "returns": "timer id", "note": "一次性定时器，回调参数为 tick、dt、timer_id。" },
@@ -311,7 +294,8 @@ window.__LUA_API_DATA = {
         { "api": "engine.ui.rml.clear(mod_id?)", "params": "string?", "returns": "-", "note": "清空已注册面板；传 mod_id 只清该 MOD，省略则清空全部。" },
         { "api": "engine.ui.rml.reload(mod_id?)", "params": "string?", "returns": "bool", "note": "强制热重载面板文档：递增内部 reload_epoch，runtime 在下一帧 lua_ui_rml_panels 快照中检测到变化即 Close+LoadDocument，即使 .rml 路径未变也会重新读取磁盘内容。传 mod_id 只重载该 MOD，返回是否有面板被标记。" },
         { "api": "engine.ui.data.resources()", "params": "-", "returns": "table", "note": "资源快照，汇总 stockpile 账本和殖民者手持物品，返回 totals 和 rows。" },
-        { "api": "engine.ui.data.colonists()", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、文档基础/工作/战斗属性、background、equipment.item、inventory、class_tree。" },
+        { "api": "engine.ui.data.career_detail(entity_id)", "params": "entity_id: integer", "returns": "table", "note": "按需构建某个殖民者的职业树（current_job + options），供人员面板职业页使用。它有意不进入 colonist_list 通道载荷：该载荷每 0.2s 被序列化成 JSON 交给 RML 桥，职业树的逐职业 abilities/equipment 选项曾占其大头（实测随载荷传输时 colonist_list 20.8ms、移除后模拟线程 UiChannels 从 2.5-3.3ms 降到 1.0-1.2ms）。未选中/未知实体返回空树。" },
+        { "api": "engine.ui.data.colonists()", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、文档基础/工作/战斗属性、background、equipment.item、inventory。class_tree 已从该快照移除：职业树改为按需接口 engine.ui.data.career_detail(entity_id) 提供，不再随 colonist_list 载荷序列化。" },
         { "api": "engine.ui.data.work()", "params": "-", "returns": "table", "note": "工作/订单快照，包含工作池实例，以及可建造定义和可制造配方列表。" },
         { "api": "engine.ui.data.research()", "params": "-", "returns": "table", "note": "科技快照，包含当前文明研究状态、科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。" },
         { "api": "engine.ui.data.events()", "params": "-", "returns": "table", "note": "事件/焦点快照，包含 instance_id、severity、详情和可执行 actions。" },
@@ -348,8 +332,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.factions.evaluate_proposal(target, proposal, offered_score)", "params": "string, string, integer?", "returns": "table", "note": "只读评估接口；无已注册提案时返回配置拒绝，不执行或修改状态。" },
         { "api": "engine.factions.diplomatic_status(target)", "params": "string", "returns": "string", "note": "读取玩家与目标实例的外交状态。" },
         { "api": "engine.factions.has_treaty(target, treaty)", "params": "string, string", "returns": "bool", "note": "只读查询玩家与目标实例是否存在指定条约。" },
-        { "api": "engine.world_map.diplomacy_snapshot()", "params": "-", "returns": "table", "note": "返回战略地图快照：has_map、planet_radius、water_coverage、sea_level、tiles(q/r/x/y/water/biome_id/map_color/elevation/temperature/moisture) 和 factions(id/display_name/relation/map_q/map_r/x/y/map_color)，供外交地图 UI 叠加已有地点。" },
-        { "api": "事件：faction:spawned", "params": "-", "returns": "payload", "note": "保留给未来专项规则显式加入阵营实例时发布；CoreMod 当前不产生。" }
+        { "api": "engine.world_map.diplomacy_snapshot()", "params": "-", "returns": "table", "note": "返回战略地图快照：has_map、planet_radius、water_coverage、sea_level、tiles(q/r/x/y/water/biome_id/map_color/elevation/temperature/moisture) 和 factions(id/display_name/relation/map_q/map_r/x/y/map_color)，供外交地图 UI 叠加已有地点。" }
       ]
     },
     {

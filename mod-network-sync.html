@@ -30,6 +30,7 @@
 
     <h2>快照同步机制</h2>
     <p>主机每隔固定 tick 向所有已认证客户端广播一个<strong>快照（Snapshot）</strong>。快照包含当前 tick 下所有需要同步的实体及其组件状态。</p>
+    <p><strong>两种节奏：</strong>实体状态按 <code>snapshot_interval_ticks</code>（默认 2 tick，20 TPS 下 10 Hz）广播；<strong>状态通道文档</strong>（物品、经济日志、工作池、阵营、设计与存档状态等，由主机把整个世界序列化成 JSON）按更慢的 <code>state_channel_interval_ticks</code>（默认 20 tick，即 1 Hz）刷新，避免每 2 tick 重复序列化整个世界。<code>full_snapshot_interval_ticks</code>（默认 120）的周期全量快照一定携带通道，因此新加入的客户端最多等待一个通道周期。未刷新通道的那个 tick 不产生任何通道条目，客户端保留已有通道；把"当前包中缺失"当作删除会清空客户端世界状态，这一点由单元测试固定。</p>
     <h3>同步的组件</h3>
     <table>
       <thead><tr><th>组件</th><th>同步字段</th></tr></thead>
@@ -57,7 +58,7 @@
 
     <h3>增量快照</h3>
     <p>当启用增量快照（默认开启）时，主机只发送与上一次快照<strong>有差异的实体</strong>和<strong>被删除的实体</strong>。这显著减少了带宽。客户端负责将增量合并到本地完整状态中。</p>
-	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、焦点定义运行态/活动焦点、经营日志、持续问题和 Host 时间控制；只有内容变化的通道进入增量包。已知 Host 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Host 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
+	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、要闻定义运行态/活动要闻、经营日志、持续问题和 Host 时间控制；只有内容变化的通道进入增量包。已知 Host 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Host 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
 
     <h3>插值</h3>
     <p>客户端在两个快照之间可以对 Position 组件做线性插值（lerp），使移动看起来更平滑。</p>
@@ -84,8 +85,8 @@
       <li><strong>Client → Hello</strong>：客户端发送 peer_name、world_seed、shared_secret、last_applied_tick，以及按 Registry 分类排序的分类 hash 和逐条目 hash。</li>
       <li><strong>Host → Welcome</strong>：主机验证密钥、世界 seed 和 Registry 指纹，返回 world_seed、server_tick、authenticated、Host 指纹及明确拒绝原因。分类或条目缺失、条目内容不同都会在进入正常同步前拒绝，并报告具体分类/条目。</li>
       <li><strong>Host → ModList + ModDataManifest</strong>：握手完全匹配后，主机发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
-      <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向主机请求这些记录。</li>
-      <li><strong>Host → Records</strong>：主机发送请求的 Mod 数据原始 JSON。</li>
+      <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向主机请求这些记录。这里按 Registry 条目比较，不看客户端本地是否安装或启用了对应 Mod：该通道用于让两端持有同一份权威数据，真正的门禁是握手阶段的 Registry 指纹。</li>
+      <li><strong>Host → Records</strong>：主机发送请求的 Mod 数据原始 JSON（只从主机已加载内容里取，禁用 Mod 的数据不会被服务）。</li>
     </ol>
     <p>只有协议版本、世界 seed 和 Registry 分类/条目指纹全部匹配时，客户端才进入正常快照接收循环。当前未发布协议重置为 v1，只包含现行实体字段、专项 Mine/Chop <code>PostWork</code>、Host <code>UiCommand</code> 和领域快照；背包、装备和物品位置只走统一物品领域快照。协议版本由包头严格校验；seed 或 Registry 不一致不会通过后续记录交换掩盖。</p>
 
@@ -103,14 +104,15 @@
     <p>未填写 <code>side</code> 时默认为 <code>"both"</code>，向后兼容。</p>
 
     <h3>校验码（Checksum）</h3>
-    <p>引擎对所有 <code>side == "both"</code> 的 Mod（按加载顺序）计算一个 64-bit FNV-1a 哈希值，作为<strong>ModList 校验码</strong>。校验码仅基于 Mod 的 <code>id</code> 和 <code>version</code>，不包含数据内容。</p>
+    <p>引擎对<strong>当前已加载内容</strong>中所有 <code>side == "both"</code> 的 Mod（按加载顺序）计算一个 64-bit FNV-1a 哈希值，作为<strong>ModList 校验码</strong>。校验码仅基于 Mod 的 <code>id</code> 和 <code>version</code>，不包含数据内容。</p>
+    <p>“已加载内容”= 启用并被 <code>load_all()</code> 成功加载的 Mod：禁用但已安装的 Mod、因依赖或校验失败被跳过的 Mod 都不在校验码里，也不在 ModList 包与 <code>mod_list</code> / <code>export_mod_list</code> 输出中；存档 <code>mods.json</code> 会列出所有已安装 Mod，但它们的 <code>enabled</code> 为 <code>false</code>。包内的 <code>mod_count</code>/<code>mods</code> 和 <code>checksum</code> 始终描述同一批 Mod。启用或禁用 Mod 后需要重启才会改变加载结果与校验码。</p>
 
     <h2>Lua 脚本在网络中的行为</h2>
     <h3>主机上的 Lua</h3>
     <p>作为主机的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。领域系统创建的实体会进入 Host 快照；Lua 不提供通用原型生成入口。</p>
 
     <h3>客户端上的 Lua</h3>
-    <p>纯客户端不推进本地玩法模拟，游戏状态由主机快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、焦点、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Host 权威玩法状态。</p>
+    <p>纯客户端不推进本地玩法模拟，游戏状态由主机快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、要闻、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Host 权威玩法状态。</p>
 
     <h3>区分主机和客户端</h3>
     <p><code>engine.network.mode()</code> 返回 <code>host</code>、<code>client</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不执行玩法 <code>on_tick</code>；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Host 权威 target 编码成 <code>UiCommand</code>。</p>

@@ -24,14 +24,14 @@
       如果你想先判断整个项目现在做到什么程度，阅读 <a href="project-completion.html">项目完成度审计</a>。它按引擎、玩法、MOD 数据、测试覆盖和发布门槛整理当前工作树的完成度。
     </div>
     <div class="callout info">
-      存档系统的当前覆盖范围和限制见 <a href="engine-save-system.html">存档系统状态</a>；近战小队接触、命中公式、攻击冷却和测试命令见 <a href="engine-combat.html">战斗规则</a>。
+      存档系统的当前覆盖范围和限制见 <a href="engine-save-system.html">存档系统状态</a>；近战小队接触、命中公式和攻击冷却尚无专项规则，见 <a href="engine-combat.html">战斗规则</a>；袭击的加载、随机敌人组合和投送链路见 <a href="mod-raidregistry.html">袭击注册</a>。
     </div>
 
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
       <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、多类数据注册和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和 <code>on_world_init</code> 时不会混淆。</li>
-      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、焦点、NPC 阵营、名称池、作物、区域类型和本地化文本。能用 JSON 表达的内容优先写 JSON。</li>
-      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、焦点条件和运行时逻辑，不是用来重建数据系统的。</li>
+      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，然后添加方块、实体、配方、职业、文明、要闻、NPC 阵营、名称池、作物、区域类型和本地化文本。能用 JSON 表达的内容优先写 JSON。</li>
+      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、要闻条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
 
     <h2>当前能稳定使用的能力</h2>
@@ -51,12 +51,12 @@
         <tr><td>经营界面</td><td><span class="badge partial">部分可用</span></td><td>游戏内底栏注册伐木、采掘、区域、指令、制造、仓储、科技、招募、策略和日志入口；区域打开持续区域二级菜单，运行中不显示难度入口。实现阶段暂时增加人员列表入口，双击殖民者会从上方聚焦该实体。其他专项管理面板只从对应聚合入口、对象摘要或状态跳转打开。旧小地图悬浮窗和底栏地图按钮已由进入世界时自动显示的战略地图悬浮窗取代。UI 主路线是游戏内 RmlUI（宿主层 <a href="mod-ui-api.html#rml-ui-host">RmlUiHost</a>），运行时文档位于 <code>CoreMod/assets/ui/rml/</code>。</td></tr>
         <tr><td>区域系统</td><td><span class="badge partial">部分可用</span></td><td>持续区域只注册露天仓储区和种植区；采集与采掘使用一次性选择工具，不存在旧收获区、采掘区或居住区类型。</td></tr>
         <tr><td>AI 与行为树</td><td><span class="badge partial">部分</span></td><td>基于需求、调度、寻路（A* + NavMesh）、LOD 系统，行为树可运行。</td></tr>
-        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、动态天气区域、文明研究、建筑/区域实例、纪念记录、阵营、工作资源预留、焦点、统一物品和 Lua 订单/计划可保存；完整往返仍需活体验证。</td></tr>
+        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、动态天气区域、文明研究、建筑/区域实例、纪念记录、阵营、工作资源预留、要闻、统一物品和 Lua 订单/计划可保存；完整往返仍需活体验证。</td></tr>
       </tbody>
     </table>
 
     <div class="callout info">
-      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、焦点、NPC 阵营、作物、区域和少量 Lua 辅助逻辑。完整能力清单见 <a href="mod-status.html">当前能力状态</a>。参考 <code>CoreMod/</code> 了解目录结构和数据格式。
+      当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、要闻、NPC 阵营、作物、区域和少量 Lua 辅助逻辑。完整能力清单见 <a href="mod-status.html">当前能力状态</a>。参考 <code>CoreMod/</code> 了解目录结构和数据格式。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

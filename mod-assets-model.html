@@ -16,7 +16,7 @@
     <div class="callout info">完整字段、默认值、必填标记、UV 公式和算法见 <code>docs/minecraft-java-block-model-technical-reference.md</code>。“必填”严格对应上游页面的星号标记；可选字段缺失时不得报错。</div>
 
     <h2>目录与预处理</h2>
-    <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，纹理放在 <code>assets/textures/</code> 下并使用命名空间资源 ID 引用。启动预处理只编译 <code>models/block/</code>。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
+    <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，纹理放在 <code>assets/textures/</code> 下并使用命名空间资源 ID 引用。启动预处理只编译 <code>models/block/</code>，并且只处理<strong>启用中的 MOD</strong>（禁用 MOD 的模型和方块数据不会被预处理，其错误也不会阻止启动）。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
 
     <h2>根字段</h2>
     <table>

@@ -70,6 +70,7 @@
         <tr><td><code>output_table</code> 不在 <code>output_tables</code> 注册表</td><td>配方保留，<code>output_table_not_found</code>，原因携带产出表 ID。</td></tr>
         <tr><td><code>output_table_executions</code> 缺失或为 0</td><td>配方保留，<code>output_table_executions_invalid</code>。</td></tr>
         <tr><td>模式为 <code>quality</code> 但 <code>quality_table</code> 为空或不存在</td><td>配方保留，<code>quality_table_missing</code> 或 <code>quality_table_not_found</code>。</td></tr>
+        <tr><td>被引用品质表的 <code>modifiers[].attribute</code> 不在引擎属性名表内</td><td>该品质表无效，<code>quality_table_attribute_unknown</code>；配置期即生效，配方保留并写入该原因，不必等一次真实制造。属性名表见 <a href="mod-data.html">数据格式</a> 的锻造物品基型一节。</td></tr>
         <tr><td>产出表结构错误、存在循环或超过深度上限</td><td>配方保留，写入产出表的稳定 <code>error_id</code> 并携带来源路径。</td></tr>
         <tr><td>全局制造规则缺失或多记录</td><td>配方保留，写入制造规则的稳定 <code>error_id</code>；空内容表不会获得代码默认值。</td></tr>
       </tbody>

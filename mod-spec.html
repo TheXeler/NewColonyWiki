@@ -33,7 +33,7 @@
     <h2>数据与脚本</h2>
     <ul>
       <li>能用 JSON 表达的内容优先放在 <code>data/</code>。</li>
-      <li>Lua 只补充 JSON 做不到的事情：监听事件、注册 焦点 条件、定时执行逻辑。</li>
+      <li>Lua 只补充 JSON 做不到的事情：监听事件、注册 要闻 条件、定时执行逻辑。</li>
       <li>脚本中自定义的事件名也加一个 MOD 命名空间前缀。</li>
       <li><code>on_tick</code> 里的逻辑保持短小，不要在每个 tick 做大规模实体扫描。</li>
       <li>涉及随机结果时使用 <code>engine.random</code>，不用 <code>math.random</code>。</li>

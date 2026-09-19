@@ -26,7 +26,7 @@
         <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code> 使用 Xoshiro256** 确定性 RNG。</td></tr>
         <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业 1-5 级、装备实例许可、前置职业、配方输入、职业要求、文明配方限制和解锁均已从注册表初始化。公开直通制作已禁用，CoreMod 制作统一走带资源预留的生产订单；固定制作结果由产出表决定。</td></tr>
         <tr><td>文明</td><td><span class="badge partial">接口</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
-        <tr><td>焦点系统</td><td><span class="badge partial">接口</span></td><td>焦点 schema、运行态和存档接口保留；CoreMod 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。</td></tr>
+        <tr><td>要闻系统</td><td><span class="badge partial">接口</span></td><td>要闻 schema、运行态和存档接口保留；CoreMod 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。</td></tr>
         <tr><td>派系、城邦与外交</td><td><span class="badge partial">接口</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、双边关系和空的提案/谈判 schema 可用；世界地图与外交页只显示状态摘要。专项文档未建立前不生成城邦资源/发展、默认提案、贸易积分或 AI 周期外交。</td></tr>
         <tr><td>战斗</td><td><span class="badge partial">接口</span></td><td>职业战斗属性、伤病/倒地/死亡和小队身份/成员状态摘要保留；专项文档未建立前不推进小队移动、接敌、命中、伤害、冷却、压制、阵型或区域法力，所有战斗命令无副作用拒绝，HUD 只显示接口未定。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
@@ -80,7 +80,7 @@
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、文明研究、殖民者纪念记录、阵营、Job、工作资源预留、焦点状态和 MOD 差异诊断。详见<a href="engine-save-system.html">存档系统状态</a>。</td>
+          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、文明研究、殖民者纪念记录、阵营、Job、工作资源预留、要闻状态和 MOD 差异诊断。详见<a href="engine-save-system.html">存档系统状态</a>。</td>
           <td>完整活体往返、已删除/重命名内容的迁移规则、MOD 自定义组件序列化仍需完善；无限高度已迁移区块列、存档、网络、细分网格、导航、光源传播和 GPU/CPU 流体分片，自然地形生成及开发者 GPU 探针保留有限工作带；多体素部件已有稳定实例、明确体素集合、owner、建筑 parts 与版本化 Host 运行态，具体树形和门形仍等待专项文档定义。</td>
         </tr>
         <tr>
@@ -103,7 +103,7 @@
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
         <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载分类、前置、unlocks 和研究成本；运行时还读取开题材料、工作站、职业要求及暂停状态。详见 <a href="mod-techregistry.html">科技注册</a>。</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td><code>export-release</code> 预设使用 MSVC/Ninja；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod，<code>bash/Export.bat</code>/<code>Export.sh</code> 负责复制既有输出。Windows MinGW Debug 已完整构建，并通过 <code>bash/DebugOutput.bat build-mingw</code> 导出到 <code>game/</code>；Release 包、测试和运行态内容仍未验证。</td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td><code>export-release</code> 预设使用 MSVC/Ninja；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod，<code>bash/Export.bat</code>/<code>Export.sh</code> 负责复制既有输出。Windows MinGW Debug 已完整构建，并通过 <code>bash/DebugExport.bat build-mingw</code> 导出到 <code>game/</code>；Release 包、测试和运行态内容仍未验证。</td></tr>
       </tbody>
     </table>
 
@@ -113,7 +113,7 @@
       <tbody>
         <tr><td>Core</td><td>32</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
         <tr><td>ECS</td><td>11</td><td>World, Archetype, SystemManager 和标准组件</td></tr>
-        <tr><td>Simulation</td><td>44</td><td>TickManager, RecipeSystem, JobSystem, CivilizationSystem, TechTree, BuildingSystem, ZoneSystem, ReservationSystem</td></tr>
+        <tr><td>Simulation</td><td>45</td><td>TickManager, RecipeSystem, JobSystem, CivilizationSystem, TechTree, BuildingSystem, ZoneSystem, RaidSystem, ReservationSystem</td></tr>
         <tr><td>AI</td><td>17</td><td>AISystem, WorkPool, WorkRegistry, Action, Pathfinder, NavMesh, NavAgent, BehaviorTree</td></tr>
         <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
         <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
@@ -132,7 +132,7 @@
 
     <h2>给 MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、群系、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为和复杂 UI 扩展仍不建议作为强依赖；MOD 打包发布已有 Windows 流程。
+      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、要闻、NPC 阵营、名称池、动作、地物、作物、建筑、群系、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为和复杂 UI 扩展仍不建议作为强依赖；MOD 打包发布已有 Windows 流程。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
@@ -141,4 +141,4 @@
 <script src="wiki.js"></script>
 </body>
 </html>
-
+

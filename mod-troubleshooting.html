@@ -22,6 +22,20 @@
       <li>查看 <code>logs/latest.log</code> 是否有报错。</li>
     </ul>
 
+    <h2>MOD 列表里有它，但内容没生效</h2>
+    <p><code>mods</code> 命令现在会同时给出加载数量和安装数量，并给未加载的条目打标记：</p>
+    <pre><code>mods
+  Loaded mods: 1 of 3 installed
+   - core v0.1.0 (...) 
+   - copper_age v0.1.0 (...) [disabled]
+   - ui_theme v0.2.0 (...) [enabled, restart required]</code></pre>
+    <ul>
+      <li><code>[disabled]</code>：该 MOD 未启用。内容不进注册表、不参与预处理、不计入 ModList 校验码；在 MOD 管理器里启用并重启后生效。</li>
+      <li><code>[enabled, restart required]</code>：本次启动时它还是禁用的，启用后需要重启才会加载。</li>
+      <li>被禁用的 MOD 即使 <code>assets/</code> 或 <code>data/</code> 里有坏文件也不会阻止启动，但启用后同样的错误会直接让加载失败，需要先修好。</li>
+      <li>启用某个 MOD 后读档提示缺内容，先确认它是否被禁用：存档的 <code>mods.json</code> 记录了每个 MOD 存档时是否参与加载。</li>
+    </ul>
+
     <h2>数据在 <code>list_data</code> 里找不到</h2>
     <pre><code>list_data blocks prefix=copper_age:
 list_data civilizations prefix=copper_age:
@@ -42,12 +56,12 @@ data copper_age:copper_ore</code></pre>
 	<h2>进食或用药动作没有执行</h2>
 	<p>优先检查进食方案/治疗模板过滤、物品营养或药品载荷、统一实例是否可达和未预留，以及个人药品 CD 槽。普通进食、药品和医疗包互不作为后备行为。</p>
 
-    <h2>焦点 没有触发</h2>
+    <h2>要闻 没有触发</h2>
     <ul>
       <li>确认文件在 <code>data/focuses</code> 目录下。</li>
       <li>确认 <code>conditions</code> 数组不为空。</li>
       <li>用了 <code>lua</code> 条件的话，确认已经在 <code>on_load</code> 里通过 <code>engine.focus.register_condition</code> 注册。</li>
-      <li><code>engine.focus.subscribe</code> 只负责把触发通知交给 Lua 脚本；是否显示给玩家还取决于当前 UI/焦点系统是否消费该焦点。</li>
+      <li><code>engine.focus.subscribe</code> 只负责把触发通知交给 Lua 脚本；是否显示给玩家还取决于当前 UI/要闻系统是否消费该要闻。</li>
     </ul>
 
     <h2>Lua 脚本没有执行</h2>

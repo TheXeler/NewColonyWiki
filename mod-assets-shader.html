@@ -12,6 +12,9 @@
   <div class="content">
     <h1>着色器格式</h1>
     <p class="subtitle">着色器源码放在 <code>assets/shaders/</code> 下，使用 GLSL 编写。启动预处理阶段会通过打包的 glslangValidator 编译为 Vulkan SPIR-V 字节码。</p>
+    <div class="callout info">
+      预处理只跑<strong>启用中的 MOD</strong>：禁用 MOD 的 shader 不会编译，其编译错误也不会阻止启动。要看到编译错误，先在 MOD 管理器里启用它并重启。
+    </div>
 
     <h2>支持的格式</h2>
     <table>
@@ -97,12 +100,11 @@ void main() {
         <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
         <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，会按 chunk AABB 与当前 frustum 写回 indirect command 的 instance count，并统计 GPU 可见 chunk/draw 数；关闭或不可用时渲染器会把当前帧 indirect instance count 重置为全可见。</td></tr>
         <tr><td>模拟光照 Compute</td><td><code>sim_light.comp</code></td><td>天空光参考 kernel，只服务开发者探针（控制台 <code>gpu_probe_light</code>），保留列初始化与天空传播两个 mode。权威方块光传播是 CPU 稀疏 BFS，已无 GPU 光源表与 GPU BFS 路径；该 shader 不再声明 LightSSBO / frontier binding。</td></tr>
-        <tr><td>模拟流体 Compute</td><td><code>sim_fluid.comp</code></td><td>模拟侧流体候选更新入口；每个实际含流体的 16 高有符号垂直子区块独立进入 batch，并以 <code>origin_y</code> 写回世界坐标。上下边界和未完成 batch 由 CPU 队列衔接；CPU 仍负责权威提交、BUD 通知和脏区块标记。</td></tr>
         <tr><td>模拟遮挡 Compute</td><td><code>sim_occlusion.comp</code></td><td>模拟侧区块高度/遮挡辅助入口；失败或关闭时回退到 CPU 高度扫描。</td></tr>
       </tbody>
     </table>
 
-    <p>GPU 模拟路径默认启用，可在开发者控制台使用 <code>gpu_sim on</code>、<code>gpu_sim off</code> 或 <code>gpu_sim status</code> 控制。流体候选 tick 另由 <code>gpu_fluid_tick on|off|status</code> 控制；chunk compute culling 可用 <code>gpu_chunk_cull on|off|status</code> 单独切换。<code>gpu_stats</code> 会输出 GPU 模拟、compute kernel 可用性、chunk culling compute 可用性、流体 batch、aggregate buffer 与 greedy mesh 计数。<code>gpu_probe_occlusion</code>、<code>gpu_probe_light</code> 和 <code>gpu_probe_fluid</code> 可用于检查已加载区块的 GPU 计算结果。</p>
+    <p>GPU 计算路径现在只剩<strong>诊断探针</strong>：<code>gpu_probe_occlusion</code> 与 <code>gpu_probe_light</code>，由控制台 <code>gpu_probes on|off|status</code> 开关（该命令原名 <code>gpu_sim</code>，随流体 GPU 路径删除而改名为名实相符的 <code>gpu_probes</code>；它不切换任何模拟系统，只切换探针可用性）。chunk compute culling 由 <code>gpu_chunk_cull on|off|status</code> 单独切换。<code>gpu_stats</code> 会输出探针开关、compute kernel 可用性（light / occlusion）、chunk culling compute 可用性、aggregate buffer 与 greedy mesh 计数。<strong>流体是 CPU 权威实现</strong>：原先的 GPU 候选流水线（<code>sim_fluid.comp</code> + <code>gpu_fluid_tick</code> + <code>gpu_probe_fluid</code> + 逐 sub-chunk 层上传/回读的 batch）已删除——它只计算每格流标记而所有状态变更仍在 CPU，且每次 dispatch 的整层上传、同步 fence 等待与标记回读使它在实际规模（每 tick 2 个区块）下严格劣于 CPU 扫描。流体规则（流距与更新节奏）仍由 NCDOCS 待定，规则缺失时 <code>FluidSystem::configuration_valid()</code> 为假、整段流体推进停用。</p>
 
     <div class="callout warn">
       目前没有公开的“新增自定义渲染或模拟管线”MOD API。MOD 可以提供会被预处理的 shader 源码，但只有被 C++ 代码按固定名称引用的 shader 会实际进入管线。

@@ -82,8 +82,9 @@ engine.events.clear("copper_age:ore_found")</code></pre>
         <tr><td><code>building:completed</code></td><td>建筑完成（CoreMod）</td><td>instance_id, def_id, x, y, z</td></tr>
         <tr><td><code>research:started</code> / <code>research:completed</code></td><td>科技状态变化</td><td>tech_id, civilization_index</td></tr>
         <tr><td><code>colonist:death</code></td><td>死亡殖民者写入纪念记录并销毁实体前通知</td><td>entity_id, name, tick, x, y, z</td></tr>
-        <tr><td><code>focus:chosen</code> / <code>focus:dismissed</code></td><td>焦点事件被选择或关闭</td><td>focus_id, instance_id, choice_id, tick</td></tr>
+        <tr><td><code>focus:chosen</code> / <code>focus:dismissed</code></td><td>要闻被选择或关闭</td><td>focus_id, instance_id, choice_id, tick</td></tr>
         <tr><td><code>faction:spawned</code></td><td>阵营实例生成</td><td>instance_id, def_id, display_name, reason</td></tr>
+        <tr><td><code>raid:started</code> / <code>raid:wave</code> / <code>raid:ended</code></td><td>袭击开始、后续波次投送、袭击结束</td><td>instance_id, def_id, faction_id, reason, alert_level, wave_index, waves, spawned, alive, tick</td></tr>
         <tr><td><code>day_changed</code> / <code>season_changed</code> / <code>year_changed</code></td><td>模拟日历变化</td><td>day/season/year, previous_*</td></tr>
       </tbody>
     </table>

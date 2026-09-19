@@ -48,6 +48,7 @@ const WIKI_NAV = [
           ["mod-terrainregistry", "地形配置注册", "mod-terrainregistry.html"],
           ["mod-biomeregistry", "群系注册", "mod-biomeregistry.html"],
           ["mod-zoneregistry", "区域注册", "mod-zoneregistry.html"],
+          ["mod-raidregistry", "袭击注册", "mod-raidregistry.html"],
           ["mod-audioregistry", "音频注册", "mod-audioregistry.html"]
         ]
       },
@@ -70,10 +71,8 @@ const WIKI_NAV = [
   {
     title: "Lua 脚本",
     links: [
-      ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
       ["mod-lua-api", "Lua 怎么用", "mod-lua-api.html"],
       ["mod-events", "Lua 事件系统", "mod-events.html"],
-      ["mod-lua-data-components", "数据组件 API", "mod-lua-data-components.html"],
       ["mod-ui-api", "UI 框架", "mod-ui-api.html"],
       ["ui-rmlui", "游戏内 RmlUI", "ui-rmlui.html"],
       ["mod-ui-theme", "UI CSS 主题", "mod-ui-theme.html"],
@@ -87,6 +86,13 @@ const WIKI_NAV = [
       ["mod-troubleshooting", "常见问题", "mod-troubleshooting.html"],
       ["mod-roadmap", "路线图", "mod-roadmap.html"],
       ["mod-spec", "发布约定", "mod-spec.html"]
+    ]
+  },
+  {
+    title: "附录",
+    links: [
+      ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
+      ["mod-lua-events-reference", "Lua 事件 速查", "mod-lua-events-reference.html"]
     ]
   }
 ];
@@ -231,43 +237,35 @@ function ensureShell() {
   return { main, topbar, content };
 }
 
-// Top-right search box that filters the page's own sections by heading name.
-function setupSectionSearch(topbar, content) {
-  if (!topbar || !content) return;
-
-  const blocks = [];
-  let current = null;
-  let currentH2 = null;
-
-  for (const el of Array.from(content.children)) {
-    const tag = el.tagName ? el.tagName.toLowerCase() : "";
-    const level = tag === "h2" ? 2 : (tag === "h3" ? 3 : 0);
-    if (level) {
-      current = {
-        level,
-        heading: el,
-        text: el.textContent.toLowerCase(),
-        body: [],
-        parent: level === 3 ? currentH2 : null,
-        match: false,
-        childMatch: false
-      };
-      if (level === 2) currentH2 = current;
-      blocks.push(current);
-    } else if (current && !el.classList.contains("footer")) {
-      current.body.push(el);
+function flattenNav() {
+  const out = [];
+  const walk = (links, group, subgroup) => {
+    for (const item of links) {
+      if (Array.isArray(item)) {
+        out.push({ id: item[0], label: item[1], href: item[2], group, subgroup });
+      } else if (item.children) {
+        walk(item.children, group, item.title);
+      }
     }
-  }
+  };
+  for (const group of WIKI_NAV) walk(group.links, group.title, null);
+  return out;
+}
 
-  if (blocks.length === 0) return;
+// Top-right search over the wiki's chapter list.
+function setupChapterSearch(topbar) {
+  if (!topbar) return;
+
+  const chapters = flattenNav();
+  if (chapters.length === 0) return;
 
   const box = document.createElement("div");
   box.className = "section-search";
 
   const input = document.createElement("input");
   input.type = "search";
-  input.placeholder = "筛选章节名称";
-  input.setAttribute("aria-label", "按章节名称筛选");
+  input.placeholder = "搜索章节...";
+  input.setAttribute("aria-label", "搜索章节");
   input.autocomplete = "off";
   input.spellcheck = false;
 
@@ -282,10 +280,92 @@ function setupSectionSearch(topbar, content) {
   clear.textContent = "清除";
   clear.hidden = true;
 
+  // Dropdown listing every chapter in the wiki that matches the query.
+  const results = document.createElement("div");
+  results.className = "section-search-results";
+  results.id = "section-search-results";
+  results.hidden = true;
+  results.setAttribute("role", "listbox");
+  results.setAttribute("aria-label", "匹配的章节");
+  input.setAttribute("role", "combobox");
+  input.setAttribute("aria-expanded", "false");
+  input.setAttribute("aria-controls", "section-search-results");
+  input.setAttribute("aria-autocomplete", "list");
+
   box.appendChild(input);
   box.appendChild(count);
   box.appendChild(clear);
+  box.appendChild(results);
   topbar.appendChild(box);
+
+  let matches = [];
+  let activeIndex = -1;
+
+  const showResults = () => {
+    results.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+  };
+  const hideResults = () => {
+    results.hidden = true;
+    input.setAttribute("aria-expanded", "false");
+    activeIndex = -1;
+  };
+  const resultItems = () => Array.from(results.querySelectorAll(".section-search-result"));
+  const setActive = (index) => {
+    const items = resultItems();
+    if (items.length === 0) {
+      activeIndex = -1;
+      return;
+    }
+    activeIndex = ((index % items.length) + items.length) % items.length;
+    items.forEach((item, i) => {
+      const on = i === activeIndex;
+      item.classList.toggle("active", on);
+      item.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    const active = items[activeIndex];
+    if (active && typeof active.scrollIntoView === "function") {
+      active.scrollIntoView({ block: "nearest" });
+    }
+  };
+  const goToChapter = (index) => {
+    const chapter = matches[index];
+    if (!chapter) return;
+    hideResults();
+    window.location.href = chapter.href;
+  };
+  const renderResults = (found) => {
+    results.innerHTML = "";
+    matches = found;
+    activeIndex = -1;
+    for (const chapter of found) {
+      const item = document.createElement("a");
+      item.className = "section-search-result";
+      item.href = chapter.href;
+      item.setAttribute("role", "option");
+      item.setAttribute("aria-selected", "false");
+
+      const label = document.createElement("span");
+      label.className = "section-search-result-label";
+      label.textContent = chapter.label;
+      item.appendChild(label);
+
+      const context = document.createElement("span");
+      context.className = "section-search-result-context";
+      context.textContent = chapter.subgroup ? chapter.subgroup + " / " + chapter.group : chapter.group;
+      item.appendChild(context);
+
+      results.appendChild(item);
+    }
+
+    if (found.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "section-search-empty";
+      empty.textContent = "没有匹配的章节";
+      results.appendChild(empty);
+    }
+    showResults();
+  };
 
   const apply = () => {
     const query = input.value.trim().toLowerCase();
@@ -293,31 +373,16 @@ function setupSectionSearch(topbar, content) {
     clear.hidden = query === "";
 
     if (query === "") {
-      for (const b of blocks) {
-        b.heading.hidden = false;
-        for (const el of b.body) el.hidden = false;
-      }
       count.textContent = "";
+      matches = [];
+      activeIndex = -1;
+      hideResults();
       return;
     }
 
-    for (const b of blocks) b.match = b.text.includes(query);
-    for (const b of blocks) {
-      if (b.level === 2) {
-        b.childMatch = blocks.some((c) => c.parent === b && c.match);
-      }
-    }
-
-    let visible = 0;
-    for (const b of blocks) {
-      const parentMatch = b.parent ? b.parent.match : false;
-      const showHeading = b.match || parentMatch || (b.level === 2 && b.childMatch);
-      const showBody = b.match || parentMatch;
-      b.heading.hidden = !showHeading;
-      for (const el of b.body) el.hidden = !showBody;
-      if (showHeading) visible += 1;
-    }
-    count.textContent = visible === 0 ? "无匹配章节" : visible + " 个章节";
+    const found = chapters.filter((chapter) => chapter.label.toLowerCase().includes(query));
+    renderResults(found);
+    count.textContent = found.length === 0 ? "无匹配章节" : found.length + " 个章节";
   };
 
   input.addEventListener("input", apply);
@@ -326,12 +391,37 @@ function setupSectionSearch(topbar, content) {
     apply();
     input.focus();
   });
+  input.addEventListener("focus", () => {
+    if (input.value.trim() !== "") apply();
+  });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (!results.hidden) {
+        hideResults();
+        return;
+      }
       input.value = "";
       apply();
       input.blur();
+      return;
     }
+    if (results.hidden) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActive(activeIndex + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActive(activeIndex - 1);
+    } else if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      goToChapter(activeIndex);
+    }
+  });
+  box.addEventListener("focusout", (event) => {
+    if (!box.contains(event.relatedTarget)) hideResults();
+  });
+  document.addEventListener("click", (event) => {
+    if (!box.contains(event.target)) hideResults();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -385,9 +475,11 @@ function escapeHtml(s) {
 function renderLuaApiTable() {
   const container = document.querySelector("[data-lua-api-container]");
   if (!container) return;
-  const data = window.__LUA_API_DATA;
+  const source = container.getAttribute("data-lua-api-source") || "__LUA_API_DATA";
+  const data = window[source];
   if (!data) {
-    container.innerHTML = '<div class="callout warn">lua-api-data.js 未加载，请确认 HTML 中包含对应的 &lt;script&gt; 标签。</div>';
+    container.innerHTML = '<div class="callout warn">数据 ' + escapeHtml(source) +
+      ' 未加载，请确认 HTML 中包含对应的 &lt;script&gt; 标签。</div>';
     return;
   }
 
@@ -434,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const activePage = document.body.dataset.page || "index";
   const shell = ensureShell();
   document.body.prepend(createSidebar(activePage));
-  setupSectionSearch(shell.topbar, shell.content);
+  setupChapterSearch(shell.topbar);
   renderLuaApiTable();
   setupApiSearch();
 });

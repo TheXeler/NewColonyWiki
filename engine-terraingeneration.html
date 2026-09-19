@@ -33,6 +33,18 @@
       <li><code>data/terrain/*.json</code>：基础地形材料引用；不替代缺失的群落规则。</li>
       <li><code>engine.terrain.list_biomes()</code>、<code>list_features()</code>、<code>get_biome()</code> 和 <code>get_feature()</code>：只读诊断接口。</li>
     </ul>
+    <h2>世界派生缓存与失效契约</h2>
+    <p>地形/气候查询链上有若干按区块坐标缓存的采样结果，但它们的值其实是<strong>世界状态的函数</strong>（世界种子、世界地图配置、<code>terrain_sea_level</code>、群落注册表）。只按区块坐标作键，在世界切换后会串味：新世界第一个被查询的区块可能继承上一个世界的气候/基准高度。只按种子作键也不够，因为基准高度还取决于 <code>terrain_sea_level</code>、气候取决于世界地图配置。</p>
+    <p>因此失效做成显式的：<code>ChunkManager</code> 持有世界状态世代 <code>world_state_epoch()</code>，每个缓存槽记录自己填充时的世代、不匹配就重填（<code>thread_local</code> 槽位因此无需枚举线程）。<code>ChunkManager::rebuild_world_derived_state()</code> 做两件事：按<strong>当前</strong>世界种子重建种子派生字段，并自增世代。调用时机：</p>
+    <ul>
+      <li><code>WorldLifecycleCoordinator::start_new_world()</code> 与 <code>activate_loaded_world()</code>：在 <code>m_config.world_seed</code> 定稿之后调用 <code>rebuild_world_derived_state()</code>（同一函数里 <code>build_initial_chunks()</code> 之前，保证首个区块就用新种子）。</li>
+      <li><code>WorldLifecycleCoordinator::return_to_main_menu()</code>：世界拆除后调用 <code>invalidate_world_derived_caches()</code>，不得再供出旧世界采样。</li>
+      <li><code>Engine::refresh_runtime_mod_data_from_registry()</code>：运行期 MOD 数据刷新会原地重建群落表与地形生成器，但种子未变，因此只需 <code>invalidate_world_derived_caches()</code>。</li>
+    </ul>
+    <p>当前挂在世代上的槽位：<code>ChunkManager::cached_climate_for_chunk()</code>、<code>ChunkManager::terrain_base_height_for_block()</code>、<code>TerrainQueryService</code> 的程序化地形 <code>chunk_cache</code>。<code>column_climate_lookup()</code> 的 <code>thread_local</code> 只用于返回稳定指针、每次调用都整体覆写，不需要世代。新增世界派生缓存时必须挂到同一世代上，不要只按区块坐标或只按种子作键。</p>
+    <div class="callout warn">
+      <strong>种子派生字段不能由 <code>init()</code> 负责（已修复）：</strong>三个气候扰动 Perlin 场（<code>m_climate_perturb_temperature</code> / <code>_moisture</code> / <code>_elevation</code>，供 <code>WorldMap::sample_climate_for_block</code> 的块级中频扰动使用）原本只在 <code>ChunkManager::init()</code> 里按当时的 <code>m_config.world_seed</code> 重建。而 <code>init()</code> 只在引擎启动与 <code>return_to_main_menu()</code>（拆除时）被调用，世界启动路径只在 <code>!initialized()</code> 时补调；启动时 <code>world_seed</code> 还是 <code>EngineConfig</code> 的默认值 <strong>12345</strong>，拆除时又是正在关闭的那个世界的种子。结果是：每个会话的<strong>第一个世界</strong>用 12345 的扰动场，之后每个世界用<strong>上一个世界</strong>的种子 —— 同种子在不同会话里可能生成不同地形（群落宏观选择传入的是当前种子，不受影响，所以差异只体现在块内中频气候/群落过渡上）。现在扰动场重建与世界启动同处（<code>rebuild_world_derived_state()</code>），<code>init()</code> 复用同一实现只为启动期提供默认值。若存在按旧行为生成、尚未走完的存档，其未生成区块会与新生成区块在气候过渡上出现接缝。</div>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

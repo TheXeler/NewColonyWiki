@@ -11,7 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
     <h1>Lua 怎么用</h1>
-    <p class="subtitle">Lua 入口用来连接事件、定时器、焦点、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
+    <p class="subtitle">Lua 入口用来连接事件、定时器、要闻、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
 
     <div class="callout info">
       <strong>脚本运行时</strong>：LuaJIT 2.1（Lua 5.1 语言）。不要使用 5.3+ 才有的位运算符（<code>&amp;</code> <code>|</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code>）和整除运算符 <code>//</code>——需要位运算时改用 <code>bit</code> 库（<code>bit.band</code>、<code>bit.bor</code>、<code>bit.bxor</code>、<code>bit.lshift</code>、<code>bit.rshift</code>）。注意 <code>bit</code> 库只在 32 位上运算。
@@ -52,7 +52,7 @@ return M</code></pre>
 
     <p>四个生命周期函数的用途：</p>
     <ul>
-      <li><strong>on_load</strong> —— 适合订阅事件、注册焦点条件、读取配置和恢复非世界领域状态。此时数据与完整领域 API 已绑定，但世界还没生成。</li>
+      <li><strong>on_load</strong> —— 适合订阅事件、注册要闻条件、读取配置和恢复非世界领域状态。此时数据与完整领域 API 已绑定，但世界还没生成。</li>
       <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore/feature。此时地形 API 已可用。</li>
       <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
       <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
@@ -73,12 +73,50 @@ if not id then return end
 local hp = engine.ecs.get_health(id)
 engine.log.info("health: " .. tostring(hp.current) .. "/" .. tostring(hp.max))</code></pre>
 
-    <h2>实体脚本数据</h2>
-    <p>需要给实体挂任务状态、临时标记或脚本私有计数时，使用 <code>engine.data</code> 数据组件 API。它提供类似 NBT compound 的点分路径读写。完整说明见 <a href="mod-lua-data-components.html">数据组件 API</a>。</p>
-    <pre><code>engine.data.set(id, "quest.stage", 2)
-engine.data.set(id, "quest.flags.met_elder", true)
-
-local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
+    <h2>实体附加数据</h2>
+    <p>实体上的"键 → 带种类的值"数据表，用于任务状态、临时标记或脚本私有计数。键是数据 ID，种类由引擎决定（<code>bool</code> / <code>int</code> / <code>float</code> / <code>string</code> / <code>uuid</code> / <code>vec3</code> / <code>enum</code>），并且<strong>会随存档保存、随网络同步</strong>。</p>
+    <p>宿主对象只能从事件回调里得到：任何携带实体的事件都会在负载里给出 <code>host</code>（施动实体，<code>entity_id</code> 优先、其次 <code>worker</code>）与 <code>target_host</code>（工作目标实体）。宿主是句柄而不是普通表——实体销毁后再调用会立刻失败，不会写到被复用的实体 ID 上。</p>
+    <pre><code>engine.events.subscribe("work:completed", function(event)
+    local host = event.host
+    if not host or not host.valid then return end
+    local map = host.attachmentsMap
+    if not map:has("core:harvest_count") then
+        map:attach("core:harvest_count", 0)  -- 建键：有声明按声明种类，无声明按 Lua 类型推断
+    end
+    map:set("core:harvest_count", (map:get("core:harvest_count") or 0) + 1)
+    for key, value in pairs(map:list()) do
+        -- 遍历该实体当前附着的全部键值（UI 用）
+    end
+end)</code></pre>
+    <p><code>attach</code> 建键、<code>set</code> 只改已存在的键（键不存在会报错）、<code>get</code> 缺键返回 <code>nil</code>、<code>has</code> 判存在、<code>detach</code> 移除、<code>kind</code> 返回该键的种类名、<code>list</code> 返回全部键值。同一个键不能改种类：跨类覆盖是致命错误。写操作只在主机侧放行，客户端只读。</p>
+    <p>可用键写在各持有者定义的 <code>attachments</code> 数组里（实体原型、物品定义、方块定义各自声明），缺省值在生成实体时写入；运行期也可以附加未声明的键，但那样种类只能从 Lua 值推断（表值不接受）。例如在实体原型里：</p>
+    <pre><code>"attachments": [
+    { "id": "yourmod:battery", "type": "float", "default": 1.0 },
+    { "id": "yourmod:mode",    "type": "enum",  "values": ["idle", "patrol"], "default": "idle" },
+    { "id": "yourmod:home",    "type": "vec3",  "default": [0, 64, 0] }
+]</code></pre>
+    <p>这样生成的每个该原型实体，一开始就带着这三个键与默认值；之后用 <code>host.attachmentsMap</code> 读写即可，存档与网络同步都由引擎处理。<strong>引擎保留键（<code>health</code>、<code>position</code> 等）的声明写法尚未定案</strong>（见附加数据设计文档与搁置问题清单的 D5），本示例只用自定义键。</p>
+    <p><strong>键名规则（写内容前务必确认）：</strong>引擎保留键用<strong>裸名</strong>（<code>health</code>、<code>position</code>、<code>rotation</code>…，完整清单见附加数据设计文档 §3.2）；你声明的<strong>其他键</strong>如果不带命名空间，会被自动补上你的模组名（<code>work_precision</code> → <code>你的模组:work_precision</code>）。所以自建键请始终写成 <code>你的模组:键名</code>，避免与别的模组撞名。键名只允许小写字母、数字、下划线、短横线和命名空间冒号。</p>
+    <p><strong>声明的取值形状：</strong>每个声明的 <code>type</code> 决定取值形式——<code>bool</code> 为真假值；<code>int</code> / <code>float</code> 为数字（<strong>两者不可互换</strong>，写 <code>1</code> 与 <code>1.0</code> 会按声明区分）；<code>string</code> 为字符串；<code>uuid</code> 为 32 位十六进制字符串（可带连字符）；<code>vec3</code> 为 <code>[x, y, z]</code> 三元数组；<code>enum</code> 必须额外给 <code>values</code> 取值表，且默认值与附加的值都必须是其中之一。任何声明都必须写 <code>default</code>。</p>
+    <p><strong>同一个键不能改种类：</strong>无论是声明还是运行期附加，一个键一旦以某种种类存在，再用另一种种类覆盖都是致命错误（游戏会终止并先刷新日志）；同一键被多个定义声明时，类型必须一致。</p>
+    <p><strong>物品也有同样的表。</strong>物品事件（<code>item:spoiled</code>、<code>item:ground_despawned</code>）的回调里给的是 <code>event.item</code>，接口与 <code>host.attachmentsMap</code> 完全一致（<code>attach</code> / <code>set</code> / <code>get</code> / <code>has</code> / <code>detach</code> / <code>list</code> / <code>kind</code> / <code>valid</code>），读写的正是该物品实例的附加数据。</p>
+    <p>与实体不同的是失效时的表现：实体宿主在实体消失后根本不会交给你（字段为 <code>nil</code>），而物品句柄可能拿到，但每个操作都会像"键不存在"那样失败（写操作返回 <code>false</code>）——两种做法都保证不会把数据写进已被回收的实例。</p>
+    <pre><code>engine.events.subscribe("item:ground_despawned", function(event)
+    local item = event.item
+    if not item or not item:valid() then return end
+    if item:has("yourmod:freshness") then
+        item:set("yourmod:freshness", 0.0)
+    end
+end)</code></pre>
+    <p>物品附加数据与实体一样随存档往返、随网络同步，并参与同类物品的堆叠合并判定（附加数据不同的两堆不会合并）。物品定义里同样可以写 <code>attachments</code> 数组来声明键与默认值。</p>
+    <p><strong>方块也有同样的表。</strong>凡是负载里带数值 <code>x</code>／<code>y</code>／<code>z</code> 的事件都会给出 <code>event.block</code>——包括 <code>block:interacted</code>／<code>block:removed</code>／<code>block:changed</code>／<code>block:placed</code>，也包括 <code>work:*</code>（那里的坐标就是被施工的方块）。接口与另外两个宿主一致。</p>
+    <pre><code>engine.events.subscribe("block:interacted", function(event)
+    local block = event.block
+    if not block or not block:valid() then return end
+    block:attach("yourmod:tended_at", event.tick or 0)
+end)</code></pre>
+    <p>方块的失效表现与物品类似但原因不同：坐标不存在"存活"一说，**区块没加载时你仍会拿到句柄，但每次操作都返回失败**；并且引擎**不会为了读而创建区块**。请注意：<strong>方块附加数据目前只存在内存里</strong>——实体与物品的附加数据会随存档往返、随网络同步，方块的要等后续阶段（设计文档 §4.5 的 V3/V4）才接上，当前卸载区块即丢失。</p>
+    <p><strong>旧的 <code>engine.data</code> 数据组件 API 与本节重叠，且不存档、不同步、实体销毁不清理，已随本 API 一起删除（该 API 与旧 wiki 页均已移除，导航项也已去掉）</strong>；它的点分路径与表值请改为多个扁平键。旧说明见 <a href="mod-lua-data-components.html">数据组件 API</a>（待重写）。</p>
 
     <h2>合成和职业</h2>
     <p>配方和职业本体写在 JSON 里。公开直通制作和职业分配入口均已禁用；Lua 可以查询配方，并通过 CoreMod 生产订单和装备换装事务创建实际工作。</p>
@@ -89,6 +127,7 @@ local stage = engine.data.get(id, "quest.stage", 0)</code></pre>
   end
 end</code></pre>
     <p>CoreMod 菜单通过 <code>systems.production.queue</code> 建立可重复或维持库存的订单，再由 <code>systems.crafting.queue</code> 预留 stockpile 材料并在 <code>work:completed</code> 后结算；Lua 不提供直接制作入口。</p>
+	<p><code>engine.designs.attribute_ids()</code> 返回只读且有序的引擎属性名表（26 项，索引 1..26），顺序与 <code>Engine/Simulation/AttributeStats.hpp</code> 一致。物品基型的 <code>base_values</code> 键、<code>attributes[].id</code> 以及品质表的 <code>modifiers[].attribute</code> 都取这份名单，表外名字在配置期被拒绝。编辑器与工具应以该入口生成属性下拉，不要再各自硬编码副本。</p>
 	<p><code>engine.designs</code> 提供锻造基型和不可变设计方案接口。<code>list_item_bases()</code>/<code>get_item_base(id, civilization_index?)</code> 返回基型、科技解锁状态、属性/词条等级、容量、材料与配置错误；<code>preview(base, attributes, affixes)</code> 只计算方案；<code>save(...)</code> 仅允许已解锁基型并始终创建新 design ID，即使方案因容量或选择错误而无效。<code>list()</code>/<code>get(id)</code> 返回已保存方案。方案没有名称或批量数量字段。</p>
 
     <h2>工作池</h2>
@@ -102,7 +141,7 @@ local work_id = engine.work.post("haul", player_faction, 16.5, 65.0, 16.5, 3.0, 
 	<p>公共工作先进入殖民者个人队列，领取本身不触发预留。领取初选和未激活队列继续执行共用职业、工作计划、状态、路径与当前材料可满足性条件。调度器每轮按稳定殖民者顺序让每名空闲且合格的殖民者至多认领一项；后一名殖民者只会从前者尚未认领的工作中选择，因此优先形成 A、B、C 的均匀分配，不再先填满某一人的队列。个人队列上限仍为 20 项。AI 每 5 tick（250 ms）检查一次公共池，已有个人工作时不会补领或被更高优先级工作抢占。</p>
 	<p>队列中的一项真正激活后才触发 <code>work:activated</code>，制作等经营系统在此时申请资源和位置预留。激活检查失败时可调用 <code>engine.work.activation_failed(work_id)</code>，它会把该项退回公共池、清理导航并阻塞 20 tick；执行者随后尝试队列下一项。<code>engine.work.set_locked(work_id, true)</code> 复用同一个 <code>blocked_until_tick</code> 字段写入永久阻塞哨兵，任务继续存在但不能被领取；传入 <code>false</code> 会把阻塞时间恢复到当前 tick 并立即解锁。完成结算与下一项激活分属不同 tick，避免下一项在上一项提交前抢先预留。</p>
 	<p>取消和中断分别触发 <code>work:cancelled</code> 与 <code>work:interrupted</code>。<code>engine.work.interrupt_all(worker)</code> 会把当前激活项和整条个人队列全部退回，释放激活项未提交预留；其他殖民者可立即领取，原殖民者在 20 tick 内跳过这些工作。</p>
-	<p>搬运是唯一允许同批多项同时激活的类型。CoreMod 只合并来源坐标、物品堆叠键、来源位置和目标仓储位置都兼容的项，并按背包格、单格堆叠与搬运容量截断。<code>engine.work.claimed(worker)</code> 提供该人尚未激活的队列，<code>engine.work.activate_claimed_haul(work_id, worker)</code> 只允许激活其中的 Haul 项；各项仍独立保存来源、数量、目标格和预留，并由 AI 逐项导航结算。合成系统在成功创建每个产物实例后立即调用搬运系统的幂等入库入口发布 Haul 工作，周期扫描仅作为遗漏恢复。没有有效仓储目的地时自动搬运任务仍会发布，但使用永久冷却哨兵锁定；目的地出现后自动解锁。拆分物品堆时，原始来源实例会保持占用到当前批次交付完成，防止携带者被同一堆的新取货任务抢走；交付结算后立即扫描剩余来源并发布下一批，不等待周期扫描。</p>
+	<p>搬运是唯一允许同批多项同时激活的类型。CoreMod 只合并来源坐标、物品堆叠键、来源位置和目标仓储位置都兼容的项，并按背包格、单格堆叠与搬运容量截断。<code>engine.work.claimed(worker)</code> 提供该人尚未激活的队列，<code>engine.work.personal_load(worker)</code> 与 <code>engine.work.personal_limit()</code> 给出个人队列的加权负载与上限（摧毁/放置体素类工作每项占 1 格、其他类型每项占 10 格，总上限 20；人员界面的“当前工作数量”即显示该负载），<code>engine.work.activate_claimed_haul(work_id, worker)</code> 只允许激活其中的 Haul 项；各项仍独立保存来源、数量、目标格和预留，并由 AI 逐项导航结算。合成系统在成功创建每个产物实例后立即调用搬运系统的幂等入库入口发布 Haul 工作，周期扫描仅作为遗漏恢复。没有有效仓储目的地时自动搬运任务仍会发布，但使用永久冷却哨兵锁定；目的地出现后自动解锁。拆分物品堆时，原始来源实例会保持占用到当前批次交付完成，防止携带者被同一堆的新取货任务抢走；交付结算后立即扫描剩余来源并发布下一批，不等待周期扫描。</p>
     <p>寻路失败会被记为 error；AI 不再因导航目标不可达而生成原地 fallback 工作。</p>
 	<p>如果 AI 在执行中被中断（例如殖民者倒地、死亡、低需求触发个人需求，或 AI 状态被外部清空），当前激活项和未激活个人队列都会返回工作池；只有激活项可能持有预留。恍惚只影响命中率，不会单独中断工作。</p>
 	<p><code>engine.economy_log.record(spec)</code> 向统一经营日志追加结构化正常/异常记录；<code>engine.economy_log.entries(filter?)</code> 只读查询并支持 <code>worker</code>、<code>source_id</code>、<code>source_object_id</code>、<code>item_id</code>、<code>work_tag</code> 和 <code>problem_id</code> 筛选。<code>engine.problems.report(spec)</code> 按来源与问题 ID 上报或刷新持续问题，<code>list(filter?)</code>/<code>alerts()</code> 返回局部问题和同类聚合警报，<code>resolve(instance_id)</code> 解除并自动写日志。个人进食工作按殖民者保持唯一；暂时找不到或无法预留食物时只冷却并重试同一工作，不记录逐次激活失败，也不上报普通缺粮问题。殖民者进入会持续损失生命的严重饥饿阶段后，才产生按人数聚合的全局持续警报。问题 API 只表达文档已有的阻塞/失效反馈，不应创建新的玩法规则。</p>
@@ -242,8 +281,8 @@ end
 engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
-    <h2>焦点</h2>
-    <p>焦点 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 焦点 被触发、选择或关闭。</p>
+    <h2>要闻</h2>
+    <p>要闻 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 要闻 被触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20
 end)

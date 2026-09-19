@@ -34,19 +34,6 @@
   "load_before": [],
   "conflicts": [],
   "side": "both",
-  "ui": {
-    "images": {
-      "main_menu_background_001": "assets/ui/background001.png"
-    },
-    "image_pools": {
-      "main_menu_backgrounds": ["main_menu_background_001"]
-    },
-    "main_menu": {
-      "background_pool": "main_menu_backgrounds",
-      "selection": "first",
-      "background_tint": [0.0, 0.0, 0.0, 0.35]
-    }
-  },
   "settings": {
     "enable_debug_logs": false,
     "ore_spawn_rate": {
@@ -73,13 +60,17 @@
         <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>
         <tr><td><code>conflicts</code></td><td>否</td><td>和这些 MOD 同时存在时加载失败。</td></tr>
-        <tr><td><code>ui</code></td><td>否</td><td>客户端 UI 图片资源声明。支持 <code>images</code>、<code>image_pools</code> 和 <code>main_menu</code> 背景配置。详见 <a href="mod-assets-ui.html">UI 图片资源</a>。</td></tr>
         <tr><td><code>settings</code></td><td>否</td><td>默认配置。支持直接写字符串、数字、布尔值，也支持 <code>{"value": ..., "label_key": "...", "description_key": "..."}</code> 对象格式。保留项 <code>enabled</code> 必须是布尔值。</td></tr>
       </tbody>
     </table>
 
+    <div class="callout info">
+      主菜单背景图没有 <code>mod.json</code> 字段：把图片放进 MOD 的 <code>assets/background/</code> 即可，引擎会自动扫描所有启用 MOD 的该目录。旧版 <code>ui</code> 字段已删除并被忽略。详见 <a href="mod-assets-ui.html">UI 图片资源</a>。
+    </div>
+
     <h2>玩家配置覆盖</h2>
     <p>加载器会自动确保每个 MOD 都有 <code>enabled</code> 设置。<code>core</code> 永远启用；其他 MOD 首次发现时默认为未启用。主菜单 MOD 管理器会写入同名配置文件中的 <code>enabled</code> 值；启用或禁用后需要重启使加载结果生效。</p>
+    <p>被禁用的 MOD 在运行时不产生任何影响：内容不进注册表、<code>assets/</code> 不参与启动预处理（坏资源也不会阻止启动）、翻译不合并、Lua 入口不执行，也不计入 ModList 校验码与存档的 MOD 内容差异。它的 <code>mod.json</code> 与配置项仍会被读取（MOD 管理器要展示它并允许重新启用），但 <code>assets/background/</code> 只对启用的 MOD 扫描：禁用 MOD 的背景图不进主菜单背景图池。</p>
     <p>在 <code>settings</code> 里声明了默认值后，玩家可以用同名文件覆盖。覆盖文件放在 <code>config/</code> 目录下：</p>
     <pre><code>config/copper_age.json</code></pre>
     <p>覆盖值必须和默认值类型一致。Lua 中读取配置时给一个 fallback，避免旧配置缺字段时崩溃。</p>
