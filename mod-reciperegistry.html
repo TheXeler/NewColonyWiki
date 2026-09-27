@@ -25,7 +25,7 @@
   "processing_difficulty": 0,
   "output_table": "core:wood_plank_output",
   "output_table_executions": 1,
-  "compatible_task_points": ["core:handcraft", "core:workbench"]
+  "compatible_work_points": ["core:handcraft", "core:workbench"]
 }</code></pre>
 
     <h2>字段</h2>
@@ -35,7 +35,7 @@
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>稳定配方 ID。缺失时文件解析失败，配方表加载中止。</td></tr>
         <tr><td><code>inputs</code></td><td>object[]</td><td>是</td><td>材料清单。缺失或不是数组时加载失败；条目规则见下节。</td></tr>
         <tr><td><code>target_item</code></td><td>string</td><td>是</td><td>目标物品数据 ID，用于展示与维持库存统计，不决定产出数量。缺失或不是合法数据 ID 时加载失败。</td></tr>
-        <tr><td><code>compatible_task_points</code></td><td>string[]</td><td>是</td><td>非空的工作点类型数据 ID 数组。缺失、不是数组或为空时加载失败。</td></tr>
+        <tr><td><code>compatible_work_points</code></td><td>string[]</td><td>是</td><td>非空的工作点类型数据 ID 数组。缺失、不是数组或为空时加载失败。</td></tr>
         <tr><td><code>manufacturing_mode</code></td><td>string</td><td>否</td><td>只能是 <code>none</code>、<code>failure</code> 或 <code>quality</code>；其他取值解析失败。可写作 <code>mode</code>，默认 <code>none</code>。</td></tr>
         <tr><td><code>work_amount</code></td><td>integer</td><td>否</td><td>基础工时，单位为 1 倍速现实秒（1 现实秒对应 1 游戏分钟）。必须是 0 到 2^32-1 的整数，否则加载失败。省略或为 0 时，工作在完成激活、材料预留和到达条件后立即结算；正数工时仍受工人制作速度乘数影响。</td></tr>
         <tr><td><code>processing_difficulty</code></td><td>number</td><td>否</td><td>基础加工难度。默认 <code>0</code>。</td></tr>
@@ -64,7 +64,7 @@
     <table>
       <thead><tr><th>情况</th><th>结果</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code>、<code>inputs</code>、<code>target_item</code> 或 <code>compatible_task_points</code> 缺失/类型错误</td><td>加载失败，文件被拒绝。</td></tr>
+        <tr><td><code>id</code>、<code>inputs</code>、<code>target_item</code> 或 <code>compatible_work_points</code> 缺失/类型错误</td><td>加载失败，文件被拒绝。</td></tr>
         <tr><td><code>work_amount</code> 越界；<code>manufacturing_mode</code> 取值非法；<code>job.id</code> 非法或 <code>job.level</code> 不在 1-5；出现 <code>output</code></td><td>加载失败，文件被拒绝。</td></tr>
         <tr><td><code>output_table</code> 为空</td><td>配方保留，<code>configuration_error = output_table_missing</code>。</td></tr>
         <tr><td><code>output_table</code> 不在 <code>output_tables</code> 注册表</td><td>配方保留，<code>output_table_not_found</code>，原因携带产出表 ID。</td></tr>

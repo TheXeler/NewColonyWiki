@@ -147,7 +147,7 @@
 	"processing_difficulty": 0,
 	"output_table": "core:wood_plank_output",
 	"output_table_executions": 1,
-	"compatible_task_points": ["core:workbench"]
+	"compatible_work_points": ["core:workbench"]
 }</code></pre>
 	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时仍会受到工人的制作速度乘数影响。CoreMod 工作台配方为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
     <p>生产完成时会触发 <code>recipe:crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
@@ -155,7 +155,7 @@
 	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Server 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
 
 	<h2>锻造物品基型（item_bases）</h2>
-	<p>物品基型放在 <code>data/item_bases/</code>。基型 ID 就是目标物品 ID，不再重复配置目标；目标必须存在于 <code>items</code> 或兼容方块物品注册表。基型声明 <code>base_values</code>、<code>base_processing_difficulty</code>、<code>base_materials</code>、<code>attributes</code>、<code>affixes</code>、<code>max_capacity</code>、<code>manufacturing_mode</code>、<code>quality_table</code> 与 <code>compatible_task_points</code>。</p>
+	<p>物品基型放在 <code>data/item_bases/</code>。基型 ID 就是目标物品 ID，不再重复配置目标；目标必须存在于 <code>items</code> 或兼容方块物品注册表。基型声明 <code>base_values</code>、<code>base_processing_difficulty</code>、<code>base_materials</code>、<code>attributes</code>、<code>affixes</code>、<code>max_capacity</code>、<code>manufacturing_mode</code>、<code>quality_table</code> 与 <code>compatible_work_points</code>。</p>
 	<p><code>base_values</code> 的键和 <code>attributes[].id</code> 共用同一份属性名表，都只能取下列 26 个名字之一。表外名字会让该基型 <code>configuration_valid = false</code> 并写入稳定错误 <code>item_base_attribute_unknown</code>。该表由引擎唯一持有（<code>Engine/Simulation/AttributeStats.hpp</code>），不能由 Mod 扩展；运行时可用只读入口 <code>engine.designs.attribute_ids()</code> 按同样的顺序取得，编辑器和游戏内界面应当使用它而不是各自硬编码副本。</p>
 	<p>属性名表（顺序即 <code>engine.designs.attribute_ids()</code> 的返回顺序）：</p>
 	<pre><code>move_speed_modifier, comfortable_temperature_min, comfortable_temperature_max,
