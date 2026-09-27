@@ -13,7 +13,7 @@ window.__LUA_API_DATA = {
     },
     "risk_candidates": [
       "殖民者需求、治疗结果、待登记移除和患者搬运只通过带工作或候选上下文校验的领域接口提交。",
-      "engine.world.place_block/remove_block/set_block_data 只允许 Host/单机写入；玩法请求统一走 Host 处理的 UiCommand，不提供旧的直接网络写入口。",
+      "engine.world.place_block/remove_block/set_block_data 只允许 Server/单机写入；玩法请求统一走 Server 处理的 UiCommand，不提供旧的直接网络写入口。",
       "engine.events.clear 与 engine.timers.clear 是全局清理入口，会影响同一 Lua runtime 中其他 MOD 的订阅和定时器。",
       "engine.locale.reload/load_locale 是开发向能力，不适合作为普通内容 MOD 的核心运行时依赖。"
     ]
@@ -92,7 +92,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.ecs.is_alive(entity)", "params": "entity id", "returns": "bool", "note": "实体是否还存在。" },
         { "api": "engine.ecs.entity_count()", "params": "-", "returns": "number", "note": "当前实体总数。" },
         { "api": "engine.ecs.has_component(entity, name)", "params": "entity id, string", "returns": "bool", "note": "组件名用小写，如 position、health。" },
-        { "api": "engine.ecology.spawn_animal_at(rule_id, x, y, z)", "params": "animal_distributions id, number, number, number", "returns": "entity id 或 0", "note": "Host 生态结算专用：从已注册动物分布规则解析 animal 原型并在指定位置原子生成；不是通用实体创建入口。" },
+        { "api": "engine.ecology.spawn_animal_at(rule_id, x, y, z)", "params": "animal_distributions id, number, number, number", "returns": "entity id 或 0", "note": "Server 生态结算专用：从已注册动物分布规则解析 animal 原型并在指定位置原子生成；不是通用实体创建入口。" },
         { "api": "engine.ecs.get_position(entity)", "params": "entity id", "returns": "table", "note": "返回 { x, y, z }，没有组件时返回空表。" },
         { "api": "engine.ecs.get_velocity(entity)", "params": "entity id", "returns": "table", "note": "返回 { x, y, z }。" },
         { "api": "engine.ecs.get_speed(entity)", "params": "entity id", "returns": "table", "note": "get_velocity() 的同义接口，返回 { x, y, z }。" },
@@ -107,7 +107,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.ecs.get_mood(entity)", "params": "entity id", "returns": "table", "note": "返回 mood_value、broken_down、breakdown_timer、thought_count。" },
         { "api": "engine.ecs.get_name(entity)", "params": "entity id", "returns": "string", "note": "没有 Name 时返回 nil。" },
         { "api": "engine.ecs.has_colonist_tag(entity)", "params": "entity id", "returns": "bool", "note": "检查实体是否有殖民者标记。" },
-        { "api": "engine.ecs.get_ai_state(entity)", "params": "entity id", "returns": "table", "note": "返回 behavior_tree_id、current_node、lod_level。" },
+        { "api": "engine.ecs.get_ai_state(entity)", "params": "entity id", "returns": "table", "note": "返回 lod_level。实体 AI 统一通过 TaskPool 调度，不再选择行为树。" },
         { "api": "engine.ecs.get_job(entity)", "params": "entity id", "returns": "table", "note": "返回哈希后的 job_id 和 level。" },
         { "api": "engine.ecs.get_block_interactor(entity)", "params": "entity id", "returns": "table", "note": "返回 x、y、z、action_type，没有组件时返回空表。" },
         { "api": "engine.ecs.get_prototype_ref(entity)", "params": "entity id", "returns": "string", "note": "读取 PrototypeRef；没有组件时返回空字符串。" },
@@ -166,7 +166,7 @@ window.__LUA_API_DATA = {
         { "api": "systems.resources.summary()", "params": "-", "returns": "table", "note": "CoreMod 资源汇总入口；当前返回 stockpile 快照，供主界面、科技、制造和建造聚合读取。" },
         { "api": "systems.resources.stockpile_snapshot()", "params": "-", "returns": "table", "note": "返回 stockpile 账本数组：{ item_hash, item_id, count }。" },
         { "api": "systems.resources.preview(requirements)", "params": "table", "returns": "table", "note": "按需求数组返回 { item_hash, item_id, required, available, missing }。" },
-        { "api": "systems.crafting.queue(entity, recipe, faction, x, y, z, duration, force_storage)", "params": "entity, data id, hashed id, position, number?, bool?", "returns": "table", "note": "CoreMod 制作执行器。通过 engine.work reservation ledger 预留 stockpile 输入并发布 Craft 工作；完成时提交预留，取消时释放。" },
+        { "api": "systems.crafting.queue(entity, recipe, faction, x, y, z, duration, force_storage)", "params": "entity, data id, hashed id, position, number?, bool?", "returns": "table", "note": "CoreMod 制作执行器。通过 engine.tasks reservation ledger 预留 stockpile 输入并发布 Craft 任务；完成时提交预留，取消时释放。" },
         { "api": "systems.production.queue(worker, recipe, faction, count, priority, designated_worker, duration, maintain)", "params": "entity, data id, hashed id, integer, integer, entity?, number?, bool?", "returns": "table", "note": "创建生产订单；支持目标次数或维持库存、优先级和指定工人。另有 pause/resume/cancel/snapshot。" },
         { "api": "systems.food.create_plan/copy_plan/rename_plan/assign_plan/set_min_nutrition/set_category", "params": "plan/entity/category", "returns": "bool", "note": "CoreMod 饮食计划 API；snapshot_plans 返回计划。进食从 stockpile 选择 category=food 且达到最低 food_value 的物品。" },
         { "api": "systems.treatment.create_template/copy_template/rename_template/set_template_*", "params": "template/injury/resource", "returns": "bool", "note": "CoreMod 治疗模板 API；食物、药品和医疗包按 injury 分别保存。queue 发布 Treat 工作并占用治疗点，snapshot/snapshot_templates 返回运行态。" },
@@ -178,9 +178,8 @@ window.__LUA_API_DATA = {
         { "api": "engine.buildings.create_planned(def_id, x, y, z)", "params": "data id, integer, integer, integer", "returns": "table", "note": "位置通过建筑碰撞校验后创建 Planned 实例并返回状态。" },
         { "api": "engine.buildings.find(instance_id)", "params": "integer", "returns": "table 或 nil", "note": "读取建筑实例状态，返回 instance_id、definition_hash、state、x、y、z 和 progress。" },
         { "api": "engine.buildings.find_definition(id)", "params": "data id", "returns": "table 或 nil", "note": "读取建筑定义，包含 size、materials、construction_ticks 和 blueprint。" },
-        { "api": "engine.buildings.complete_construction(work_id, instance_id)", "params": "integer, integer", "returns": "bool", "note": "仅在匹配该建筑 payload 的 Build 工作完成派发期间提交完成。" },
+        { "api": "engine.buildings.complete_construction(work_uuid, durability, materials, state_commit)", "params": "task UUID string, number, table, table", "returns": "committed, notification_failed", "note": "仅在匹配任务 UUID 的 Build 工作完成派发期间提交，目标建筑取自原生 Building payload，不由脚本指定。materials 使用预约编号或含 reservation_id 的材料行数组；预约须属于该工作。state_commit={state=受管state,field=字段名,value=候选值}，校验通过后先写状态，再消费和完成建筑；状态写入失败不消费。" },
         { "api": "engine.buildings.set_construction_state(instance_id, state)", "params": "integer, integer", "returns": "bool", "note": "只允许未完成建筑在 Planned 与 Constructing 之间转换。" },
-        { "api": "engine.buildings.place_blueprint_block(work_id, instance_id, x, y, z, block_id)", "params": "work/building/position/data id", "returns": "bool", "note": "仅在匹配 Build 完成上下文中放置该定义明确声明的蓝图格。" },
         { "api": "engine.buildings.set_preview(def_id, x, y, z, valid)", "params": "data id, integer, integer, integer, bool", "returns": "bool", "note": "在 HUD 上显示建筑放置预览线框。" },
         { "api": "engine.buildings.clear_preview()", "params": "-", "returns": "-", "note": "清除建筑放置预览。" },
         { "api": "engine.buildings.begin_placement(def_id)", "params": "data id", "returns": "bool", "note": "开始交互式建筑放置模式。" },
@@ -213,20 +212,21 @@ window.__LUA_API_DATA = {
       ]
     },
     {
-      "name": "工作池",
+      "name": "任务池",
       "items": [
-        { "api": "engine.work.post(type, faction_id, x, y, z, duration, payload_id, target_entity)", "params": "string, hashed id, number, number, number, number?, integer?, entity?", "returns": "work id", "note": "发布通用脚本工作；Mine/Chop 只能由指定工具经 Host 创建，Research 只能由已付款项目派生。faction_id 必填且不能为 0。" },
-        { "api": "engine.work.cancel(id)", "params": "work id", "returns": "-", "note": "取消工作。" },
-        { "api": "engine.work.interrupt_all(worker)", "params": "entity", "returns": "integer", "note": "解除该工人已领取的工作并返回数量，产生 work:interrupted。" },
-		{ "api": "engine.work.set_locked(id, locked)", "params": "work id, bool", "returns": "bool", "note": "复用 blocked_until_tick 的永久阻塞哨兵锁定或立即解锁工作；锁定任务继续存在但不可领取。" },
-        { "api": "engine.work.set_metadata(id, source_id, priority, designated_worker?)", "params": "work id, integer, 0-9, entity?", "returns": "bool", "note": "写订单来源、优先级和指定工人；0 是特殊优先级，1-9 是普通优先级。" },
-        { "api": "engine.work.set_qualification(id, job_id, job_level)", "params": "work id, hashed id, integer", "returns": "bool", "note": "限制领取工作所需的职业和最低等级。" },
-        { "api": "engine.work.set_available/available/reserved/reserve/commit_reservation/release_reservation", "params": "item hash、数量、reservation id", "returns": "mixed", "note": "共享资源 reservation ledger；CoreMod stockpile、crafting 和生产订单使用。" },
-        { "api": "engine.work.cancel_matching(work_tag, faction_id?, payload_id?)", "params": "string, hashed id?, integer?", "returns": "integer", "note": "按工作标签、阵营和可选 payload_id 批量取消工作，返回取消数量。指令菜单按 mine/chop 标签中断已发布的采集/挖矿工作；正在执行的 AI 会在下一次检查工作有效性时退出当前工作。" },
-        { "api": "engine.work.is_valid(id)", "params": "work id", "returns": "bool", "note": "检查工作是否仍在工作池中。" },
-        { "api": "engine.work.total()", "params": "-", "returns": "integer", "note": "返回工作池中活跃工作数量。" },
-		{ "api": "engine.work.list()", "params": "-", "returns": "table", "note": "当前工作实例；除目标、进度外还含 source_id、priority、designated_worker、reservation_id、blocked_until_tick、locked、qualification_expression 和 step_index。" },
-		{ "api": "engine.work.set_qualification_expression()", "params": "work_id, expression", "returns": "bool", "note": "保存由 #职业ID_RANK_LEVEL、AND、OR 和括号组成的权威资格表达式。" }
+        { "api": "engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity)", "params": "string, hashed id, number, number, number, number?, integer?, entity?", "returns": "task UUID", "note": "发布通用实体任务；Mine/Chop 只能由指定工具经 Server 创建，Research 只能由已付款项目派生。faction_id 必填且不能为 0。" },
+        { "api": "engine.tasks.cancel(id)", "params": "task UUID", "returns": "-", "note": "取消任务。" },
+        { "api": "engine.tasks.interrupt_all(worker)", "params": "entity", "returns": "integer", "note": "解除该实体已领取的任务并返回数量，发布 core:task_interrupted。" },
+		{ "api": "engine.tasks.set_locked(id, locked)", "params": "task UUID, bool", "returns": "bool", "note": "复用 blocked_until_tick 的永久阻塞哨兵锁定或立即解锁任务；锁定任务继续存在但不可领取。" },
+        { "api": "engine.tasks.set_metadata(id, source_id, priority, designated_worker?)", "params": "task UUID, integer, 0-9, entity?", "returns": "bool", "note": "写来源、优先级和指定实体；0 是特殊优先级，1-9 是普通优先级。" },
+        { "api": "engine.tasks.set_qualification(id, job_id, job_level)", "params": "task UUID, definition ID string, integer", "returns": "bool", "note": "职业使用定义字符串，不传内部数字哈希；未知定义或无效等级返回 false，不改已有要求。" },
+        { "api": "engine.tasks.set_available/available/reserved/reserve/commit_reservation/release_reservation", "params": "item hash、数量、reservation id", "returns": "mixed", "note": "共享资源 reservation ledger；CoreMod stockpile、crafting 和生产订单使用。" },
+        { "api": "engine.tasks.cancel_matching(task_tag, faction_id?, payload_id?)", "params": "string, hashed id?, integer?", "returns": "integer", "note": "按任务标签、阵营和可选 payload_id 批量取消任务，返回取消数量。" },
+        { "api": "engine.tasks.is_valid(id)", "params": "task UUID", "returns": "bool", "note": "检查任务是否仍有效。" },
+        { "api": "engine.tasks.total()", "params": "-", "returns": "integer", "note": "返回任务池中活跃任务数量。" },
+		{ "api": "engine.tasks.list()", "params": "-", "returns": "table", "note": "当前任务实例，包含身份、目标、进度、资格和队列信息。" },
+		{ "api": "engine.tasks.set_qualification_expression()", "params": "task_id, expression", "returns": "bool", "note": "保存由 #职业ID_RANK_LEVEL、AND、OR 和括号组成的权威资格表达式。" },
+        { "api": "engine.tasks.set_duration(task_uuid, seconds)", "params": "task UUID string, seconds", "returns": "bool", "note": "按任务 UUID 修改时长，不接受数字任务号。时长改变时清零进度，未改变时保留；仅制作允许零时长。" }
       ]
     },
     {
@@ -301,11 +301,11 @@ window.__LUA_API_DATA = {
         { "api": "engine.ui.data.events()", "params": "-", "returns": "table", "note": "事件/焦点快照，包含 instance_id、severity、详情和可执行 actions。" },
         { "api": "engine.ui.data.battle_hud()", "params": "-", "returns": "table", "note": "接口未定快照，只包含 visible、interface_defined=false、status=combat_interface_undefined 和空 commands。" },
         { "api": "engine.ui.data.channels()", "params": "-", "returns": "table", "note": "返回 Web UI 使用的快照通道名列表。" },
-        { "api": "engine.ui.command.run(target, payload)", "params": "string, table?", "returns": "bool|table", "note": "统一 UI 命令入口；已定义的玩法写入经 Host UiCommand，包括生产、研究、治疗、招募、仓储、区域、地面回收与焦点。外交操作尚未定义，不在命令白名单中。" },
+        { "api": "engine.ui.command.run(target, payload)", "params": "string, table?", "returns": "bool|table", "note": "统一 UI 命令入口；已定义的玩法写入经 Server UiCommand，包括生产、研究、治疗、招募、仓储、区域、地面回收与焦点。外交操作尚未定义，不在命令白名单中。" },
         { "api": "engine.ui.command.panel_open(panel)", "params": "string", "returns": "bool", "note": "打开经营面板的快捷命令，内部转发 panel.open。" },
         { "api": "engine.ui.command.panel_close(panel)", "params": "string", "returns": "bool", "note": "关闭经营面板的快捷命令，内部转发 panel.close。" },
-        { "api": "ScriptEngine::get_ui_snapshot(channel)", "params": "string", "returns": "JSON string", "note": "C++ RmlUiHost 包装函数：调用 engine.ui.data.snapshot(channel) 并序列化为页面快照 JSON。" },
-        { "api": "ScriptEngine::run_ui_command(target, json_payload)", "params": "string, JSON string", "returns": "JSON string", "note": "C++ RmlUiHost 包装函数：把页面 JSON payload 转成 Lua table 后调用 engine.ui.command.run(target, payload)。" }
+        { "api": "ScriptEngine::get_ui_snapshot(channel)", "params": "string", "returns": "JSON string", "note": "C++ RmlUiServer 包装函数：调用 engine.ui.data.snapshot(channel) 并序列化为页面快照 JSON。" },
+        { "api": "ScriptEngine::run_ui_command(target, json_payload)", "params": "string, JSON string", "returns": "JSON string", "note": "C++ RmlUiServer 包装函数：把页面 JSON payload 转成 Lua table 后调用 engine.ui.command.run(target, payload)。" }
       ]
     },
     {
@@ -322,24 +322,24 @@ window.__LUA_API_DATA = {
         { "api": "engine.factions.list_defs()", "params": "-", "returns": "table", "note": "列出已注册的 NPC 阵营定义 ID。" },
         { "api": "engine.factions.list_pools()", "params": "-", "returns": "table", "note": "列出已注册的名称池 ID。" },
         { "api": "engine.factions.list_spawn_rules()", "params": "-", "returns": "table", "note": "读取 faction_spawn_rules schema；CoreMod 当前为空，引擎不会据此自动生成实例。" },
-        { "api": "engine.factions.get_instance(id)", "params": "string", "returns": "table 或 nil", "note": "读取已由外部专项规则显式加入的阵营实例及地图状态。" },
+        { "api": "engine.factions.get_instance(uuid)", "params": "string", "returns": "table 或 nil", "note": "读取已由外部专项规则显式加入的阵营实例及地图状态。" },
         { "api": "engine.factions.list_instances()", "params": "-", "returns": "table", "note": "列出当前阵营实例；CoreMod 不随机生成实例。" },
         { "api": "engine.factions.generate_name(template, pools, seed)", "params": "string, table?, integer?", "returns": "string", "note": "按 ${random_name} 模板和可选名称池生成确定性名称。" },
-        { "api": "engine.factions.get_relation_between(first, second)", "params": "string, string", "returns": "integer", "note": "读取两个 NPC 阵营实例之间的双边关系。" },
+        { "api": "engine.factions.get_relation_between(first_uuid, second_uuid)", "params": "string, string", "returns": "integer", "note": "读取两个 NPC 阵营实例之间的双边关系。" },
         { "api": "engine.factions.pair_relations()", "params": "-", "returns": "table", "note": "列出当前所有阵营对关系及 last_changed_tick。" },
         { "api": "engine.factions.proposal_defs()", "params": "-", "returns": "table", "note": "读取外交提案 schema；CoreMod 当前为空。" },
         { "api": "engine.factions.list_negotiations()", "params": "-", "returns": "table", "note": "只读谈判状态；当前没有玩法写入口。" },
-        { "api": "engine.factions.evaluate_proposal(target, proposal, offered_score)", "params": "string, string, integer?", "returns": "table", "note": "只读评估接口；无已注册提案时返回配置拒绝，不执行或修改状态。" },
-        { "api": "engine.factions.diplomatic_status(target)", "params": "string", "returns": "string", "note": "读取玩家与目标实例的外交状态。" },
-        { "api": "engine.factions.has_treaty(target, treaty)", "params": "string, string", "returns": "bool", "note": "只读查询玩家与目标实例是否存在指定条约。" },
-        { "api": "engine.world_map.diplomacy_snapshot()", "params": "-", "returns": "table", "note": "返回战略地图快照：has_map、planet_radius、water_coverage、sea_level、tiles(q/r/x/y/water/biome_id/map_color/elevation/temperature/moisture) 和 factions(id/display_name/relation/map_q/map_r/x/y/map_color)，供外交地图 UI 叠加已有地点。" }
+        { "api": "engine.factions.evaluate_proposal(target_uuid, proposal, offered_score)", "params": "string, string, integer?", "returns": "table", "note": "只读评估接口；无已注册提案时返回配置拒绝，不执行或修改状态。" },
+        { "api": "engine.factions.diplomatic_status(target_uuid)", "params": "string", "returns": "string", "note": "读取玩家与目标实例的外交状态。" },
+        { "api": "engine.factions.has_treaty(target_uuid, treaty)", "params": "string, string", "returns": "bool", "note": "只读查询玩家与目标实例是否存在指定条约。" },
+        { "api": "engine.world_map.diplomacy_snapshot(include_terrain)", "params": "bool?，默认 true", "returns": "table", "note": "返回战略地图和 UUID 阵营标记快照。false 不构造地形格表，tiles 为空，供服务端动态同步使用；客户端窗口读取通道缓存。" }
       ]
     },
     {
       "name": "网络",
       "items": [
-        { "api": "engine.network.send_ui(target, payload)", "params": "string, table", "returns": "table", "note": "提交 Host 权威 UiCommand，返回 submitted/pending 状态；普通 MOD 优先使用 engine.ui.command.run。" },
-        { "api": "engine.network.is_handling_command()", "params": "-", "returns": "bool", "note": "当前是否正在 Host 的已接收命令处理上下文中；供命令桥避免递归提交。" },
+        { "api": "engine.network.send_ui(target, payload)", "params": "string, table", "returns": "table", "note": "提交 Server 权威 UiCommand，返回 submitted/pending 状态；普通 MOD 优先使用 engine.ui.command.run。" },
+        { "api": "engine.network.is_handling_command()", "params": "-", "returns": "bool", "note": "当前是否正在 Server 的已接收命令处理上下文中；供命令桥避免递归提交。" },
         { "api": "engine.network.set_command_handler(fn)", "params": "function", "returns": "-", "note": "设置收到网络命令后的 Lua 回调；回调表包含 type、type_name、sequence 和命令字段。" },
         { "api": "engine.network.is_connected()", "params": "-", "returns": "bool", "note": "网络层是否已初始化。" },
         { "api": "engine.network.mode()", "params": "-", "returns": "string", "note": "返回当前网络模式名称。" }
@@ -376,8 +376,8 @@ window.__LUA_API_DATA = {
     {
       "name": "装备",
       "items": [
-        { "api": "engine.equipment.get_equipment(entity)", "params": "entity id", "returns": "table", "note": "返回唯一 Equipment 槽的 item_id 和 count。" },
-        { "api": "engine.equipment.get_slot(entity, slot)", "params": "entity, \"Equipment\"", "returns": "table", "note": "返回唯一 Equipment 槽的 item_id 和 count。" }
+        { "api": "engine.equipment.get_equipment(entity)", "params": "entity UUID", "returns": "table", "note": "返回 Equipment 内容快照，item_id 为定义字符串，包含 count、components 及品质、词缀、效果和附件；无库存 UUID。" },
+        { "api": "engine.equipment.get_slot(entity, slot)", "params": "entity UUID, \"Equipment\"", "returns": "table", "note": "返回独立装备内容快照；空槽 item_id 为空字符串、count 为 0。修改快照不修改实体。" }
       ]
     },
     {
