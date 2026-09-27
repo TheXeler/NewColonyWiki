@@ -27,6 +27,12 @@ directly. A changed raid objective updates the active task target, causing the
 executor to replace the stale route. `Move` is an internal zero-duration task
 that completes on arrival; it has no colony work or `Needs` prerequisite.
 
+Pending-registration colonists use the same `Move` task path through
+`engine.ecs.move_to`: it checks reachability before posting or retargeting a
+designated task. While registration is active, the entity cannot take colony
+work or need tasks. `engine.ecs.has_path` includes an executable queued Move
+task, so a pending path request is visible before the AI tick assigns a route.
+
 ## Current API and content format
 
 - Lua API: `engine.tasks`.
