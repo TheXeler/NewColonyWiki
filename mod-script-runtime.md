@@ -18,7 +18,7 @@
 
 地面堆必须同时具有 ECS `GroundItemPile` 与 `Position`；保存捕获和磁盘／网络候选读取会拒绝缺少位置的堆。这样地面查询、搬运与渲染使用同一个实体位置。测试源码已补，尚未运行。
 
-地面堆的 Lua 孤立句柄预留／释放入口已删除；调用方通过 `work.reserve_owner_item` 建立可保存的所有者预约。直接物品转移拒绝工作预约系统当前管理的句柄，搬运领取与送达经 `work.*` 事务更新来源和目的地。旧逐轮记录中的 `items.reserve_ground_pile` / `items.release_ground_pile` 不再是当前 API。
+地面堆的 Lua 孤立句柄预留／释放入口已删除；调用方通过 `engine.tasks.reserve_owner_item` 建立可保存的所有者预约。直接物品转移拒绝工作预约系统当前管理的句柄，搬运领取与送达经 `engine.tasks.*` 事务更新来源和目的地。旧逐轮记录中的 `items.reserve_ground_pile` / `items.release_ground_pile` 不再是当前 API。
 
 自动搬运在扫描地面堆和搬运任务激活时都检查 `recovery_authorized`；建单后关闭许可的堆不会在激活时取得新预约。此场景的 Lua 测试源码已补，尚未运行。
 
@@ -72,7 +72,7 @@ Equipment 槽由实体持有完整 ItemStack 内容；原型装备使用 {id,num
 
 库存迁移中的新路径：ECS `Inventory` 持有背包槽，`GroundItemPile` 是带实体 UUID 的单品地面堆，方块容器内容由 `ChunkDataStore` 按坐标持有。槽位保存定义字符串 ID、数量、组件及必要预约状态；`OwnerItemRef` 用所有者、槽位、内容和预约句柄查找。实体存档和 `owner_items` 网络文档已读写这些新内容，方块容器也写入磁盘 `owner_items.json`；Lua 的 `items.owner_inventory` / `items.block_inventory` / `items.ground_pile` / `items.ground_piles` 返回完整 `components` 表，服务端可按实体 UUID、方块坐标和槽位拾取、丢出、存取，`items.reserve_ground_pile` / `items.release_ground_pile` 与拾取的可选预约句柄可保护实体堆来源。初始补给和制作／采矿产物现创建 ECS 地面堆。ECS 堆腐坏和消失通知已送入现有通知队列，死亡时 ECS 背包及装备内容生成地面实体堆。自动搬运、消耗及旧账本物品仍未迁移，双路径尚未收口；新增测试源码未运行。
 
-`work.reserve_owner_item(source, count, source_task_uuid, target_task_uuid, target_entity_uuid)` 现可针对 `{kind="ground_pile", entity_uuid=...}`、`{kind="entity_inventory", entity_uuid=..., slot=...}` 或 `{kind="block_inventory", x=..., y=..., z=..., slot=...}` 建立所有者预约。返回数字预约句柄；任务参数仍是任务 UUID 字符串。预约系统已能缩减、释放和扣取消费此类来源；磁盘及网络 `works` 文档写入 `owner_allocations`，恢复时核对所有者内容与预约句柄。CoreMod 自动消费流程仍需迁移，新增测试源码未运行。
+`engine.tasks.reserve_owner_item(source, count, source_task_uuid, target_task_uuid, target_entity_uuid)` 现可针对 `{kind="ground_pile", entity_uuid=...}`、`{kind="entity_inventory", entity_uuid=..., slot=...}` 或 `{kind="block_inventory", x=..., y=..., z=..., slot=...}` 建立所有者预约。返回数字预约句柄；任务参数仍是任务 UUID 字符串。预约系统已能缩减、释放和扣取消费此类来源；磁盘及网络 `tasks` 文档写入 `owner_allocations`，恢复时核对所有者内容与预约句柄。CoreMod 自动消费流程仍需迁移，新增测试源码未运行。
 
 方块槽预约批量扣料可在方块内容候选准备完成后执行托管状态提交回调，然后发布内容；普通进食可由方块容器供餐。`items.place_player_output` 将可容纳数量插入 ECS 背包，其余按定义容量生成地面堆并返回 `pile_entity_uuids`。地面物品快照和 `core:item.recovery` 只使用地面堆实体 UUID。旧集中账本、自动搬运及其他消费方仍待迁移；相关测试源码未运行。
 
@@ -94,7 +94,7 @@ CoreMod 自动搬运只保存 `owner_output_task` 状态：扫描 ECS 地面堆�
 
 工作材料资格的具体数字物品实例筛选现在在建单和恢复边界拒绝；普通候选定义 ID 仍按所有者方块槽的可用数量检查。材料预约继续保留所有者、槽位及组件内容。相关测试源码未运行。
 
-`works` 预约 JSON 不再包含旧物品实例 `allocations` 字段；恢复时即使旧字段为空数组也拒绝。所有者来源使用 `owner_allocations`。测试源码未运行。
+`tasks` 预约 JSON 不再包含旧物品实例 `allocations` 字段；恢复时即使旧字段为空数组也拒绝。所有者来源使用 `owner_allocations`。测试源码未运行。
 
 工作材料资格只保存定义候选 `item_ids` 和数量；原生结构、Lua 输入及存档不再接受数字物品实例筛选字段。任务 `instance_id` 仍是独立的任务 UUID。测试源码未运行。
 
@@ -118,7 +118,7 @@ Lua `items.total`、`items.available`、`items.reserved` 和 `items.storage_snap
 
 原生工作池的普通材料需求现在从已加载方块容器槽位判断可用量，并扣除槽位预约。显式数字物品实例需求仍走旧账本，等待职业等消费者迁移；未绑定所有者存储的独立工作池继续使用原测试契约。新增测试源码未运行。
 
-方块容器的 `OwnerInventory` 现将目标槽容量预留记在 `incoming`，记录现有数字预约句柄、目标槽和无独立身份的完整内容。普通插入必须保留预留容量；搬运完成按同一句柄存入。磁盘与网络 `owner_items` 内容和 `works.owner_destination` 同步读写，恢复核对两边句柄、内容、数量与位置，不读取旧格式。取消、失败退回和成功送达会清除预留。相关测试源码尚未运行。
+方块容器的 `OwnerInventory` 现将目标槽容量预留记在 `incoming`，记录现有数字预约句柄、目标槽和无独立身份的完整内容。普通插入必须保留预留容量；搬运完成按同一句柄存入。磁盘与网络 `owner_items` 内容和 `tasks.owner_destination` 同步读写，恢复核对两边句柄、内容、数量与位置，不读取旧格式。取消、失败退回和成功送达会清除预留。相关测试源码尚未运行。
 
 按定义 ID 的普通材料预约现在从已加载方块所有者槽位取得，可以用同一句柄跨多个槽位凑齐数量。每个 `owner_allocations` 条目保存该槽位领取数量；批量扣料、缩减、释放和恢复分别核对并处理这些数量。`work.available` 也读取所有者槽位剩余量。显式数字物品实例需求仍等候职业等消费者迁移，新增测试源码未运行。
 
@@ -136,7 +136,7 @@ Lua `items.total`、`items.available`、`items.reserved` 和 `items.storage_snap
 
 Lua `items.find_by_uuid` 已删除；库存内容不提供独立 UUID 查询。地面堆仍可按其实体 UUID 查询，原生旧账本实现仍待完整移除。
 
-普通进食现在从 `items.owner_sources()` 选择可恢复的地面堆实体或已加载方块容器槽，以所有者来源调用 `work.reserve_owner_item`。Food pending 保存来源引用；完成结算扣除预约后增加饥饿值，日志仅记录物品定义和数量。治疗、医疗和职业的具体物品选择仍待切换，相关源码测试未运行。
+普通进食现在从 `items.owner_sources()` 选择可恢复的地面堆实体或已加载方块容器槽，以所有者来源调用 `engine.tasks.reserve_owner_item`。Food pending 保存来源引用；完成结算扣除预约后增加饥饿值，日志仅记录物品定义和数量。治疗、医疗和职业的具体物品选择仍待切换，相关源码测试未运行。
 
 工作通知只保留记录中的二进制实体 UUID，Engine 建立 Lua 事件上下文时才生成 worker_uuid／target_entity_uuid 文本，无需世界身份查询回调。TaskInstance 不再存储冗余的 event_worker_uuid／event_target_entity_uuid 字符串。实体删除后通知仍保留原身份；删除实体只取消关联工作并清除临时排除记录。已删除身份解析回调及其重入检查、额外队列副本，通知确认机制保持不变。对应测试源码已调整，未运行。
 
@@ -1728,7 +1728,7 @@ construction_active 提供器现读取客户端缓存。core:construction 通道
 
 网络状态恢复前检查全部文档：重复文档 ID、坏 JSON、非对象根和重复顶层字段直接拒绝，不先应用早先文档。新增后部文档损坏不进入恢复的测试源码未执行。该检查仅覆盖格式，跨文档业务校验和统一发布仍未完成。
 
-网络 world 文档中的文明、建筑、天气、区域、袭击和纪念记录先在候选恢复，解析完成后发布；可见性恢复先构建独立表，重复探索区块拒绝并保留旧图。新增跨子系统失败保持测试源码未运行。该事务尚未覆盖后续 factions/items/works 等独立文档，整个网络快照仍未完成统一提交。
+网络 world 文档中的文明、建筑、天气、区域、袭击和纪念记录先在候选恢复，解析完成后发布；可见性恢复先构建独立表，重复探索区块拒绝并保留旧图。新增跨子系统失败保持测试源码未运行。该事务尚未覆盖后续 factions/items/tasks 等独立文档，整个网络快照仍未完成统一提交。
 
 网络文明与研究实例改为整批校验后替换，重复 UUID 或非法研究进度不再先清空已有研究状态；恢复不补发研究完成通知。新增回归测试源码未执行。此保证仅覆盖文明子批次，跨系统网络快照事务仍未完成。
 
