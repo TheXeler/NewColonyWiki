@@ -23,19 +23,19 @@
       <li>当前引擎注册类型包含 <code>items</code>、<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>recipes</code>、<code>manufacturing_rules</code>、<code>quality_tables</code>、<code>output_tables</code>、<code>item_bases</code>、<code>experiences</code>、<code>medicinal_herbs</code>、<code>potion_trait_effects</code>、<code>hunting_rules</code>、<code>medicine_slot_rules</code>、<code>colonist_survival_rules</code>、<code>career_progression_rules</code>、<code>wild_food_rules</code>、<code>animal_distributions</code>、<code>weather_definitions</code>、<code>dynamic_weather_regions</code>、<code>visibility_rules</code>、<code>mine_rules</code>、<code>difficulty_rules</code>、<code>jobs</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>raids</code>、<code>zones</code>、<code>audio</code>；旧 <code>professions</code> 目录会存入 <code>jobs</code> 注册类型。</li>
     </ul>
 	<p><code>medicine_slot_rules</code> 是可选的单记录全局表：<code>base_capacity</code> 必须为 1-16，<code>technology_bonuses</code> 为 <code>{"technology_id":"mod:tech","slots":N}</code> 数组，同一科技不可重复，基础值加全部科技增量不得超过 16。槽位是每个人都有的通用药剂属性，不限于治疗用途，并显示在人员界面的个人信息中。CoreMod 当前提供两个基础槽位；其他 MOD 若缺少此表，仍保留 <code>medicine_slot_rules_missing</code> 配置屏障。</p>
-	<p><code>colonist_survival_rules</code> 是单记录生存规则表。需求与状态转换字段为 <code>hunger_depletion_per_second</code>、<code>fatigue_depletion_per_second</code>、<code>need_work_duration_seconds</code>、<code>fatigue_recovery_per_second</code>、<code>depleted_stage_seconds</code>、<code>recovery_stage_seconds</code>、<code>temperature_stage_seconds</code>、<code>stress_mood_threshold</code>、<code>stress_recovery_mood_threshold</code>、<code>stress_stage_seconds</code>、<code>stress_recovery_stage_seconds</code>、<code>dazed_duration_seconds</code>、<code>well_fed_healing_per_second</code>、<code>dying_limit</code> 和 <code>dying_per_second</code>。精力消耗使用统一字段，不自行增加昼夜差速或时间边界。需求工作时长与休息恢复速度必须来自该记录；缺失时不会回退到旧的 3 秒或每秒 6 点。压力在低心情或存在负面心情印象时恶化，只有心情达到恢复阈值且不存在负面印象时恢复；崩溃触发配置时长的恍惚，结束后压力降低一级。</p>
-	<p><code>career_progression_rules</code> 是单记录职业成长规则表。<code>work_experience</code> 是成功完成一次可结算工作的基础经验，<code>level_requirements</code> 必须恰好包含四个正数，依次表示 1→2、2→3、3→4 和 4→5 级需求。NCDOCS 没有给出具体数值，因此 CoreMod 可暂时不提供记录；缺失时 <code>engine.jobs.progression_configuration()</code> 返回 <code>career_progression_rules_missing</code>，工作不会采用旧的 25/15 经验或每级 100 的公式。</p>
+	<p><code>colonist_survival_rules</code> 是单记录生存规则表。需求与状态转换字段为 <code>hunger_depletion_per_second</code>、<code>fatigue_depletion_per_second</code>、<code>need_task_duration_seconds</code>、<code>fatigue_recovery_per_second</code>、<code>depleted_stage_seconds</code>、<code>recovery_stage_seconds</code>、<code>temperature_stage_seconds</code>、<code>stress_mood_threshold</code>、<code>stress_recovery_mood_threshold</code>、<code>stress_stage_seconds</code>、<code>stress_recovery_stage_seconds</code>、<code>dazed_duration_seconds</code>、<code>well_fed_healing_per_second</code>、<code>dying_limit</code> 和 <code>dying_per_second</code>。精力消耗使用统一字段，不自行增加昼夜差速或时间边界。需求工作时长与休息恢复速度必须来自该记录；缺失时不会回退到旧的 3 秒或每秒 6 点。压力在低心情或存在负面心情印象时恶化，只有心情达到恢复阈值且不存在负面印象时恢复；崩溃触发配置时长的恍惚，结束后压力降低一级。</p>
+	<p><code>career_progression_rules</code> 是单记录职业成长规则表。<code>task_experience</code> 是成功完成一次可结算工作的基础经验，<code>level_requirements</code> 必须恰好包含四个正数，依次表示 1→2、2→3、3→4 和 4→5 级需求。NCDOCS 没有给出具体数值，因此 CoreMod 可暂时不提供记录；缺失时 <code>engine.jobs.progression_configuration()</code> 返回 <code>career_progression_rules_missing</code>，工作不会采用旧的 25/15 经验或每级 100 的公式。</p>
 	<p><code>status_effects</code> 必须覆盖饥饿、极饿、营养不良、疲劳、过劳、昏睡、压力、崩溃、冻僵、冻伤、炎热、酷暑、恍惚、腿部骨折、手臂骨折和内伤的稳定英文 ID。每项通过 <code>work_efficiency_multiplier</code>、<code>move_speed_multiplier</code>、<code>work_precision_multiplier</code>、<code>care_precision_multiplier</code>、<code>crafting_speed_multiplier</code>、<code>repair_speed_multiplier</code>、<code>melee_hit_multiplier</code>、<code>ranged_hit_multiplier</code>、<code>melee_block_multiplier</code>、<code>ranged_block_multiplier</code>、<code>attack_speed_multiplier</code>、<code>combat_move_speed_multiplier</code>、<code>vision_range_multiplier</code>、<code>ranged_range_multiplier</code>、<code>max_health_multiplier</code>、<code>mood_offset</code> 和 <code>damage_per_second</code> 表达文档列出的效果；除可为负数的 <code>mood_offset</code> 外均不得为负。脑震荡不另设效果行，而是在运行时对腿伤和臂伤效果做去重并集；温度链冻伤与伤病冻伤也是同一效果。缺失、多记录或字段无效时保留稳定配置屏障，不回退到代码平衡值。CoreMod 可以暂不提供该内容记录。</p>
 	<p><code>wild_food_rules</code> 每条记录声明具体资源点 <code>block_id</code>、食材 <code>category</code>、非空且不重复的 <code>biomes</code>、0-1 的 <code>temperature_min/temperature_max</code>、正整数 <code>max_points_per_chunk</code>、<code>refresh_interval_ticks</code>、<code>spawn_attempts</code> 和固定生命周期 <code>post_harvest:"remove_and_refresh"</code>。资源点方块必须引用现有产出表，才能通过一次性采集结算。<code>animal_distributions</code> 每条记录声明动物 <code>entity_id</code>、与原型一致的 <code>aggression</code>、群落/温度条件、<code>base_cap_per_chunk</code>、<code>tree_cap_per_tree</code>、<code>max_cap_per_chunk</code>、检查间隔、候选次数和 <code>death_handling:"drop_and_refresh"</code>；动物原型必须带 <code>animal:true</code> 和有效死亡产出表。两类内容表允许为空，但分别保留稳定全局配置屏障，不生成默认食材、动物、上限或刷新速度。</p>
 	<p>生态系统只检查强加载区块。区块加载与渲染范围以相机的绝对世界位置为中心，不使用环绕相机的观察目标代替相机位置。用户配置的渲染距离是地形绘制的硬外边界；线性 LOD 只在加载距离与渲染距离之间逐级降低细节，不额外扩大驻留或绘制范围。渲染距离内已驻留区块组成稳定聚合网格，相机高度、俯仰或旋转只更新视图参数并由 GPU 改写间接绘制可见性，不重新拼接或全量上传网格。卸载在渲染边界外保留两区块滞回，但滞回区块不会被绘制。强模拟集合进一步只包含已经提交到权威区块存储的驻留区块，并在卸载发生前发布；离开该集合的实体先冻结位移、碰撞和行走动画，新区块真正驻留后才解冻，因此缺失地形不会被物理系统解释为空气并触发坠落。区块提供主群落、基础温度、叠加当前天气修正后的最终温度和树木统计；动物上限按 <code>min(max_cap_per_chunk, floor(base_cap_per_chunk + tree_count * tree_cap_per_tree))</code> 计算，因此伐木和植树会在后续检查改变上限。系统只补足低于上限的数量，不因上限下降删除现存动物；击杀后实体死亡产出照常结算，后续检查再补充。资源点是实际方块，动物是实际实体，均由既有区块/实体存档和网络路径保存；检查时重新核算当前对象。<strong>野生食材使用随机刻（random tick）刷新</strong>：每 tick 在活跃区块里随机抽固定数量（引擎常量 <code>RANDOM_TICK_SAMPLES_PER_TICK = 5</code>）的地表列，每个被抽中的列按规则概率触发一次放置尝试，概率为 <code>活跃区块数 × spawn_attempts / (5 × refresh_interval_ticks)</code>（上限 1），因此在活跃区块数不超过 <code>5 × refresh_interval_ticks</code>（间隔 20 时即 100 个区块）时，单区块速率与旧的"每区块每间隔检查一次"完全等价，超出后按 Minecraft 同款方式随载入范围稀释；采样点由 <code>tick</code> 与序号经世界种子哈希稳定决定，不消耗引擎 RNG 流，跨存读档一致。<code>refresh_interval_ticks</code> 因此是"每条规则在每个区块上的期望间隔"，不再是扫描周期。<strong>动物仍按上限补足</strong>，但区块扫描被切片：每 tick 访问 <code>ceil(活跃区块数 / 最小检查间隔)</code> 个区块，速率不变、成本摊平；计数与已占用位置随列表刷新重建并由生成增量维护。活跃区块/动物列表由绑定整表编组，故每 5 秒（<code>LIST_REFRESH_TICKS = 100</code>）刷新一次，是本系统唯一的周期性成本。资源点计数、位置查找与清理均为增量/切片式（计数表、位置索引、每 tick 校验少量点），不再每次全量遍历。刷新候选（动物）仍由世界 seed、规则 ID、区块、检查代次和候选序号稳定决定。</p>
 	<p><code>visibility_rules</code> 是可空的单记录视野规则表。它声明正整数 <code>update_interval_ticks</code>，非负 <code>colonist_radius_multiplier</code> 和 <code>building_radius_multiplier</code>，以及恰好 16 项的非负 <code>light_multipliers</code>（建筑索引对应合并光照 0-15）。天气的局部光照和视野影响来自 <code>weather_definitions</code> 对应区域状态，不在视野规则中重复声明。殖民者基础半径来自 <code>ColonistAttributes.vision_range</code> 并叠加状态及局部天气倍率；其当前视野是只使用绝对 XZ 坐标的 RTS 圆形范围，不读取 Y 坐标、所在高度光照或体素遮挡。建筑可用非负 <code>vision_radius</code> 提供玩家视野。镜头渲染距离内的地形始终提交；当前无视野时在体素光照、距离雾和颜色调整后保留色相并降低亮度。迷雾内实体保留权威数据但不生成模型。加载距离独立决定定位实体是否继续 AI、生存、心情、视野和物理模拟，处于只渲染外圈的实体保持冻结。记录缺失、多记录或无效时保留稳定全局屏障，不以加载或渲染半径作为玩法视野默认值。</p>
 	<p>视野距离、状态、地形明暗和实体模型剔除统一使用原始绝对 XZ 显示区块坐标；规范化星球坐标只负责区块数据和网格驻留。同一存储网格在不同环绕显示位置分别读取各自的绝对 XZ 视野状态。</p>
 	<p>新区块提交到权威区块存储后会对自身及光照传播半径内的已加载邻居安排一次最终光照网格重建。该过程不依赖生态资源点放置或其他后续方块修改，因此动物分布不会决定区块是否获得正常光照。</p>
-	<p><code>weather_definitions</code> 按天气类型提供光照倍率、温度修正、视野倍率、战斗环境接口、表现接口和强度档位；类型严格为 <code>clear</code>、<code>cloudy</code>、<code>rain</code>、<code>snow</code>、<code>fog</code>。<code>dynamic_weather_regions</code> 提供稳定区域 ID、天气定义、覆盖区块集合、移动/切换策略和强度档位。运行时按区块查询区域天气、基础温度和最终温度；区域状态写入世界存档并随 Host 世界状态复制。文档未定义移动或切换公式时，配置屏障保留接口，不生成代码默认公式。</p>
+	<p><code>weather_definitions</code> 按天气类型提供光照倍率、温度修正、视野倍率、战斗环境接口、表现接口和强度档位；类型严格为 <code>clear</code>、<code>cloudy</code>、<code>rain</code>、<code>snow</code>、<code>fog</code>。<code>dynamic_weather_regions</code> 提供稳定区域 ID、天气定义、覆盖区块集合、移动/切换策略和强度档位。运行时按区块查询区域天气、基础温度和最终温度；区域状态写入世界存档并随 Server 世界状态复制。文档未定义移动或切换公式时，配置屏障保留接口，不生成代码默认公式。</p>
 	<p><code>mine_rules</code> 是单记录矿井规则表，声明矿井工作点类型、职业/等级、单次工作量、基础产量、每次基础耗减单位、矿物候选及权重、丰度档位权重/初始单位/产量倍率，以及按最低剩余比例选择的衰减产量倍率表。衰减表必须包含零阈值；引擎不内置最低产量倍率。<code>difficulty_rules</code> 也是单记录表，但不直接保存一套当前数值：<code>dimensions</code> 分别列出资源丰度、矿井衰减/耗尽、环境状态、需求速度、袭击、死亡和恢复窗口的稳定选项，<code>presets</code> 用选项 ID 组合预设，<code>default_preset</code> 指定数据定义的默认预设。预设和选项可用 <code>label_key</code> 提供本地化名称，并以 <code>label</code> 作为缺失翻译时的回退。倍率、矿井模式和死亡开关只来自所选选项；预设与选项引用会在加载时交叉校验。两表缺失或多记录时保留稳定配置屏障，不生成代码默认矿物、丰度、产量或难度。CoreMod 当前只有一组用于贯通系统的中性测试难度，不代表正式数值平衡。矿物物品引用必须存在。</p>
-	<p>旧 <code>ores</code> 体素矿脉目录不再加载。矿物不会作为普通矿物体素随机散布；世界种子和区块坐标稳定决定天然可见的矿物类型与丰度档位。带有 <code>mine_rules.work_point_type</code> 的建筑按工作点世界坐标实施每区块唯一约束，交互式放置预览会以 <code>chunk_unique_work_point_conflict</code> 拒绝第二座矿井。连续产物先进入该工作点输出暂存再由搬运清运。</p>
-	<p>地面物品即使由玩家殖民者行动、生产溢出或殖民者死亡产生，也保持 <code>unowned</code> 世界对象归属，只设置 <code>recovery_authorized</code>。搬运完成并进入露天仓储或储存体素时才原子改为玩家归属；当前存档直接保存这一结构。</p>
-	<p>每个地面物品实例同时进入只读渲染快照，并显示其中物品自身的缩小方块模型；没有完整模型时使用物品自身的方块贴图或图标生成代理，只有缺少这些资源时才回退到特殊方块 <code>core:item_pile</code>。该方块没有物品形态、不能由玩家放置，也不会写入或覆盖地形；物品种类、数量、归属和权威坐标仍只由 <code>ItemSystem</code> 管理。同一格的不同物品堆使用由实例 ID 决定的稳定偏移和朝向，不会逐帧抖动。</p>
+	<p>旧 <code>ores</code> 体素矿脉目录不再加载。矿物不会作为普通矿物体素随机散布；世界种子和区块坐标稳定决定天然可见的矿物类型与丰度档位。带有 <code>mine_rules.work_point_type</code> 的建筑按工作点世界坐标实施每区块唯一约束，交互式放置预览会以 <code>chunk_unique_work_point_conflict</code> 拒绝第二座矿井。连续产物在工作点坐标生成带来源工作点句柄的 ECS 地面单品堆，再由搬运清运。</p>
+	<p>玩家殖民者行动、生产溢出或死亡产生的地面物品是带实体 UUID 的单品堆；<code>recovery_authorized</code> 决定自动搬运是否可领取。搬运完成并进入方块容器后，内容成为该方块所有者的槽位属性，不另建物品 UUID；存档保存所有者和内容。</p>
+	<p>每个 ECS 地面堆实体进入只读渲染快照，并显示其中物品自身的缩小方块模型；没有完整模型时使用物品自身的方块贴图或图标生成代理，只有缺少这些资源时才回退到特殊方块 <code>core:item_pile</code>。该方块没有物品形态、不能由玩家放置，也不会写入或覆盖地形；物品定义、数量与运行状态由 <code>GroundItemPile</code> 组件持有，权威坐标由实体 <code>Position</code> 持有。同一格的不同物品堆按实体 UUID 生成稳定偏移和朝向。</p>
 
     <h2>方块（blocks）</h2>
     <p>方块是体素世界的基本构成单位，放在 <code>data/blocks/</code> 下。<code>stack_size</code> 表示一个背包格子能堆叠多少个，范围 1~999。<code>category</code> 用来分类，可以取 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</p>
@@ -94,7 +94,7 @@
         <tr><td><code>Health</code></td><td>生命值 (current, max)</td></tr>
         <tr><td><code>Needs</code></td><td>两项需求 (hunger, fatigue)</td></tr>
         <tr><td><code>Mood</code></td><td>心情值 (mood_value, 0~100)</td></tr>
-        <tr><td><code>Equipment</code></td><td>旧原型兼容输入。当前装备权威是统一物品系统中的单一装备位置实例，ECS 组件只作查询缓存。</td></tr>
+        <tr><td><code>Equipment</code></td><td>实体所有者的单一装备槽，直接持有完整 <code>ItemStack</code> 内容；没有独立库存 UUID 或集中账本位置。</td></tr>
         <tr><td><code>Job</code></td><td>职业 ID 和等级 (1-5)</td></tr>
         <tr><td><code>Name</code></td><td>显示名称</td></tr>
         <tr><td><code>ColonistTag</code></td><td>殖民者标记（用于查询过滤）</td></tr>
@@ -114,24 +114,24 @@
     "Position": { "x": 0, "y": 64, "z": 0 },
     "Speed": { "x": 0, "y": 0, "z": 0 },
     "Health": { "current": 100, "max": 100 },
-    "AIState": { "behavior_tree_id": 0, "current_node": 0, "lod_level": 0 },
+    "AIState": { "lod_level": 0 },
 	"Name": { "data": "Pack Animal" }
   }
 }</code></pre>
 
     <h2>工作标签与动作</h2>
-    <p>工作系统使用 <strong>WorkTag</strong>、<strong>WorkTargetKind</strong>、<strong>WorkAction</strong> 和 <strong>WorkPayloadKind</strong> 描述一个归一化工作实例：前往目标位置，然后对实体、方块或规划方块执行 Interact 或 Destroy。</p>
+    <p>工作系统使用 <strong>TaskTag</strong>、<strong>TaskTargetKind</strong>、<strong>TaskAction</strong> 和 <strong>TaskPayloadKind</strong> 描述一个归一化工作实例：前往目标位置，然后对实体、方块或规划方块执行 Interact 或 Destroy。</p>
     <table>
       <thead><tr><th>概念</th><th>来源</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>WorkTag</code></td><td>C++ 枚举</td><td>细粒度工作标签，包含 Build、Mine、Chop、Haul、Craft、Research、JobChange、Treat、Rest、Sleep 等。</td></tr>
-        <tr><td><code>WorkCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
-        <tr><td><code>WorkTargetKind</code></td><td>C++ 枚举</td><td>目标类型：Entity、Block 或 PlannedBlock。</td></tr>
-        <tr><td><code>WorkAction</code></td><td>C++ 枚举</td><td>硬编码底层动作：Interact 或 Destroy；不再有数据驱动 action 注册表。</td></tr>
-        <tr><td><code>WorkPayloadKind</code></td><td>C++ 枚举</td><td>payload_id 的语义类型：None、Block、Item、Recipe、Building、Zone 或 Custom。</td></tr>
+        <tr><td><code>TaskTag</code></td><td>C++ 枚举</td><td>细粒度工作标签，包含 Build、Mine、Chop、Haul、Craft、Research、JobChange、Treat、Rest、Sleep 等。</td></tr>
+        <tr><td><code>TaskCategory</code></td><td>C++ 分类</td><td>用于工人优先级、筛选和调度评分。AI 只会领取同阵营工作；<code>faction_id</code> 为 0 的工作会被拒绝。</td></tr>
+        <tr><td><code>TaskTargetKind</code></td><td>C++ 枚举</td><td>目标类型：Entity、Block 或 PlannedBlock。</td></tr>
+        <tr><td><code>TaskAction</code></td><td>C++ 枚举</td><td>硬编码底层动作：Interact 或 Destroy；不再有数据驱动 action 注册表。</td></tr>
+        <tr><td><code>TaskPayloadKind</code></td><td>C++ 枚举</td><td>payload_id 的语义类型：None、Block、Item、Recipe、Building、Zone 或 Custom。</td></tr>
       </tbody>
     </table>
-    <p>当前公开的 Lua 发布入口是 <code>engine.work.post(type, faction_id, x, y, z, duration, payload_id, target_entity?)</code>。支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>use_medicine</code>/<code>medicine</code>/<code>use_potion</code>、<code>transfer_patient</code>/<code>carry_patient</code>、<code>job_change</code>/<code>change_class</code>、<code>treat</code>/<code>treatment</code>/<code>heal</code>、<code>feed_patient</code>/<code>patient_feed</code>、<code>first_aid</code>/<code>stabilize</code>、<code>battlefield_treat</code>/<code>medical_pack</code>、<code>guard</code> 和 <code>patrol</code>。未知类型、缺失或非正数时长固定返回 0，不创建其它类型工作。非零 <code>payload_id</code> 作为 Custom payload 保存，<code>target_entity</code> 可指定实体目标。一次性 Mine/Chop 只能由指定工具确认后经 Host 命令创建，研究工作只由已开启且已支付材料的研究项目派生；这些来源工作不能通过通用发布入口伪造。生产制作应通过生产订单，不应调用直通制作接口。目前没有公开的 Lua 工作类型注册 API。</p>
+    <p>当前公开的 Lua 发布入口是 <code>engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity?)</code>。支持 <code>build</code>/<code>construction</code>/<code>plant</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>/<code>manufacture</code>/<code>cook</code>、<code>use_medicine</code>/<code>medicine</code>/<code>use_potion</code>、<code>transfer_patient</code>/<code>carry_patient</code>、<code>job_change</code>/<code>change_class</code>、<code>treat</code>/<code>treatment</code>/<code>heal</code>、<code>feed_patient</code>/<code>patient_feed</code>、<code>first_aid</code>/<code>stabilize</code>、<code>battlefield_treat</code>/<code>medical_pack</code>、<code>guard</code> 和 <code>patrol</code>。未知类型、缺失或非正数时长固定返回 0，不创建其它类型工作。非零 <code>payload_id</code> 作为 Custom payload 保存，<code>target_entity</code> 可指定实体目标。一次性 Mine/Chop 只能由指定工具确认后经 Server 命令创建，研究工作只由已开启且已支付材料的研究项目派生；这些来源工作不能通过通用发布入口伪造。生产制作应通过生产订单，不应调用直通制作接口。目前没有公开的 Lua 工作类型注册 API。</p>
     <p>工作完成时引擎会发出 <code>work:completed</code> 事件，payload 包含 <code>instance_id</code>、<code>worker</code>、<code>tag</code>、<code>category</code>、<code>target_kind</code>、<code>action</code>、<code>payload_kind</code>、<code>payload_id</code>、<code>faction_id</code>、坐标、<code>target_entity</code> 和 <code>tick</code>。工作取消或中断时分别发出 <code>work:cancelled</code> 或 <code>work:interrupted</code>，并包含 <code>instance_id</code>、<code>worker</code>、<code>payload_id</code>、<code>faction_id</code>、<code>source_id</code> 和 <code>tick</code>。</p>
 
     <h2>配方（recipes）</h2>
@@ -147,15 +147,15 @@
 	"processing_difficulty": 0,
 	"output_table": "core:wood_plank_output",
 	"output_table_executions": 1,
-	"compatible_work_points": ["core:workbench"]
+	"compatible_task_points": ["core:workbench"]
 }</code></pre>
 	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时仍会受到工人的制作速度乘数影响。CoreMod 工作台配方为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
     <p>生产完成时会触发 <code>recipe:crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
-    <p>生产订单支持目标次数、维持库存、优先级、指定工人、暂停、恢复和取消。创建生产订单不等于已经创建具体工作：只有材料、合格工人和兼容工作点条件满足时，订单才会向 WorkPool 发布 Craft 工作；命令结果通过 <code>work_created</code>、<code>status</code> 和 <code>waiting_reason</code> 区分两种状态，界面不再显示误导性的“已加入工作池”成功通知。工作激活后才通过统一物品与预留系统绑定材料实例并送入工作点输入暂存；完成时原子提交材料，把产出表结果写入输出暂存。取消或中断会释放预留并安排输入材料返还。</p>
-	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Host 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
+    <p>生产订单支持目标次数、维持库存、优先级、指定工人、暂停、恢复和取消。创建生产订单不等于已经创建具体工作：只有材料、合格工人和兼容工作点条件满足时，订单才会向 TaskPool 发布 Craft 工作；命令结果通过 <code>task_created</code>、<code>status</code> 和 <code>waiting_reason</code> 区分两种状态。工作激活后通过所有者槽位预约材料，材料保留在原槽直到结算；完成时提交材料，并在工作点坐标生成 ECS 地面单品堆产物。取消或中断释放预约，未消费的材料仍留在原所有者槽位。</p>
+	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Server 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
 
 	<h2>锻造物品基型（item_bases）</h2>
-	<p>物品基型放在 <code>data/item_bases/</code>。基型 ID 就是目标物品 ID，不再重复配置目标；目标必须存在于 <code>items</code> 或兼容方块物品注册表。基型声明 <code>base_values</code>、<code>base_processing_difficulty</code>、<code>base_materials</code>、<code>attributes</code>、<code>affixes</code>、<code>max_capacity</code>、<code>manufacturing_mode</code>、<code>quality_table</code> 与 <code>compatible_work_points</code>。</p>
+	<p>物品基型放在 <code>data/item_bases/</code>。基型 ID 就是目标物品 ID，不再重复配置目标；目标必须存在于 <code>items</code> 或兼容方块物品注册表。基型声明 <code>base_values</code>、<code>base_processing_difficulty</code>、<code>base_materials</code>、<code>attributes</code>、<code>affixes</code>、<code>max_capacity</code>、<code>manufacturing_mode</code>、<code>quality_table</code> 与 <code>compatible_task_points</code>。</p>
 	<p><code>base_values</code> 的键和 <code>attributes[].id</code> 共用同一份属性名表，都只能取下列 26 个名字之一。表外名字会让该基型 <code>configuration_valid = false</code> 并写入稳定错误 <code>item_base_attribute_unknown</code>。该表由引擎唯一持有（<code>Engine/Simulation/AttributeStats.hpp</code>），不能由 Mod 扩展；运行时可用只读入口 <code>engine.designs.attribute_ids()</code> 按同样的顺序取得，编辑器和游戏内界面应当使用它而不是各自硬编码副本。</p>
 	<p>属性名表（顺序即 <code>engine.designs.attribute_ids()</code> 的返回顺序）：</p>
 	<pre><code>move_speed_modifier, comfortable_temperature_min, comfortable_temperature_max,
@@ -186,7 +186,7 @@ squad_size_limit, max_hp</code></pre>
   ]
 }</code></pre>
     <p><code>materials[].item_id</code> 和 <code>blueprint[].block</code> 都必须引用已注册方块/物品；所有蓝图坐标都必须在 <code>size</code> 范围内。完整说明见 <a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
-	<p>建筑可用 <code>parts</code> 声明内部多体素部件。每项必须包含建筑内唯一的非空 <code>id</code>、非空 <code>type</code> 和非空 <code>cells</code> 坐标数组；坐标必须在建筑 <code>size</code> 内、必须被 <code>blueprint</code> 覆盖，且不同部件不能占用同一格。建筑完成时，CoreMod 以建筑稳定实例 ID 作为 owner 注册部件；每个部件保存稳定实例 ID、定义 ID、实际方块集合和逐格方块 hash，并随版本化运行态及 Host 快照恢复。部件按整体交互和整体移除，不能把各格当作独立对象重复结算。</p>
+	<p>建筑可用 <code>parts</code> 声明内部多体素部件。每项必须包含建筑内唯一的非空 <code>id</code>、非空 <code>type</code> 和非空 <code>cells</code> 坐标数组；坐标必须在建筑 <code>size</code> 内、必须被 <code>blueprint</code> 覆盖，且不同部件不能占用同一格。建筑完成时，CoreMod 以建筑稳定实例 ID 作为 owner 注册部件；每个部件保存稳定实例 ID、定义 ID、实际方块集合和逐格方块 hash，并随版本化运行态及 Server 快照恢复。部件按整体交互和整体移除，不能把各格当作独立对象重复结算。</p>
 	<pre><code>"parts": [
   { "id": "bed", "type": "bed", "cells": [[0, 0, 0], [0, 0, 1]] }
 ]</code></pre>
@@ -213,7 +213,7 @@ squad_size_limit, max_hp</code></pre>
   "prerequisites": [
     { "id": "core:crafter_2", "level": 5 }
   ],
-  "allowed_work_tags": ["craft"],
+  "allowed_task_tags": ["craft"],
   "level_abilities": [
     { "id": "copper_age:coppersmith_3_level_1", "source_text": "..." },
     { "id": "copper_age:coppersmith_3_level_2", "source_text": "..." },
@@ -269,7 +269,7 @@ squad_size_limit, max_hp</code></pre>
 
     <h2>阵营自动生成规则（faction_spawn_rules）</h2>
 	<p><code>data/faction_spawn_rules/</code> 保留注册目录，但 NCDOCS 未定义数量、密度、距离或位置生成公式。CoreMod 目录为空，新世界不随机生成 NPC 阵营；旧 Lua/控制台生成入口已移除。</p>
-	<p>未来有文档依据的专项规则显式加入阵营实例时可发布 <code>faction:spawned</code> 事件；CoreMod 当前不会产生该事件。</p>
+	<p>显式加入阵营实例时发布不可取消的注册事件 <code>core:faction_spawned</code>，携带 <code>faction_uuid</code>、<code>def_id</code>、<code>display_name</code>、<code>relation</code>、<code>spawned_tick</code> 和 <code>reason</code>。新世界玩家城邦也使用此通知；读档和网络状态恢复不重放生成通知。UUID 由权威端创建，恢复必须提供合法且不重复的 UUID。</p>
 
     <h2>外交提议（diplomacy_proposals）</h2>
     <p>外交提议 schema 放在 <code>data/diplomacy_proposals/</code>。每个文件可定义一个 <code>id</code>、<code>effect</code>、<code>required_status</code> 和可选的 <code>relation_offset</code>、<code>maximum_base_score</code>、<code>treaty_id</code>、<code>forced</code>。当前 NCDOCS 未定义具体外交玩法，CoreMod 目录保持为空，引擎不生成默认提案或积分。</p>
