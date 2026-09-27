@@ -67,10 +67,11 @@ engine.events.clear("copper_age:ore_found")</code></pre>
         <tr><td><code>core:stockpile_changed</code></td><td>CoreMod 仓储数量变化</td><td>item_id, delta, count, reason</td></tr>
         <tr><td><code>core:item_spoiled</code></td><td>地面堆或所有者槽内容腐坏</td><td>entity_uuid 或 owner_kind 与所有者位置/槽位，item_id, result_item_id, count, tick</td></tr>
         <tr><td><code>core:item_ground_despawned</code></td><td>未被预留的地面堆实体计时结束并消失</td><td>entity_uuid, item_id, count, tick</td></tr>
-        <tr><td><code>work:activated</code></td><td>工作由执行者激活；资源系统应在此时申请预留</td><td>instance_id, worker, tag/type, payload_id, faction_id, source_id, tick</td></tr>
-        <tr><td><code>work:completed</code></td><td>工作实例完成</td><td>instance_id, worker, tag/type, action, payload_id, tick</td></tr>
-        <tr><td><code>work:cancelled</code></td><td>工作被订单或脚本取消</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
-        <tr><td><code>work:interrupted</code></td><td>工人被解除当前工作，工作可重新调度</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
+        <tr><td><code>core:task_activated</code></td><td>任务由实体激活；资源系统可在此时申请预留</td><td>task_uuid, tick</td></tr>
+        <tr><td><code>core:task_execution_starting</code></td><td>任务执行阶段开始</td><td>task_uuid, tick</td></tr>
+        <tr><td><code>core:task_completed</code></td><td>任务实例完成</td><td>task_uuid, tick</td></tr>
+        <tr><td><code>core:task_cancelled</code></td><td>任务被取消</td><td>task_uuid, tick</td></tr>
+        <tr><td><code>core:task_interrupted</code></td><td>实体解除当前任务，任务可重新调度</td><td>task_uuid, tick</td></tr>
         <tr><td><code>world:restored</code></td><td>实体、建筑、工作和运行时状态全部恢复完成</td><td>slot_id, tick</td></tr>
         <tr><td><code>treatment:blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>task_id, patient, reason</td></tr>
         <tr><td><code>recruitment:registered</code></td><td>新人完成城镇大厅登记</td><td>entity_id, candidate_id, town_hall_instance_id</td></tr>

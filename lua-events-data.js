@@ -29,7 +29,7 @@ window.__LUA_EVENTS_DATA = {
         { "api": "recipe:crafted（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、recipe_id、output_block_id、output_block_key、output_count。" },
         { "api": "job:assigned（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、job_id、level。" },
         { "api": "block:interacted（事件）", "params": "-", "returns": "payload", "note": "字段：entity_id、x、y、z、action_type、action。" },
-        { "api": "work:completed（事件）", "params": "-", "returns": "payload", "note": "字段：instance_id、worker、tag、category、target_kind、action、payload_kind、payload_id、faction_id、x、y、z、target_entity、tick。" },
+        { "api": "core:task_activated / task_execution_starting / task_completed / task_cancelled / task_interrupted（事件）", "params": "-", "returns": "payload", "note": "权威任务生命周期通知；字段为 task_uuid、tick。同步回调可按 UUID 读取任务快照，Lua 不可自行发布。" },
         { "api": "focus:chosen（事件）", "params": "-", "returns": "payload", "note": "字段：focus_id、instance_id、choice_id、choice_action、tick。" },
         { "api": "focus:dismissed（事件）", "params": "-", "returns": "payload", "note": "字段：focus_id、instance_id、tick。" },
         { "api": "faction:spawned（事件）", "params": "-", "returns": "payload", "note": "字段：instance_id、def_id、faction_hash、display_name、relation、spawned_tick、reason。仅供未来有文档依据的专项规则显式加入阵营实例时发布；CoreMod 当前不产生该事件。" },
