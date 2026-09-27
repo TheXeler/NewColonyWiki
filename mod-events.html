@@ -18,20 +18,20 @@
     </div>
 
     <h2>监听事件</h2>
-    <pre><code>local handler_id = engine.events.subscribe("inventory:changed", function(evt)
-  if evt.item_key == "core:wood" then
+    <pre><code>local handler_id = engine.events.subscribe("core:stockpile_changed", function(evt)
+  if evt.item_id == "core:wood" then
     engine.log.info("wood delta=" .. tostring(evt.delta))
   end
 end, 10) -- priority 越大越早执行；默认是 0
 
 -- 在 MOD 卸载或不再需要时取消（来源也可放在最前）
-engine.events.unsubscribe("inventory:changed", handler_id)
-engine.events.unsubscribe("core", "inventory:changed", handler_id)</code></pre>
+engine.events.unsubscribe("core:stockpile_changed", handler_id)
+engine.events.unsubscribe("core", "core:stockpile_changed", handler_id)</code></pre>
     <p><code>subscribe(name, fn, priority?)</code> 省略来源时匹配所有来源；也可以把来源放在最前：<code>subscribe("ui", "panel:opened", fn)</code>。来源为 <code>e</code>（引擎）、<code>core</code>（CoreMod）或 <code>ui</code>。相同 priority 的回调保持注册顺序。</p>
 
     <h2>按来源和前缀监听</h2>
-    <pre><code>-- 只监听 CoreMod 的 inventory:changed
-engine.events.subscribe("core", "inventory:changed", on_inventory, 0)
+    <pre><code>-- 只监听 CoreMod 的 stockpile_changed
+engine.events.subscribe("core", "core:stockpile_changed", on_inventory, 0)
 
 -- 监听 UI 来源下的所有 ui:panel:* 事件
 local id = engine.events.subscribe_prefix("ui", "panel", function(evt)
@@ -64,17 +64,15 @@ engine.events.clear("copper_age:ore_found")</code></pre>
     <table>
       <thead><tr><th>事件</th><th>用途</th><th>payload 示例字段</th></tr></thead>
       <tbody>
-        <tr><td><code>inventory:changed</code></td><td>实体背包变化</td><td>entity_id, item_id, item_key, delta, reason</td></tr>
-        <tr><td><code>stockpile:changed</code></td><td>库存区账本变化（CoreMod）</td><td>item_id, delta, count, reason</td></tr>
-        <tr><td><code>item:spoiled</code></td><td>物品实例腐坏并替换为配置结果</td><td>instance_id, item_id, result_item_id, count, tick</td></tr>
-        <tr><td><code>item:ground_despawned</code></td><td>未被预留的地面物品计时结束并消失</td><td>instance_id, item_id, count, tick</td></tr>
-        <tr><td><code>reservation:invalidated</code></td><td>预留物腐坏且找不到替代实例，来源工作阻塞 20 tick</td><td>reservation_id, source_id, target_id, item_id, instance_id, reason, blocked_ticks</td></tr>
+        <tr><td><code>core:stockpile_changed</code></td><td>CoreMod 仓储数量变化</td><td>item_id, delta, count, reason</td></tr>
+        <tr><td><code>core:item_spoiled</code></td><td>地面堆或所有者槽内容腐坏</td><td>entity_uuid 或 owner_kind 与所有者位置/槽位，item_id, result_item_id, count, tick</td></tr>
+        <tr><td><code>core:item_ground_despawned</code></td><td>未被预留的地面堆实体计时结束并消失</td><td>entity_uuid, item_id, count, tick</td></tr>
         <tr><td><code>work:activated</code></td><td>工作由执行者激活；资源系统应在此时申请预留</td><td>instance_id, worker, tag/type, payload_id, faction_id, source_id, tick</td></tr>
         <tr><td><code>work:completed</code></td><td>工作实例完成</td><td>instance_id, worker, tag/type, action, payload_id, tick</td></tr>
         <tr><td><code>work:cancelled</code></td><td>工作被订单或脚本取消</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
         <tr><td><code>work:interrupted</code></td><td>工人被解除当前工作，工作可重新调度</td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
         <tr><td><code>world:restored</code></td><td>实体、建筑、工作和运行时状态全部恢复完成</td><td>slot_id, tick</td></tr>
-        <tr><td><code>treatment:blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>work_id, patient, reason</td></tr>
+        <tr><td><code>treatment:blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>task_id, patient, reason</td></tr>
         <tr><td><code>recruitment:registered</code></td><td>新人完成城镇大厅登记</td><td>entity_id, candidate_id, town_hall_instance_id</td></tr>
         <tr><td><code>recipe:crafted</code></td><td>配方产物完成</td><td>entity_id, recipe_id, output_item_key, output_count</td></tr>
         <tr><td><code>block:interacted</code></td><td>实体与方块交互</td><td>entity_id, x, y, z, action</td></tr>
