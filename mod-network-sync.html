@@ -11,26 +11,39 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>网络同步与 Mod 数据</div></div>
   <div class="content">
     <h1>网络同步与 Mod 数据</h1>
-    <p class="subtitle">理解 NewColony 的主机-客户端架构、Mod 数据如何在网络间传输，以及 Lua 脚本怎样在联机环境中正确工作。</p>
+    <p class="subtitle">理解 NewColony 的服务器-客户端架构、Mod 数据如何在网络间传输，以及 Lua 脚本怎样在联机环境中正确工作。</p>
 
     <h2>网络模型概览</h2>
-    <p>NewColony 采用 <strong>主机-客户端（Host-Client）</strong> 架构。Host 唯一推进游戏逻辑；普通单机也会建立进程内逻辑 Host/Client 回环并复用协议编码、解码、命令和快照路径，不另设可绕过 Host 的单机写入模式。联机时一名玩家作为 Host，其他 Client 连接到该 Host。</p>
-    <p><code>NetworkSystem</code> 对象本身随 Engine 存活，但活动网络会话属于世界生命周期：创建或读取世界时，<code>WorldLifecycleCoordinator</code> 使用该世界 seed 和当前 Registry 指纹启动 Loopback/Host/Client 会话；返回主菜单时关闭会话并把模式重置为 <code>disabled</code>。主菜单的 Host/Join 操作只记录下一世界的连接配置，不会在尚无世界时提前创建会话；Disconnect 同时清除该配置。这样再次进入世界时不会复用上一个世界的已关闭会话。</p>
+    <p><strong>最新目标契约（实现待对齐）：</strong>允许短暂字段中间态，保证最终一致；运动发送开始模拟时间、起点和速度向量供客户端外推，运动变化时更新。库存差异补同步，可部分分配的请求先分配可用量再告知缺额。死亡小队操作静默忽略。15 秒未收到有效服务端消息或心跳判掉线；初次进入和重连先准备必要世界状态再开放操作。下面的具体刷新频率和连接细节描述既有实现，不能覆盖本段决定。</p>
+    <h3>逻辑端与物理进程必须分开理解</h3>
+    <p><strong>LogicServer 是玩法权威，LogicClient 是输入与表现端；PhysicalClient 和 PhysicalServer 描述程序的部署形态。</strong>逻辑端不是“一台机器”的同义词，也不意味着必须各占一个进程。</p>
+    <table>
+      <thead><tr><th>运行形态</th><th>进程内的逻辑端</th><th>职责</th></tr></thead>
+      <tbody>
+        <tr><td>单人世界的 PhysicalClient</td><td>LogicServer + LogicClient 同时运行</td><td>本地 LogicClient 提交意图，本地 LogicServer 推进权威世界；不是绕过服务器的单机特例</td></tr>
+        <tr><td>开放联机的 PhysicalClient</td><td>LogicServer + 本地 LogicClient</td><td>同一 LogicServer 同时服务本地和远程 LogicClient</td></tr>
+        <tr><td>连接远程世界的 PhysicalClient</td><td>LogicClient</td><td>连接远程 LogicServer，不独立推进该世界的权威玩法</td></tr>
+        <tr><td>PhysicalServer</td><td>可以只有 LogicServer</td><td>无需 LogicClient、玩家窗口或 UI；这是部署模型，不表示当前独立无界面启动入口已经交付</td></tr>
+      </tbody>
+    </table>
+    <p>单人世界可表示为 <code>PhysicalClient { LogicClient ↔ LogicServer }</code>；独立服务端可表示为 <code>PhysicalClient { LogicClient } ↔ PhysicalServer { LogicServer }</code>。即便两端同进程，Lua VM、模块缓存、state 和执行 owner 仍独立。不得根据“运行在 PhysicalClient 中”判断某回调属于 LogicClient。</p>
+    <p>NewColony 采用 <strong>服务器-客户端（Server-Client）</strong> 架构。Server 唯一推进游戏逻辑；普通单机也会建立进程内逻辑 Server/Client 回环并复用协议编码、解码、命令和快照路径，不另设可绕过 Server 的单机写入模式。联机时一名玩家作为 Server，其他 Client 连接到该 Server。</p>
+    <p><code>NetworkSystem</code> 对象本身随 Engine 存活，但活动网络会话属于世界生命周期：创建或读取世界时，<code>WorldLifecycleCoordinator</code> 使用该世界 seed 和当前 Registry 指纹启动 Loopback/Server/Client 会话；返回主菜单时关闭会话并把模式重置为 <code>disabled</code>。主菜单的 Server/Join 操作只记录下一世界的连接配置，不会在尚无世界时提前创建会话；Disconnect 同时清除该配置。这样再次进入世界时不会复用上一个世界的已关闭会话。</p>
     <table>
       <thead><tr><th>角色</th><th>职责</th><th>典型操作</th></tr></thead>
       <tbody>
-		<tr><td>Loopback</td><td>进程内同时承担逻辑 Host/Client；只有 Host 推进模拟</td><td>普通单机默认自动启用</td></tr>
-        <tr><td>Host</td><td>运行完整游戏逻辑、广播快照、处理命令</td><td>控制台执行 <code>net_host 7777</code></td></tr>
-        <tr><td>Client</td><td>发送 Host 命令、接收快照与命令结果</td><td>控制台执行 <code>net_join 127.0.0.1 7777</code></td></tr>
+		<tr><td>Loopback</td><td>进程内同时承担逻辑 Server/Client；只有 Server 推进模拟</td><td>普通单机默认自动启用</td></tr>
+        <tr><td>Server</td><td>运行完整游戏逻辑、广播快照、处理命令</td><td>控制台执行 <code>net_server 7777</code></td></tr>
+        <tr><td>Client</td><td>发送 Server 命令、接收快照与命令结果</td><td>控制台执行 <code>net_join 127.0.0.1 7777</code></td></tr>
       </tbody>
     </table>
     <div class="callout info">
-      主机拥有 <strong>唯一权威</strong>。所有游戏状态（实体位置、血量、背包等）由主机计算后广播给客户端。客户端的本地修改会被快照覆盖。
+      服务器拥有 <strong>唯一权威</strong>。所有游戏状态（实体位置、血量、背包等）由服务器计算后广播给客户端。客户端的本地修改会被快照覆盖。
     </div>
 
     <h2>快照同步机制</h2>
-    <p>主机每隔固定 tick 向所有已认证客户端广播一个<strong>快照（Snapshot）</strong>。快照包含当前 tick 下所有需要同步的实体及其组件状态。</p>
-    <p><strong>两种节奏：</strong>实体状态按 <code>snapshot_interval_ticks</code>（默认 2 tick，20 TPS 下 10 Hz）广播；<strong>状态通道文档</strong>（物品、经济日志、工作池、阵营、设计与存档状态等，由主机把整个世界序列化成 JSON）按更慢的 <code>state_channel_interval_ticks</code>（默认 20 tick，即 1 Hz）刷新，避免每 2 tick 重复序列化整个世界。<code>full_snapshot_interval_ticks</code>（默认 120）的周期全量快照一定携带通道，因此新加入的客户端最多等待一个通道周期。未刷新通道的那个 tick 不产生任何通道条目，客户端保留已有通道；把"当前包中缺失"当作删除会清空客户端世界状态，这一点由单元测试固定。</p>
+    <p>服务器每隔固定 tick 向所有已认证客户端广播一个<strong>快照（Snapshot）</strong>。快照包含当前 tick 下所有需要同步的实体及其组件状态。</p>
+    <p><strong>两种节奏：</strong>实体状态按 <code>snapshot_interval_ticks</code>（默认 2 tick，20 TPS 下 10 Hz）广播；<strong>状态通道文档</strong>（物品、经济日志、工作池、阵营、设计与存档状态等，由服务器把整个世界序列化成 JSON）按更慢的 <code>state_channel_interval_ticks</code>（默认 20 tick，即 1 Hz）刷新，避免每 2 tick 重复序列化整个世界。<code>full_snapshot_interval_ticks</code>（默认 120）的周期全量快照一定携带通道，因此新加入的客户端最多等待一个通道周期。未刷新通道的那个 tick 不产生任何通道条目，客户端保留已有通道；把"当前包中缺失"当作删除会清空客户端世界状态，这一点由单元测试固定。</p>
     <h3>同步的组件</h3>
     <table>
       <thead><tr><th>组件</th><th>同步字段</th></tr></thead>
@@ -39,13 +52,13 @@
         <tr><td>Speed</td><td>x, y, z</td></tr>
         <tr><td>Rotation</td><td>yaw, pitch</td></tr>
         <tr><td>Health</td><td>current, max, base_max</td></tr>
-        <tr><td>Equipment</td><td>装备权威位于统一物品领域快照；ECS 单槽仅为从装备位置实例重建的查询缓存，新 Host 实体快照不再发送第二份装备值。</td></tr>
+        <tr><td>Equipment</td><td>装备权威位于统一物品领域快照；ECS 单槽仅为从装备位置实例重建的查询缓存，新 Server 实体快照不再发送第二份装备值。</td></tr>
         <tr><td>Needs</td><td>hunger, fatigue</td></tr>
         <tr><td>Mood</td><td>mood_value, broken_down, breakdown_timer, thought_count</td></tr>
         <tr><td>Job</td><td>job_id, rank, level, xp</td></tr>
         <tr><td>Name</td><td>data</td></tr>
         <tr><td>Scale</td><td>x, y, z</td></tr>
-        <tr><td>AIState</td><td>behavior_tree_id, current_node, lod_level, busy, current_work_instance</td></tr>
+        <tr><td>AIState</td><td>lod_level, busy, current_task_instance, current_plan_step</td></tr>
         <tr><td>WorkerPriorityConfig</td><td>六类工作计划开关、24 小时排班、模板 ID 和个人覆盖掩码</td></tr>
         <tr><td>Civilization</td><td>civilization_id</td></tr>
         <tr><td>BlockInteractor</td><td>target_block(x,y,z), action_type</td></tr>
@@ -57,38 +70,38 @@
     <p>组件是否被同步由<strong>组件掩码（Component Mask）</strong>决定。客户端收到快照后，根据掩码逐字段覆盖本地状态。</p>
 
     <h3>增量快照</h3>
-    <p>当启用增量快照（默认开启）时，主机只发送与上一次快照<strong>有差异的实体</strong>和<strong>被删除的实体</strong>。这显著减少了带宽。客户端负责将增量合并到本地完整状态中。</p>
-	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、要闻定义运行态/活动要闻、经营日志、持续问题和 Host 时间控制；只有内容变化的通道进入增量包。已知 Host 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Host 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
+    <p>当启用增量快照（默认开启）时，服务器只发送与上一次快照<strong>有差异的实体</strong>和<strong>被删除的实体</strong>。这显著减少了带宽。客户端负责将增量合并到本地完整状态中。</p>
+	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、要闻定义运行态/活动要闻、经营日志、持续问题和 Server 时间控制；只有内容变化的通道进入增量包。已知 Server 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Server 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
 
     <h3>插值</h3>
     <p>客户端在两个快照之间可以对 Position 组件做线性插值（lerp），使移动看起来更平滑。</p>
 
     <h2>命令系统</h2>
-    <p>客户端通过发送<strong>命令（Command）</strong>向主机请求操作。主机收到后执行命令并更新权威状态，变化会在下一次快照中广播。</p>
+    <p>客户端通过发送<strong>命令（Command）</strong>向服务器请求操作。服务器收到后执行命令并更新权威状态，变化会在下一次快照中广播。</p>
     <table>
       <thead><tr><th>命令</th><th>参数</th><th>用途</th></tr></thead>
       <tbody>
-		<tr><td>PostWork</td><td>work_tag, faction_id, x, y, z, duration, payload_id, priority, designated_worker</td><td>只接受一次性采掘和采集确认产生的规范 Mine/Chop；Host 会重新校验玩家阵营、目标方块与产出配置、碰撞、优先级、指定者资格和实际路径，其它工作必须从对应来源系统建立。</td></tr>
-		<tr><td>UiCommand</td><td>target, payload_json</td><td>把已注册的经营操作提交给 Host 数据桥校验和结算。</td></tr>
+		<tr><td>PostTask</td><td>task_tag, faction_id, x, y, z, duration, payload_id, priority, designated_worker</td><td>只接受一次性采掘和采集确认产生的规范 Mine/Chop；Server 会重新校验玩家阵营、目标方块与产出配置、碰撞、优先级、指定者资格和实际路径，其它工作必须从对应来源系统建立。</td></tr>
+		<tr><td>UiCommand</td><td>target, payload_json</td><td>把已注册的经营操作提交给 Server 数据桥校验和结算。</td></tr>
       </tbody>
     </table>
     <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>
-    <p>每条命令携带一个递增的序列号。主机收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
-	<p>经营界面写操作使用同一协议中的 <code>UiCommand</code>，携带稳定 target 和 JSON payload。Client/单机逻辑 Client 只提交命令；Host 调用 CoreMod 数据桥结算，并以 <code>CommandResult</code> 返回原序号和实际结果 JSON。生产、治疗、招募、研究、仓储、区域和地面回收等已定义玩法走该链路。贸易外交当前仅显示接口状态，不发送玩法命令。纯 Client 的基础 ECS、世界方块、Lua data component、runtime state 和统一物品写接口也有底层权限屏障，不能用脚本绕过数据桥。面板开关、筛选、镜头与设计预览等纯本地表示不发送给 Host。</p>
+    <p>每条命令携带一个递增的序列号。服务器收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
+	<p>经营界面写操作使用同一协议中的 <code>UiCommand</code>，携带稳定 target 和 JSON payload。Client/单机逻辑 Client 只提交命令；Server 调用 CoreMod 数据桥结算，并以 <code>CommandResult</code> 返回原序号和实际结果 JSON。生产、治疗、招募、研究、仓储、区域和地面回收等已定义玩法走该链路。贸易外交当前仅显示接口状态，不发送玩法命令。纯 Client 的基础 ECS、世界方块、Lua data component、runtime state 和统一物品写接口也有底层权限屏障，不能用脚本绕过数据桥。面板开关、筛选、镜头与设计预览等纯本地表示不发送给 Server。</p>
 
     <h2>Chunk Terrain Sync</h2>
-    <p>主机维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
-    <p>ChunkDelta 由主机把当前 <code>ChunkSnapshot</code> 与同 seed 生成的原始地形对比得到。生成 delta 时会按 sub-chunk 遍历，完全一致的 sub-chunk 不发送；连续相同 <code>BlockState{id,data}</code> 的修改会编码成 run，短修改保留为单点 entry。客户端解码后把 run 展开到现有 block entry 应用路径，因此应用层仍按 block_index/id/data 写入本地 <code>ChunkDataStore</code>。</p>
+    <p>服务器维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
+    <p>ChunkDelta 由服务器把当前 <code>ChunkSnapshot</code> 与同 seed 生成的原始地形对比得到。生成 delta 时会按 sub-chunk 遍历，完全一致的 sub-chunk 不发送；连续相同 <code>BlockState{id,data}</code> 的修改会编码成 run，短修改保留为单点 entry。客户端解码后把 run 展开到现有 block entry 应用路径，因此应用层仍按 block_index/id/data 写入本地 <code>ChunkDataStore</code>。</p>
 
     <h2>握手流程</h2>
     <ol class="step-list">
       <li><strong>Client → Hello</strong>：客户端发送 peer_name、world_seed、shared_secret、last_applied_tick，以及按 Registry 分类排序的分类 hash 和逐条目 hash。</li>
-      <li><strong>Host → Welcome</strong>：主机验证密钥、世界 seed 和 Registry 指纹，返回 world_seed、server_tick、authenticated、Host 指纹及明确拒绝原因。分类或条目缺失、条目内容不同都会在进入正常同步前拒绝，并报告具体分类/条目。</li>
-      <li><strong>Host → ModList + ModDataManifest</strong>：握手完全匹配后，主机发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
-      <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向主机请求这些记录。这里按 Registry 条目比较，不看客户端本地是否安装或启用了对应 Mod：该通道用于让两端持有同一份权威数据，真正的门禁是握手阶段的 Registry 指纹。</li>
-      <li><strong>Host → Records</strong>：主机发送请求的 Mod 数据原始 JSON（只从主机已加载内容里取，禁用 Mod 的数据不会被服务）。</li>
+      <li><strong>Server → Welcome</strong>：服务器验证密钥、世界 seed 和 Registry 指纹，返回 world_seed、server_tick、authenticated、Server 指纹及明确拒绝原因。分类或条目缺失、条目内容不同都会在进入正常同步前拒绝，并报告具体分类/条目。</li>
+      <li><strong>Server → ModList + ModDataManifest</strong>：握手完全匹配后，服务器发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
+      <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向服务器请求这些记录。这里按 Registry 条目比较，不看客户端本地是否安装或启用了对应 Mod：该通道用于让两端持有同一份权威数据，真正的门禁是握手阶段的 Registry 指纹。</li>
+      <li><strong>Server → Records</strong>：服务器发送请求的 Mod 数据原始 JSON（只从服务器已加载内容里取，禁用 Mod 的数据不会被服务）。</li>
     </ol>
-    <p>只有协议版本、世界 seed 和 Registry 分类/条目指纹全部匹配时，客户端才进入正常快照接收循环。当前未发布协议重置为 v1，只包含现行实体字段、专项 Mine/Chop <code>PostWork</code>、Host <code>UiCommand</code> 和领域快照；背包、装备和物品位置只走统一物品领域快照。协议版本由包头严格校验；seed 或 Registry 不一致不会通过后续记录交换掩盖。</p>
+    <p>只有协议版本、世界 seed 和 Registry 分类/条目指纹全部匹配时，客户端才进入正常快照接收循环。当前未发布协议重置为 v1，只包含现行实体字段、专项 Mine/Chop <code>PostTask</code>、Server <code>UiCommand</code> 和领域快照；背包、装备和物品位置只走统一物品领域快照。协议版本由包头严格校验；seed 或 Registry 不一致不会通过后续记录交换掩盖。</p>
 
     <h2>Mod 列表与校验码</h2>
     <h3>side 字段</h3>
@@ -108,28 +121,28 @@
     <p>“已加载内容”= 启用并被 <code>load_all()</code> 成功加载的 Mod：禁用但已安装的 Mod、因依赖或校验失败被跳过的 Mod 都不在校验码里，也不在 ModList 包与 <code>mod_list</code> / <code>export_mod_list</code> 输出中；存档 <code>mods.json</code> 会列出所有已安装 Mod，但它们的 <code>enabled</code> 为 <code>false</code>。包内的 <code>mod_count</code>/<code>mods</code> 和 <code>checksum</code> 始终描述同一批 Mod。启用或禁用 Mod 后需要重启才会改变加载结果与校验码。</p>
 
     <h2>Lua 脚本在网络中的行为</h2>
-    <h3>主机上的 Lua</h3>
-    <p>作为主机的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。领域系统创建的实体会进入 Host 快照；Lua 不提供通用原型生成入口。</p>
+    <h3>服务器上的 Lua</h3>
+    <p>作为服务器的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。领域系统创建的实体会进入 Server 快照；Lua 不提供通用原型生成入口。</p>
 
     <h3>客户端上的 Lua</h3>
-    <p>纯客户端不推进本地玩法模拟，游戏状态由主机快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、要闻、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Host 权威玩法状态。</p>
+    <p>纯客户端不推进本地玩法模拟，游戏状态由服务器快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、要闻、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Server 权威玩法状态。</p>
 
-    <h3>区分主机和客户端</h3>
-    <p><code>engine.network.mode()</code> 返回 <code>host</code>、<code>client</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不执行玩法 <code>on_tick</code>；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Host 权威 target 编码成 <code>UiCommand</code>。</p>
+    <h3>区分服务器和客户端</h3>
+    <p><code>engine.network.mode()</code> 返回 <code>server</code>、<code>client</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不执行玩法 <code>on_tick</code>；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Server 权威 target 编码成 <code>UiCommand</code>。</p>
 
     <div class="callout warn">
-      <strong>常见错误：</strong>尝试直接发移动、方块或给物命令，或直接写组件。此类入口不存在；玩法请求必须使用已注册、由 Host 处理的专项 <code>UiCommand</code>。
+      <strong>常见错误：</strong>尝试直接发移动、方块或给物命令，或直接写组件。此类入口不存在；玩法请求必须使用已注册、由 Server 处理的专项 <code>UiCommand</code>。
     </div>
 
     <h2>重连与恢复</h2>
-    <p>客户端断线后自动尝试重连（最多 10 次，指数退避）。会话记录在主机内存中保留 60 秒。</p>
+    <p>客户端断线后自动尝试重连（最多 10 次，指数退避）。会话记录在服务器内存中保留 60 秒。</p>
 
     <h2>编写网络兼容 Mod 的最佳实践</h2>
     <ol class="step-list">
       <li><strong>影响游戏逻辑的 Mod 用 <code>"side": "both"</code>。</strong>纯客户端 Mod（UI 主题、音效包）应用 <code>"side": "client"</code>，这样它们不会影响校验码。</li>
-      <li><strong>在主机上修改状态，客户端只发命令。</strong></li>
+      <li><strong>在服务器上修改状态，客户端只发命令。</strong></li>
       <li><strong>数据文件保持确定性。</strong>不要在 Lua 中使用 <code>math.random</code>（已禁用），使用 <code>engine.random</code>。</li>
-      <li><strong>使用 <code>mod_list</code> 和 <code>export_mod_list</code> 命令调试。</strong>对比主机和客户端的 Mod 列表和校验码是否一致。主菜单的 <strong>MOD 管理器</strong> 也会显示当前 ModList、校验码和加载顺序，并可导出 ModList JSON。</li>
+      <li><strong>使用 <code>mod_list</code> 和 <code>export_mod_list</code> 命令调试。</strong>对比服务器和客户端的 Mod 列表和校验码是否一致。主菜单的 <strong>MOD 管理器</strong> 也会显示当前 ModList、校验码和加载顺序，并可导出 ModList JSON。</li>
     </ol>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
