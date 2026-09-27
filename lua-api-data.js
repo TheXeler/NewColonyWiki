@@ -214,7 +214,7 @@ window.__LUA_API_DATA = {
     {
       "name": "任务池",
       "items": [
-        { "api": "engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity)", "params": "string, hashed id, number, number, number, number?, integer?, entity?", "returns": "task UUID", "note": "发布通用实体任务；Mine/Chop 只能由指定工具经 Server 创建，Research 只能由已付款项目派生。faction_id 必填且不能为 0。" },
+        { "api": "engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity)", "params": "string, hashed id, number, number, number, number?, integer?, entity?", "returns": "task UUID or nil", "note": "发布通用实体任务；move 允许零时长并需指定执行实体。Mine/Chop 只能由指定工具经 Server 创建，Research 只能由已付款项目派生。faction_id 必填且不能为 0。" },
         { "api": "engine.tasks.cancel(id)", "params": "task UUID", "returns": "-", "note": "取消任务。" },
         { "api": "engine.tasks.interrupt_all(worker)", "params": "entity", "returns": "integer", "note": "解除该实体已领取的任务并返回数量，发布 core:task_interrupted。" },
 		{ "api": "engine.tasks.set_locked(id, locked)", "params": "task UUID, bool", "returns": "bool", "note": "复用 blocked_until_tick 的永久阻塞哨兵锁定或立即解锁任务；锁定任务继续存在但不可领取。" },
@@ -226,7 +226,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.tasks.total()", "params": "-", "returns": "integer", "note": "返回任务池中活跃任务数量。" },
 		{ "api": "engine.tasks.list()", "params": "-", "returns": "table", "note": "当前任务实例，包含身份、目标、进度、资格和队列信息。" },
 		{ "api": "engine.tasks.set_qualification_expression()", "params": "task_id, expression", "returns": "bool", "note": "保存由 #职业ID_RANK_LEVEL、AND、OR 和括号组成的权威资格表达式。" },
-        { "api": "engine.tasks.set_duration(task_uuid, seconds)", "params": "task UUID string, seconds", "returns": "bool", "note": "按任务 UUID 修改时长，不接受数字任务号。时长改变时清零进度，未改变时保留；仅制作允许零时长。" }
+        { "api": "engine.tasks.set_duration(task_uuid, seconds)", "params": "task UUID string, seconds", "returns": "bool", "note": "按任务 UUID 修改时长，不接受数字任务号。时长改变时清零进度，未改变时保留；制作与移动允许零时长。" }
       ]
     },
     {
