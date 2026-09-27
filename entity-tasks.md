@@ -30,6 +30,9 @@ that completes on arrival; it has no colony work or `Needs` prerequisite.
 ## Current API and content format
 
 - Lua API: `engine.tasks`.
+- The existing `Move` task can be posted from Lua with type `move` and zero
+  duration. Set its designated entity with `engine.tasks.set_metadata`; task
+  scheduling, navigation and completion remain native.
 - Native task identity: `TaskId`, a UUID; task instances preserve their UUID
   through assignment, interruption and completion.
 - Lifecycle events: `core:task_activated`, `core:task_execution_starting`,
@@ -48,6 +51,9 @@ that completes on arrival; it has no colony work or `Needs` prerequisite.
 
 Career `Job`, work efficiency/precision, work plans/policies, and building work
 points remain business concepts. They are not renamed into generic AI tasks.
+Career progression still uses `work_experience`, and equipment transitions use
+`transition_work_duration_seconds`. Generic movement and other non-Core tasks
+do not grant career work experience.
 
 ## Combat and Reaction boundary
 
