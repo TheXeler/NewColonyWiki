@@ -33,6 +33,9 @@
       <li><code>std::filesystem</code> 的 <code>exists</code>、<code>directory_iterator</code>、<code>last_write_time</code> 等路径查询可以继续使用；问题集中在实际打开文件的 char 路径 API。</li>
     </ul>
 
+    <h2>构建模块</h2>
+    <p><code>NewColonyCore</code> DLL 提供唯一的 <code>Logger</code>、<code>EnginePaths</code> 和 <code>FileIO</code> 实现；音频实现和 miniaudio 只编译进 <code>NewColonyAudio</code> DLL。<code>NewColonyRendererBackend</code> DLL 包含 Vulkan 上下文、设备、交换链和命令缓冲底层实现。<code>NewColonyEngine</code> 静态库是内部构建输入，由 <code>NewColonyEngineRuntime</code> 共享库链接并输出为 <code>NewColonyEngine.dll</code>。Windows 下可执行文件从 <code>engine/</code> 显式加载引擎 DLL，项目自身的 DLL 位于 <code>engine/</code>，第三方运行库位于 <code>depend/</code>；构建脚本按 DLL 实际依赖暂存后，导出脚本复制这两个目录。新的 Renderer DLL 和目录布局尚待编译与运行验证。</p>
+
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
