@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>袭击注册 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-raidregistry">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>袭击注册</div></div>
+  <div class="content">
+    <h1>袭击注册</h1>
+    <p class="subtitle">袭击定义（Raid）放在 <code>data/raids/</code> 下，以 JSON 描述。一条记录声明“由谁来袭、来多少人、从多远来、持续多久”。<code>RaidSystem</code> 负责读取定义、按权重抽取敌人组合、把来袭者生成到目标周围并让他们走向目标；命中、伤害和攻击冷却公式不在这里定义。</p>
+
+    <h2>JSON 格式</h2>
+    <pre><code>{
+    "id": "my_mod:probe",
+    "faction": "my_mod:raiders",
+    "origin": "settlement",
+    "enemy_groups": [
+        { "entity_id": "my_mod:raider", "weight": 3.0, "count_min": 2, "count_max": 4 },
+        { "entity_id": "my_mod:raider_heavy", "weight": 1.0, "count_min": 1, "count_max": 2 }
+    ],
+    "group_picks_min": 1,
+    "group_picks_max": 2,
+    "max_attackers": 6,
+    "waves": 2,
+    "wave_interval_ticks": 600,
+    "spawn_distance_min": 24.0,
+    "spawn_distance_max": 40.0,
+    "alert_level": 1,
+    "max_duration_ticks": 12000
+}</code></pre>
+	<p><code>origin</code> 为必填字段，只接受 <code>settlement</code> 或 <code>generated_bandits</code>。前者的来源 UUID 在触发时明确指定，保存于 Raid 状态及各波袭击者的归属字段；后者没有殖民地来源。控制台用 <code>raid &lt;raid_id&gt; [source_instance_uuid]</code>。</p>
+
+    <h2>字段说明</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识，格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</td></tr>
+        <tr><td><code>faction</code></td><td>string</td><td>是</td><td>来袭者的阵营数据 ID。生成时写入 <code>ecs::Civilization</code>，因此 <code>CombatSystem::faction_id_of</code> 会返回该阵营而不是中立。相对 ID 会按当前 MOD 前缀补全。</td></tr>
+        <tr><td><code>enemy_groups</code></td><td>object[]</td><td>是</td><td>非空、<code>entity_id</code> 不重复的加权敌人组数组，语义与产出表一致（权重 + 闭区间数量），但选择的是实体原型而不是物品。</td></tr>
+        <tr><td><code>enemy_groups[].entity_id</code></td><td>string</td><td>是</td><td>实体原型 ID。必须存在于 <code>data/entities/</code>；带 <code>ColonistTag</code> 的殖民者原型会被拒绝。</td></tr>
+        <tr><td><code>enemy_groups[].weight</code></td><td>number</td><td>是</td><td>该组被抽中的相对权重，必须大于 0。</td></tr>
+        <tr><td><code>enemy_groups[].count_min</code> / <code>count_max</code></td><td>positive integer</td><td>是</td><td>该组入选后生成数量的闭区间，<code>count_max &gt;= count_min</code>。先抽组，再在区间内抽数量。</td></tr>
+        <tr><td><code>group_picks_min</code> / <code>group_picks_max</code></td><td>positive integer</td><td>是</td><td>每波从 <code>enemy_groups</code> 中抽取多少个不同的组（不重复抽取）。必须满足 <code>1 &lt;= min &lt;= max &lt;= enemy_groups.size()</code>。</td></tr>
+        <tr><td><code>max_attackers</code></td><td>positive integer</td><td>是</td><td>单波生成上限。<code>RaidSystem</code> 不会超过该值；这是唯一的硬上限。</td></tr>
+        <tr><td><code>waves</code></td><td>positive integer</td><td>是</td><td>波数。每波重新抽取组合，因此同一场袭击的敌人构成会变化。</td></tr>
+        <tr><td><code>wave_interval_ticks</code></td><td>non-negative integer</td><td>是</td><td>两波之间的间隔（ticks，20 ticks = 1 秒）。<code>0</code> 表示下一波紧接着上一波。</td></tr>
+        <tr><td><code>spawn_distance_min</code> / <code>spawn_distance_max</code></td><td>number</td><td>是</td><td>来袭者相对目标的生成距离（格）的闭区间，必须 <code>min &gt; 0</code> 且 <code>max &gt;= min</code>。方向按确定性随机取角度，因此来袭者会从目标周围一圈出现。</td></tr>
+        <tr><td><code>alert_level</code></td><td>non-negative integer</td><td>是</td><td>警报等级，原样出现在状态摘要、Lua 接口和 <code>raid:started</code> 等事件中，供 UI 或脚本决定表现。</td></tr>
+        <tr><td><code>max_duration_ticks</code></td><td>non-negative integer</td><td>否</td><td><code>0</code> 或缺省表示“来袭者全部消失才结束”。大于 0 时在该时长后让残余来袭者撤离（从世界中移除）并以 <code>duration_elapsed</code> 结束。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      记录里只有“投送”参数，没有命中率、伤害、攻击冷却或压制公式。NCDOCS 尚未定义战斗专项规则，因此 <code>RaidSystem</code> 生成的是带有阵营、生命、移动属性和导航组件的普通实体，不结算伤害，也不从旧原型恢复任何数值。
+    </div>
+
+    <h2>随机化如何发生</h2>
+    <ol>
+      <li>每波先用权重抽取 <code>group_picks_min</code> 到 <code>group_picks_max</code> 个不同的敌人组。</li>
+      <li>每个入选组在自己的 <code>count_min</code>–<code>count_max</code> 区间内抽取数量，再乘以当前难度的袭击倍率。</li>
+      <li>总量被 <code>max_attackers</code> 截断；<code>waves &gt; 1</code> 时每波重复上述过程。</li>
+    </ol>
+    <p>随机数来自 <code>Xoshiro256</code>，种子由世界种子、袭击实例编号、波次和 tick 组合而成，不使用系统时钟，因此同一存档在相同操作序列下会得到相同的敌人构成，便于复现和联机同步。</p>
+    <p>来袭者死亡后的掉落沿用实体原型自带的 <code>death_output_table</code>。产出表支持 <code>"selection": "weighted_one"</code>，把多行战利品按权重抽一行，于是“敌人构成随机”和“掉落随机”可以分别用两层数据表表达。</p>
+
+    <h2>投送与目标</h2>
+    <ul>
+      <li>目标优先取 <code>BuildingSystem::select_raid_target()</code>：已完成的城镇大厅（稳定实例 ID 最小者），否则价值最高的玩家建筑。</li>
+      <li>既没有大厅也没有高价值建筑时，退化为殖民者平均位置（殖民地中心），这样在建成第一座建筑之前也能验证袭击链路。</li>
+      <li>目标每 100 ticks 复核一次；目标建筑被摧毁或新建大厅后，来袭者会改用新的目标重新寻路。</li>
+      <li>移动复用现有导航链路：<code>NavAgent</code> + <code>MovementTarget</code> + <code>MovementIntent</code>，由 <code>NavigationSystem</code>、<code>EntityMovementSystem</code> 和 <code>EntityPhysicsSystem</code> 推进。来袭者的基础速度来自顶层 <code>move_speed</code>，状态修正来自属性 Map。与其它实体一致，位于强加载范围外的来袭者不会推进，直到所在区块被加载。</li>
+      <li>来袭者的战斗属性由原型引用的 battler pack 在生成时展开到属性 Map；<code>RaidSystem</code> 不安装第二份属性组件。袭击结束并撤退时，系统在销毁兵模前清理对应实体的运行时属性修正组。</li>
+    </ul>
+
+    <h2>难度倍率</h2>
+    <p>难度的“袭击”维度倍率（<code>DifficultyRuntimeState::raid_multiplier</code>）在触发时读取：<code>0</code> 表示关闭袭击并拒绝预约（原因 <code>raid_disabled_by_difficulty</code>），大于 0 时按比例缩放每个入选组的数量（至少保留 1 个）。</p>
+
+    <h2>运行时接口</h2>
+    <table>
+      <thead><tr><th>接口</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine.raids.list()</code></td><td>已注册的袭击定义 ID 列表。</td></tr>
+        <tr><td><code>engine.raids.definition(id)</code></td><td>单条定义的全部字段与 <code>enemy_groups</code> 行；不存在时 <code>exists=false</code>。</td></tr>
+        <tr><td><code>engine.raids.active()</code></td><td>当前进行中的袭击摘要：实例 ID、定义、阵营、来源殖民地 UUID、警报等级、波次、存活/累计人数和目标坐标。</td></tr>
+        <tr><td><code>engine.raids.trigger(id, source_instance_uuid)</code></td><td><code>origin=settlement</code> 必须传现存且属于声明派系的来源殖民地 UUID；<code>origin=generated_bandits</code> 必须传空字符串。返回袭击实例 ID；失败返回 0，原因见 <code>engine.raids.last_error()</code>。客户端返回 0。</td></tr>
+        <tr><td><code>engine.raids.configuration_error()</code></td><td>配置屏障原因，例如 <code>raids_missing</code> 或 <code>raid_enemy_group_invalid</code>。</td></tr>
+        <tr><td><code>require("systems.raid_data")</code></td><td>Lua 侧薄封装：<code>definitions()</code>、<code>definition(id)</code>、<code>active()</code>、<code>trigger(id, source_instance_uuid)</code>、<code>raw_json(id)</code>、<code>configuration_error()</code>。</td></tr>
+      </tbody>
+    </table>
+    <p>袭击生命周期会发布 <code>raid:started</code>、<code>raid:wave</code> 和 <code>raid:ended</code> 事件，载荷包含 <code>instance_id</code>、<code>def_id</code>、<code>faction_id</code>、<code>source_instance_uuid</code>、<code>reason</code>、<code>alert_level</code>、<code>wave_index</code>、<code>waves</code>、<code>spawned</code>、<code>alive</code> 和 <code>tick</code>。结束原因目前有 <code>attackers_cleared</code> 和 <code>duration_elapsed</code>。</p>
+
+    <h2>存档与联机</h2>
+    <p>进行中的袭击随世界存档保存（<code>raids_schema_version</code> + <code>raids</code> 实例数组），来袭者本身仍是普通实体记录，成员按稳定实体 ID 恢复。Server 的通用世界状态同步包含同一份数据，客户端不自行触发或推进袭击。</p>
+
+    <h2>CoreMod 测试内容</h2>
+    <table>
+      <thead><tr><th>ID</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:mvp_test_raid</code></td><td>两波、两组权重的系统验证用袭击，目标 1 号警报等级，12000 ticks 后撤离。仅用于贯通加载、随机抽取、投送和结束链路，不代表正式平衡。</td></tr>
+        <tr><td><code>core:mvp_test_raider</code> / <code>core:mvp_test_raider_heavy</code></td><td>来袭者实体原型。没有 <code>ColonistTag</code>，声明移动速度与战斗属性占位值，死亡产出指向 <code>core:mvp_test_raider_death</code>。</td></tr>
+        <tr><td><code>core:mvp_test_raider_death</code></td><td><code>weighted_one</code> 产出表：木棍（权重 3）或测试野生食物（权重 1）。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>文件放置规则</h2>
+    <ul>
+      <li>放在 <code>data/raids/</code> 下，支持子目录。</li>
+      <li>文件名随意，引擎只关心 JSON 内的 <code>id</code> 字段。</li>
+      <li>引用的实体原型必须同时存在于某个已加载 MOD 的 <code>data/entities/</code>，否则加载会被拒绝。</li>
+    </ul>
+
+    <h2>验证命令</h2>
+    <pre><code>raid                          -- 列出已注册的袭击定义
+raid status                   -- 查看进行中的袭击
+raid core:mvp_test_raid       -- 触发一场测试袭击
+list_data raids               -- 通过数据注册表查询
+data raids core:mvp_test_raid -- 查看原始 JSON</code></pre>
+
+    <p>战斗接口边界见 <a href="engine-combat.html">战斗规则</a>。</p>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="wiki.js"></script>
+</body>
+</html>

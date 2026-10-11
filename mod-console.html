@@ -48,18 +48,19 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
         <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原型 ID 生成非殖民者实体；带 <code>ColonistTag</code> 的原型固定拒绝，自动补全也不会列出。</td></tr>
         <tr><td><code>raid [list|status|&lt;raid_id&gt;]</code></td><td>列出已注册的袭击定义、查看进行中的袭击，或触发一场袭击。触发失败时会给出稳定原因（未知 ID、难度袭击倍率为 0、没有可用目标、生成失败）。</td></tr>
-        <tr><td><code>inventory &lt;entity&gt;</code> / <code>inventory_page &lt;entity&gt;</code></td><td>只读查看殖民者的统一背包和单一装备位置实例。</td></tr>
+        <tr><td><code>inventory &lt;entity_uuid&gt;</code> / <code>inventory_page &lt;entity_uuid&gt;</code></td><td>只读查看所有者背包内容和实体装备槽，显示槽位、定义 ID、数量与品质；穿戴装备没有独立库存 UUID。</td></tr>
         <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池。</td></tr>
         <tr><td><code>list_faction_instances</code></td><td>查看已经生成的 NPC 阵营实例。</td></tr>
         <tr><td><code>gen_name &lt;template&gt; [seed]</code></td><td>按名称模板生成调试名称。模板里可写 <code>${random_name}</code>。</td></tr>
         <tr><td><code>net_status</code></td><td>查看网络角色、连接状态和同步计数。</td></tr>
-        <tr><td><code>net_host [port]</code> / <code>net_join host [port]</code></td><td>启动主机或连接到主机。</td></tr>
+        <tr><td><code>net_server [port]</code> / <code>net_join server [port]</code></td><td>启动服务器或连接到服务器。</td></tr>
         <tr><td><code>net_disconnect</code></td><td>断开网络连接。</td></tr>
         <tr><td><code>mod_list</code> / <code>export_mod_list</code></td><td>列出/导出 MOD 列表及校验码（调试网络 MOD 一致性）。</td></tr>
-        <tr><td><code>lua &lt;code&gt;</code></td><td>直接执行一段 Lua 代码。</td></tr>
-        <tr><td><code>echo &lt;lua_expression&gt;</code></td><td>执行 Lua 表达式并输出返回值。</td></tr>
+        <tr><td><code>lua &lt;code&gt;</code></td><td>将 Lua 代码排入服务端模拟线程，与 emit、echo 按提交顺序执行。queued 仅表示已排队；实际执行结果随后显示。运行时不可用时拒绝，世界卸载时取消待执行请求。</td></tr>
+        <tr><td><code>echo &lt;lua_expression&gt;</code></td><td>将 Lua 表达式排队求值，结果由主线程显示。暂停时仍可处理，错误详情见日志。控制台脚本执行由统一 watchdog 监测。</td></tr>
+        <tr><td><code>time query</code> / <code>time set &lt;时刻&gt;</code> / <code>time add &lt;增量&gt;</code></td><td>排队到模拟线程查询或调整时间；修改仅限服务端。时刻支持 morning/noon 等名称、00:00 至 23:59 或日内数值，增量为正整数。按每个模拟 Tick 的时间精度取整；目标时刻已过则前进到次日，不倒退模拟时钟。增量保留日内取模行为。</td></tr>
         <tr><td><code>locale_list</code> / <code>locale_set &lt;id&gt;</code> / <code>locale_reload</code></td><td>查看、切换和重载本地化资源。</td></tr>
-        <tr><td><code>reload</code> / <code>reload rml</code> / <code>reload &lt;lua_path&gt;</code></td><td>热重载。<code>reload</code>（不带参数）重载所有子项：游戏内 RmlUI 的界面文档与样式、以及全部已加载的 Lua 脚本；<code>reload rml</code> 只重载 RmlUI 文档（<code>.rml</code>/<code>.rcss</code>，改完即时生效，无需重启游戏）；<code>reload &lt;lua_path&gt;</code> 只热重载指定的单个 Lua 脚本。</td></tr>
+        <tr><td><code>reload</code> / <code>reload rml</code></td><td>仅 <code>--DEBUG</code> 可用。<code>reload</code> 排队请求注册表重载，在可用帧间准备双端 Lua、状态、UI、原生定义和渲染资源；候选准备失败保留旧环境。保存或载入期间延后。Lua 文件变化由自动监听单独处理，不能传 Lua 路径给此命令。<code>reload rml</code> 重载游戏内 RML/RCSS。当前为未运行验证的迁移实现，固定 VM 所属线程、提交后缓存异常和活动世界迁移仍在完善。</td></tr>
         <tr><td><code>ui_lab</code> / <code>ui_lab show</code> / <code>ui_lab hide</code> / <code>ui_lab toggle</code> / <code>ui_lab components</code> / <code>ui_lab tech_tree</code></td><td>切换、显示、隐藏真实 RmlUI 设计实验室，或直接打开指定预览场景。仅 <code>--DEBUG</code> 运行会加载该文档；普通/Release 路径不可用。Components 与 Tech Tree fixture 场景都使用真实共享 RCSS；修改后执行 <code>reload rml</code> 即可刷新。</td></tr>
         <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档。</td></tr>
         <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体。</td></tr>
