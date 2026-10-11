@@ -11,6 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>存档系统状态</div></div>
   <div class="content">
     <h1>存档系统状态</h1>
+    <p>构建模块：存档工作目录的发布与恢复、region 文件读写和 region header 缓存位于 <code>engine/saveio.dll</code>；世界状态捕获、序列化、恢复和网络状态文档由 <code>engine/save.dll</code> 的 <code>SaveSystem</code> 提供。它通过 <code>SaveHost</code> 借用宿主服务；<code>SaveSystemHost.cpp</code> 留在 engine.dll，提供六个 Engine 入口适配，世界发布与所有者屏障继续由 Engine 控制。2026-10-11 模块链接、完整项目续编和依赖暂存通过，未运行游戏或测试。边界与验证记录见 <code>docs/engine-runtime-final-split.md</code>。</p>
     <p>经验接口支持负整数增量：扣除后最低为 0，不降低已有等级；正增量封顶 INT32_MAX。计算全程使用 i32，在运算前判断边界，INT32_MIN 扣除也不会发生取反溢出。工作奖励和升级阈值配置仍要求正整数，测试源码未执行。</p>
     <p>经验值、奖励和升级阈值使用 i32 整数。累加前检查上限，超出时取 INT32_MAX，再按整数阈值升级；不使用 i64 或浮点累加。存档、网络、经济日志和 UI 同步使用整数经验，配置拒绝小数、负数和越界值。职业历史无法写入时，当前职业保持原样。测试源码尚未执行。</p>
     <p>结算后清理工人关联同时检查工作 UUID：若回调重建工作池并复用了原数字编号，外层不会清掉不同 UUID 的新工作。两种 AI 入口的同编号复用测试源码已补，尚未执行。</p>
@@ -19,12 +20,12 @@
     <p>建筑删除回调使用定义和实例副本，同一 UUID 的递归删除被拒绝，回调后按原 UUID 重新查找再移除，避免回调扩容建筑数组或替换回调导致引用失效。异常释放删除保护，但不撤销回调已发生的世界副作用。拆除掉落与方块修改的整体事务仍未完成，测试源码未执行。</p>
     <p>原生工作结算返回 Applied、Deferred 或 Rejected。缺少狩猎目标 Health、缺少方块交互器或建筑拆除拒绝时，两个 AI 入口走工作取消、不授予成功经验、不发布完成通知。进度到 1 后保留活动记录直到完成或取消提交。Deferred 仍需后续方块处理或 Lua 结算，因此不代表效果已提交；完整事务尚未完成，测试源码未执行。</p>
     <p>工作坐标转为方块整数坐标时，先检查 floor 后的值是否有限且处于 i32 范围内；错误坐标在写入 BlockInteractor 或兴趣点之前抛错，避免有限大浮点数转换越界。负数仍按 floor 取整，相关边界测试源码尚未执行。</p>
-    <p>AI 忙碌工人和行为树执行入口在 complete_task 成功后才清除当前工作、忙碌状态及兴趣点；完成后使用提前保存的标签，不再读取已移除的工作指针。推进已将工作标为失效，世界效果和经验仍发生在通知提交之前，因此此顺序修复不等于完整完成事务或可安全自动重试。</p>
+    <p>AI 的 Task 执行入口在 complete_task 成功后清除当前 Task、忙碌状态及兴趣点；完成后使用提前保存的标签，不再读取已移除的任务指针。推进已将任务标为失效，世界效果和经验仍发生在通知提交之前，因此此顺序修复不等于完整完成事务或可安全自动重试。</p>
     <p>工作推进拒绝负数、NaN 和无穷时间步，异常输入不改写进度。有限输入的进度计算先使用 double，再限制到完成值后写回 float，避免除法溢出污染工作状态。相关测试源码未执行。</p>
     <p>直接派工与目标替换共用有限坐标、有限非负时长、目标类型/动作/载荷类型枚举检查。直接派工保留零时长支持，目标替换和批量派工要求正时长。非法输入在分配身份或取消旧工作前拒绝；测试源码未执行。</p>
     <p>目标工作替换在取消旧工作前检查编号耗尽、编号冲突、时长和有限坐标；已知无法派工时直接拒绝并保留旧工作。内存分配或其他后续失败的整体回滚仍待完成，测试源码未执行。</p>
     <p>替换同一目标的工作共用 cancel_task 的资源释放检查：旧预约无法释放时保留该工作并停止新增替代工作，不提前发布取消通知。旧工作取消成功后的新建失败仍不具备整体回滚；测试源码未执行。</p>
-    <p>单项中断、解除工人工作和中断工人全部工作共用预约释放检查：预约仍被持有时抛错，保留该工作分配、进度、预约及通知队列；释放成功后才发布中断通知。批量操作按工作逐项提交，后项失败不撤销前项；测试源码尚未运行。</p>
+    <p>单项中断和解除工人工作先检查预约能否释放，失败时保留该工作分配、进度、预约及通知队列。中断工人全部普通工作先准备整批通知，再以一次 <code>release_many</code> 发布相关预约释放；拒绝释放时所有相关工作的分配与进度保持原状，成功后才发布中断通知。Battle Task 由战斗停止或失能清理路径管理；征召交接另将旧个人 Move 的取消与经营任务中断纳入同一预约发布。测试源码尚未运行。</p>
     <p>工作完成先复制并入队通知，再移除工作和身份索引；末尾记录通过不抛异常的移动填补空位。通知分配失败不会提前失效工作。已有索引/重复完成测试源码，分配失败注入和运行验证尚未执行。</p>
     <p>网络状态接收器使用本包复制后的实体候选世界解析工作 UUID 和同步装备缓存，不能读取旧活动实体世界。SaveSystem 成功后更新该候选，NetworkSystem 在会话发布门内最终交换实体世界；拒绝包不发布候选修改。此路径已补源码测试，尚未运行；实体增量不带状态文档时的关联清理仍待核对。</p>
     <p>Lua 的 remove_pending_candidate 在删除待入籍候选实体前也执行工作引用清理；清理抛错时不会继续销毁实体。袭击超时撤退通过显式传入的工作池执行同样清理，再销毁成员；网络实体替换仍需独立处理。相关测试源码未执行。</p>
@@ -45,7 +46,7 @@
         <tr><td><code>entities.json</code></td><td>实体 UUID、内部实体 ID 和标准 ECS 组件，无 schema_version。</td><td>必须提供合法且不重复的 UUID，缺失时拒绝，不在读取时分配身份。当前按保存的内部 ID 重建；内部引用迁移和完整候选恢复事务仍待完成。</td></tr>
 		<tr><td><code>regions/*.ncr</code></td><td>当前 v1 按 32×32 chunk region 写出已加载 chunk。文件头包含 magic/version、region 坐标、header size、1024 项 chunk offset/size/flags table 和 block id 字典；chunk payload 按有符号 <code>sub_y</code> 保存任意数量的 sub-chunk uniform/palette/dense <code>BlockState{id,data}</code> 表示和对应独立光照 overlay。payload 使用内置 RLE 压缩，压缩后不变小时自动保留未压缩数据。</td><td>读档只接受当前 v1 region 文件并恢复成可变高度 <code>ChunkSnapshot</code>。运行时 chunk streaming 会按目标 chunk 坐标定向打开对应 <code>r.x.z.ncr</code>，优先从当前 slot 的 region payload 加载 snapshot，缺失时才重新生成地形。保存的 block id 字典必须全部解析到当前 MOD registry；任何缺失 ID 都会拒绝该 region，不保留旧 numeric 值。</td></tr>
         <tr><td><code>mods.json</code></td><td>已安装 MOD 的 id、name、version、side，以及 <code>enabled</code>（存档时该 MOD 是否参与内容加载）。</td><td>用于 MOD 差异诊断；不会自动下载、启用或重排 MOD。</td></tr>
-		<tr><td><code>factions.json</code></td><td>当前 schema v1；其他殖民地实例的稳定身份、地图坐标、归属和表现色，以及阵营对关系、条约和空谈判状态。</td><td>缺失、损坏或非当前 schema 均拒绝，不读取旧开发结构。</td></tr>
+		<tr><td><code>factions.json</code></td><td>殖民地实例的稳定 UUID、地图坐标、归属和表现色；实例间关系、条约、谈判状态、<code>user_colonies</code> 用户名到殖民地 UUID 的绑定，以及独立的 <code>player_faction_relations</code> 派系定义关系数组。</td><td>绑定只接受现存的玩家可控殖民地；同一派系下的殖民地仍有独立 UUID、仓储和关系。用户名由客户端自填，当前允许冒名。</td></tr>
 <tr><td><code>tasks.json</code></td><td>保存工作 UUID、next_id、工作状态、工作点 UUID 和预留记录，无 schema_version。磁盘与网络读取使用保存的 UUID，不生成或补写身份。</td><td>工作及关联工作点必须能按 UUID 恢复。磁盘路径拒绝无法解析文件、错误工作数组/计数器及预约恢复失败；内部数字引用与完整候选恢复事务仍待清理；未完成运行验收。</td></tr>
 		<tr><td><code>economy_log.json</code></td><td>当前格式包含 next_entry_id 和 entries，无 schema_version。结构化保存结算与异常日志的 ID、tick、殖民者、来源、物品投入/结果、效果、经验和原因。source_object_uuid 保存组件等来源的 UUID，无 UUID 来源时为空字符串。</td><td>计数器必须为正整数；拒绝重复记录 ID、非法 UUID、非法日志种类和非有限数值。日志不重放内部工作。其他数字身份仍在迁移，完整运行验收尚未完成。</td></tr>
 		<tr><td><code>economy_problems.json</code></td><td>schema v1；保存尚未解除的局部问题、来源身份、首次/最近 tick、位置、关联物品/工作、全局警报标记和解决入口。</td><td>恢复后继续按来源和稳定问题 ID 去重；解除时删除持续状态并向统一日志追加解除记录。</td></tr>
@@ -64,11 +65,13 @@
     <h2>会保存的实体组件</h2>
     <p><code>entities.json</code> 当前覆盖以下标准组件。保存时尽量同时写字符串 ID 和哈希，加载时优先用字符串 ID 重新从当前注册表计算哈希。</p>
     <ul>
-      <li>基础空间与生命：<code>Position</code>、<code>Speed</code>、<code>Rotation</code>、<code>Scale</code>、<code>Health</code>、<code>Name</code>。</li>
-      <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistCondition</code>、<code>ColonistAttributes</code>、<code>ColonistBackground</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Job</code>、<code>Civilization</code>、<code>WorkerPriorityConfig</code>、<code>NavAgent</code>。</li>
-      <li>附加数据：<code>Attachments</code>。每个实体一张"键 → 带种类的值"表，键名与种类都随值一起写出，因此引擎没见过的键也能往返（含 Lua 在运行期附加的键）。存档形状为 <code>"Attachments": { "键": {"type":&lt;种类&gt;,"value":&lt;值&gt;} }</code>，种类取值见 <code>bool/int/float/string/uuid/vec3/enum</code>；同类值再次附加会覆盖，跨类附加被拒绝。声明写在持有者定义的 <code>attachments</code> 数组里，见 <code>NCDOCS/附加数据系统与迁移设计.md</code>。</li>
-	  <li>物品与交互：<code>BlockInteractor</code>、<code>Inventory</code>、<code>GroundItemPile</code> 与 <code>Equipment</code> 随实体保存；方块容器和仓储策略写入 <code>owner_items.json</code>。装备组件保存完整 ItemStack，地面堆使用实体 UUID；普通库存内容没有独立实例身份。</li>
-      <li>实体原型和表现：<code>PrototypeRef</code>、<code>EntityVisual</code>、<code>EntityAnimation</code>、<code>HeadVisual</code>、<code>InterestPoint</code>。</li>
+      <li>基础空间、视野与生命：<code>Position</code>、<code>Speed</code>、<code>VisionRange</code>、<code>Rotation</code>、<code>Scale</code>、<code>Health</code>、<code>Name</code>。VisionRange 保存非负基础半径；Health 必须保存有效的 <code>base_max</code> 基础容量；缺失或无效时拒绝加载，不从已修正的 <code>max</code> 推导基础值。基础容量为零也是有效值。</li>
+	  <li>保存 Speed 和 Rotation 时，通过统一属性接口读取 ECS 基础值；持续修正后的速度和朝向由修正来源重新解析。Name 也通过统一接口读取 ECS 字符串。保存 Health 时，<code>current</code> 和 <code>max</code> 从统一属性接口取得当前解析值，<code>base_max</code> 通过同一接口读取独立基础容量。解析失败或结果超出 Health 整数范围时拒绝捕获，不保存旧投影值。</li>
+	  <li>实体基础属性 Map 不得包含 <code>position.x</code>、<code>current_hp</code> 等 ECS 权威字段的同名键；保存捕获和读档都会拒绝这类冲突。</li>
+	  <li>殖民者与 AI：<code>Needs</code>、<code>Mood</code>、<code>ColonistCondition</code>、<code>Attributes</code>、<code>AttributeModifierGroups</code>、<code>ColonistBackground</code>、<code>ColonistTag</code>、<code>AIState</code>、<code>Job</code>、<code>Civilization</code>、<code>WorkPriorityConfig</code>、<code>NavAgent</code>。基础属性按完整路径保存在 Map 中；每个实体的修正组保存来源、组 ID 和修正项，读档时先完整校验，再恢复到运行时。带 <code>ColonistTag</code> 的实体必须保存包含 <code>colonist.*</code> 的属性 Map，缺失时拒绝保存或读档。读档还校验导航路径数量、当前位置和路径点数组长度，拒绝越过 NavAgent 容量的记录。</li>
+	  <li>实体能力属性统一保存在 <code>Attributes</code> Map；空 Map 的组件存在性也随存档保留。运行时新增属性的来源另存在 <code>AttributeSources</code>。保存与加载都拒绝指向不存在属性键或空来源的记录；加载还拒绝重复来源键。旧实体 <code>Attachments</code> 存档组件会被拒绝。物品内容中的附件仍随其 ItemStack 保存。</li>
+      <li>物品与交互：<code>BlockInteractor</code>、<code>Inventory</code>、<code>GroundItemPile</code> 与 <code>Equipment</code> 随实体保存；实体背包同时保存基础槽数和实际内容，读档校验物理槽数与已恢复修正后的 <code>inventory_slots</code> 一致。<code>owner_items.json</code> 的实体背包行也记录基础槽数，并与实体记录核对；客户端恢复带服务器解析缓存的实体时，也拒绝物理槽数与同步解析值不一致的背包。方块容器和仓储策略写入同一文件。装备组件保存完整 ItemStack，地面堆使用实体 UUID；普通库存内容没有独立实例身份。</li>
+      <li>实体原型、属性和表现：<code>PrototypeRef</code>、<code>Attributes</code>（生成时展开后的属性 Map）、<code>EntityVisual</code>、<code>EntityAnimation</code>、<code>HeadVisual</code>、<code>InterestPoint</code>。原始 capability JSON 不再随实体保存。</li>
     </ul>
 
     <h2>MOD 校验</h2>
