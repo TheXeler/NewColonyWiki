@@ -7,22 +7,24 @@
 <h2>当前实施状态</h2>
 <table><thead><tr><th>阶段</th><th>已有源码</th><th>仍需接入</th></tr></thead><tbody>
 <tr><td>身份、状态与布局</td><td>城邦、居民、建筑、工作、队伍和战斗事实使用 Lua 世界状态；模板生成保留结果、游标与进行中的身份。</td><td>正式模板、地域选取、原生建筑及实体状态的完整交接；既有无经营状态城邦需要显式迁移。</td></tr>
-<tr><td>预测与评分</td><td>倾向缺省来源不算零；带时点的确定／不确定供需、预约消耗去重、储备上限、富余与评分限幅。</td><td>从共享库存、订单和实际消费实时构造预测输入；正式资源分类与评分参数。</td></tr>
-<tr><td>规划与调度</td><td>确定性跨轮搜索、循环与版本失效；1200 Tick 决策、20 Tick 推进；抽象工作保持身份和进度暂停。</td><td>主路径和实际能力注册、多路径成果覆盖的自动更新、共用前置的订单执行关联；实体 Task 的无损暂停。</td></tr>
+<tr><td>预测与评分</td><td>抽象库存、实际人口消耗、带完成时点的工作产出与返程货物自动进入预测；倾向缺省来源不算零，评分限幅。</td><td>实体共享库存／订单的原生捕获适配；正式资源分类与评分参数。</td></tr>
+<tr><td>规划与调度</td><td>确定性跨轮搜索、前置子树执行顺序、覆盖数量消费、共用工作与来源分配；1200／20 Tick 调度和完成后沿承诺路径再投入。</td><td>主路径和实际能力注册、实体 Task 的无损暂停与原生经营接入。</td></tr>
 <tr><td>分层模拟</td><td>实际抽象物品扣除、产能推进、缺粮负担、营养余量与具体身份伤亡；模式协议保持单一权威。</td><td>全城区块占用、多玩家触发、实体准备和显示屏障、原生库存／建筑／Task 导入导出；代表性吞吐校准。</td></tr>
 <tr><td>对外行动</td><td>统一外交适配、冷静／保护期、积分和授权检查；队伍资产划出／返回；可配置分段抽象战斗。</td><td>正式外交目标／回应政策、现场贸易算法、实体队伍桥、战斗换算配置与实体战斗连续交接。</td></tr>
 </tbody></table>
 <p>未注册能力不能被报告为成功。CoreMod 没有新增隐藏平衡值，也没有用空接口自动生成城邦、免费完成生产或交换远程库存。当前正常新世界不会自动出现这些模板城邦。</p>
 <h2>模块与配置</h2>
-<p>公共模块为 <code>core:systems.city_math</code>、<code>city_planner</code>、<code>city_model</code>、<code>city_runtime</code>、<code>city_generation</code>、<code>city_diplomacy</code>、<code>city_teams</code> 和 <code>city_combat</code>。依赖 core 的 Mod 在 Server 注册具体内容；函数不进入存档。</p>
+<p>公共模块为 <code>core:systems.city_math</code>、<code>city_planner</code>、<code>city_model</code>、<code>city_ledger</code>、<code>city_allocation</code>、<code>city_runtime</code>、<code>city_generation</code>、<code>city_diplomacy</code>、<code>city_teams</code> 和 <code>city_combat</code>。依赖 core 的 Mod 在 Server 注册具体内容；函数不进入存档。</p>
 <p><code>city_runtime.register_rules(id, rules)</code> 验证 tendency_weights（leader &gt; city &gt; faction）、tendency_min/max、reserves、score、planner.depth/nodes_per_round、exit_wait_ticks、forecast_window_ticks、crisis_shortfall/crisis_workers_required 和 survival。survival 明确提供 nutrition、food_per_resident_tick、burden_per_death、burden_recovery_per_tick。数值缺失报错；1200／20 Tick 和外交天数来自已确认设计，不是未确认默认值。</p>
-<p>每个 reserve 声明 item_ids、unit（days/construction/money/quantity）、lower、upper、tendency 和 tendency_scale。城邦提供 reserve_context（对应 daily_consumption/planned_materials/expected_spending）以及 forecast 的 locks、events、checkpoints。forecast event 包含稳定 id、tick、incoming、outgoing、confidence、source，可带 reservation_id；未成交 purchase 的 confidence 必须小于 1。这些输入目前需要能力适配器从真实系统更新。</p>
-<p><code>city_math.tendencies/reserve/forecast/score/aggregate</code> 为纯算法。aggregate 以动作、目标、产物及兼容条件形成的稳定 key 汇总数量和来源，已有覆盖只使用一次，共用前置优先度取最大值。当前 runtime 记录汇总解释，但尚未自动将所有共用前置变为唯一共享订单。</p>
+<p>每个 reserve 声明 item_ids、unit（days/construction/money/quantity）、lower、upper、tendency 和 tendency_scale，可指定 measure（quantity/nutrition）及 consumption_per_resident_tick。nutrition 直接使用生存配置的实际营养和消费率；其他持续消耗需要明确单位换算，缺少时报告 city_reserve_consumption_missing。city_ledger 自动读取库存、营养余量、居民、工作和返程队伍，派生消费量、未来材料／支出与完成时点；额外 forecast 的 locks/events/checkpoints 仍可由专项适配器提供。事件带 work_uuid 时由实时工作输出替代，人口消费不会重复导入。</p>
+<p><code>city_math.tendencies/reserve/forecast/score/aggregate</code> 为纯算法。预测包含每个收支边界，不能用最终库存掩盖到货前的短缺；未成交 purchase 的 confidence 必须小于 1。item:定义ID、building:建筑UUID、facility:设施定义ID 的覆盖由真实库存和有效建筑派生，不重复保存为资源账本。</p>
 <h2>承诺路径与工作</h2>
-<p><code>register_focus(id,{evaluate})</code> 的 evaluate 读取同一城邦快照、预测和倾向，返回候选 goal、urgency、satisfaction、timeliness、remaining_cost、risk、tendency、available、requirements 及满足／永久失效标记。candidate goal 含稳定 key 和 quantity。能力尚未提供时 available=false 并给出原因，不用零成本占位。</p>
+<p><code>register_focus(id,{evaluate})</code> 的 evaluate 读取同一城邦快照、预测和倾向，返回候选 goal、urgency、satisfaction、timeliness、remaining_cost、risk、tendency、available、requirements 及满足／永久失效标记。goal 含 key/quantity，可标 reusable（设施等持续能力）、deadline 和 demand_id（解决同一个储备需求的多个途径）。独立消耗需求不共享 demand_id，有限库存和预期产出只分配一次；deadline 前尚未完成的输出不抵扣早期缺口。能力尚未提供时明确不可用。</p>
 <p><code>register_action(id,{plan,start,valid,settle,strategic})</code> 注册实际途径。plan 返回前置 requires、完整 remaining_cost 和 available；start 在候选数据中准备真实工作规格；valid 在每段前检查设施和目标；settle 在候选数据中按共享专项规则结算。回调不可直接修改外部系统来伪装候选提交，实体工作必须通过 bridge 使用现有 Task。</p>
-<p>抽象工作规格包含 uuid、action_id、workers、materials、required、facility_factor、state_factor、work_fraction、interruptible；产能单位为每模拟 Tick 工作量。materials 是实际物品 id/count/components，精确匹配组件内容后扣除，缺料不部分扣除。暂停保留 uuid、progress、consumed，恢复不重复扣材料。普通优先变化不取消已下达工作；规划缓存可重建，承诺和工作持久化。</p>
-<p>当前底座不提供完整配方、农业、温度与建设适配器；不得直接把生产订单原有的取消式 pause 当作无损 Task 暂停。多途径预测成果的自动抵扣及共用前置的执行共享仍需完成，不能仅凭解释记录宣称全部规划算法完成。</p>
+<p>抽象工作规格包含 uuid、action_id、workers、materials、required、facility_factor、state_factor、work_fraction、interruptible；产能单位为每模拟 Tick 工作量。materials 精确匹配物品 id/count/components，缺料不部分扣除。可用 facilities 指定建筑 uuid/slots，建筑 work_capacity 必须来自明确设施配置；开始与恢复都校验实际占用。暂停保留进度和已耗材料，恢复只取得原需人数。完成时在候选城邦结算；失败不发布候选产出，不返还真实投入或重试已失败工作。</p>
+<p>outputs 是连续数组，含 key、可选 item_id、quantity、confidence 和 source。没有产出信息不能虚构预测收益。city_ledger 按真实劳动力产能和剩余工作量估算完成时点，暂停或无产能工作不承诺到货。动作 start 可以只提供实际可执行的小批次，runtime 检查真实目标是否达成后继续追加，不把一次小批完成当作整条路径完成。</p>
+<p>可复用前置声明 share_key 和完整 compatibility 参数，目标、动作及参数签名一致才共用一个持久 work_uuid。city_allocation 保存各路径的数量和用途，按最高来源优先度执行；不同建筑位置不能合并。shared_jobs 随城邦事实保存，读档不重复下单。普通工作完成沿原路径重用闲置能力，不触发全城重排；能力变化、失败和危机仍按规则重评。</p>
+<p>2026-10-12 已把抽象多路径覆盖和共用前置关联到实际工作，不再只有解释记录。完整配方、农业、温度、建设与实体经营适配仍需完成；不得直接把生产订单原有的取消式 pause 当作无损 Task 暂停。新增测试源码未编译或运行。</p>
 <h2>生成、模式与数据查询</h2>
 <p><code>city_generation.register(id,{density_per_100_chunks,minimum_distance,seed,initial})</code> 使用独立保存的随机流和稳定候选顺序；generate 接受实际区块候选（key/chunk_x/chunk_z）。initial 提供城邦状态和派系身份，选择结果只创建一次。进行中生成保存身份和初始结果，可继续而不重新抽取；空间不足记录原因。没有配置地图／模板供应器时不会启动生成。</p>
 <p>新原生 API <code>engine.factions.create_settlement(spec)</code> 要求 uuid、已存在的非玩家 def_id、display_name、map_q/map_r/map_color，使用定义的初始关系和当前权威 Tick。恢复不能通过此生成入口重放。<code>engine.factions.calendar()</code> 返回现有日历换算常量，外交天数不按现实时间计算。</p>
