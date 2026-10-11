@@ -11,18 +11,27 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地物注册</div></div>
   <div class="content">
     <h1>地物数据</h1>
-    <p>地物由 C++ 世界生成器读取 <code>data/features/*.json</code>。Lua 没有注册、替换或生成地物的写入口。</p>
+    <p>地物由 C++ 世界生成器读取 <code>data/features/*.json</code>。Lua 不直接注册或替换地物定义；树苗生长通过 Server 的 <code>engine.world.grow_tree</code> 使用已加载树形整体提交。</p>
 
     <h2>当前状态</h2>
     <p>NCDOCS 定义了树木等世界部件应具有稳定实例 ID、明确体素集合和整体结算语义，但没有定义具体树形、生成密度、最小间距、温度范围或群落分布数值。</p>
-    <p>CoreMod 的地物内容表当前为空。旧的森林树、平原树、山地松树、雪林树、稀树草原树、丛林树和沼泽树记录均已删除，避免把单格树形和概率参数当成正式设计。</p>
+    <p>CoreMod 当前提供 <code>core:oak</code>，在平原与森林生成多方块橡树。其树形和密度用于当前实现，尚未作为正式平衡参数验收。每棵树包含 4 格树干和 49 格树叶；生成器先校验完整集合为空且位于当前区块内，再一次放置，避免截断树冠、覆盖现有浆果丛或与其他树共享单元。</p>
+    <pre><code>{
+  "id": "core:oak", "type": "tree",
+  "block": "core:tree", "leaves_block": "core:leaves",
+  "trunk_height": 4, "crown_radius": 2,
+  "density": 0.65, "min_spacing": 5,
+  "biomes": ["core:plains", "core:forest"],
+  "temperature_optimum": 0.5, "temperature_range": 0.6
+}</code></pre>
+    <p>树记录必须指定不同的树干 <code>block</code> 和已注册的 <code>leaves_block</code>。<code>trunk_height</code> 为 2 至 16 的整数，缺省 4；<code>crown_radius</code> 为 1 至 3 的整数，缺省 2。实际树间距不小于树冠直径加一。完整单元集合由 C++ 生成器提供，不根据相邻同类方块猜测归属。</p>
 
     <h2>只读接口</h2>
     <ul>
-      <li><code>engine.terrain.list_features()</code>：列出成功加载的地物 ID；当前返回空列表。</li>
+      <li><code>engine.terrain.list_features()</code>：列出成功加载的地物 ID。</li>
       <li><code>engine.terrain.get_feature(id)</code>：读取已加载定义；不存在时返回空表。</li>
     </ul>
-    <p>将来内容记录必须直接给出文档确定的方块/部件形状和生成条件；加载器不会生成默认树或默认概率。</p>
+    <p><code>engine.terrain.generated_tree_at(x,y,z)</code> 返回该位置原生生成器提供的树归属、树干 hash 和逐格坐标/hash；已加载区块的树已改变时返回空。<code>tree_cells(feature_id,x,y,z)</code> 返回在指定根位置生长的完整形状。CoreMod 首次割除时将完整集合登记为带 UUID 的世界组件并保存，后续使用组件记录；树苗长成时登记同样的完整组件。生长提交失败会撤销预登记并保留树苗，成功后才发布组件变化通知，使监听器看到完整树形。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

@@ -11,12 +11,19 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块模型格式</div></div>
   <div class="content">
     <h1>方块模型格式</h1>
-    <p class="subtitle">世界方块模型采用 Minecraft Java 版方块烘焙模型 JSON 语义。实体和物品模型不属于本页范围。</p>
+    <p class="subtitle">世界方块和地面物品使用 Minecraft Java 版烘焙模型 JSON 语义。实体仍使用独立的 glTF 模型。</p>
 
     <div class="callout info">完整字段、默认值、必填标记、UV 公式和算法见 <code>docs/minecraft-java-block-model-technical-reference.md</code>。“必填”严格对应上游页面的星号标记；可选字段缺失时不得报错。</div>
 
     <h2>目录与预处理</h2>
-    <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，纹理放在 <code>assets/textures/</code> 下并使用命名空间资源 ID 引用。启动预处理只编译 <code>models/block/</code>，并且只处理<strong>启用中的 MOD</strong>（禁用 MOD 的模型和方块数据不会被预处理，其错误也不会阻止启动）。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
+    <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，物品形态放在 <code>assets/models/item/&lt;name&gt;.json</code>；两类模型都在启动时预处理。纹理使用相对 <code>assets/textures/</code> 的命名空间资源 ID。只处理<strong>启用中的 MOD</strong>。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
+    <h2>物品形态与植被</h2>
+    <p><code>minecraft:item/generated</code> 和 <code>minecraft:item/handheld</code> 为虚拟父模型，支持 <code>layer0</code> 至 <code>layer4</code>。从 PNG alpha 生成前后面和外露像素轮廓的侧面，厚度为一个模型像素；透明区域不变成立方体面，相邻不透明像素不生成内部侧面。手持父模型目前提供相同的生成几何，不解析 Minecraft 的视角 <code>display</code> 变换。显式 <code>elements</code> 可覆盖生成形态。</p>
+    <pre><code>{
+  "parent": "minecraft:item/handheld",
+  "textures": {"layer0": "core:items/test_sword"}
+}</code></pre>
+    <p>物品模型单独登记，不覆盖世界方块的材质或形状。地面物品优先使用同名 item 模型；没有 item 模型的方块保留 block 形状，独立物品的 <code>icon</code> 可作为生成 sprite 的来源。<code>minecraft:block/cross</code> 提供 Minecraft 的两张旋转交叉片，适合浆果丛等植被。测试食物在世界中使用浆果丛模型，掉落后使用浆果图标生成的物品模型；测试铁剑使用 handheld 模型。</p>
 
     <h2>根字段</h2>
     <table>

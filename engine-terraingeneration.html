@@ -23,17 +23,18 @@
     </ul>
 
     <h2>当前配置状态</h2>
-    <p>NCDOCS 尚未给出正式群落气候阈值、选择权重、高度曲线、材料层、洞穴参数或植被概率。CoreMod 当前为森林、平原、山地、水域、雪地和荒漠提供一组完整但明确属于测试用途的生成契约，用于验证六类可生成、可区分并贯通创建世界流程；六类权重统一为 1，气候与海拔仅按各类目的做测试分区，不代表正式平衡。地物表仍为空，不生成未设计的树木内容。</p>
+    <p>NCDOCS 尚未给出正式群落气候阈值、选择权重、高度曲线、材料层、洞穴参数或植被概率。CoreMod 当前为森林、平原、山地、水域、雪地和荒漠提供测试用途的生成契约，不代表正式平衡。地物表当前提供 <code>core:oak</code>：平原和森林中的多方块树由明确的树干与树叶集合组成，生成前校验整棵树，保留现有地物。</p>
     <p>只有在全部生成字段获得文档来源并通过注册表校验后，生成器才会执行气候选择和体素生成。配置为空时不创建 fallback 群落，也不生成默认地物。</p>
 
     <h2>数据与只读接口</h2>
     <ul>
       <li><code>data/biomes/*.json</code>：群落类型与生成参数。</li>
-      <li><code>data/features/*.json</code>：具体地物形状与生成条件；CoreMod 当前为空。</li>
+      <li><code>data/features/*.json</code>：具体地物形状与生成条件；<code>oak.json</code> 提供树干高度、树叶方块、树冠半径和分布参数。</li>
       <li><code>data/terrain/*.json</code>：基础地形材料引用；不替代缺失的群落规则。</li>
       <li><code>engine.terrain.list_biomes()</code>、<code>list_features()</code>、<code>get_biome()</code> 和 <code>get_feature()</code>：只读诊断接口。</li>
     </ul>
     <h2>世界派生缓存与失效契约</h2>
+    <p>树归属查询通过同一原生地形生成流程重建完整单元集合，按世界世代缓存最多 32 个区块；实际方块有变化时不把程序化集合当成有效组件。首次割除保存组件 UUID 与逐格 hash；一次割除移除整棵树，按树干格数结算木材。树苗生长沿权威方块批量事务创建相同形状。已保存的区块不会因更新生成规则而自动重写。</p>
     <p>地形/气候查询链上有若干按区块坐标缓存的采样结果，但它们的值其实是<strong>世界状态的函数</strong>（世界种子、世界地图配置、<code>terrain_sea_level</code>、群落注册表）。只按区块坐标作键，在世界切换后会串味：新世界第一个被查询的区块可能继承上一个世界的气候/基准高度。只按种子作键也不够，因为基准高度还取决于 <code>terrain_sea_level</code>、气候取决于世界地图配置。</p>
     <p>因此失效做成显式的：<code>ChunkManager</code> 持有世界状态世代 <code>world_state_epoch()</code>，每个缓存槽记录自己填充时的世代、不匹配就重填（<code>thread_local</code> 槽位因此无需枚举线程）。<code>ChunkManager::rebuild_world_derived_state()</code> 做两件事：按<strong>当前</strong>世界种子重建种子派生字段，并自增世代。调用时机：</p>
     <ul>

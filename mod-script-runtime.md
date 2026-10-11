@@ -38,11 +38,11 @@ buildings.apply_repair_unit(task_uuid) 只接收任务 UUID，核对当前 Repai
 
 colonists.apply_treatment_result 和 sync_transfer_position 的首参数改为任务 UUID 字符串。治疗结算必须匹配当前完成事件 UUID；转运可匹配活动 TransferPatient 任务或其当前完成事件，并检查目标患者。治疗监听器直接传 evt.uuid；持续搬运更新按需取得一次任务列表用于仍未迁移的 pending 数字键，不在脚本恢复阶段查询活动任务。相关测试源码已更新，未运行。
 
-colonists.consume_meal 的首参数为任务 UUID 字符串，Food 完成监听器传 evt.uuid。原生入口先验证当前事件的任务 UUID，再核对进食完成上下文及执行者，内部预约关联号只从上下文取得；脚本不传数字任务号。状态写入、预约扣除和营养更新顺序保持不变。无完成上下文、错误 UUID 和数字参数拒绝的测试源码已更新，未运行。
+colonists.consume_meal 的首参数为任务 UUID 字符串，Food 完成监听器传 evt.uuid。原生入口先验证当前事件的任务 UUID，再核对进食完成上下文及执行者，内部预约关联号只从上下文取得；脚本不传数字任务号。预约事务在候选世界里通过统一属性接口准备 `needs.hunger` 基础值写入；准备失败不消耗食物，成功时与 Lua 状态写入、预约扣除一起提交。无完成上下文、错误 UUID 和数字参数拒绝的测试源码已更新，未运行。
 
 engine.tasks.set_duration(task_uuid, seconds) 接受任务 UUID 字符串，原生 set_task_duration 使用二进制 UUID 直接查任务。制作、施工和治疗传事件中的 uuid，不再传 instance_id。时长变化清零进度，相同时保留；仅制作允许零时长。数字任务号与无效 UUID 不修改任务。相关源码与测试已更新，未运行。
 
-原生 prepare_completion 和直接 complete_task 只接受二进制任务 UUID，提交 PreparedCompletion 同样按 UUID 索引查当前记录，不按快照中的数字编号定位。模拟和行为树在原生结算前捕获 UUID；任务数组移位不会改变完成对象，旧数字编号复用也不会让旧凭据或旧 UUID 完成新任务。数字完成入口已删除；领取、取消及其他数字调度接口仍待迁移。重复完成、空 UUID、编号复用和移位的测试源码已调整，未运行。
+原生 prepare_completion 和直接 complete_task 使用二进制任务 UUID，提交 PreparedCompletion 同样按 UUID 索引查当前记录。Task 执行器在原生结算前捕获 UUID；任务数组移位不会改变完成对象。旧数字任务入口已删除，领取、取消和其他调度接口也使用 Task UUID。相关测试源码已调整，尚未运行。
 
 急救、患者喂食和战地治疗的模块入口与普通治疗统一校验实体 UUID；数字或错误格式在查询患者、预约或建单前报错。可选执行者缺省归为空字符串，患者必须为有效 UUID。治疗 pending 仍使用数字任务引用，需与原生任务接口一起迁移；恢复不通过活动工作池把 UUID 转回数字句柄。
 
@@ -73,6 +73,8 @@ Equipment 槽由实体持有完整 ItemStack 内容；原型装备使用 {id,num
 库存迁移中的新路径：ECS `Inventory` 持有背包槽，`GroundItemPile` 是带实体 UUID 的单品地面堆，方块容器内容由 `ChunkDataStore` 按坐标持有。槽位保存定义字符串 ID、数量、组件及必要预约状态；`OwnerItemRef` 用所有者、槽位、内容和预约句柄查找。实体存档和 `owner_items` 网络文档已读写这些新内容，方块容器也写入磁盘 `owner_items.json`；Lua 的 `items.owner_inventory` / `items.block_inventory` / `items.ground_pile` / `items.ground_piles` 返回完整 `components` 表，服务端可按实体 UUID、方块坐标和槽位拾取、丢出、存取，`items.reserve_ground_pile` / `items.release_ground_pile` 与拾取的可选预约句柄可保护实体堆来源。初始补给和制作／采矿产物现创建 ECS 地面堆。ECS 堆腐坏和消失通知已送入现有通知队列，死亡时 ECS 背包及装备内容生成地面实体堆。自动搬运、消耗及旧账本物品仍未迁移，双路径尚未收口；新增测试源码未运行。
 
 `engine.tasks.reserve_owner_item(source, count, source_task_uuid, target_task_uuid, target_entity_uuid)` 现可针对 `{kind="ground_pile", entity_uuid=...}`、`{kind="entity_inventory", entity_uuid=..., slot=...}` 或 `{kind="block_inventory", x=..., y=..., z=..., slot=...}` 建立所有者预约。返回数字预约句柄；任务参数仍是任务 UUID 字符串。预约系统已能缩减、释放和扣取消费此类来源；磁盘及网络 `tasks` 文档写入 `owner_allocations`，恢复时核对所有者内容与预约句柄。CoreMod 自动消费流程仍需迁移，新增测试源码未运行。
+
+`engine.items.colony_sources(colony_uuid, item_id_or_ids)` 由 C++ 按殖民地实例 UUID 与物品定义 ID 或哈希检索可用所有者来源；第二个参数可为单个 ID 或连续 ID 数组。每行返回 `source`、`item_id`、`item_hash`、未预约的 `count` 和坐标。来源包括归属该殖民地的方块库存，以及归属该殖民地且允许该物品的户外储存区内的地面堆；储存区外的散落物品不计入。放置任务的领取预检和激活预留使用同一 C++ 检索规则。服务端使用用户名到殖民地 UUID 的绑定校验 C++ 原生命令；Mod 自有传输不经过这层自动校验。
 
 方块槽预约批量扣料可在方块内容候选准备完成后执行托管状态提交回调，然后发布内容；普通进食可由方块容器供餐。`items.place_player_output` 将可容纳数量插入 ECS 背包，其余按定义容量生成地面堆并返回 `pile_entity_uuids`。地面物品快照和 `core:item.recovery` 只使用地面堆实体 UUID。旧集中账本、自动搬运及其他消费方仍待迁移；相关测试源码未运行。
 
@@ -218,7 +220,7 @@ UUID 存档迁移：实体记录只保存 uuid 并直接恢复身份；袭击成
 
 LogicServer 与一个世界会话同生共灭。加载期间丢弃普通入站信息，握手回复 `world_loading`；原生世界数据和脚本初始化/恢复全部完成后才开放连接，不增加客户端初始快照门槛。关闭世界时先停止网络，完成世界关闭回调，保留序列化 Local 设置，释放事件引用、Server 模块和 Lua VM；下次创建新的实例。原生执行线程可以复用，但不是仍在运行的 LogicServer。启动校验临时实例不发布 Server mod_ready/mod_closing；这些通知仅属于真正的世界会话。
 
-新建世界先准备原生数据、势力和初始区块，再创建 Server 脚本运行时；读档先恢复原生实体、工作、库存、区块和 runtime_states，再创建运行时并恢复脚本状态。模块加载前设置新世界的时间和随机种子。返回菜单的保存直接在已暂停的 owner 安全点完成，再销毁会话；退出程序也在销毁前处理最后一笔保存并取回结果，不遗留排队保存。失败读档丢弃本次世界，UI 只报告结果，不重复卸载；保存未完成导致的入口拒绝保留现有世界。
+新建世界先准备原生数据、势力和初始区块，再创建 Server 脚本运行时；读档先恢复原生实体、工作、库存、区块和 runtime_states，再创建运行时并恢复脚本状态。新世界从第 1 天 08:00 开始（初始模拟 Tick 为 9600，每 Tick 对应 3 秒游戏时间），原生天气、服务端及客户端脚本时钟使用同一初始 Tick；读档继续使用存档中的 Tick。模块加载前设置新世界的时间和随机种子。返回菜单的保存直接在已暂停的 owner 安全点完成，再销毁会话；退出程序也在销毁前处理最后一笔保存并取回结果，不遗留排队保存。失败读档丢弃本次世界，UI 只报告结果，不重复卸载；保存未完成导致的入口拒绝保留现有世界。
 
 DEBUG 显式重载仅在有世界 Server 时接受，关闭会话清除其待执行重载请求；不为菜单重载临时复活 Server。原生读档入口在使用 ChunkManager 前完成其初始化，与新建世界保持一致。以上为当前源码行为；完整世界往返仍待验收。按用户要求，后续停止编译和测试，不将源码修改当作运行验证通过。
 
@@ -282,7 +284,7 @@ C++ Error/Fatal 日志现保留调用处文件名、行号和原始错误原因�
 - UUID 用于实体与任务，定义用定义 ID。实体内部也使用 128 位二进制 UUID，直接作为 HashMap 键查找 EntityLocation，不增加数字实体 Handle 中间层；组件数组保持连续，删除时末行填补。Lua/JSON 的 UUID 文本仅在边界转换。小队和箭是实体，伤害是无 UUID 事件。地面单品堆全取删除实体、部分取减数量保留；背包/容器是所有者的 `{id,num,components}` 属性，无库存 UUID，组件完全一致才合堆。二进制 UUID 基础类型已写入源码，ECS 和调用方迁移尚在进行。
 - 工作先标记可用材料再取用。路径失效中断行为后复查工作并重寻路，再失败走现有有效性失败流程。开始/完成制作事件只包围制作动作：开始有材料和时长，完成有经验/产物/作者，但无可修改消耗列表；减免通过开始事件或产物返还。
 
-原生 AI 和行为树工作节点在路径结束后重新计算当前工作落点，再判断是否到达；工作目标变化时重新寻路，不以旧导航终点开始结算。行为树不再因路径耗尽但未到达而永久返回 Running。无法重寻路时沿用现有中断与后续重新分配流程，工作本身不因此完成；失效工作清空导航。相关回归测试已补源码，尚未运行。
+原生 Task 执行器在路径结束后重新计算当前任务落点，再判断是否到达；任务目标变化时重新寻路，不以旧导航终点开始结算。无法重寻路时沿用中断与后续重新分配流程，任务本身不因此完成；失效任务清空导航。相关回归测试已补源码，尚未运行。
 
 批量寻路在计算结果返回时也重新读取实体位置、工作有效性、归属和当前目标。若计算期间位置或工作目标改变，先清除旧导航，再从当前状态寻路并继续有效工作；若工作已失效，沿用工作有效性检查失败的清理路径。已改派的工作不向原实体安装旧结果，也不解除新执行者；世界卸载后不保留或重试寻路任务。对应确定性测试只补源码，尚未编译或运行。
 - DEBUG 热重载优先调试可用，不保证任意结构/状态无缝迁移；必要时重新进世界。独立 PhysicalServer 暂不实施。
@@ -574,7 +576,7 @@ shutdown 在模拟 owner 上调用时会在设置完成标记前拒绝；每次�
 
 世界组件客户端缓存按 world_components_snapshot 的字段类型投影：instances 与 cells 必须是连续的对象数组，组件 UUID 唯一，文本字段必须是字符串，坐标和方块 hash 必须是有限整数。接收失败保留整份旧缓存，查询与输入互不共享表引用。相关测试源码尚未执行。
 
-工作池缓存要求连续 rows 数组及唯一工作 UUID，按 task_pool_snapshot 事件字段类型检查后构造展示副本。稀疏数组、重复身份、非法字段或非有限数值拒绝整批更新并保留旧缓存；未知字段不进入展示投影。测试源码已补，尚未运行。
+工作池面板通过 `engine.tasks.ui_rows()` 查询本地 C++ TaskPool 中玩家拥有的有效 Task，只提取展示所需字段。单机和主机读取权威池，远程客户端读取网络同步后的本地副本；面板不维护独立 Lua 快照缓存。
 
 居民客户端缓存接收连续 rows 数组，拒绝稀疏数组、命名索引、非表行和重复 UUID；复制居民行时拒绝循环引用及非字符串/数字键。整批复制成功才替换旧缓存，查询结果为独立副本。药剂槽缓存也检测循环及非法键；职业和个人工作缓存已加入循环检测。相关测试源码尚未执行。
 
@@ -846,7 +848,7 @@ Hauling.place_refund 在查询仓储或写入库存前检查物品哈希、数�
 
 招募入籍先保存 registration_pending，再调用原生完成入籍。原生已成功但档案保存失败时，待提交记录保留；下次更新或恢复后检查原生 PendingRegistration 状态，补交档案，不重复入籍。档案集合与移除后的待入籍列表通过候选保存，成功后一起替换内存，最后通知；通知错误不会重新入籍。已补原生成功后保存拒绝、重载补交及通知抛错测试源码，未运行。这是可重试提交记录，不代表全世界磁盘保存和原生/Lua 状态的崩溃原子性已经验收。
 
-招募候选创建后先保存 entity_uuid、hall_uuid、origin 和 cleanup_pending，再应用经历及发起寻路。初始化返回失败或抛错时保留待清理记录；清理分支不依赖 Position，删除失败保留 UUID 重试，成功后回到 waiting_entry，避免重复生成候选。已有初始化抛错、清理拒绝、恢复后重试测试源码，未运行。原生创建与第一次持久化之间的崩溃窗口、无效原生 UUID 和入籍提交仍需跨系统事务处理。
+招募候选创建后先保存 entity_uuid、hall_uuid、origin 和 cleanup_pending，再应用经历及发起寻路。初始经历的属性修正、职业等级、初始状态、经历 ID 写入或资料应用异常失败时，记录 ERROR 并清空候选资料中的经历及其增量；已部分写入的实体沿 cleanup_pending 删除，随后以基础职业重新生成。清理分支不依赖 Position，删除失败保留 UUID 重试，成功后回到 waiting_entry，避免重复生成候选。已有初始化抛错、清理拒绝、恢复后重试测试源码，未运行；新增经历失败分支尚未运行验证。原生创建与第一次持久化之间的崩溃窗口、无效原生 UUID 和入籍提交仍需跨系统事务处理。
 
 待入籍居民仍存在但缺少 Position 时保留 UUID，并记录 candidate_position_unavailable，不视为实体已删除。返回途中 remove_pending_candidate 拒绝删除时保留 UUID、返回状态及期限，记录 candidate_removal_failed，后续更新重试；只有成功移除或确认 UUID 对象不存在才清空引用。新增缺位置、删除拒绝、重载后重试和成功清理测试源码，未运行。创建失败后的清理及原生入籍与保存提交事务仍未完成。
 
@@ -854,13 +856,13 @@ Hauling.place_refund 在查询仓储或写入库存前检查物品哈希、数�
 
 已入籍招募档案 recruited_profiles 以居民 UUID 为键，Recruitment.profile(entity_uuid) 只接受 UUID 并返回副本。待入籍记录使用 entity_uuid/hall_uuid，更新时解析当前实体句柄，入籍核对市政厅 UUID；恢复拒绝错误身份、重复居民及待入籍/已入籍冲突。入籍前检查居民身份和重复档案。已更新测试源码，覆盖居民/市政厅数字句柄变化、档案重载、查询隔离及错误引用拒绝，未运行。客户端档案展示通道、待入籍其他字段校验和入籍/存档跨系统事务尚未完成。
 
-居民当前工作和个人队列通过 `core:personal_task` 按居民 UUID 请求，接收端发布 `core:personal_task_snapshot`，居民详情面板读取独立缓存。服务端包含自动工作，使用 AI 当前工作引用识别正在执行的任务，按认领序列排列其余已认领工作；网络只传工作 UUID 和数组顺序，不传工作编号、工人句柄或认领序号。负载与上限直接使用工作池 personal_load/personal_limit。已补自动工作、排序、排除其他居民/未认领/失效工作和加权负载测试源码，未运行。旧数据桥中的个人队列分组/排序、加权负载查询和职业树备用构建已删除；居民列表的当前工作摘要、招募资料等原生查询仍待迁移。
+居民当前工作和个人队列仍通过 `core:personal_task` 按居民 UUID 发起鉴权请求；服务端写入 `core:personal_task:<居民 UUID>` C++ 共享键，居民详情面板按版本读取本地副本。服务端包含自动工作，使用 AI 当前工作引用识别正在执行的任务，按认领序列排列其余已认领工作；网络只传工作 UUID 和数组顺序，不传工作编号、工人句柄或认领序号。负载与上限直接使用工作池 personal_load/personal_limit。居民无效时删除对应共享键。已补自动工作、排序、排除其他居民/未认领/失效工作和加权负载测试源码，未运行。旧数据桥中的个人队列分组/排序、加权负载查询和职业树备用构建已删除；居民列表的当前工作摘要、招募资料等原生查询仍待迁移。
 
-工作池快照独立计算工人归属和工作状态：锁定工作仍显示工人 UUID/名称，归属优先级为 assigned、claimed、designated。客户端 task_pool_state 在接收和返回时复制公开字段，调用方不能修改缓存，也不会保留额外原生句柄。已补锁定归属、输入/输出隔离及重置测试源码，未运行。该快照只覆盖玩家拥有的工作，不能据此替代居民全部个人队列；自动工作、队列顺序和加权负载由独立 personal_task 快照提供，尚未运行验收。
+工作池本地查询独立计算工人归属和工作状态：锁定工作仍显示工人 UUID，归属优先级为 assigned、claimed、designated。查询只覆盖玩家拥有的工作；自动工作、队列顺序和加权负载由独立 personal_task 快照提供。
 
-居民药剂槽展示通过 `core:medicine_slots` 按居民 UUID 请求，接收后发布 `core:medicine_slots_snapshot` 写入客户端缓存。居民面板不再加载 systems.medicine；服务端将槽位物品哈希转换为配置 ID 和名称，将 reserved_by 转换为预约布尔值，不公开工作编号。使用五秒超时重试、按需每秒刷新及世界/请求/居民匹配；关闭、切换与断线清空缓存。已有字段映射、过期回复和隔离测试源码，未运行。居民列表、经历、装备等剩余数据入口尚未完成迁移。
+居民药剂槽展示通过 `core:medicine_slots` 按居民 UUID 发起鉴权请求，服务端把结果写入 `core:medicine_slots:<居民 UUID>` C++ 共享键；客户端按版本读取。居民面板不再加载 systems.medicine；服务端将槽位物品哈希转换为配置 ID 和名称，将 reserved_by 转换为预约布尔值，不公开工作编号。按需每秒请求刷新，读取时核对世界和居民；关闭、切换与断线清空缓存。居民无效时删除对应共享键。已有字段映射和客户端版本读取测试源码，未运行。居民列表、经历、装备等剩余数据入口尚未完成迁移。
 
-职业详情通过 `core:career` 按居民 UUID 请求，由服务端构建职业、前置要求、能力和装备候选；装备只公开物品 UUID，不公开原生实例编号。接收端发布 `core:career_snapshot` 写入 `ui.career_state`，居民面板直接读取该缓存，旧 data_bridge.career_detail 已移除。请求按世界、递增请求编号和居民 UUID 匹配；等待五秒重试，成功后按需每秒刷新；切换居民、断线、卸载或关闭窗口清空缓存。原生能力表允许等级空位，快照收集全部能力并按等级/ID 排序，不在首个空位停止。已补客户端过滤/隔离以及服务端稀疏能力、配置 ID、装备 UUID、定向回复和错误请求测试源码，未运行。居民列表、个人状态及完整原生客户端查询清理仍未完成。
+职业详情通过 `core:career` 按居民 UUID 发起鉴权请求，由服务端构建职业、前置要求、能力和装备候选，写入 `core:career:<居民 UUID>` C++ 共享键；装备只公开物品 UUID，不公开原生实例编号。客户端按版本读取本地共享副本并写入 `ui.career_state`，居民面板读取该缓存，旧 data_bridge.career_detail 已移除。请求校验世界、递增请求编号和居民 UUID；按需每秒请求刷新，切换居民、断线、卸载或关闭窗口清空缓存。居民无效时删除对应共享键。原生能力表允许等级空位，快照收集全部能力并按等级/ID 排序，不在首个空位停止。已补客户端版本读取/隔离以及服务端稀疏能力、配置 ID、装备 UUID 和错误请求测试源码，未运行。居民列表、个人状态及完整原生客户端查询清理仍未完成。
 
 完整生态诊断使用独立 `core:ecology` 通道，接收后发布 `core:ecology_snapshot`；客户端 `ui.ecology_state` 提供 ecology_state / ecology/state，旧数据桥不再加载 systems.ecology。快照显式复制规则、区块、资源点和动物显示字段；动物实例使用 UUID，规则 entity_id 表示原型配置名。缓存接收与读取均复制嵌套数据；断线、卸载和重载上下文切换清空缓存，重连重新请求。诊断每 20 Tick 刷新；地面物品面板继续使用每 4 Tick 的资源点通道。已补身份映射、私有字段过滤、复制隔离和连接生命周期测试源码，未运行。大规模快照的带宽/CPU 开销、生态持久状态和居民/职业提供器迁移仍待处理。
 
@@ -994,7 +996,7 @@ HUD 和快捷键的 core:time.pause/speed 已注册为 server/play 命令，各�
 
 狩猎菜单以目标 UUID 和优先级通过 `core:hunting` 通道请求预览。服务端解析当前实体，计算资格、可达性及标记；快照只公开目标和工人 UUID，不传输原生工作编号。客户端 receiver 发布 `core:hunting_snapshot`，监听器更新 `ui.hunting_state`，菜单及 `hunting_state` 提供器读取缓存。普通模块不自动执行，通道 receiver 与本地监听器分别注册。
 
-客户端按请求编号拒绝过时和重复回复，选择或优先级改变时清空旧预览，窗口关闭、世界卸载和断线时清理。服务端每四 Tick 发失效通知，只有存在选择的客户端重新请求；已有请求等待回复时不因通知重复发送。打开菜单后持续查询的预览请求使用 `engine.time.now()` 单调时钟，等待五秒未成功接收即分配新请求编号重试，模拟暂停不阻止恢复。发送抛错也保留重试期限，不在每帧重复发包；旧请求回复仍被丢弃。相关超时和发送失败测试仅添加源码，尚未运行。
+客户端按请求编号拒绝过时和重复回复，选择或优先级改变时清空旧预览，窗口关闭、世界卸载和断线时清理。服务端不再每四 Tick 向所有客户端广播失效通知；只有正在读取预览的客户端在成功收到回复后每 0.2 秒按需刷新。狩猎状态变更和模组重载仍可触发一次即时失效通知。打开菜单后的请求使用 `engine.time.now()` 单调时钟，等待五秒未成功接收即分配新请求编号重试，模拟暂停不阻止恢复。发送抛错也保留重试期限，不在每帧重复发包；旧请求回复仍被丢弃。相关超时和发送失败测试仅添加源码，尚未运行。
 
 `core:hunting.designate` 和 `core:hunting.cancel` 是 server/play 注册命令，分别拥有可取消前置事件。目标使用 UUID 数组，指定工人使用可选 `worker_uuid`，优先级为 0–9 整数；无效类型报错，目标消失则拒绝命令。原生 designate 使用统一游戏写权限检查，并先准备所有目标，再调用工作池 `post_batch`。批内插入拒绝或抛错时逆序移除新增工作及索引、恢复编号，不触发取消通知；已提交后构造 Lua 回复和发布通知仍是后续步骤。新增批次失败、编号耗尽和重试测试源码，尚未编译运行，分配失败注入及整体运行性能仍未验收。
 
@@ -1064,7 +1066,7 @@ potion_state / potion/state 提供器现在从 ui.design_state 读取，返回 i
 
 锻造设计新增 server/play 注册命令 core:forge.design.preview/save，各有可取消前置事件 forge_design_preview_requested/forge_design_save_requested。参数为 item_base_id、attributes、affixes，选项是连续的 {id,level_id} 数组，拒绝错误类型和重复选项。保存重新检查解锁与配置，成功发布 forge_design_saved 刷新制作目录；旧桥分支和别名已删除。当前返回 design_id，设计 UUID、面板缓存和异步预览回复尚未完成。新增命令测试源码未运行。
 
-制作菜单使用独立的 core:craft_catalog 通道；receiver 发布 core:craft_catalog_snapshot，ui.craft_catalog_state 保存 jobs、recipes、designs、potions、qualities。菜单已移除原生库存、设计、药剂、居民和寻路查询；来源 workers 为服务端计算的 UUID 候选，资格逻辑与生产面板共用 manufacturing_eligibility，支持徒手制作。配方 available 包含权威研究锁定，提交命令仍重新检查。断线/卸载清缓存，断线关闭菜单；载入、重连、重载和四 Tick 周期同步已接线。设计编辑器尚待替换，目录计算/传输性能未验收。
+制作目录由服务端写入 C++ 共享键 `core:craft_catalog`，`ui.craft_catalog_state` 按版本读取 jobs、recipes、designs、potions、qualities。菜单已移除原生库存、设计、药剂、居民和寻路查询；来源 workers 为服务端计算的 UUID 候选，资格逻辑与生产面板共用 manufacturing_eligibility，支持徒手制作。配方 available 包含权威研究锁定，提交命令仍重新检查。载入世界、模组重载和设计保存会发布目录；制作菜单打开时立即请求一次，制作菜单或仓储策略面板保持打开时客户端每秒通过 `core:craft_catalog.request` 请求服务端更新共享键，服务端对请求按单调时钟做全局一秒节流。面板关闭时不再每四 Tick 重算全部工人和工位可达性。断线/卸载清缓存，断线关闭菜单。设计编辑器尚待替换，目录计算/传输性能未验收。
 
 当前 RmlUI 使用的 craft_recipes 提供器已在 mod_ready 注册，读取制作目录缓存生成配方、锻造、药剂展示行；目录携带材料、制造参数、错误来源和研究锁定。旧 data_bridge 中该提供器的重复原生查询与研究索引已删除，桥内调用委托缓存。新增提供器测试源码检查本地化、锁定、三种来源和修改返回行不污染缓存，未运行。
 
@@ -1114,7 +1116,7 @@ core:production.set_target 已注册服务端命令，使用 order_uuid、正整
 
 仓储策略新增持久 uuid，原生创建时分配，同策略更新保留，删除重建产生新身份。磁盘/网络恢复不补生成 UUID，非法或重复身份拒绝；仓储快照向客户端暴露 uuid。面板选择与修改命令仍待接入此身份，相关测试源码未运行。
 
-仓储展示通过 core:storage 通道传输策略和物品，经本地 core:storage_snapshot 更新客户端缓存；storage_state 与 storage/state 提供器在 mod_ready 注册。物品行使用 UUID，断线/卸载清数据。仅展示链路已接线，策略修改命令及仓储目标稳定身份仍待迁移；测试源码未运行。
+仓储展示由服务端写入 C++ 共享键 `core:storage`，客户端按版本读取并缓存策略、物品和仓储点；`storage_state` 提供器在 mod_ready 注册。进入世界、策略变化、区域删除和模组重载时发布；仓储策略面板打开时立即通过 `core:storage.request` 请求一次，保持打开时每秒请求刷新，服务端请求入口全局节流为每秒一次。面板关闭后不再每四 Tick 枚举全部物品来源并计算接受规则。断线/卸载清缓存。仅展示链路已接线，策略修改命令及仓储目标稳定身份仍待迁移；测试源码未运行。
 
 资源 HUD 使用 core:resources 通道的服务端汇总，经本地 core:resources_snapshot 事件更新客户端缓存。mod_ready 注册 resource_snapshot、resources、colony/resources 提供器；名称与图标在客户端解析，断线/卸载清缓存。载入、重连、重载和每四 Tick 更新接线已完成，测试源码未运行；其他旧桥提供器仍在迁移。
 
@@ -1160,7 +1162,7 @@ Managed state 恢复严格使用当前声明：类型不匹配直接失败，不
 
 预约提交和释放拒绝同预约中重复的物品实例；批量提交同时检查跨预约的累计数量，拒绝时不修改物品。新增状态保持及正常合并消耗测试源码，未运行。进食持久状态统一提交仍在开发。
 
-进食结算使用 `colonists.consume_meal`，完成上下文和 Needs 检查在消耗预约前进行，消耗后直接更新营养；原 `apply_nutrition` 分离入口已移除。失败会释放未消耗预约，释放失败保留任务。Lua 状态写入与原生消耗的完整事务仍待完成，未编译运行。
+进食结算使用 `colonists.consume_meal`，完成上下文和 Needs 检查在消耗预约前进行；营养写入在候选世界通过统一属性接口完成，验证失败时预约和实体保持原状。成功时 Lua 状态写入、预约扣除和实体状态一起发布；原 `apply_nutrition` 分离入口已移除。失败会释放未消耗预约，释放失败保留任务。候选世界拒绝与成功提交的测试源码已补充，尚未编译运行；进食事件链仍需真实内容验证。
 
 进食任务取消、失效清理与 reset 在预约释放失败时保留记录；预约已不存在则继续清理。pending 删除写入 state 成功后才替换缓存，写入失败可重试。测试源码已补充，未运行；消耗食物与应用营养的结算事务仍未完成。
 
@@ -1333,6 +1335,10 @@ orders_kinds 新增真实模块组合测试源码，覆盖延迟宿主读取、�
 职业任务释放预约失败且预约仍存在时保留任务与预约记录，并报错供后续重试；中断、取消、失效清理、重置和完成失败均遵守此规则。预约已不存在可完成清理，完成成功则移除记录后再报告结果。新增故障测试源码未执行，排队事务及回调重入仍待处理。
 
 `core:colonists.change_class` 和 `core:colonists.change_equipment` 为服务端 play 注册命令，传 `entity_uuid`、`item_uuid`；转职还需 `job_id`，换装备以服务端当前职业为准。各自具有可取消前置事件，服务端重新解析目标后调用职业系统排队，失败原因返回 error。面板和装备选项已接入 UUID；职业任务存档及职业树数据链路尚未完整迁移，测试源码未执行。
+
+当前转职命令的装备来源使用 `source_kind`、`source_x/y/z`、`source_slot`，地面物品堆另外传 `source_entity_uuid`。职业树只列出位于 `core:stockpile` 储存区内、符合该储存区物品筛选且尚有未预约数量的地面装备，以及原有的方块库存装备；服务端在排队、激活和提交前重新核对地面来源仍位于储存区。地面装备完成交换时，旧装备会放回来源位置。没有候选装备时，人员面板给出储存区提示。此变更尚未编译或运行测试。
+
+职业任务的方块库存装备需求使用 `set_item_requirements` 的 `item_id` 字段。地面装备不设置该任务需求，因为工作池的需求可用性只统计方块库存；其指定来源在命令预检、任务激活时的所有者物品预留和提交时验证。此前误传 `item_ids` 会产生 `task_requirements_invalid`，该原因码现在有本地化文本。
 
 职业 pending 恢复先校验全部记录，再同步原生材料要求和替换缓存；拒绝错误类型、重复工作及稀疏列表，不再静默丢弃记录。候选恢复不调用原生写接口，原生同步失败会报错。多工作原生同步尚未实现整体回滚，职业 UUID/命令迁移仍在进行；测试源码未执行。
 
@@ -1540,9 +1546,9 @@ mod_ready 现在可携带可选 world_id：初始启动无世界时省略，重�
 
 采掘和方块放置命令使用 cells 前检查其为连续数组，拒绝额外键或空洞；所有坐标检查完成后按首次出现顺序去重，再执行世界写入。前置监听器仍保留修改、不逐个校验。新增边界测试源码未运行。
 
-旧 `engine.selection.confirm_mine/confirm_chop` 及其 Engine 实现已移除。采掘确认应调用注册命令 `core:orders.confirm_mine` / `core:orders.confirm_gather`，提交格坐标、优先级和可选工人 UUID，由服务端重新校验。静态引用检查，未编译运行。
+旧 `engine.selection.confirm_mine/confirm_chop` 及其 Engine 实现已移除。采掘确认调用 `core:orders.confirm_mine`，割除确认调用 `core:orders.confirm_cut`，提交格坐标、优先级和可选工人 UUID，由服务端重新校验。静态引用检查，未编译运行。
 
-采矿/采集确认面板向服务端注册命令发送格坐标、优先级、工人 UUID，经可取消 designation_mine_requested/designation_chop_requested 事件后逐格复用原生权威校验；服务端执行不读取客户端选择状态。测试源码未运行，旧兼容 API 清理与确认后工具状态仍待完成。
+采矿/割除确认面板向服务端发送格坐标、优先级、工人 UUID，经可取消 designation_mine_requested/designation_cut_requested 事件后复用原生权威校验；服务端执行不读取客户端选择状态。割除使用 Cut（编号 15），2D 区域按整列收集树根与野生植被目标；多格树按完整生成/保存组件归并到根部并去重。测试源码未运行。
 
 `engine.selection.start/cancel/set_vertical_range/set_instruction` 为客户端工具接口，服务端调用抛出 Lua 错误。权威世界变更仍应经过注册命令；选择查询与旧 confirm_mine/chop 的完整迁移尚未完成。
 
@@ -1674,7 +1680,7 @@ construction_active 提供器现读取客户端缓存。core:construction 通道
 
 建筑完成发布 core:building_completed，字段 building_uuid、def_id、x/y/z；组件登记和仓储更新通过独立服务端静态监听器执行。仓储策略变更发布 core:storage_policy_changed。搬运产物每 40 Tick 由静态监听器扫描，不再依赖 bootstrap 初始化闭包定时器。客户端旧数据桥通知及其他建筑事件仍待迁移；回归测试仅新增源码，未运行。
 
-采矿和砍伐先发布可修改的 `core:resource_extracting`，监听器的 `current.products` 是最终产物定义和数量；随后 `engine.world.settle_mining_outputs` 先准备全部产物，再与整组方块删除共同发布。提交失败不执行组件或区域清理。提交成功后发布事实事件 `core:block_mined`/`core:block_chopped`，包含坐标、方块定义、工作/工人 UUID、组件坐标及产物地面堆实体 UUID；`core:resource_blocked` 报告失败原因。提交后的世界组件清理由既有失效协调重试，区域清理坐标写入世界状态并由专属 tick 监听器重试。事件和经济日志不回滚已提交的方块与产物；测试源码未执行。
+采矿和割除先发布可修改的 `core:resource_extracting`，监听器的 `current.products` 是最终产物定义和数量；随后 `engine.world.settle_mining_outputs` 准备全部产物，与整组方块删除共同发布。多方块树由原生生成集合或树苗生长集合登记 UUID，不推断邻接归属；按树干格数执行产出表，树叶随整棵树移除但不额外产木。野生食物按单格结算，保留原有产出表和生态刷新规则。提交失败不清理组件或区域，重试保留组件 UUID。提交成功后发布 `core:block_mined`/`core:block_cut`；`core:resource_blocked` 报告失败原因。区域清理坐标写入世界状态并由专属 tick 监听器重试。事件和经济日志不回滚已提交的方块与产物；测试源码未执行。
 
 进食失败发布 core:need_blocked，字段 task_uuid、可选 entity_uuid、need、reason；不可取消、不自动同步。经济问题由独立服务端静态监听器处理，失败待办在报告前保存移除，避免通知异常后重复结算。测试源码已添加，未执行。
 
@@ -1859,6 +1865,10 @@ Engine 注入的候选 UI 命令与网络 transport 现在要求双端候选已�
 双端加载器支持提交前候选准备回调。两端候选注册成功后可恢复并验证状态；拒绝、异常或准备期间源文件变化时不替换活动注册表及运行时。回调必须遵守候选 API 的副作用隔离，当前尚未接入世界热重载流程。新增双 VM 准备失败/成功测试源码未运行。
 
 已新增 LuaSourceWatch 文件监测组件：仅 DEBUG 启用，按字节检测 scripts 根目录中的 Lua 增删改并防抖，JSON 不触发 Lua 变更；读失败不当作文件删除。组件只返回稳定源集合，不执行 Lua。尚未连接引擎轮询与候选替换，因此自动热重载仍未交付；新增测试源码未运行。
+
+帧分析中的 `PollEvents` 现在只计量 GLFW 消息泵；网络 Mod 数据接收和 DEBUG Lua 源码监视分别记为 `ModData`、`LuaWatch`。Windows DEBUG Lua 监视优先使用 `ReadDirectoryChangesW` 接收 scripts 目录变化，空闲时不周期性遍历文件；变更静默 500 ms 后由后台线程读取受影响的 Lua 文件。通知溢出或目录改名时后台全量校验。监听失效时以及其他平台按 1 秒间隔后台遍历 Lua 文件的大小与修改时间，只读取元数据变化的文件；首次进入回退路径时读取全部文件建立元数据基线。主线程消费完成结果并执行后续候选热重载。首次配置时的源码基线扫描仍在世界启动阶段同步完成。本次监视改动尚未编译或运行验证。
+
+后续日志显示多秒慢帧集中在模拟互斥锁争用：原 `Chunks` 和 `Raycast` 分段都包含主线程等待同一把模拟锁。帧分析现单列 `ChunkLock`、`RayLock`，`Chunks` 和 `Raycast` 只统计其余工作；模拟线程在每个 tick 安全点看到渲染线程等待时结束当前批次，释放锁后等待渲染线程取得锁，避免高倍速连续抢锁导致渲染线程饥饿。此改动尚未编译或运行验证。
 
 新建世界也会保留 world_created、world_load_started 的逐监听器失败至完成阶段，其他监听器继续执行。早期初始化失败不能被完成监听器成功覆盖，运行时保持 Tick/保存门关闭，交由新建世界失败路径处理。新增回归测试源码未运行。
 
@@ -2146,15 +2156,15 @@ Resident equipment/backpack display rows project definition ID, name, positive i
 
 Resident collection requires dense resident, work and inventory arrays. Sparse or named indices fail collection instead of truncating data. An absent equipment item is nil, not false; every displayed item supplies a stats table with string keys and finite numeric values.
 
-Resident data now travels over `core:residents`: server request/snapshot receivers, a client `core:residents_snapshot` local event and detached `ui.residents_state` cache. Server publication occurs every four simulation Ticks and at world load; client lifecycle listeners clear on disconnect/unload and request again on reconnect/reload. data_bridge reads this cache and filters/sorts locally. Native resident summaries always expose a string job_id: an unresolved or absent job definition produces an empty string, never a numeric hash. Test source connects actual native ECS/bindings, collection and EventRuntime with a recruitment fixture; it has not been executed and does not exercise network transport. Full-snapshot performance, actual recruitment generation through transport and runtime validation remain outstanding.
+Resident presentation data is built on the server every four simulation Ticks and at world load, then written to the C++ shared-state key `core:residents`. C++ compares the value and sends changed state through native snapshots; `ui.residents_state` reads the local C++ replica and validates/projects rows before filtering and sorting. The old client event receiver remains registered for compatibility but the server no longer publishes periodic resident snapshots through a Lua channel. Native resident summaries always expose a string job_id: an unresolved or absent job definition produces an empty string, never a numeric hash. The shared-state network path has not been compiled or runtime-tested in this workspace.
 
-The resident snapshot event now declares nested equipment/inventory, current-work, health and thought fields. Current-work UUID and numeric fields are validated before local dispatch; undeclared nested item/work fields are not forwarded. Attribute dictionaries and recruitment experience shapes remain under review. Actual EventRuntime schema tests have been authored but not run.
+The retained resident snapshot event schema declares nested equipment/inventory, current-work, health and thought fields for compatibility with older event consumers. The active shared-state reader validates resident rows locally. Attribute dictionaries and recruitment experience shapes remain under review. Existing EventRuntime schema test sources do not exercise the new native shared-state path.
 
-Resident server world-load handling records the active world before publishing. A failed initial snapshot build/send can therefore be retried on a later Tick. Requests from other world IDs are ignored; matching requests target the receiver-context sender. Reload preparation sets context without publishing, and unload disables publication.
+Resident server world-load handling records the active world before writing shared state. A failed initial build can be retried on a later Tick. Requests from other world IDs are ignored; a valid request refreshes the same server-owned shared value. Reload preparation sets context without writing, and unload disables updates.
 
-The resident client starts disconnected. Loading a world establishes its world ID but does not imply a connection; requests and snapshots are enabled by the real connection event or a native connected value during runtime restoration. Loopback and local Server also emit those connection facts. Reload preparation clears the cache without sending; reload commit requests a fresh snapshot.
+The resident client starts disconnected. Loading a world establishes its world ID but does not imply a connection; a real connection event or restored connected value enables requests. Loopback and local Server also emit those connection facts. Reload preparation clears the local view; reload commit requests that the server refresh its shared value, which C++ then replicates.
 
-Periodic resident snapshots are compared with the last successful broadcast; unchanged content is not sent. Targeted requests always receive a full snapshot and do not update the broadcast baseline. Failed sends leave the baseline unchanged for retry. World/reload changes clear it. Collection and deep-comparison CPU costs remain to be measured.
+The C++ shared-state store compares encoded values, advances a version only on change, and the native network snapshot path sends only changed shared documents. The old Lua deep-comparison and targeted snapshot baseline have been removed. Collection and encoding costs on the server remain to be measured.
 
 Resident snapshots omit the duplicate aggregate `attributes` table. Base/work/combat groups project declared finite numeric fields, and the event schema declares those same nested keys. Unknown native attribute extensions are not automatically exposed.
 
@@ -2163,3 +2173,18 @@ Resident snapshots omit the duplicate aggregate `attributes` table. Base/work/co
 The `CoreNativeHaulingScan` integration test uses a real ECS ground pile, an item definition with its production hash, a block inventory, a storage policy, native Lua bindings and TaskPool. The actual `hauling.lua` scans that state and posts a UUID task.
 
 The same fixture now registers the actual CoreMod hauling activation and completion listeners in a Server ModRuntime. Engine notification dispatch activates a carrier, reserves the pile and destination, completes pickup into the carrier, then completes delivery into the block inventory. The targeted native delivery test passes. It does not include a world save/load, crafting or treatment.
+
+Mod-defined replicated presentation data uses the C++ shared-state store rather than periodic Lua snapshot channels. The server writes through `engine.shared_state.set`; clients read their local replica with `get` and `version`. See [模组网络共享状态](mod-network-shared-state.md) for ownership, lifecycle, remote snapshot cadence, and the remaining producer-side polling work. These changes have not been compiled or runtime-tested in this workspace.
+
+Difficulty rules accept an optional integer `falling_block_damage` at the rule
+root and on each preset. A preset value overrides the root; older definitions
+without either field default to 20. The value must be between 0 and INT32_MAX;
+zero disables falling-block damage. `systems.difficulty` publishes the resolved
+field through native `engine.difficulty.apply`, `engine.difficulty.get`, and the
+existing shared difficulty snapshot. The difficulty panel shows its numeric
+value. It is restored from the saved difficulty selection and current rules,
+without adding a new selection dimension or changing the saved selection format.
+The native binding rejects malformed values without replacing published state.
+Fixed impact damage and runtime structural collapse are described in
+[Entity tasks and movement](entity-tasks.md). Added checks are source-only;
+this change has not been compiled or runtime-tested.
