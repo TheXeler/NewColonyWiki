@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>城邦决策与分层模拟 · NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="city-simulation"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>城邦模拟</div></div><div class="content">
+<h1>城邦决策与分层模拟：算法底座</h1>
+<p>依据源仓库 <code>NCDOCS/城邦AI决策与分层模拟重构设计.md</code>。本页描述新增源码的接口与实际边界，不代表整份重构已完成。没有编译、运行测试或进行游戏验收。</p>
+<h2>当前实施状态</h2>
+<table><thead><tr><th>阶段</th><th>已有源码</th><th>仍需接入</th></tr></thead><tbody>
+<tr><td>身份、状态与布局</td><td>城邦、居民、建筑、工作、队伍和战斗事实使用 Lua 世界状态；模板生成保留结果、游标与进行中的身份。</td><td>正式模板、地域选取、原生建筑及实体状态的完整交接；既有无经营状态城邦需要显式迁移。</td></tr>
+<tr><td>预测与评分</td><td>倾向缺省来源不算零；带时点的确定／不确定供需、预约消耗去重、储备上限、富余与评分限幅。</td><td>从共享库存、订单和实际消费实时构造预测输入；正式资源分类与评分参数。</td></tr>
+<tr><td>规划与调度</td><td>确定性跨轮搜索、循环与版本失效；1200 Tick 决策、20 Tick 推进；抽象工作保持身份和进度暂停。</td><td>主路径和实际能力注册、多路径成果覆盖的自动更新、共用前置的订单执行关联；实体 Task 的无损暂停。</td></tr>
+<tr><td>分层模拟</td><td>实际抽象物品扣除、产能推进、缺粮负担、营养余量与具体身份伤亡；模式协议保持单一权威。</td><td>全城区块占用、多玩家触发、实体准备和显示屏障、原生库存／建筑／Task 导入导出；代表性吞吐校准。</td></tr>
+<tr><td>对外行动</td><td>统一外交适配、冷静／保护期、积分和授权检查；队伍资产划出／返回；可配置分段抽象战斗。</td><td>正式外交目标／回应政策、现场贸易算法、实体队伍桥、战斗换算配置与实体战斗连续交接。</td></tr>
+</tbody></table>
+<p>未注册能力不能被报告为成功。CoreMod 没有新增隐藏平衡值，也没有用空接口自动生成城邦、免费完成生产或交换远程库存。当前正常新世界不会自动出现这些模板城邦。</p>
+<h2>模块与配置</h2>
+<p>公共模块为 <code>core:systems.city_math</code>、<code>city_planner</code>、<code>city_model</code>、<code>city_runtime</code>、<code>city_generation</code>、<code>city_diplomacy</code>、<code>city_teams</code> 和 <code>city_combat</code>。依赖 core 的 Mod 在 Server 注册具体内容；函数不进入存档。</p>
+<p><code>city_runtime.register_rules(id, rules)</code> 验证 tendency_weights（leader &gt; city &gt; faction）、tendency_min/max、reserves、score、planner.depth/nodes_per_round、exit_wait_ticks、forecast_window_ticks、crisis_shortfall/crisis_workers_required 和 survival。survival 明确提供 nutrition、food_per_resident_tick、burden_per_death、burden_recovery_per_tick。数值缺失报错；1200／20 Tick 和外交天数来自已确认设计，不是未确认默认值。</p>
+<p>每个 reserve 声明 item_ids、unit（days/construction/money/quantity）、lower、upper、tendency 和 tendency_scale。城邦提供 reserve_context（对应 daily_consumption/planned_materials/expected_spending）以及 forecast 的 locks、events、checkpoints。forecast event 包含稳定 id、tick、incoming、outgoing、confidence、source，可带 reservation_id；未成交 purchase 的 confidence 必须小于 1。这些输入目前需要能力适配器从真实系统更新。</p>
+<p><code>city_math.tendencies/reserve/forecast/score/aggregate</code> 为纯算法。aggregate 以动作、目标、产物及兼容条件形成的稳定 key 汇总数量和来源，已有覆盖只使用一次，共用前置优先度取最大值。当前 runtime 记录汇总解释，但尚未自动将所有共用前置变为唯一共享订单。</p>
+<h2>承诺路径与工作</h2>
+<p><code>register_focus(id,{evaluate})</code> 的 evaluate 读取同一城邦快照、预测和倾向，返回候选 goal、urgency、satisfaction、timeliness、remaining_cost、risk、tendency、available、requirements 及满足／永久失效标记。candidate goal 含稳定 key 和 quantity。能力尚未提供时 available=false 并给出原因，不用零成本占位。</p>
+<p><code>register_action(id,{plan,start,valid,settle,strategic})</code> 注册实际途径。plan 返回前置 requires、完整 remaining_cost 和 available；start 在候选数据中准备真实工作规格；valid 在每段前检查设施和目标；settle 在候选数据中按共享专项规则结算。回调不可直接修改外部系统来伪装候选提交，实体工作必须通过 bridge 使用现有 Task。</p>
+<p>抽象工作规格包含 uuid、action_id、workers、materials、required、facility_factor、state_factor、work_fraction、interruptible；产能单位为每模拟 Tick 工作量。materials 是实际物品 id/count/components，精确匹配组件内容后扣除，缺料不部分扣除。暂停保留 uuid、progress、consumed，恢复不重复扣材料。普通优先变化不取消已下达工作；规划缓存可重建，承诺和工作持久化。</p>
+<p>当前底座不提供完整配方、农业、温度与建设适配器；不得直接把生产订单原有的取消式 pause 当作无损 Task 暂停。多途径预测成果的自动抵扣及共用前置的执行共享仍需完成，不能仅凭解释记录宣称全部规划算法完成。</p>
+<h2>生成、模式与数据查询</h2>
+<p><code>city_generation.register(id,{density_per_100_chunks,minimum_distance,seed,initial})</code> 使用独立保存的随机流和稳定候选顺序；generate 接受实际区块候选（key/chunk_x/chunk_z）。initial 提供城邦状态和派系身份，选择结果只创建一次。进行中生成保存身份和初始结果，可继续而不重新抽取；空间不足记录原因。没有配置地图／模板供应器时不会启动生成。</p>
+<p>新原生 API <code>engine.factions.create_settlement(spec)</code> 要求 uuid、已存在的非玩家 def_id、display_name、map_q/map_r/map_color，使用定义的初始关系和当前权威 Tick。恢复不能通过此生成入口重放。<code>engine.factions.calendar()</code> 返回现有日历换算常量，外交天数不按现实时间计算。</p>
+<p><code>register_bridge</code> 明确要求 observe/prepare/discard/activate/capture/deactivate/start/pause/resume。observe 分开提供玩家加载与必须实体处理的交互；activate 必须对完整城邦原子校正和启用，deactivate 必须导出真实事实并停止实体推进。准备未完成仍由抽象状态权威；无玩家且无交互达到 exit_wait_ticks 后退出。这里只实现协议协调，原生全城桥尚未提供。</p>
+<p>人口通过 <code>core:city_population</code> 指标从实际居民记录统计；没有经营数据时返回 nil 与 city_operating_state_unavailable。外交 query 保留指标供应器返回的不可用原因。实体库存和居民的实时查询依赖 bridge 捕获，没有额外石材／人口权威整数账本。</p>
+<h2>外交、队伍与抽象战斗</h2>
+<p>city_diplomacy.register 为规则 ID 注册 choose/approve。initiate 核对战略授权、冷静期、玩家保护和未结束提议；respond 接受需要当前版本、回应权、积分 &gt;= 0 和绑定目标／提议／城邦 revision 的批准。议和绕过 7／5／9 日与一天保护等待，但不重复发送。成功才记录发起时点，直接调用现有外交模块。正式政策仍待路径能力内容，未注册时记录 city_diplomacy_policy_missing。</p>
+<p>city_teams.depart 将真实居民和携带物移出本城；transport→onsite→returning→return_settlement→returned 保留队员身份。到达后通过注册的现场贸易供应器处理两个候选库存，未实现交易时拒绝，不能远程预约成交。返回处理一次后清空队伍资产，避免重复入库。实体出发／返回与现场实体交易尚无原生适配器，会明确拒绝。</p>
+<p>city_combat.register 需要 segment_ticks、loss_coefficient、retreat_fraction，以及 capability/damage/dead/retreat/goal 配置回调。能力读取真实人员及装备，独立随机流按分段概率结算，写回人员和装备损失。非边界保存补齐时间；同段双方能力从段前状态读取。实体战斗接入尚未完成，当前报告 city_entity_combat_adapter_required，不声称两种战斗已经连续对接。</p>
+<h2>持久化、诊断与验证</h2>
+<p>core:systems.city_runtime 的 @State cities 保存 records/teams/battles；生成过程和外交等待时点由各自模块世界状态保存。save_started 补齐不足 20 Tick 的抽象进度和队伍／战斗时间。恢复不生成新的身份，不自动为旧城邦补随机经营状态。core:city_simulation 共享状态发布城邦解释和已注册能力清单，缺少经营状态的 NPC 明确标记迁移需求。</p>
+<p>新增验收源码 <code>Tests/UnitTests/test_core_city_algorithms.cpp</code> 覆盖预测、倾向、规划、抽象暂停、生存、非边界时间、队伍返回、外交等待和模式协议等。仅进行 Lua／嵌入片段语法解析与源码差异检查；没有 C++ 编译、测试运行、联机或吞吐校准。</p>
+<div class="footer">NewColony Wiki · UTF-8</div></div></div><script src="wiki.js"></script></body></html>

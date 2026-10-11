@@ -40,6 +40,6 @@ diplomacy.reject(negotiation_uuid, actor_uuid, expected_version)</code></pre>
   <p>外交列表可选择本方城邦；仅一个玩家城邦时自动选择。界面显示当前双方关系、状态、条约、提议积分、谈判诉求和条件，提供接受、拒绝、反议与条件增删。客户端作者可通过公共 <code>core:ui.diplomacy.edit_conditions(uuid, version, conditions)</code> 提供带参数的条件编辑器；内置界面只提供无参数的条件选择，不虚构物资支付编辑器。战略地图保留当前入口，也可进入玩家城邦的外交。</p>
   <h2>保存、同步与后续 AI</h2>
   <p>战争和条约复用 <code>factions.json</code> 的 pair_relations；谈判通过公共模块的 <code>@State diplomacy</code> 世界状态自动保存。<code>core:diplomacy</code> 共享状态含 factions、definitions、proposals、negotiations、perspectives 和 world_id。perspectives 为每个玩家城邦提供其与其他城邦的关系、状态、条约及提议预览，不把旧的全局玩家关系套用到联机双方。旧 C++/JSON 提议 schema 保留兼容读取，旧 evaluate_proposal 等占位接口不负责新谈判。</p>
-  <p>加载与热重载恢复会检查谈判身份和结构。缺少 Lua 提议实现时保留事实、显示 unavailable_reason，并拒绝执行；重新注册后可重新评估。Client 不保存或执行 Server 回调，断线／卸载清空显示缓存。后续 AI 在 Server 调用同一 begin/preview/list/accept/counter/reject；外交本体不提前规定生成、发展、冷静期或决策算法。</p>
+  <p>加载与热重载恢复会检查谈判身份和结构。缺少 Lua 提议实现时保留事实、显示 unavailable_reason，并拒绝执行；重新注册后可重新评估。Client 不保存或执行 Server 回调，断线／卸载清空显示缓存。新增 <a href="city-simulation.html">城邦算法底座</a>以 city_diplomacy 接入同一 begin/preview/list/accept/counter/reject，并保存冷静与保护时点；正式城邦政策和全城实体桥仍未完成。战争、敌对与贸易的独立语义不变。</p>
   <div class="footer">NewColony Wiki · UTF-8</div>
 </div></div><script src="wiki.js"></script></body></html>
