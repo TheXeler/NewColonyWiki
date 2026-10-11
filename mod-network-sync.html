@@ -28,6 +28,7 @@
     </table>
     <p>单人世界可表示为 <code>PhysicalClient { LogicClient ↔ LogicServer }</code>；独立服务端可表示为 <code>PhysicalClient { LogicClient } ↔ PhysicalServer { LogicServer }</code>。即便两端同进程，Lua VM、模块缓存、state 和执行 owner 仍独立。不得根据“运行在 PhysicalClient 中”判断某回调属于 LogicClient。</p>
     <p>NewColony 采用 <strong>服务器-客户端（Server-Client）</strong> 架构。Server 唯一推进游戏逻辑；普通单机也会建立进程内逻辑 Server/Client 回环并复用协议编码、解码、命令和快照路径，不另设可绕过 Server 的单机写入模式。联机时一名玩家作为 Server，其他 Client 连接到该 Server。</p>
+    <p>加入世界的用户名由客户端提供，当前允许冒名；服务端在玩家选择可加入的殖民地后保存用户名到殖民地实例 UUID 的绑定。原生 C++ 命令由服务器使用该绑定校验，不依赖客户端在命令载荷中提交殖民地 UUID。Mod 自有传输和绕过原生命令入口的调用不受此自动校验。派系定义表示文化来源，同派系殖民地仍各有独立身份与仓储归属。</p>
     <p><code>NetworkSystem</code> 对象本身随 Engine 存活，但活动网络会话属于世界生命周期：创建或读取世界时，<code>WorldLifecycleCoordinator</code> 使用该世界 seed 和当前 Registry 指纹启动 Loopback/Server/Client 会话；返回主菜单时关闭会话并把模式重置为 <code>disabled</code>。主菜单的 Server/Join 操作只记录下一世界的连接配置，不会在尚无世界时提前创建会话；Disconnect 同时清除该配置。这样再次进入世界时不会复用上一个世界的已关闭会话。</p>
     <table>
       <thead><tr><th>角色</th><th>职责</th><th>典型操作</th></tr></thead>
@@ -43,38 +44,42 @@
 
     <h2>快照同步机制</h2>
     <p>服务器每隔固定 tick 向所有已认证客户端广播一个<strong>快照（Snapshot）</strong>。快照包含当前 tick 下所有需要同步的实体及其组件状态。</p>
+    <p>捕获解析属性时，若已有的引擎数值属性因修正溢出等原因无法得到结果，服务器会拒绝该次快照捕获并报告错误；不会静默省略该属性后发送不完整的解析缓存。</p>
     <p><strong>两种节奏：</strong>实体状态按 <code>snapshot_interval_ticks</code>（默认 2 tick，20 TPS 下 10 Hz）广播；<strong>状态通道文档</strong>（物品、经济日志、工作池、阵营、设计与存档状态等，由服务器把整个世界序列化成 JSON）按更慢的 <code>state_channel_interval_ticks</code>（默认 20 tick，即 1 Hz）刷新，避免每 2 tick 重复序列化整个世界。<code>full_snapshot_interval_ticks</code>（默认 120）的周期全量快照一定携带通道，因此新加入的客户端最多等待一个通道周期。未刷新通道的那个 tick 不产生任何通道条目，客户端保留已有通道；把"当前包中缺失"当作删除会清空客户端世界状态，这一点由单元测试固定。</p>
     <h3>同步的组件</h3>
     <table>
       <thead><tr><th>组件</th><th>同步字段</th></tr></thead>
       <tbody>
         <tr><td>Position</td><td>x, y, z</td></tr>
-        <tr><td>Speed</td><td>x, y, z</td></tr>
+        <tr><td>Speed</td><td>x, y, z 与引擎基础移动速度 move_speed（格/秒）均通过统一属性接口读取 ECS 基础值；解析后的速度随属性缓存同步。</td></tr>
+        <tr><td>VisionRange</td><td>顶层 ECS 基础视野半径 vision_range；由统一属性接口读取。组件新增、数值变化和移除均随实体快照同步。</td></tr>
         <tr><td>Rotation</td><td>yaw, pitch</td></tr>
-        <tr><td>Health</td><td>current, max, base_max</td></tr>
+        <tr><td>Health</td><td>current, max, base_max；current 与 max 从统一属性接口获取当前解析值，与解析属性缓存的 current_hp、max_hp 一致。无法解析或超出 Health 整数范围时拒绝捕获。</td></tr>
         <tr><td>Equipment</td><td>装备权威位于统一物品领域快照；ECS 单槽仅为从装备位置实例重建的查询缓存，新 Server 实体快照不再发送第二份装备值。</td></tr>
         <tr><td>Needs</td><td>hunger, fatigue</td></tr>
         <tr><td>Mood</td><td>mood_value, broken_down, breakdown_timer, thought_count</td></tr>
-        <tr><td>Job</td><td>job_id, rank, level, xp</td></tr>
-        <tr><td>Name</td><td>data</td></tr>
+		<tr><td>Job</td><td>job_id, rank, level, xp；快照按权威状态安装、更新或移除该组件。</td></tr>
+		<tr><td>Name</td><td>data 从统一属性接口读取；快照按权威状态安装、更新或移除该组件。</td></tr>
         <tr><td>Scale</td><td>x, y, z</td></tr>
         <tr><td>AIState</td><td>lod_level, busy, current_task_instance, current_plan_step</td></tr>
-        <tr><td>WorkerPriorityConfig</td><td>六类工作计划开关、24 小时排班、模板 ID 和个人覆盖掩码</td></tr>
+        <tr><td>WorkPriorityConfig</td><td>六类工作计划开关、24 小时排班、模板 ID 和个人覆盖掩码</td></tr>
         <tr><td>Civilization</td><td>civilization_id</td></tr>
         <tr><td>BlockInteractor</td><td>target_block(x,y,z), action_type</td></tr>
-        <tr><td>NavAgent</td><td>路径数据（path_count, waypoints, target）</td></tr>
-        <tr><td>ColonistAttributes</td><td>文档定义的基础、工作和战斗属性</td></tr>
+		<tr><td>NavAgent</td><td>路径数据（path_count, waypoints, target）；快照可为无原型实体安装导航组件。权威快照移除导航时，客户端清除旧路径、局部目标和移动意图。</td></tr>
+		<tr><td>Attributes / AttributeCache</td><td>实体基础属性 Map 与服务器解析后的属性 Map；均按完整路径传输，例如 <code>battler.melee_hit</code>。基础 Map 的组件存在性单独编码：有空 Map 时发送空 Map，权威实体无 Map 时客户端移除旧组件，二者不会混淆。<code>pack</code> 根值保留类型和模板 ID 字符串。解析 Map 还包含 <code>move_speed</code>、<code>current_hp</code>、<code>max_hp</code>、<code>needs.*</code>、<code>mood.*</code> 与 <code>condition.*</code> 等引擎属性值，即使实体没有基础属性 Map 也会发送。客户端统一读取接口使用服务器解析值，生存属性修正不会回退到 ECS 基础值；<code>position.x/y/z</code> 返回当前插值后的 ECS 显示坐标。</td></tr>
+		<tr><td>属性键校验</td><td>基础属性 Map 中若出现与 ECS 引擎字段同名的键，快照应用会拒绝该实体状态；服务器解析缓存中的引擎字段是正常的同步结果。二进制 Map 编码拒绝非有限数值和超过条目上限的 Map；解码拒绝重复键以及 NaN、无穷大等非有限浮点值，失败时不发布部分解码结果。实体快照中的位置、速度、朝向、需求和心情数值也拒绝非有限浮点值。</td></tr>
         <tr><td>PrototypeRef</td><td>data（实体原型 ID）</td></tr>
       </tbody>
     </table>
-    <p>组件是否被同步由<strong>组件掩码（Component Mask）</strong>决定。客户端收到快照后，根据掩码逐字段覆盖本地状态。</p>
+    <p>组件是否被同步由<strong>组件掩码（Component Mask）</strong>决定。客户端收到快照后，根据掩码安装或更新已携带的字段；缺失的 VisionRange 组件会从客户端实体移除。bit 23 现用于 VisionRange，旧实体附件格式不再支持；实体能力值只通过 <code>Attributes</code> 与 <code>AttributeCache</code> 同步。快照若带实体原型 ID，客户端必须能解析该原型；缺失时拒绝本次快照，不创建无能力声明的替代实体。</p>
 
+    <p><strong>TaskPool：</strong>工作池面板在单机与主机读取本地权威 TaskPool，在远程客户端读取 C++ 网络同步后的本地副本；不再通过 Lua <code>core:task_pool</code> 通道每 4 tick 发送显示行。远程网络的 <code>save_state:tasks</code> 首次或周期全量同步仍提供完整基线，后续变化按 Task UUID 发送新增、变更和删除；预约列表有变化时才随补丁发送。接收端先用补丁重建完整任务文档，再走现有网络状态校验与发布。存档格式不变。</p>
     <h3>增量快照</h3>
     <p>当启用增量快照（默认开启）时，服务器只发送与上一次快照<strong>有差异的实体</strong>和<strong>被删除的实体</strong>。这显著减少了带宽。客户端负责将增量合并到本地完整状态中。</p>
 	<p>实体组件之外，快照包含版本化领域状态通道。当前覆盖统一物品与仓储策略、目标格及材料预留、工作池、Lua 经营运行态、研究项目、建筑工作点与治疗容量、锻造设计、阵营/双边关系/谈判、要闻定义运行态/活动要闻、经营日志、持续问题和 Server 时间控制；只有内容变化的通道进入增量包。已知 Server 状态通道遇到缺失或未知 schema 会拒绝该次状态应用，不会静默跳过。Client 会清理旧运行态后按 Server 文档完整恢复，暂停/1x/2x/4x/无限速也由 <code>save_state:time_control</code> 覆盖本地显示。CoreMod 的订单、制作、施工、治疗、招募、职业、搬运、药剂、效果、难度、排班等运行态载荷各自携带当前 <code>schema_version = 1</code>；项目尚未发布，不维护旧领域结构的兼容读取。殖民者经历、独立职业履历、待登记状态和药品 CD 槽按实体组件复制。</p>
 
     <h3>插值</h3>
-    <p>客户端在两个快照之间可以对 Position 组件做线性插值（lerp），使移动看起来更平滑。</p>
+    <p>客户端在两个快照之间可以对 Position 组件做线性插值（lerp），使移动看起来更平滑。统一属性接口查询 <code>position.x/y/z</code> 时返回该插值结果；服务器解析坐标仍随快照传输。</p>
 
     <h2>命令系统</h2>
     <p>客户端通过发送<strong>命令（Command）</strong>向服务器请求操作。服务器收到后执行命令并更新权威状态，变化会在下一次快照中广播。</p>
@@ -122,7 +127,7 @@
 
     <h2>Lua 脚本在网络中的行为</h2>
     <h3>服务器上的 Lua</h3>
-    <p>作为服务器的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。领域系统创建的实体会进入 Server 快照；Lua 不提供通用原型生成入口。</p>
+    <p>作为服务器的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。服务器 Lua 可通过 <code>engine.entities.spawn(id)</code> 或 <code>engine.entities.spawn(id, payload)</code> 生成实体；生成结果会进入 Server 快照。</p>
 
     <h3>客户端上的 Lua</h3>
     <p>纯客户端不推进本地玩法模拟，游戏状态由服务器快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、要闻、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Server 权威玩法状态。</p>

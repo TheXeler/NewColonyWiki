@@ -5,16 +5,17 @@
 <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>阵营注册</div></div>
 <div class="content">
   <h1>阵营与其他殖民地接口</h1>
-  <p class="subtitle"><code>data/factions/</code>、<code>data/faction_spawn_rules/</code> 和 <code>data/diplomacy_proposals/</code> 保留注册 schema；CoreMod 当前三个目录均为空。</p>
+  <p class="subtitle"><code>data/factions/</code> 当前有玩家定义和 MVP 袭击者派系定义；<code>data/faction_spawn_rules/</code> 与 <code>data/diplomacy_proposals/</code> 尚无 CoreMod 玩法记录。</p>
   <h2>已定义边界</h2>
   <ul>
     <li><code>core:player</code> 是运行时玩家归属/阵营身份，不需要 CoreMod 内容记录。</li>
     <li>其他殖民地可保存稳定实例 ID、世界地图位置、归属和与玩家的关系状态。</li>
     <li>其他殖民地是商队和敌对实体的来源接口，不模拟完整建筑、生产或库存。</li>
-    <li>阵营实例、双边关系、空谈判状态、存档和 Host 同步接口继续保留。</li>
+    <li>阵营实例、双边关系、空谈判状态、存档和 Server 同步接口继续保留。</li>
   </ul>
+  <p>同一派系定义下可以有多个独立殖民地实例。每个实例的 <code>relation</code> 是玩家与该殖民地的局部关系；玩家与派系定义的关系另存于 <code>player_faction_relations</code>，不从实例关系推导。Lua 可读取 <code>engine.factions.get_player_faction_relation(def_id)</code>；没有记录时为 <code>nil</code>。Server 可用 <code>set_player_faction_relation(def_id, value)</code> 写入派系关系，按定义区间钳制，不会自动改变殖民地关系或正式战争状态。成功写入时同步派发 <code>core:player_faction_relation_changed</code>，世界就绪时服务端监听器广播外交快照。该账本随存档和网络状态保存，外交面板分列显示局部与派系关系，未记录的派系关系明确标示。攻击事件何时改变该值及改变量仍待裁定。</p>
   <h2>未定义边界</h2>
-  <p>没有贸易外交专项文档，因此不生成阵营类型、倾向、需求、初始关系、关系上下限、生成数量、密度、最小距离、发展、自动提案、条约或谈判积分。外交与世界地图界面只显示接口未定和已有状态摘要。</p>
+  <p>当前派系定义包含关系区间和初始关系；没有其他殖民地生成或贸易外交专项规则，因此新世界不会仅凭派系定义自动生成 NPC 殖民地实例。生成数量、位置、发展、自动提案、条约和谈判积分仍未定义。MVP 袭击数据声明派系定义，但来袭者尚未归属到明确的殖民地实例；多实例时的 Raid 来源规则仍待裁定。</p>
   <div class="callout warn">旧 CoreMod 的部落、海盗、佣兵、商会、学会和随机生成规则包含私有数值与玩法，已删除。</div>
   <div class="footer">NewColony Wiki · UTF-8</div>
 </div></div><script src="wiki.js"></script></body></html>
