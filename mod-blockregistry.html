@@ -61,6 +61,8 @@
 
     <p>成熟作物可声明 <code>crop_id</code>，例如 <code>core:wheat_stage7</code> 引用 <code>core:wheat</code>。该字段由 <code>get_block_info</code> 投影，割除收获时保留区域格并生成可回收地面产物，供后续补种。作物内容仍通过统一 <code>output_table</code> 结算。</p>
 
+    <p><code>core:smoker</code> 是可放置的不透明烟熏炉方块，归入 <code>functional</code> 调色板，允许四个水平方向并要求下方支撑。采掘引用 <code>core:smoker_output</code>，固定回收 1 个烟熏炉物品。用于面包加工时，应从建筑菜单建造同 ID 的建筑；它显式登记 <code>core:smoker</code> 工作点，普通方块放置本身不登记工作点。制作材料与面包配方见<a href="mod-reciperegistry.html">配方数据</a>。</p>
+
     <h2>物品图标推导</h2>
     <p>方块物品的图标按以下顺序选择：</p>
     <ol>

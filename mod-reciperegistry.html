@@ -77,7 +77,7 @@
     </table>
 
     <h2>CoreMod 当前内容</h2>
-    <p>CoreMod 当前提供 4 条固定配方，全部使用 <code>manufacturing_mode: "none"</code>、<code>processing_difficulty: 0</code> 和 <code>output_table_executions: 1</code>。</p>
+    <p>CoreMod 当前提供 6 条固定配方，全部使用 <code>manufacturing_mode: "none"</code>、<code>processing_difficulty: 0</code> 和 <code>output_table_executions: 1</code>。</p>
     <table>
       <thead><tr><th>配方 ID</th><th>材料</th><th>目标物品</th><th>工时</th><th>兼容工作点</th><th>产出表（结果）</th></tr></thead>
       <tbody>
@@ -85,9 +85,12 @@
         <tr><td><code>core:craft_stick</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:stick</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:stick_output</code>（4 木棍）</td></tr>
         <tr><td><code>core:craft_wood_floor</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:wood_floor</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:wood_floor_output</code>（2 木地板）</td></tr>
         <tr><td><code>core:craft_workbench</code></td><td>4 x <code>core:wood_plank</code></td><td><code>core:workbench_item</code></td><td>15</td><td><code>core:handcraft</code></td><td><code>core:workbench_output</code>（1 工作台）</td></tr>
+        <tr><td><code>core:craft_smoker</code></td><td>8 x <code>core:stone</code>、4 x <code>core:wood</code></td><td><code>core:smoker</code></td><td>15</td><td><code>core:workbench</code></td><td><code>core:smoker_output</code>（1 烟熏炉）</td></tr>
+        <tr><td><code>core:bake_bread</code></td><td>3 x <code>core:wheat</code></td><td><code>core:bread</code></td><td>10</td><td><code>core:smoker</code></td><td><code>core:bread_output</code>（1 面包）</td></tr>
       </tbody>
     </table>
-    <p>对应的 14 条产出表位于 <code>data/output_tables/</code>，全局制造规则位于 <code>data/manufacturing_rules/</code>。CoreMod 未提供 <code>quality_tables</code> 内容，因此当前没有可用品质表；使用 <code>quality</code> 模式的第三方配方必须自带品质表。</p>
+    <p>当前的 18 条产出表位于 <code>data/output_tables/</code>，全局制造规则位于 <code>data/manufacturing_rules/</code>。CoreMod 未提供 <code>quality_tables</code> 内容，因此当前没有可用品质表；使用 <code>quality</code> 模式的第三方配方必须自带品质表。</p>
+    <p>烟熏炉先在工作台制作，再从建筑菜单建造 <code>core:smoker</code> 建筑以登记烘烤工作点。建筑只放置一格炉体，北侧一格为空的入口与操作位置；入口需要道路连通并可通行。普通方块放置仅放置炉体，不会登记建筑工作点。面包配方只消耗小麦，当前没有额外燃料消耗或燃烧动画。面包为独立物品，饱腹值为 20，进食方案需许可 <code>food</code> 分类。</p>
 
     <h2>边界</h2>
     <ul>

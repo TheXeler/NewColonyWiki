@@ -31,6 +31,8 @@
 
     <p>方块物品缺少独立 item 模型时保留 block 模型或立方体兜底，只有独立物品的图标自动生成薄片。木板使用 <code>wood_plank.json</code> 与橡木木板贴图，物品堆中保持立方体。树叶在程序化兜底之前加载 <code>leaves.json</code> 与 <code>oak_leaves.png</code>；其 tintindex 从 MC foliage 色表按默认温度 0.5、降雨 1.0 的坐标采样，并用于完整模型、LOD 和地面方块物品。当前尚未接入群落颜色混合或树叶腐烂。</p>
 
+    <p>烟熏炉 <code>core:smoker</code> 使用显式六面立方体模型，北面为炉口，顶面、底面与侧面分别引用 <code>smoker_top</code>、<code>smoker_bottom</code> 和 <code>smoker_side</code>；四张贴图从工作区已有素材导入。其 item 模型继承 <code>core:block/smoker</code>，地面物品保留炉体形状。独立面包物品 <code>core:bread</code> 使用 <code>minecraft:item/generated</code> 与 <code>textures/items/bread.png</code>。</p>
+
     <h2>根字段</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>

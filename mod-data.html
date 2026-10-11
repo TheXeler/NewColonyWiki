@@ -50,6 +50,7 @@
 }</code></pre>
 
     <p>方块是体素单元。新物品独立放在 <code>data/items/</code>，不需要成为可放置方块。可采方块的正数 <code>hardness</code> 直接表示一次性采掘/伐木工作时长秒数；缺失或无效时目标进入配置屏障。产物必须引用统一 <code>output_table</code>，旧 <code>drops</code> 不再属于当前 schema。</p>
+    <p>独立食品可声明正整数 <code>food_value</code>（饱腹值）与 <code>category</code>（进食方案分类）；未写 <code>category</code> 时使用物品定义的 <code>primary_category</code>。<code>systems.food</code> 在物品没有方块定义时读取独立物品记录，按现有分类、标签、品质和预约规则选择食物。<code>core:bread</code> 是 <code>food</code> 分类的独立物品，饱腹值为 20，由烟熏炉烘烤配方产出，不是可放置方块。</p>
     <pre><code>{
   "id": "copper_age:copper_ore_block",
   "name": "Copper Ore",

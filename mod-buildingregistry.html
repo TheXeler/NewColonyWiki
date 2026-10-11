@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>建筑数据 - NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
 <body data-page="mod-buildingregistry"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑蓝图注册</div></div><div class="content">
 <h1>建筑数据</h1>
-<p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod 当前没有具体建筑内容：NCDOCS 定义了建筑对象契约，但没有提供形状、材料、工期、工作点布局或具体建筑清单。</p>
+<p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod 当前提供制作点 <code>core:crafting_spot</code>、工作台 <code>core:workbench</code> 与烟熏炉 <code>core:smoker</code>，均显式声明蓝图、材料、正工期、入口和工作点。</p>
 <h2>定义契约</h2>
 <ul>
   <li>稳定建筑 ID、体素占位、部件集合、碰撞、遮挡和通行。</li>
@@ -13,7 +13,9 @@
 </ul>
 <p>缺少正 <code>construction_ticks</code> 的定义会被拒绝，不回退 100 tick。建筑功能不得通过名称特判；例如治疗点只读取显式容量和能力，休息不再硬编码 <code>core:bed</code>。</p>
 <h2>当前内容屏障</h2>
-<p>旧工作台、熔炉、床、小屋和各工艺设施已删除。城镇大厅、矿井、储存体素、治疗设施和生产工作台需要获得有文档来源的具体定义后才能加入；运行时不会生成替代建筑。</p>
+<p>其他城镇大厅、矿井、储存体素、治疗设施和工艺设施仍需具体内容定义；运行时不会生成替代建筑。</p>
+<h2>烟熏炉</h2>
+<p><code>data/buildings/smoker.json</code> 使用 1 个 <code>core:smoker</code> 物品，工期为 20 tick，占位大小为 <code>[1,1,2]</code>。炉体位于局部 <code>[0,0,1]</code>，北侧的 <code>[0,0,0]</code> 同时作为空入口与操作位置，登记类型为 <code>core:smoker</code> 的工作点。入口必须满足现有道路连通与内部通行检查，才能接收 <code>core:bake_bread</code> 订单。通过建筑菜单建造才会创建建筑实例与工作点；单独放置炉体方块不会。制作与烘烤材料见<a href="mod-reciperegistry.html">配方数据</a>。</p>
 <h2>只读与事务接口</h2>
 <p><code>engine.buildings</code> 提供定义/实例查询、工作点状态、存储点状态、治疗容量、放置预览和拆除事务。生产、治疗、招募和矿井系统只消费这些显式角色，不按 ID 名称猜测。</p>
 <div class="footer">NewColony Wiki · UTF-8</div></div></div><script src="wiki.js"></script></body></html>
