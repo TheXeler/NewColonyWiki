@@ -280,7 +280,7 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
 	<p>显式加入阵营实例时发布不可取消的注册事件 <code>core:faction_spawned</code>，携带 <code>faction_uuid</code>、<code>def_id</code>、<code>display_name</code>、<code>relation</code>、<code>spawned_tick</code> 和 <code>reason</code>。新世界玩家城邦也使用此通知；读档和网络状态恢复不重放生成通知。UUID 由权威端创建，恢复必须提供合法且不重复的 UUID。</p>
 
     <h2>外交提议（diplomacy_proposals）</h2>
-    <p>外交提议 schema 放在 <code>data/diplomacy_proposals/</code>。每个文件可定义一个 <code>id</code>、<code>effect</code>、<code>required_status</code> 和可选的 <code>relation_offset</code>、<code>maximum_base_score</code>、<code>treaty_id</code>、<code>forced</code>。当前 NCDOCS 未定义具体外交玩法，CoreMod 目录保持为空，引擎不生成默认提案或积分。</p>
+    <p><code>data/diplomacy_proposals/</code> 的旧 schema 保留兼容读取，但不执行新外交。新提议由 Server Lua 调用公共模块 <code>core:systems.diplomacy.register(id, definition)</code> 注册前置条件、积分和执行回调，无需新增 JSON 提议表。CoreMod 已以 Lua 注册开战、议和和贸易许可；谈判状态通过 Lua 世界状态保存。详见 <a href="diplomacy-system.html">外交系统</a>；城邦 AI 算法另行接入。</p>
 
     <h2>名称池（name_pools）</h2>
     <p>名称池为未来显式加入的其他殖民地提供名称模板词汇，放在 <code>data/name_pools/</code> 下。<code>words</code> 必须是字符串数组，空数组会被跳过；名称工具不会自行生成阵营实例。</p>

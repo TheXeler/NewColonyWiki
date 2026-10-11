@@ -194,7 +194,7 @@ end</code></pre>
         <tr><td><code>core:colonists.sort</code> / <code>core:colonists.filter</code></td><td>更新人员面板名单排序和职业筛选，并刷新 <code>colonist_list</code>。</td></tr>
         <tr><td><code>core:research.start</code></td><td>建立开题付款预览；确认后由 <code>core:research.confirm_start</code> 在 Server 原子提交材料并调用受限的研究开题接口。</td></tr>
 		<tr><td><code>core:world_map.select_start_site</code></td><td>由 Client 提交给 Server；协议边界会将公开目标规范化为 <code>world_map.select_start_site</code>，受控初始生成权限检查将两种名称视为同一命令。验证并持久化预生成地图中的 q/r，然后在原点附近确定性搜索脚部/头部为空气且脚下为非植物固体的安全位置，使用 <code>initial_colony.lua</code> 内明确标注的临时测试表生成 3 名测试殖民者及木材、石材各 20。实体 ID 0 保留为空句柄，不会再把首个新实体误判为失败。loopback 新世界创建会等待 Server 的实际结算结果；成功后刷新世界地图和 <code>colonist_list</code>。结算失败保留警报和具体原因。</td></tr>
-		<tr><td><code>core:diplomacy.*</code></td><td>当前没有外交玩法写命令；外交窗口和世界地图城邦标记只显示状态摘要与 <code>diplomacy_interface_undefined</code>。</td></tr>
+		<tr><td><code>core:diplomacy.begin / accept / counter / reject</code></td><td>Server 权威谈判命令，校验本方城邦绑定和谈判版本；界面显示双方关系、独立战争状态、条约、积分及条件，支持反议。AI 回应算法暂留空。详见 <a href="diplomacy-system.html">外交系统</a>。</td></tr>
         <tr><td><code>core:view.set_mode</code> / <code>core:view.toggle_xray</code></td><td><code>engine.view.set_mode</code> / <code>engine.view.toggle_terrain_xray</code>。</td></tr>
         <tr><td><code>core:events.act</code> / <code>core:events.dismiss</code></td><td><code>engine.focuses.choose</code> / <code>engine.focuses.dismiss</code>。</td></tr>
         <tr><td><code>core:build.begin</code></td><td><code>systems.construction.order</code>（有坐标时）或 <code>engine.buildings.begin_placement</code>。无坐标 <code>{ id }</code> 只启动 placement 并返回 <code>status="placement_started"</code>；带 <code>{ id, x, y, z }</code> 才创建施工订单，缺料时仍返回 <code>ok=true,status="waiting_materials"</code>。</td></tr>

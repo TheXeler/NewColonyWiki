@@ -11,11 +11,11 @@
     <li><code>core:player</code> 是运行时玩家归属/阵营身份，不需要 CoreMod 内容记录。</li>
     <li>其他殖民地可保存稳定实例 ID、世界地图位置、归属和与玩家的关系状态。</li>
     <li>其他殖民地是商队和敌对实体的来源接口，不模拟完整建筑、生产或库存。</li>
-    <li>阵营实例、双边关系、空谈判状态、存档和 Server 同步接口继续保留。</li>
+    <li>阵营实例和双边关系复用原生存档；谈判由 Server Lua 世界状态保存，支持提议、反议、接受与拒绝。</li>
   </ul>
   <p>同一派系定义下可以有多个独立殖民地实例。每个实例的 <code>relation</code> 是玩家与该殖民地的局部关系；玩家与派系定义的关系另存于 <code>player_faction_relations</code>，不从实例关系推导。Lua 可读取 <code>engine.factions.get_player_faction_relation(def_id)</code>；没有记录时为 <code>nil</code>。Server 可用 <code>set_player_faction_relation(def_id, value)</code> 写入派系关系，按定义区间钳制，不会自动改变殖民地关系或正式战争状态。成功写入时同步派发 <code>core:player_faction_relation_changed</code>，世界就绪时服务端监听器广播外交快照。该账本随存档和网络状态保存，外交面板分列显示局部与派系关系，未记录的派系关系明确标示。攻击事件何时改变该值及改变量仍待裁定。</p>
   <h2>未定义边界</h2>
-  <p>当前派系定义包含关系区间和初始关系；没有其他殖民地生成或贸易外交专项规则，因此新世界不会仅凭派系定义自动生成 NPC 殖民地实例。生成数量、位置、发展、自动提案、条约和谈判积分仍未定义。MVP 袭击数据声明派系定义，但来袭者尚未归属到明确的殖民地实例；多实例时的 Raid 来源规则仍待裁定。</p>
+  <p>外交本体现支持 Lua 注册提议、独立战争状态与条约、不可移除的基础诉求和可反议条件；详见 <a href="diplomacy-system.html">外交系统</a>。城邦生成、经营、发展与 AI 主动外交和回应暂留空，等待独立算法文档。新世界不会仅凭派系定义自动生成 NPC 城邦。资源等指标从实际数据来源查询，不要求为每个策划属性保存一个字段。新增源码未编译或运行。</p>
   <div class="callout warn">旧 CoreMod 的部落、海盗、佣兵、商会、学会和随机生成规则包含私有数值与玩法，已删除。</div>
   <div class="footer">NewColony Wiki · UTF-8</div>
 </div></div><script src="wiki.js"></script></body></html>

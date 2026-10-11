@@ -122,7 +122,7 @@
       <tbody>
         <tr><td>HUD</td><td><code>world_info</code> 真实刷新，日期从 year 2000 / day 1 / 春开始；每个模拟 tick 推进 3 个游戏秒，因此 20 TPS 下现实 1 秒对应游戏 1 分钟。<code>resource_snapshot</code> 当前为 <code>rows=0</code>，表示初始世界没有已储存资源，按明确空态显示。</td></tr>
         <tr><td>Lua UI Menus</td><td>建造、制造、科技、人员、事件、外交和视图选项等经营菜单通过 CoreMod <code>bootstrap.lua</code> 的 <code>on_load</code> 初始化，并经 <code>lua_ui_bottom_bar_rml</code> / <code>lua_ui_windows_rml</code> 显示。</td></tr>
-        <tr><td>World map</td><td>进入新世界后自动显示战略世界地图悬浮窗及城邦列表。全部预生成地图格均可通过 Server 权威命令保存为初始 q/r，存档载入时恢复该选择；选址成功只表示位置已记录，初始 roster 与物资内容未定义时仍保留配置屏障。城邦标记继续提供只读外交入口。底栏不再注册地图按钮，旧的小地图浮窗也不再加载。</td></tr>
+        <tr><td>World map</td><td>进入新世界后显示战略地图与城邦列表。城邦行和“谈判”按钮进入 <a href="diplomacy-system.html">外交窗口</a>，支持选择本方城邦、提议与回应；Server 核对城邦绑定。外交新增源码未编译或运行，AI 回应算法待接入。底栏不再注册地图按钮，旧的小地图浮窗不加载。</td></tr>
         <tr><td>Pause / Settings</td><td>文档在 playing 阶段加载，Escape / Resume / Save Game / Load Game / Settings / Return to Main Menu / Quit Game 仍走既有 <code>ui_phase</code> 与 pause 命令路径；设置页显示基础 Display / Interface / Controls 状态行，后续真实配置写入路径仍待补齐。</td></tr>
         <tr><td>Global Toast</td><td><code>global_toast.rml</code> 在非 menu 阶段显示文档；监听 <code>command_result</code> 的派生结果，显示 waiting / blocked / error 类全局轻量反馈；普通命令成功静默，但保存 / 加载完成会作为 success 样式 toast 显示（见下文）。</td></tr>
         <tr><td>DevConsole</td><td><code>dev_console.rml</code> 常驻副文档，由 <code>console_visible</code> 控制布局；输入框是伪输入，键盘文本由 GLFW 事件直接写入 <code>DevConsole</code>，避免 RmlUI 原生表单控件路径触发访问越界。</td></tr>

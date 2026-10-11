@@ -324,7 +324,8 @@ for _, faction in ipairs(instances) do
   local status = engine.factions.diplomatic_status(faction.uuid)
   engine.log.info(faction.display_name .. ": " .. status)
 end</code></pre>
-    <p>Lua 公开定义、实例、双边关系、提案 schema、谈判记录和外交状态的读取接口，以及名称模板工具。Server 玩法脚本可调用 <code>engine.factions.assign_entity(entity_uuid, faction_uuid)</code> 将现有实体归属到明确的殖民地实例；成功时写入该实例的派系哈希和 UUID，兵模及试图改投敌方派系的殖民者会被拒绝。此入口只处理已有实例，不创建殖民地。<code>get_player_faction_relation(def_id)</code> 读取玩家与派系定义的独立关系，没有记录时返回 <code>nil</code>；Server 可调用 <code>set_player_faction_relation(def_id, value)</code> 按定义区间写入该账本，不改变任一殖民地的局部关系或战争状态。当前没有 <code>spawn</code>、<code>spawn_initial</code>、殖民地局部关系修改、提案执行或谈判写入 API；其他殖民地实例仍需由有文档依据的专项规则加入。</p>
+    <p>Lua 公开定义、实例、双边关系和名称工具。<code>engine.factions.assign_entity(entity_uuid, faction_uuid)</code> 为现有实体指定殖民地归属；<code>get_player_faction_relation</code> / <code>set_player_faction_relation</code> 操作独立派系关系账本。新增 Server 写接口 <code>set_relation_between(first_uuid, second_uuid, value)</code>、<code>set_diplomatic_status(first_uuid, second_uuid, status)</code> 和 <code>set_treaty(first_uuid, second_uuid, treaty_id, enabled)</code>；<code>diplomatic_status</code> 支持两个城邦 UUID，<code>has_pair_treaty</code> 查询双方条约。关系写入按双方定义区间交集钳制，区间不相交则拒绝；战争、条约和战斗敌对判断彼此独立。</p>
+    <p>新外交通过公共 Server Lua 模块 <code>core:systems.diplomacy</code> 的 register、preview、begin、accept、counter、reject、get、list 接口实现；旧 engine.factions 提案 schema 和占位谈判接口仅保留兼容。提议执行函数不入存档，谈判数据使用模块世界状态；AI 算法暂留空。详见 <a href="diplomacy-system.html">外交系统与接入契约</a>。</p>
 
     <h2>网络命令</h2>
     <p>网络 API 用于联机和命令同步。内容型 MOD 不建议把核心玩法依赖放在网络回调里。详情见<a href="mod-network-sync.html">网络同步</a>。</p>

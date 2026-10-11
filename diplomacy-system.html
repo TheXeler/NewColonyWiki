@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>外交系统 · NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="diplomacy-system"><div class="main">
+<div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>外交系统</div></div>
+<div class="content">
+  <h1>外交系统本体</h1>
+  <p>2026-10-11：外交使用 Server 权威谈判、Lua 提议实现和 RmlUI 界面。城邦 AI 的生成、经营、发展及回应算法另行接入；没有临时自动接受或拒绝规则。新增源码和测试源码尚未编译或运行。</p>
+  <h2>独立状态与数据来源</h2>
+  <p>城邦用实例 UUID 标识；关系值、战争状态、条约和玩家与派系关系分别保存。开战、议和不隐式修改关系，也不改变原有战斗敌对判断。按本轮裁定，战争不限制贸易许可的签订或使用；已有许可不因开战被撤销或停用，双方可同意一边战争、一边贸易。此裁定覆盖策划文档的贸易许可非战争前置条件。</p>
+  <p>策划列出的资源、人口、军力等是查询能力，不要求重复保存字段。Server 可用 <code>require("core:systems.diplomacy").register_metric(id, provider)</code> 注册数据来源，再调用 <code>query(colony_uuid, metric_id, parameters)</code>。未注册的指标返回 <code>nil, "diplomacy_metric_unavailable"</code>，不会伪装为零。内置 <code>core:available_item_count</code> 接受 <code>{item_id="core:stone"}</code>，累加 <code>engine.items.colony_sources</code> 的未预约数量；它不代表包括背包、所有地面物品和已预约内容在内的总资产。其他统计口径等待各系统确定。</p>
+  <h2>Lua 注册</h2>
+  <p>依赖 core 的 Mod 可在 Server 的 <code>core:mod_ready</code> 监听器中导入公共模块；不要在模块顶层访问尚未建立的世界状态。提议通过代码注册，无需 JSON 提议表。</p>
+  <pre><code>local diplomacy = require("core:systems.diplomacy")
+diplomacy.register("example:proposal", {
+    name = "ui.example:proposal.name",
+    forced = false,
+    validate = function(context, parameters)
+        return true -- or false, stable_error_code
+    end,
+    score = function(context, parameters) return 0 end,
+    execute = function(context, parameters)
+        return true -- effect applied, or false, stable_error_code
+    end,
+})</code></pre>
+  <p><code>context</code> 含 <code>initiator_uuid</code>、<code>target_uuid</code>、双方 <code>relation</code> 和外交 <code>status</code>。参数与 context 是副本。validate/score 必须只读，execute 在 Server 提交效果；回调不序列化，不自动换算物资价值。重复 ID 拒绝注册，运行时重载需重新注册。积分是基础诉求与所有附加条件评分之和，只用于展示和后续 AI 判断。</p>
+  <p>CoreMod 在 <code>systems.diplomacy_proposals</code> 中注册 <code>core:declare_war</code>、<code>core:make_peace</code>、<code>core:trade_permission</code>。开战是强制提议，合法提交直接执行，不等待回应；议和和贸易许可等待对方。议和暂为零分，贸易许可为 <code>min(relation - 35, 0)</code>。资源支付、实际贸易交付和 AI 接受决策尚未注册。</p>
+  <h2>谈判接口与状态</h2>
+  <pre><code>local result = diplomacy.begin(first_uuid, second_uuid, proposal_id, parameters, conditions)
+local preview = diplomacy.preview(first_uuid, second_uuid, proposal_id, parameters, conditions)
+local row = diplomacy.get(negotiation_uuid)
+local rows = diplomacy.list()
+diplomacy.counter(negotiation_uuid, actor_uuid, expected_version, conditions)
+diplomacy.accept(negotiation_uuid, actor_uuid, expected_version)
+diplomacy.reject(negotiation_uuid, actor_uuid, expected_version)</code></pre>
+  <p>每条 condition 是 <code>{proposal_id, parameters={...}}</code>，其 ID 也通过同一 register 注册。基础诉求保存在 <code>base</code>，反议只能替换 conditions，不能移除或修改 base。参数只允许可序列化普通数据，conditions 是最多 64 项的连续数组。强制提议不接受附加条件，也不能作为其他谈判的附加条件。发起者提交表示同意本版内容；反议将版本加一并把回应权交回对方。接受需要当前版本、正确回应者和仍成立的前置条件；拒绝也可用于发起者撤回。两位玩家可以在负积分时同意，框架不根据积分自动回应 AI。</p>
+  <p>操作返回 <code>{ok=true,data=record}</code> 或 <code>{ok=false,error=code}</code>；preview 返回 ok、score、forced、context。正常生命周期是 pending / countered → accepted 或 rejected。效果执行前记录 applying；作者回调失败记录 failed，不重试同一谈判。任意 Lua 副作用没有通用回滚承诺，作者应先验证并使用适当的原生结算入口。恢复遇到 applying 会标记 failed，避免重放。</p>
+  <h2>服务端命令与界面</h2>
+  <p><code>core:diplomacy.begin</code> 携带 actor_uuid、target_uuid、proposal_id、可选 parameters/conditions。<code>accept</code>、<code>reject</code> 携带 actor_uuid、negotiation_uuid、version；<code>counter</code> 另携带 conditions。四条命令均使用现有 play 权限、可取消 before_event、Server 路由和 CommandResult。Server 核对 actor_uuid 与传输层绑定的城邦，不信任客户端选择。</p>
+  <p>外交列表可选择本方城邦；仅一个玩家城邦时自动选择。界面显示当前双方关系、状态、条约、提议积分、谈判诉求和条件，提供接受、拒绝、反议与条件增删。客户端作者可通过公共 <code>core:ui.diplomacy.edit_conditions(uuid, version, conditions)</code> 提供带参数的条件编辑器；内置界面只提供无参数的条件选择，不虚构物资支付编辑器。战略地图保留当前入口，也可进入玩家城邦的外交。</p>
+  <h2>保存、同步与后续 AI</h2>
+  <p>战争和条约复用 <code>factions.json</code> 的 pair_relations；谈判通过公共模块的 <code>@State diplomacy</code> 世界状态自动保存。<code>core:diplomacy</code> 共享状态含 factions、definitions、proposals、negotiations、perspectives 和 world_id。perspectives 为每个玩家城邦提供其与其他城邦的关系、状态、条约及提议预览，不把旧的全局玩家关系套用到联机双方。旧 C++/JSON 提议 schema 保留兼容读取，旧 evaluate_proposal 等占位接口不负责新谈判。</p>
+  <p>加载与热重载恢复会检查谈判身份和结构。缺少 Lua 提议实现时保留事实、显示 unavailable_reason，并拒绝执行；重新注册后可重新评估。Client 不保存或执行 Server 回调，断线／卸载清空显示缓存。后续 AI 在 Server 调用同一 begin/preview/list/accept/counter/reject；外交本体不提前规定生成、发展、冷静期或决策算法。</p>
+  <div class="footer">NewColony Wiki · UTF-8</div>
+</div></div><script src="wiki.js"></script></body></html>

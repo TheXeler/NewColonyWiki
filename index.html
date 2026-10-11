@@ -43,7 +43,7 @@
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本返回表，支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
         <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 和 <code>engine.timers</code>。10+ 内置事件，支持自定义。</td></tr>
         <tr><td>控制台系统</td><td><span class="badge done">可用</span></td><td>80+ 控制台命令，权限系统，别名，配置验证（doctor），快照和差异对比。</td></tr>
-        <tr><td>其他殖民地与外交</td><td><span class="badge partial">接口</span></td><td>保留 faction/name_pool、关系和空谈判状态 schema；专项文档未定义生成、关系范围或外交周期时，不随机创建 NPC 阵营或推进外交事件。</td></tr>
+        <tr><td>其他殖民地与外交</td><td><span class="badge partial">本体源码</span></td><td><a href="diplomacy-system.html">Lua 提议与谈判</a>、独立战争状态／条约、Server 命令和 RmlUI 操作已接入；未编译或运行验证。城邦 AI 生成、经营和回应等待独立算法文档。</td></tr>
         <tr><td>体素世界</td><td><span class="badge partial">配置待补</span></td><td>可变高度区块列、地形生成和六类群落接口已接入；Core 群落生成参数尚无文档数值，当前以配置屏障阻止使用旧噪声阈值。矿物只通过区块矿井规则存在，不生成矿石体素。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>Server/Client TCP 同步、快照广播、MOD 列表校验码交换。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体 <code>assets/lang/</code>、CoreMod/MOD <code>lang/</code> 合并、Lua 查询/切换/热重载 API 和控制台命令。详见 <a href="mod-localization.html">本地化与翻译</a>。</td></tr>

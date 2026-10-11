@@ -27,7 +27,7 @@
         <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业 1-5 级、装备实例许可、前置职业、配方输入、职业要求、文明配方限制和解锁均已从注册表初始化。公开直通制作已禁用，CoreMod 制作统一走带资源预留的生产订单；固定制作结果由产出表决定。</td></tr>
         <tr><td>文明</td><td><span class="badge partial">接口</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
         <tr><td>要闻系统</td><td><span class="badge partial">接口</span></td><td>要闻 schema、运行态和存档接口保留；CoreMod 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。</td></tr>
-        <tr><td>派系、城邦与外交</td><td><span class="badge partial">接口</span></td><td><code>factions</code>、<code>name_pools</code>、<code>faction_spawn_rules</code>、双边关系和空的提案/谈判 schema 可用；世界地图与外交页只显示状态摘要。专项文档未建立前不生成城邦资源/发展、默认提案、贸易积分或 AI 周期外交。</td></tr>
+        <tr><td>派系、城邦与外交</td><td><span class="badge partial">本体源码</span></td><td><a href="diplomacy-system.html">外交本体</a>支持 Lua 注册开战／议和／贸易许可、不可移除的基础诉求、反议、双方状态与条约、存档同步和界面；战争与贸易可共存。城邦 AI 留空，新增源码未编译或运行。</td></tr>
         <tr><td>战斗</td><td><span class="badge partial">接口</span></td><td>职业战斗属性、伤病/倒地/死亡和小队身份/成员状态摘要保留；专项文档未建立前不推进小队移动、接敌、命中、伤害、冷却、压制、阵型或区域法力，所有战斗命令无副作用拒绝，HUD 只显示接口未定。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和标准组件集可用；组件集合会随殖民者生存、选择和渲染状态继续演进，不以旧固定数量作为兼容承诺。</td></tr>

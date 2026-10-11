@@ -92,7 +92,7 @@
     </table>
     <p><code>block_id</code> 是 32 位方块数据 ID 哈希，与运行时 <code>BlockId</code> 一致；区块差异和实时方块更新也按 32 位传输。</p>
     <p>每条命令携带一个递增的序列号。服务器收到后回复 ACK。客户端如果超时未收到 ACK，会自动重发。</p>
-	<p>经营界面写操作使用同一协议中的 <code>UiCommand</code>，携带稳定 target 和 JSON payload。Client/单机逻辑 Client 只提交命令；Server 调用 CoreMod 数据桥结算，并以 <code>CommandResult</code> 返回原序号和实际结果 JSON。生产、治疗、招募、研究、仓储、区域和地面回收等已定义玩法走该链路。贸易外交当前仅显示接口状态，不发送玩法命令。纯 Client 的基础 ECS、世界方块、Lua data component、runtime state 和统一物品写接口也有底层权限屏障，不能用脚本绕过数据桥。面板开关、筛选、镜头与设计预览等纯本地表示不发送给 Server。</p>
+	<p>经营界面写操作使用同一协议中的 <code>UiCommand</code>，携带稳定 target 和 JSON payload。Client/单机逻辑 Client 只提交命令；Server 调用 CoreMod 数据桥结算，并以 <code>CommandResult</code> 返回原序号和实际结果 JSON。生产、治疗、招募、研究、仓储、区域和地面回收等已定义玩法走该链路。外交也通过 <code>core:diplomacy.begin/accept/counter/reject</code> 命令提交，服务端核对城邦绑定与谈判版本；共享状态同步双方视角和谈判事实，AI 回应算法另行接入。详见 <a href="diplomacy-system.html">外交系统</a>。纯 Client 的基础 ECS、世界方块、Lua data component、runtime state 和统一物品写接口也有底层权限屏障，不能用脚本绕过数据桥。面板开关、筛选、镜头与设计预览等纯本地表示不发送给 Server。</p>
 
     <h2>Chunk Terrain Sync</h2>
     <p>服务器维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
