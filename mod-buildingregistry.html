@@ -16,6 +16,34 @@
 <p>其他城镇大厅、矿井、储存体素、治疗设施和工艺设施仍需具体内容定义；运行时不会生成替代建筑。</p>
 <h2>烟熏炉</h2>
 <p><code>data/buildings/smoker.json</code> 使用 1 个 <code>core:smoker</code> 物品，工期为 20 tick，占位大小为 <code>[1,1,2]</code>。炉体位于局部 <code>[0,0,1]</code>，北侧的 <code>[0,0,0]</code> 同时作为空入口与操作位置，登记类型为 <code>core:smoker</code> 的工作点。入口必须满足现有道路连通与内部通行检查，才能接收 <code>core:bake_bread</code> 订单。通过建筑菜单建造才会创建建筑实例与工作点；单独放置炉体方块不会。制作与烘烤材料见<a href="mod-reciperegistry.html">配方数据</a>。</p>
+<h2>工作中的外观与粒子</h2>
+<p>工作点可声明 <code>working_visuals</code>，由引擎渲染器统一加载和显示，不需要 Lua 特判方块 ID。引擎只为已完成建筑、已启用且道路/内部可通行的工作点发布工作状态；必须有匹配的占用任务和工人，工人已进入执行阶段且任务已有进度，才显示效果。走向工作点、等材料和仅有预约时不点火。暂停冻结动画与粒子时间；完成、取消或中断立即恢复静态外观，已发出的粒子在寿命内淡出。失去视野、方块缺失、世界切换与资源重载清理对应效果。运行时从建筑、任务及工人快照推导状态，粒子本身不存档、不进入游戏随机数。</p>
+<pre><code>"work_points": [{
+  "id": "oven", "type": "core:smoker", "entrance": "front", "pos": [0, 0, 0],
+  "working_visuals": {
+    "surfaces": [{
+      "block": [0, 0, 1], "block_id": "core:smoker", "face": "north",
+      "texture": "textures/block/smoker_front_on.png", "frame_seconds": 0.2
+    }],
+    "particles": [{
+      "texture": "textures/particle/smoke.png", "offset": [0.5, 1.05, 1.5],
+      "velocity": [0.03, 0.45, 0.02], "spread": [0.12, 0.02, 0.12],
+      "rate": 5, "lifetime": 2, "size": 0.16, "end_size": 0.4,
+      "color": [0.65, 0.65, 0.65], "alpha": 0.65
+    }]
+  }
+}]</code></pre>
+<table><thead><tr><th>字段</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>surfaces</code></td><td>最多 16 个表面。<code>block</code> 是建筑局部整数坐标（默认零），<code>block_id</code> 和坐标必须匹配蓝图。<code>face</code> 必填，可为 east/west/up/down/north/south。加工时以整面纹理覆盖该立方体面，不改变方块 ID、模型几何、碰撞或采掘产出。</td></tr>
+<tr><td><code>texture</code></td><td>表面与粒子必填；相对于当前 MOD 的 <code>assets/</code>，不可含绝对路径或上级目录。PNG 可为一个正方形或 1-64 个正方形竖向帧，帧边长为 1-256 像素，上传时按最近邻缩放为 16 像素。文件缺失或格式无效拒绝候选渲染内容，保留当前内容。</td></tr>
+<tr><td><code>frame_seconds</code></td><td>默认 0.2，范围 0.01-10 simulation 秒。表面循环播放；粒子播放到末帧后停留。</td></tr>
+<tr><td><code>particles</code></td><td>最多 8 个发射器。<code>offset</code> 为相对建筑原点的位置；<code>velocity</code> 为每 simulation 秒移动向量（各分量绝对值不大于 10）；<code>spread</code> 为各轴随机位置半范围，范围 0-2；三个向量默认零。</td></tr>
+<tr><td><code>rate / lifetime</code></td><td>每 simulation 秒发射数量 0.1-64，默认 1；寿命 0.05-10 秒，默认 1。</td></tr>
+<tr><td><code>size / end_size</code></td><td>开始/结束边长，范围 0.01-2 格；初始默认 0.1，结束默认等于初始。粒子随寿命线性改变大小并在末段淡出。</td></tr>
+<tr><td><code>color / alpha</code></td><td>RGB 三分量与透明度均为 0-1，默认全 1，乘以贴图颜色。</td></tr>
+</tbody></table>
+<p>通用效果最多同时处理 256 个来源、4096 个粒子；单帧推进最多 0.25 simulation 秒，不为长时间停顿补发大量粒子。透明四边形面向摄像机，按距离排序，测试场景深度但不写入深度，普通与 SSAO 路径均绘制。当前表面效果为自发光显示，不向周围体素传播光照；不是完整的 Minecraft blockstates 属性或任意模型变体系统。普通单方块放置没有工作点，所以不触发这些效果。</p>
+<p>烟熏炉声明北侧炉口三帧动画，每帧 0.2 秒，顶部每秒 5 个烟雾粒子、炉口每秒 8 个火焰粒子；它们完全由上述工作点配置驱动。</p>
 <h2>只读与事务接口</h2>
 <p><code>engine.buildings</code> 提供定义/实例查询、工作点状态、存储点状态、治疗容量、放置预览和拆除事务。生产、治疗、招募和矿井系统只消费这些显式角色，不按 ID 名称猜测。</p>
 <div class="footer">NewColony Wiki · UTF-8</div></div></div><script src="wiki.js"></script></body></html>

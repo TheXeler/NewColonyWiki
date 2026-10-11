@@ -33,6 +33,8 @@
 
     <p>烟熏炉 <code>core:smoker</code> 使用显式六面立方体模型，北面为炉口，顶面、底面与侧面分别引用 <code>smoker_top</code>、<code>smoker_bottom</code> 和 <code>smoker_side</code>；四张贴图从工作区已有素材导入。其 item 模型继承 <code>core:block/smoker</code>，地面物品保留炉体形状。独立面包物品 <code>core:bread</code> 使用 <code>minecraft:item/generated</code> 与 <code>textures/items/bread.png</code>。</p>
 
+    <p>建筑工作点的 <code>working_visuals</code> 可在加工时显示动画表面及烟火粒子。烟熏炉炉口引用 16x48 的 <code>smoker_front_on.png</code>，按三帧每帧 0.2 秒循环显示；烟雾与火焰为独立摄像机朝向四边形，8 像素火焰图会最近邻放大到 16 像素。静态模型中的 <code>textures.particle</code> 只定义纹理变量，不产生粒子。工作点效果显式声明帧时间，不读取 Minecraft 的 <code>.mcmeta</code>；它也不改变方块模型几何或 ID。完整配置见<a href="mod-buildingregistry.html">建筑数据</a>。</p>
+
     <h2>根字段</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>
