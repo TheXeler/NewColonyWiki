@@ -35,8 +35,6 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     <p>文件：<code>mods/core/config/console_permissions.json</code></p>
     <p>控制哪些控制台命令在什么权限等级下可用。</p>
     <pre><code>{
-    "access_level": "developer",
-    "remote_access_level": "player",
     "command_permissions": {}
 }</code></pre>
 
@@ -61,7 +59,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
         "spawn_proto": "developer"
     }
 }</code></pre>
-    <p>未在 <code>command_permissions</code> 中列出的命令保留代码注册的默认权限；<code>access_level</code> 表示本机客户端拥有的权限等级，不是所有命令的默认权限。服务端使用自己的 <code>remote_access_level</code> 决定已接纳远程连接的等级，缺省为 <code>player</code>，客户端载荷和用户名不能覆盖它。世界命令通过网络送到服务端校验和执行，只有相机、语言、渲染等客户端命令在本地处理；详见<a href="mod-console.html">控制台执行流程</a>。</p>
+    <p>未在 <code>command_permissions</code> 中列出的命令保留代码注册的默认权限。服务端使用 <code>--DEBUG</code> 启动时，玩家（本机与远程）默认拥有 <code>developer</code> 等级，否则默认拥有 <code>player</code> 等级。可选字段 <code>access_level</code> 显式覆盖本机等级，<code>remote_access_level</code> 显式覆盖服务端授予远程玩家的等级；默认文件省略这两个字段。客户端载荷、用户名和客户端启动参数不能覆盖服务端授权。世界命令通过网络送到服务端校验和执行，只有相机、语言、渲染等客户端命令在本地处理；详见<a href="mod-console.html">控制台执行流程</a>。</p>
 
     <h2>控制台别名</h2>
     <p>文件：<code>mods/core/config/console_aliases.json</code></p>

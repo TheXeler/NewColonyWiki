@@ -80,7 +80,7 @@
     <p>难度的“袭击”维度倍率（<code>DifficultyRuntimeState::raid_multiplier</code>）在触发时读取：<code>0</code> 表示关闭袭击并拒绝预约（原因 <code>raid_disabled_by_difficulty</code>），大于 0 时按比例缩放每个入选组的数量（至少保留 1 个）。</p>
 
     <h2>运行时接口</h2>
-	<p>控制台的 <code>raid</code> 查询与触发都是客户端向服务端提交的命令。单机通过 loopback 走相同通道，袭击者生成、ECS 组件迁移、任务发布和袭击事件在服务端模拟线程执行，结果回传发起客户端。权限按服务端控制台配置校验，网络远程连接默认只有 player 等级；详情见<a href="mod-console.html">调试控制台</a>。</p>
+	<p>控制台的 <code>raid</code> 查询与触发都是客户端向服务端提交的命令。单机通过 loopback 走相同通道，袭击者生成、ECS 组件迁移、任务发布和袭击事件在服务端模拟线程执行，结果回传发起客户端。服务端以 <code>--DEBUG</code> 启动时，玩家默认拥有 developer 等级，否则默认拥有 player 等级；执行权限仍由服务端校验，详情见<a href="mod-console.html">调试控制台</a>。</p>
     <table>
       <thead><tr><th>接口</th><th>说明</th></tr></thead>
       <tbody>

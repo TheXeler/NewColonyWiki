@@ -19,7 +19,7 @@
     <p>控制台窗口、输入和历史记录属于客户端。世界命令通过已有网络命令通道发送 <code>core:console.execute</code> 请求，载荷为 <code>{"line":"raid core:mvp_test_raid"}</code>；服务端在模拟线程中校验命令、权限和世界生命周期，然后执行。单机使用 loopback 会话，遵循相同的请求和回包流程。客户端不会在键盘回调中直接创建实体或修改 ECS。</p>
     <p><code>raid</code>、<code>spawn_proto</code>、<code>tp</code>、<code>lua</code>、<code>echo</code>、<code>emit</code>、<code>time</code> 及世界查询都由服务端处理。<code>help</code>、相机、视图、语言、RML 重载、渲染调试和连接管理命令由请求客户端处理；服务端拒绝执行客户端命令。没有可用服务端会话时，世界命令明确失败，不会回退到客户端执行。</p>
     <p>提交后的 <code>Submitted to server: request=...</code> 只表示请求已提交。最终回包包含 <code>ok</code> 和 <code>console_rows</code> 数组，每行具有 <code>type</code>（output / warning / error）和 <code>text</code>。网络层按请求编号将结果交还发起者，客户端帧线程更新历史记录。断线和超时也会结束该请求，控制台回包不会进入普通游戏 UI 的命令结果通道。</p>
-    <p>服务端必须启用 <code>--DEBUG</code>。服务端的 <code>config/console_permissions.json</code> 中，<code>access_level</code> 控制本机客户端权限，新增 <code>remote_access_level</code> 控制已接纳远程连接的权限，缺省为 <code>player</code>；两者仍受 <code>command_permissions</code> 中逐命令等级约束。调试远程世界时，由服务端运营者将 <code>remote_access_level</code> 配置为所需等级。连接身份由网络层提供，客户端载荷中的权限或用户名不会授予执行权限。别名先展开，再检查实际目标命令权限。</p>
+    <p>玩家默认权限由服务端启动参数决定：服务端使用 <code>--DEBUG</code> 启动时，本机客户端和远程玩家均默认为 <code>developer</code>；否则均默认为 <code>player</code>。客户端自己的启动参数不会提升远程服务端授予的权限。服务端的 <code>config/console_permissions.json</code> 可用可选的 <code>access_level</code> 和 <code>remote_access_level</code> 显式覆盖本机与远程等级；CoreMod 默认文件不写这两个字段，以采用启动模式默认值。执行仍检查 <code>command_permissions</code> 中逐命令要求，普通模式的服务端会按 player 等级校验请求，不会一概禁用服务端命令入口。连接身份由网络层提供，客户端载荷中的权限或用户名不会授予执行权限。别名先展开，再检查实际目标命令权限。</p>
 
     <h2>帮助和补全</h2>
     <p>控制台输入框支持命令历史。当前 RML 伪输入尚未接入 Tab 补全；用 <code>help</code> 查看命令与用法：</p>
