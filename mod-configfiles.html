@@ -36,6 +36,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
     <p>控制哪些控制台命令在什么权限等级下可用。</p>
     <pre><code>{
     "access_level": "developer",
+    "remote_access_level": "player",
     "command_permissions": {}
 }</code></pre>
 
@@ -60,7 +61,7 @@ local rate  = engine.modding.get_setting("copper_age", "ore_spawn_rate", 1.0)</c
         "spawn_proto": "developer"
     }
 }</code></pre>
-    <p>未在 <code>command_permissions</code> 中列出的命令保留代码注册的默认权限；<code>access_level</code> 表示当前控制台会话拥有的权限等级，不是所有命令的默认权限。</p>
+    <p>未在 <code>command_permissions</code> 中列出的命令保留代码注册的默认权限；<code>access_level</code> 表示本机客户端拥有的权限等级，不是所有命令的默认权限。服务端使用自己的 <code>remote_access_level</code> 决定已接纳远程连接的等级，缺省为 <code>player</code>，客户端载荷和用户名不能覆盖它。世界命令通过网络送到服务端校验和执行，只有相机、语言、渲染等客户端命令在本地处理；详见<a href="mod-console.html">控制台执行流程</a>。</p>
 
     <h2>控制台别名</h2>
     <p>文件：<code>mods/core/config/console_aliases.json</code></p>
