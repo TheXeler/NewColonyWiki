@@ -57,6 +57,10 @@
       存量方块可派生同 ID 的兼容物品定义，但世界对象产出只能读取统一产出表。伐木、采石和野采会先填执行者统一背包，溢出在目标位置形成自动回收授权地面实例；不会直接写入仓储或旧 HeldItem。
     </div>
 
+    <p>树苗 <code>core:sapling</code> 使用 <code>transparent</code> 分类与 <code>block/cross</code> 模型：保留一格世界位置与生长记录，角色可以穿过，不遮挡相邻方块面，但仍可被鼠标命中。交叉片模型本身不自动决定碰撞；当前射线选中仍按体素格判断，没有独立的小尺寸树苗选中框。</p>
+
+    <p>成熟作物可声明 <code>crop_id</code>，例如 <code>core:wheat_stage7</code> 引用 <code>core:wheat</code>。该字段由 <code>get_block_info</code> 投影，割除收获时保留区域格并生成可回收地面产物，供后续补种。作物内容仍通过统一 <code>output_table</code> 结算。</p>
+
     <h2>物品图标推导</h2>
     <p>方块物品的图标按以下顺序选择：</p>
     <ol>

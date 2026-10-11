@@ -4,8 +4,11 @@
 <h1>作物数据</h1>
 <p>作物 schema 位于 <code>data/crops/*.json</code>，可表达耕地类型、生长阶段、最终温度条件和产出引用。</p>
 <h2>当前状态</h2>
-<p>NCDOCS 只保留物品、职业、任务和最终温度接口，并明确说明种植循环由专项设计定义。当前没有专项文档给出生长阶段、周期、温度范围、产量或具体作物条目。</p>
-<p>CoreMod 作物内容表因此为空。旧小麦、土豆、水稻、玉米、棉花、药草、南瓜和甘蔗记录已删除；系统不会生成默认作物、生长速度或收获产量。</p>
+<p>CoreMod 按当前素材需求加入 <code>core:wheat</code> 作物定义，位于 <code>data/crops/wheat.json</code>。提供 <code>core:wheat</code> 收获物、<code>core:wheat_seeds</code> 种子、<code>core:farmland</code> 耕地，以及 <code>core:wheat_stage0</code> 至 <code>core:wheat_stage7</code> 八个作物阶段。</p>
+<p>小麦使用 Minecraft 四张双面竖片的作物模型，八张阶段贴图由已有工作区素材导入。作物方块为 <code>transparent</code>，角色可以穿过，不遮挡相邻面；它们没有物品方块形态，也不进入放置菜单。小麦与种子的图标、掉落物使用独立的 <code>item/generated</code> 模型。耕地显示高度为 15/16 格；碰撞与射线选中仍采用引擎现有整格规则。</p>
+<p>当前定义的阶段间隔为每阶段 600 simulation tick（总计 4800 tick），最终温度范围为 5 至 35 摄氏度，单次产出为 1 小麦、2 种子。每 20 tick 更新一次，已加载区块中处于室外且最终温度有效的植株累计进度；第八阶段满周期后进入自动收获。温度不适或区块未加载时暂停，不删除生长记录。<code>seed_item</code> 是种子引用，<code>get_crop_info</code> 同时投影 <code>seed_item</code> 和 <code>seed_hash</code>。成熟方块声明 <code>cuttable</code>、<code>crop_id</code> 并引用 <code>core:wheat_harvest</code> 产出表；未成熟阶段不开放收获产出。</p>
 <h2>接口边界</h2>
-<p>种植区 <code>core:growing</code> 仍是持续区域类型，但在没有有效作物内容和专项循环时不会派生虚假播种或收获规则。Mod Registry 和只读查询接口保留，供后续有来源的内容使用。</p>
+<p><code>systems.farming</code> 为 <code>core:growing</code> 默认设置 <code>crop=core:wheat</code>。泥土或草地下方对应的空区域格先派翻地工作，耕地空格派播种工作；两者使用 Build 工作与种植权限。播种需要 1 个种子，领取预检与激活预约从所属殖民地仓储获取材料；新开局测试补给提供 20 个种子，应放入储物区或所属殖民地容器供播种使用。播种的种子消费、世界内容与幼苗格由原生批量提交协调，失败保留种子和空格。</p>
+<p>成熟后派 Cut 收获工作，沿已有方块/产出事务生成可回收地面小麦与种子。作物收获保留种植区格子，后续自动补种；种子应由搬运工作送回可用仓储。农夫职业允许种植与割除工作。每个目标只登记一个农业待办，并避开同格手动 Build/Cut 指令；一次扫描最多新派 16 个工作。</p>
+<p>世界状态保存逐格作物阶段、有效累计时间，以及待办工作 UUID、区域来源和种子预约。加载及 Mod 上下文恢复校验坐标、阶段、任务身份和引用，不重复播种。删除区域会取消其来源工作、释放预约并停止该区域作物管理；已存在植株保留在世界中，可对成熟植株手动割除。原生 Server 接口 <code>world.settle_farming(task_uuid,zone_id,crop_id,phase,reservation_id)</code> 只接受对应 Build 完成上下文，<code>world.advance_crop(zone_id,crop_id,x,y,z,stage)</code> 校验区域、耕地与预期阶段后写入下一阶段。</p>
 <div class="footer">NewColony Wiki · UTF-8</div></div></div><script src="wiki.js"></script></body></html>

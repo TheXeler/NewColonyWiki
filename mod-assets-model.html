@@ -25,6 +25,12 @@
 }</code></pre>
     <p>物品模型单独登记，不覆盖世界方块的材质或形状。地面物品优先使用同名 item 模型；没有 item 模型的方块保留 block 形状，独立物品的 <code>icon</code> 可作为生成 sprite 的来源。<code>minecraft:block/cross</code> 提供 Minecraft 的两张旋转交叉片，适合浆果丛等植被。测试食物在世界中使用浆果丛模型，掉落后使用浆果图标生成的物品模型；测试铁剑使用 handheld 模型。</p>
 
+    <p>树苗 <code>core:sapling</code> 在世界中使用 <code>block/cross</code> 与透明橡树苗贴图，图标和 <code>item/generated</code> 掉落物引用同一张贴图。其 <code>block_class: "transparent"</code> 使角色可以穿过，也不遮挡相邻面；渲染形状和通行属性分开配置。树苗仍是可命中的体素方块，不是 ECS 实体。当前射线选中按整格判断，尚未实现 Minecraft 的较小树苗选中框。</p>
+
+    <p>小麦阶段模型 <code>wheat_stage0</code> 至 <code>wheat_stage7</code> 继承本地 <code>core:block/wheat_crop_template</code>，使用四张双面竖片与各自阶段贴图；与树苗的两张对角交叉片不同。耕地模型为 15/16 格高，小麦竖片从模型 Y=-1 开始，与耕地顶面对齐。小麦及种子物品采用 <code>item/generated</code>。</p>
+
+    <p>方块物品缺少独立 item 模型时保留 block 模型或立方体兜底，只有独立物品的图标自动生成薄片。木板使用 <code>wood_plank.json</code> 与橡木木板贴图，物品堆中保持立方体。树叶在程序化兜底之前加载 <code>leaves.json</code> 与 <code>oak_leaves.png</code>；其 tintindex 从 MC foliage 色表按默认温度 0.5、降雨 1.0 的坐标采样，并用于完整模型、LOD 和地面方块物品。当前尚未接入群落颜色混合或树叶腐烂。</p>
+
     <h2>根字段</h2>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>缺省行为</th></tr></thead>
