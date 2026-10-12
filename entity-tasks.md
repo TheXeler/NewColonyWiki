@@ -426,11 +426,9 @@ availability when a pickup cannot activate. Match the task UUID in these rows
 with the native task diagnostic to follow one item through both stages.
 The posted rows include `task_pos`, the position passed to the task pool;
 `target` is the chosen storage cell. Pickup rows also include `pile_pos`.
-On a path search failure, `[AI][work] pathfinding failed` reports `task_pos`,
-the navigation `target`, snapped `start_cell` and `goal_cell`, and whether each
-snapped cell is walkable for the logged agent size. `target_valid` describes
-the navigation target, and `stale` records whether the path was recalculated
-after the candidate changed. Walkable endpoints do not guarantee a route.
+For proved asynchronous failure, `[AI][nav] unreachable work` reports entity
+and task UUIDs, the request's `from` and `target` coordinates, expanded work
+steps and cell queries. Walkable endpoints do not guarantee a route.
 The detailed warning is emitted on the first failure in a retry sequence;
 later attempts update failure counters and cooldowns without repeating it.
 Missing-stance and individual candidate probes use DEBUG logs.
