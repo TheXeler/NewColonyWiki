@@ -94,7 +94,7 @@ when that column also has a walkable level at the current height.
 The assigned route compresses straight, level cell runs into turn points.
 
 Path-failure handling (2026-10-12) does not cap the number of normal path
-requests per simulation tick. The primary search retains its configured node
+requests per simulation tick. Synchronous queries retain their configured node
 budget (4096 by default). Only after it fails, adjacent endpoint combinations
 share one multi-source search and one additional node budget, instead of
 restarting a full search for every pair. This search prefers the original goal
@@ -106,8 +106,8 @@ Unreachable scheduled tasks back off for 20, 40, 80, then at most 160 ticks
 (1, 2, 4, 8 simulation seconds at 20 TPS). The failure history belongs to the
 task UUID, so changing the worker does not restart the sequence. Success
 clears that task's history; cancellation and a minute without failure prune
-it, and world teardown clears all history. A changed task position or NavMesh
-revision clears the history and worker blacklist on the next AI update, and
+it, and world teardown clears all history. A changed task position or relevant
+NavMesh dependency clears the history and worker blacklist on the next AI update, and
 removes the recorded failure cooldown if it still belongs to that task.
 Explicit locks and independently changed blockers retain their state.
 Callback-only navigation has no terrain revision; target changes still reset
@@ -115,6 +115,75 @@ its failures, and terrain changes are discovered at the next scheduled retry.
 The retry state is derived runtime data and is not serialized.
 Regression test source has been added; this change has not been compiled,
 tested or measured in a running game.
+
+### Resumable hierarchical navigation (2026-10-12)
+
+Runtime navigation now uses a dedicated 1-8 thread service, defaulting to half
+the hardware thread count. Every valid request can enter the queue during its
+submission tick; there is no per-tick request quota. Searches yield after 4096
+work steps and retain their frontier, with a default total budget of 131072.
+Cold region construction also consumes work steps. Default Weighted A* uses
+1.2; explicit 1.0 remains available for exact cell-search comparisons.
+
+The cell kernel uses a flat coordinate index, contiguous parent/cost records,
+stable heap ties, combined passability/cost queries and reusable per-thread
+buffers. NavMesh publications are shared immutable chunks. Background jobs
+capture a snapshot, never ECS/Lua/TaskPool pointers or terrain callbacks.
+Callback-only tooling stays synchronous on its owner thread. Existing Lua
+material reservation and other `find_path` callers still return immediately
+and retain their caller-specified budget. `NavigationService::solve` provides
+the richer synchronous result contract without queuing background work.
+
+Cross-chunk requests use directed strongly connected regions built for the
+agent's clearance, footprint, permitted fluid depth, step-up and drop rules.
+Every region transition retains a legal exit and entry; one-way drops do not
+create reverse reachability. Same-chunk requests try the cell search first;
+after 4096 expansions a difficult request switches to the region proof.
+The service first establishes a complete region corridor, then refines and
+publishes its successive cell segments. It never returns an exploratory
+frontier as a route. Partial proofs describe the captured snapshot, not future
+terrain changes. Raw route coordinates remain continuous at world wrap seams.
+
+AI retains the task claim while waiting. When a valid segment arrives, the
+simulation owner rechecks position, target, body size, task eligibility and
+ownership before activating the task and installing guidance. Results are
+applied in stable request order among currently ready jobs, without waiting
+for older unfinished jobs. Timing is server-authoritative and may differ with
+worker speed. `AISystem::request_path` returns acceptance for NavMesh requests;
+it no longer means a route was installed before the call returned.
+
+Segments keep the final task target and use the existing 128-waypoint NavAgent
+capacity in overlapping windows. Intermediate endpoints cannot start work;
+the owner installs the next window or waits. Waiting does not count as a stalled
+walk, and the movement controller must not fall back to a direct MovementTarget
+while AI awaits navigation. Actual walking retains normal stall detection.
+
+`Pending`, `Partial`, `Complete`, `Unreachable`, `BudgetExceeded`,
+`NavigationUnavailable`, `Cancelled`, and `Stale` are distinct result states.
+Only proved Unreachable results enter the unreachable history. Budget exhaustion
+or missing navigation releases the request with a short retry delay and is not
+cached as impossible. Region/proof caches use agent capabilities, publication
+identities and dependency versions; missing neighbors are dependencies too.
+An unrelated chunk replacement does not invalidate a route. Changed relevant
+navigation or a target clears its failure history. Retained cache entries have
+a conservative 128 MiB LRU limit; active requests are never refused to enforce
+that limit. Simultaneous requests may therefore use more than 128 MiB overall.
+
+Cancel, reassignment, body/target changes and world teardown discard old jobs.
+World unload/shutdown cancels and joins navigation workers outside the simulation
+lock. Search state, pending results and caches are derived and are not saved or
+added to the network protocol. World load resumes planning from saved task state.
+
+`AISystemStats` includes pending requests and consumed work/query/cache-hit
+counters. `NavigationMetrics` also includes stale heap entries, route cost,
+compute time and elapsed request time. With a separate test configuration,
+`NEWCOLONY_BUILD_NAVIGATION_BENCHMARK=ON` builds the opt-in standalone
+`NewColonyNavigationBenchmark`; it is not registered with CTest. It prints CSV
+for 100/300/500 requests in short, long, disconnected, shared-goal and editing
+scenarios, including cold/warm caches, latency percentiles, first-segment time,
+throughput, result classes and retained cache bytes. The runner measures this
+implementation; comparing revisions requires running the same workloads on
+each revision. Regression and benchmark sources have not been compiled or run.
 
 Engine initialization attaches the world NavMesh, terrain callbacks, and the AI
 worker pool before world creation or loading. This does not depend on tick zero:
