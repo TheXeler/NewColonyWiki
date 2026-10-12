@@ -1,5 +1,7 @@
 # Mod 脚本运行契约与迁移记录
 
+2026-10-12 城邦经营交接源码：原生 `ManagedStateBatch` 从连续 `{state,field,value}` 数组准备同 VM 的受管 world 字段，先深拷贝所有相关模块并验证声明，拒绝重复字段、外部 VM、local 字段及关闭／未启用模块。提交再次核对模块表和嵌套内容，任何变化或非法数据在交换前拒绝；成功后通过不抛异常的原生表交换一次发布全部模块，票据只能提交一次。city_native 用它连接城邦权威、生产／制作／建设记录与原生资产，最终提交阶段不执行 Lua 回调。业务模块检测持久表替换并在公开入口刷新缓存；原生 JSON 文本保存在城邦 native_archive，避免空表丢失 JSON 对象／数组区别。完整桥、剩余业务记录和抽象变化回写仍在开发。本轮仅静态检查和 Lua 5.1 语法解析，没有编译、运行测试或启动游戏；本段不能借用下文其他线程的历史验证结果。
+
 2026-09-24：本页开头记录当前运行契约；“既有实现与历史检查记录”等章节保留逐轮历史，其中的“未运行”“仍待迁移”只对应写入时的状态。原剩余工作清单已清空并删除，相关历史构建与测试记录已于 2026-10-11 清理。本轮完整 CTest 目标通过，后续分组专项 224/224 通过；这些结果不代表同一玩家会话的完整业务往返已经验证。
 
 2026-09-28 装备槽定型：装备槽有且只有一个，`equip_slot`、`equip_type`、`two_handed` 三个遗留名字全部删除。装备只由唯一显式字段 `equipment: true` 声明——`equip_slot` 非空、`equipment_bonuses`、`equipment_requirements` 都不再让定义自动变成装备，其中 `equipment_requirements` 本来就没有任何解析代码。方块定义也校验 `equipment` 必须是布尔值。ECS `Equipment` 直接持有 `ItemStack`，删除了派生的 `Slot` 类型和 `two_handed` 字段，存盘与网络文档的装备所有者行只保留 `owner` 和 `item`；含 `two_handed` 的旧存档按未知字段拒绝，不做兼容，也不保留任何回退读取路径。Lua 物品快照不再输出 `equip_type`。当前 CoreMod 内容里没有任何定义声明装备，所以整条装备链路仍然只有单测覆盖。
@@ -2185,6 +2187,13 @@ existing shared difficulty snapshot. The difficulty panel shows its numeric
 value. It is restored from the saved difficulty selection and current rules,
 without adding a new selection dimension or changing the saved selection format.
 The native binding rejects malformed values without replacing published state.
+Startup city metric registration runs inside the server `core:mod_ready`
+listener, after module preparation, rather than at file scope. Its authority
+check calls `engine.simulation.is_authoritative`, which is blocked by the
+candidate API before activation. A file-scope call rejected CoreMod script
+registration and caused engine initialization to exit before the main loop.
+The registration timing regression has source coverage; compilation and
+runtime verification have not been run for this fix.
 Fixed impact damage and runtime structural collapse are described in
 [Entity tasks and movement](entity-tasks.md). Added checks are source-only;
 this change has not been compiled or runtime-tested.
