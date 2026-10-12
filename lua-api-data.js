@@ -133,7 +133,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.modding.resolve_block_id(hash)", "params": "hashed id", "returns": "string", "note": "把方块哈希解析为数据 ID；未找到时返回空字符串。" },
         { "api": "engine.modding.list_by_type(type)", "params": "blocks/raids 等", "returns": "table", "note": "列出指定数据类型的全部 ID。" },
         { "api": "engine.modding.get_block_info(hash)", "params": "integer", "returns": "table", "note": "返回 id/hash/exists、material、category、food_value、has_item_block、mineable/cuttable/selectable、tree_feature、hardness 和统一产出表配置状态。" },
-        { "api": "engine.modding.get_crop_info(crop_id)", "params": "data id", "returns": "table 或 nil", "note": "读取作物注册信息，包含 seed_item/seed_hash、farmland、growth_stages、growth_ticks、crop_block 和 outputs。" },
+        { "api": "engine.modding.get_crop_info(crop_id)", "params": "data id", "returns": "table 或 nil", "note": "读取作物注册信息，包含 farmland、growth_stages、growth_ticks、crop_block 和 outputs；可选 seed_item/seed_hash 仅在作物声明该字段时投影，引擎与 CoreMod 不再使用。" },
         { "api": "engine.modding.get_setting(mod, key, fallback)", "params": "string, string, any", "returns": "any", "note": "读取配置，结合清单默认值和用户覆盖后的最终值。" }
       ]
     },
