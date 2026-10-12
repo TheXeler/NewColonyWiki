@@ -143,7 +143,8 @@ window.__LUA_API_DATA = {
         { "api": "engine.tags.has(block, tag)", "params": "block id 或 hash, string", "returns": "bool", "note": "判断方块是否属于某 tag。详见 Tag 注册页。" },
         { "api": "engine.tags.blocks(tag)", "params": "string", "returns": "table", "note": "返回该 tag 下所有方块：每行 { hash, id }。" },
         { "api": "engine.tags.list()", "params": "-", "returns": "table", "note": "返回所有已声明 tag 字符串。" },
-        { "api": "engine.tags.of_block(block)", "params": "block id 或 hash", "returns": "table", "note": "返回该方块拥有的 tag 字符串数组。" }
+        { "api": "engine.tags.of_block(block)", "params": "block id 或 hash", "returns": "table", "note": "返回该方块拥有的 tag 字符串数组。" },
+        { "api": "engine.tags.loaded_blocks(tag)", "params": "string", "returns": "table", "note": "返回所有已加载的该 tag 方块：每行 { x, y, z }，按 (x,y,z) 排序；不扫描未加载区块。" }
       ]
     },
     {

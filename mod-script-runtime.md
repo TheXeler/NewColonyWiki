@@ -1,5 +1,7 @@
 # Mod 脚本运行契约与迁移记录
 
+2026-10-13 贸易点改为放置部件：贸易点不再由指令菜单指定世界地点，改为玩家放置的单方块部件 `core:trade_point`（`tags: ["core:trade_point"]`、`building_capabilities: ["trade_point"]`；模型与贴图暂复用 banner 资源，正式美术待补）。`systems.trade_points` 以已加载的该方块为泊位，提供 `list`、`available`、`counts`、`point_at`、`reserve`、`release`、`release_owner` 和 `arrival_status`；一个贸易点只容纳一个商队，占用为运行时状态，世界加载或卸载时清空。未放置返回 `trade_point_missing`，全部占用返回 `trade_points_all_occupied`。删除 `systems.world_locations`、`location.trade_point.set/clear` 命令与其处理前事件、贸易点变更事件、`core:world_locations` 通道与双端 receiver、`ui.world_locations_state`/`world_locations_panel`、指令菜单入口、`core:locations.*` 本地化键及相关监听器与测试用例；`RML_UI_SNAPSHOT_CHANNELS` 由 31 项减为 30 项。新增原生 `engine.tags.loaded_blocks(tag)`，按 (x,y,z) 排序返回已加载的带 tag 方块且不扫描未加载区块。旧用例替换为 `Tests/UnitTests/test_core_trade_points.cpp`。本轮只做 JSON 与文本静态检查，未编译、未运行测试。
+
 2026-10-12 城邦经营交接源码：原生 `ManagedStateBatch` 从连续 `{state,field,value}` 数组准备同 VM 的受管 world 字段，先深拷贝所有相关模块并验证声明，拒绝重复字段、外部 VM、local 字段及关闭／未启用模块。提交再次核对模块表和嵌套内容，任何变化或非法数据在交换前拒绝；成功后通过不抛异常的原生表交换一次发布全部模块，票据只能提交一次。city_native 用它连接城邦权威、生产／制作／建设记录与原生资产，最终提交阶段不执行 Lua 回调。业务模块检测持久表替换并在公开入口刷新缓存；原生 JSON 文本保存在城邦 native_archive，避免空表丢失 JSON 对象／数组区别。完整桥、剩余业务记录和抽象变化回写仍在开发。本轮仅静态检查和 Lua 5.1 语法解析，没有编译、运行测试或启动游戏；本段不能借用下文其他线程的历史验证结果。
 
 2026-09-24：本页开头记录当前运行契约；“既有实现与历史检查记录”等章节保留逐轮历史，其中的“未运行”“仍待迁移”只对应写入时的状态。原剩余工作清单已清空并删除，相关历史构建与测试记录已于 2026-10-11 清理。本轮完整 CTest 目标通过，后续分组专项 224/224 通过；这些结果不代表同一玩家会话的完整业务往返已经验证。
@@ -668,7 +670,7 @@ ModRuntime、ScriptModules 的生命周期令牌和候选提交门闩使用原�
 
 原生 RmlUI 的快照查询通过 `Engine::make_rml_ui_snapshot_json` 调用客户端 `ModRuntime::ui_snapshot`。已删除无调用的 `ScriptEngine::get_ui_snapshot` 全局 Lua 查询入口；ModRuntime 负责 provider 归属和生命周期。此项为源码清理，完整线程边界与运行验证尚未完成。
 
-快照查询使用唯一注册名：世界位置 `world_locations_state`、施工进度 `construction_active`、工作策略 `work_policy_state`、研究原始缓存 `research/tech`；`tech_tree` 是另一个展示投影。资源详情使用 `resources`，库存/建筑仓储使用 `storage_state`/`building_storage_state`，食物计划使用 `food_plans`，地面物品使用 `ground_item_state`，制作目录使用 `craft_catalog_state`，锻造使用 `forge_designs`，药剂使用 `potion_state`。生产/招募/维修/生态/狩猎/矿场/可见性/天气/世界组件分别使用 `production_state`、`recruitment_state`、`building_repair_state`、`ecology_state`、`hunting_state`、`mine_state`、`visibility_state`、`weather_state`、`world_components_state`；治疗记录/模板使用 `treatment_state`/`treatment_templates`。重复 provider 别名已移除，返回数据中的业务 `id` 字段不是查询别名。区域选择刷新通知使用 `zone_management_state`。字面量调用与注册扫描通过，但动态名称和运行路径尚待验收。
+快照查询使用唯一注册名：施工进度 `construction_active`、工作策略 `work_policy_state`、研究原始缓存 `research/tech`；`tech_tree` 是另一个展示投影。资源详情使用 `resources`，库存/建筑仓储使用 `storage_state`/`building_storage_state`，食物计划使用 `food_plans`，地面物品使用 `ground_item_state`，制作目录使用 `craft_catalog_state`，锻造使用 `forge_designs`，药剂使用 `potion_state`。生产/招募/维修/生态/狩猎/矿场/可见性/天气/世界组件分别使用 `production_state`、`recruitment_state`、`building_repair_state`、`ecology_state`、`hunting_state`、`mine_state`、`visibility_state`、`weather_state`、`world_components_state`；治疗记录/模板使用 `treatment_state`/`treatment_templates`。重复 provider 别名已移除，返回数据中的业务 `id` 字段不是查询别名。区域选择刷新通知使用 `zone_management_state`。字面量调用与注册扫描通过，但动态名称和运行路径尚待验收。
 
 当前状态（2026-09-21）：`CoreMod/scripts/ui/data_bridge.lua` 已删除。居民列表/详情包装/战斗摘要由 `ui.residents_view` 提供，区域选择快照由 `mod_ready/zone_management_snapshot.lua` 注册；原生 RmlUI 通过客户端 ModRuntime 请求 provider。31 个周期刷新名称已按源码对照 Lua 注册及原生专用分支，未执行运行验收。battle HUD 也统一走客户端 provider；已删除忽略世界参数并固定返回 visible=false 的原生占位分支。下文关于 bridge 尚待删除或委托的旧记录不再代表当前状态。
 
