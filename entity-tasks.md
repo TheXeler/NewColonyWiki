@@ -185,6 +185,18 @@ throughput, result classes and retained cache bytes. The runner measures this
 implementation; comparing revisions requires running the same workloads on
 each revision. Regression and benchmark sources have not been compiled or run.
 
+Validation update (2026-10-12): the focused `NewColonyNavigationTests` target
+was compiled with MSVC in a separate Release test configuration and all 77
+tests from 10 suites passed, including the 13 navigation regressions. The
+run covers A*, NavMesh, directed hierarchy, snapshot replacement, 500 requests,
+cancel/target changes, intermediate segments and overlapping waypoint windows.
+The runtime build exposed a stale `WORLD_HEIGHT` identifier; validation now
+uses the existing `TERRAIN_GENERATION_HEIGHT` constant. Result application also
+allows an already-arrived task to activate without a NavAgent, and fixtures
+explicitly match worker/task factions. Full repository tests, the standalone
+performance benchmark and final export packaging have not been run in this
+validation. These results establish focused correctness, not a speedup claim.
+
 Engine initialization attaches the world NavMesh, terrain callbacks, and the AI
 worker pool before world creation or loading. This does not depend on tick zero:
 new worlds begin at 08:00 (tick 9600), and loaded worlds resume their saved tick.
