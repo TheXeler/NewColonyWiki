@@ -25,7 +25,7 @@
     { "id": "core:crafter_2", "level": 5 }
   ],
   "unlocks_recipes": [],
-  "allowed_work_tags": ["craft"],
+  "allowed_task_tags": ["craft"],
   "level_abilities": [
     { "id": "core:carpenter_3_level_1", "source_text": "配方解锁 I：解锁基础制作配方。" },
     { "id": "core:carpenter_3_level_2", "source_text": "制作速度 I：提升制作速度。" },
@@ -41,12 +41,17 @@
       <tbody>
         <tr><td><code>id</code></td><td>必填数据 ID</td><td>职业树节点的唯一工程身份，例如 <code>core:worker_2</code>。</td></tr>
         <tr><td><code>career_id</code></td><td>必填</td><td>文档稳定职业 ID，仅允许小写字母、数字和下划线，例如 <code>worker</code>。</td></tr>
+		<tr><td><code>name</code>、<code>description</code>、<code>category</code></td><td>可选字符串</td><td>字段存在但类型错误时拒绝整个职业定义，不将其静默视为缺省。</td></tr>
         <tr><td><code>rank</code></td><td>必填，1-5</td><td>职业树 RANK。相同 <code>career_id + rank</code> 不可重复。</td></tr>
-        <tr><td><code>max_level</code></td><td>普通节点为 1-5</td><td>节点内 LEVEL 上限。初始 <code>colonist</code> 节点固定为 0。</td></tr>
-        <tr><td><code>parent</code></td><td>可选节点 ID</td><td>职业树父节点，也是当前职业能力和职业 tag 的继承链。</td></tr>
-        <tr><td><code>prerequisites</code></td><td>数组</td><td>转职必须全部满足的前置节点和 LEVEL；交叉职业据此保留两条前置链。</td></tr>
-        <tr><td><code>allowed_work_tags</code></td><td>数组</td><td>当前节点可执行的工作大类。需求、基础急救等文档基础行为另行处理。</td></tr>
-        <tr><td><code>level_abilities</code></td><td>普通节点恰好 5 项</td><td>依次对应 1-5 级能力。每项必须有稳定 <code>id</code> 和文档原文 <code>source_text</code>；只有文档明确给数值时才写 <code>modifiers</code>。</td></tr>
+		<tr><td><code>max_level</code></td><td>0-5</td><td>节点内 LEVEL 上限；零级节点没有等级天赋，也不生成正等级资格表达式。Task 资格由职业定义及其继承的允许标签决定，不查询当前装备。CoreMod 的初始 <code>colonist</code> 节点是零级实例，其他 Mod 可声明自己的零级节点。</td></tr>
+        <tr><td><code>parent</code></td><td>可选节点 ID</td><td>职业树父节点，也是当前职业能力和职业 tag 的继承链。旧字段 <code>tree_parent</code> 会被拒绝。</td></tr>
+        <tr><td><code>prerequisites</code></td><td>可选数组</td><td>转职必须全部满足的前置节点和 LEVEL；交叉职业据此保留两条前置链。<code>inherited_nodes</code>、<code>career_tags</code>、能力的 <code>modifiers</code> 也是可选数组；这些字段存在但类型错误时拒绝定义。</td></tr>
+		<tr><td><code>unlocks_recipes</code></td><td>可选数组</td><td>字段存在时必须是数组。非空项可写配方 ID 字符串（默认 1 级），或写 <code>{"id":"mod:recipe","level":N}</code>；对象省略 <code>level</code> 时也默认为 1。空 ID、显式错误的等级类型或超出 1-5 的等级会拒绝定义。</td></tr>
+        <tr><td><code>allowed_task_tags</code></td><td>可选数组</td><td>当前节点可执行的 Task 标签。旧字段 <code>allowed_task_types</code>、<code>allowed_job_types</code> 会被拒绝；字段存在时必须是数组。需求、基础急救等文档基础行为另行处理。</td></tr>
+        <tr><td><code>level_abilities</code></td><td>项数等于 <code>max_level</code></td><td>依次对应节点的各级能力；零级节点使用空数组。每项必须有非空且在全部职业中唯一的稳定 <code>id</code>，以及文档原文 <code>source_text</code>；空 ID 或重复 ID 会拒绝职业定义集合。只有文档明确给数值时才写 <code>modifiers</code>。</td></tr>
+		<tr><td><code>modifiers[].stat</code></td><td>属性完整路径</td><td>使用统一属性键，例如 <code>colonist.work_efficiency</code>、<code>battler.melee_hit</code> 或 ECS 引擎字段 <code>max_hp</code>。包装层按键选择 Map 或 ECS 基础值；修正值接受 JSON 整数或小数，必须有限且可表示为引擎 <code>f32</code>。</td></tr>
+		<tr><td><code>modifiers[].mode</code></td><td><code>add</code> 或 <code>base_percent</code></td><td>职业定义加载时拒绝其他模式，也拒绝把 <code>position</code>、<code>velocity</code>、<code>rotation</code> 父节点或字符串 <code>name</code> 用作数值修正目标。</td></tr>
+		<tr><td><code>level_abilities[].capabilities</code></td><td>属性声明数组</td><td>支持与实体相同的 pack 引用及标量声明。C++ 校验并展开声明，同时向 Lua 提供原始声明；Lua 选出生效天赋后按原始声明批量安装 pack，使覆盖值和嵌套 pack 一次展开，已有同来源能力的当前值不会被再次同步覆盖。缺失的独立标量逐键新增，缺失的 pack 子节点不会被当作另一份 pack 静默重建。职业进度由 C++ 提交，随后由 Lua 同步玩法效果；同步失败报告错误，不回滚已提交的职业变更。民兵与魔法师首个天赋声明 battler pack；战士、骑手和战斗医兵经民兵前置继承，魔法师 3 至 5 阶节点声明为战斗职业。玩家征召 Lua 命令核对当前 Job 的战斗类别和解析后的 battler 能力。</td></tr>
       </tbody>
     </table>
 
@@ -59,9 +64,14 @@
       <li>旧 <code>required_job_id + required_job_level</code> 只在读档时转换成表达式，新工作不再写入它们。</li>
     </ul>
     <pre><code>(#militia_2_5 AND #apothecary_2_5) OR #combat_medic_3_1</code></pre>
+    <p>初始殖民者由 <code>core:colonist</code> 原型生成，保持该职业的无等级状态（<code>Job.level=0</code>）。招募候选人另有 <code>PendingRegistration</code> 标记；单凭 0 级不会把正式殖民者识别为候选人。</p>
 
     <h2>能力与履历</h2>
     <p>当前节点只应用已达到 LEVEL 的能力；父节点和交叉前置节点按满级继承。切换职业后，普通能力不生效；只有数据中明确标为 <code>permanent</code> 或 <code>cross_career</code> 的能力可从独立履历继续生效。CoreMod 当前能力文本直接来自 NCDOCS，未定义数值的“提升”不会被引擎猜成倍率。</p>
+	<p>经验提交导致等级变化时，C++ 发布 <code>core:job_level_changed</code>，CoreMod 的 Lua 监听器同步新等级天赋；原生 AI 迭代产生的事件在迭代结束后投送。职业定义热重载保留原生等级变化回调，后续升级仍会通知 Lua。转职由 <code>core:job_assigned</code> 同步。普通 <code>task_completed</code> 不再为职业效果执行第二次同步；监听器错误由事件系统记录。若通知投送本身失败，原生记录 ERROR，已经提交的经验或转职仍向调用方报告成功；职业能力可能暂时滞后，后续读档或 Mod 重载会重新同步，不自动重试本次事件。</p>
+
+    <p>没有职业定义的原型实体仍有空 <code>Job</code> 组件，初始职业 ID 为 0。空 Job 属于 Job，可以执行基础和生存 Task；具有 <code>ColonistTag</code> 的空 Job 实体也可以接取用于取得职业的 <code>JobChange</code>。缺少 Job 或 <code>ColonistTag</code> 的实体不能接取 <code>JobChange</code>，与转职提交条件一致。转职 Task 的目标是装备所在方块库存，导航会选择该方块邻近的可站立位置。<code>engine.jobs.transition_state(entity)</code> 对空职业返回 <code>current_job_id=0</code>、<code>current_level=0</code>、<code>career_count=0</code> 和空的 <code>levels</code>/<code>history</code> 表。Lua 资格回调若接受其转职，C++ 只把目标职业写入履历；空职业 ID 不会被记录为历史节点。</p>
+    <p>读档遇到未注册的职业 ID 时，引擎记录含该 ID 的 ERROR，并保留当前职业及履历中的原始 ID、等级、阶级和经验。后续存档继续保存这些值，重新启用缺失的 Mod 后仍可恢复职业定义。</p>
 
     <h2>Lua/UI 接口</h2>
     <table>
@@ -69,9 +79,9 @@
       <tbody>
         <tr><td><code>engine.jobs.defs()</code></td><td>返回节点 ID、<code>career_id</code>、<code>rank</code>、前置、工作 tag 和五级能力。</td></tr>
         <tr><td><code>engine.jobs.tree()</code></td><td>按 RANK、排序值和节点 ID 返回职业树。</td></tr>
-        <tr><td><code>engine.jobs.can_transition_reason(entity, node_id)</code></td><td>检查当前实体是否满足节点前置；实际转职还需具体装备实例支持该节点。</td></tr>
+        <tr><td><code>engine.jobs.can_transition_reason(entity, node_id, source)</code></td><td>检查当前实体的职业前置及方块库存来源；C++ 将候选物品 ID 交给 Lua 转职回调，由 CoreMod 检查 <code>equipment</code> 与 <code>supported_jobs</code>。提交时会按预约中的物品再次调用同一回调；<code>commit_transition</code> 返回成功标志和失败原因，再由 C++ 交换装备并记录职业状态。</td></tr>
         <tr><td><code>engine.jobs.progression_configuration()</code></td><td>返回职业经验配置屏障；内容表为空时不会生成经验默认值。</td></tr>
-        <tr><td><code>engine.work.set_qualification_expression(work_id, expression)</code></td><td>给工作保存权威资格表达式。</td></tr>
+        <tr><td><code>engine.tasks.set_qualification_expression(task_id, expression)</code></td><td>给工作保存权威资格表达式。</td></tr>
       </tbody>
     </table>
 

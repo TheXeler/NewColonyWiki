@@ -12,6 +12,7 @@
   <div class="content">
     <h1>群落数据</h1>
     <p>群落由 C++ <code>TerrainGenerator</code> 直接读取 <code>data/biomes/*.json</code>。不存在 Lua 注册或运行时改写入口。</p>
+    <p><strong>温度口径：</strong>引擎与全部 Mod 数据的温度统一为摄氏度，生成器可产生的范围为 <code>-20</code> 至 <code>40</code> 摄氏度（<code>worldmap::CLIMATE_TEMPERATURE_MIN_C</code> 至 <code>_MAX_C</code>）。<code>climate.temperature_min/temperature_max</code> 使用该口径，<code>moisture_*/elevation_*</code> 仍是 0-1 归一化范围；群落选择与高度混合在内部把温度轴按气候跨度换算回 0-1 量纲，因此单位更换不改变群落分布与边界平局规则。</p>
 
     <h2>CoreMod 基础类型</h2>
     <p>NCDOCS 恰好定义六类基础群落：</p>

@@ -16,7 +16,7 @@
     <h2>目录</h2>
     <pre><code>name_sample/
   mod.json
-  scripts/bootstrap.lua
+  scripts/listeners/ready.lua
   data/name_pools/settlement/en-us.json
   data/name_pools/settlement/zh-cn.json</code></pre>
 
@@ -25,18 +25,16 @@
   "id": "name_sample",
   "name": "Name Sample",
   "version": "1.0.0",
-  "entry": "scripts/bootstrap.lua",
-  "dependencies": []
+  "dependencies": ["core"]
 }</code></pre>
 
     <h2>入口脚本</h2>
-    <pre><code>local M = {}
-
-function M.on_load()
+    <pre><code>-- @Event core:mod_ready
+-- @Priority 0
+-- @ServerSideEvent
+return function(e)
   engine.log.info("[name_sample] loaded")
-end
-
-return M</code></pre>
+end</code></pre>
 
     <h2>名称池</h2>
     <pre><code>{

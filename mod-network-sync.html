@@ -14,6 +14,7 @@
     <p class="subtitle">理解 NewColony 的服务器-客户端架构、Mod 数据如何在网络间传输，以及 Lua 脚本怎样在联机环境中正确工作。</p>
 
     <h2>网络模型概览</h2>
+    <p>2026-10-12：新增原生 <code>PlayerLoadingRange</code>（包类型 13），发送相机区块中心、load_radius 和 display_radius；协议版本仍为 1。客户端仅在认证后发送变化范围，重连清空发送缓存并重新提交。服务器按连接身份保存，不读取载荷中的玩家身份；未认证连接、非法半径、截断或多余字节不进入加载范围。半径上限 32 与现有设置范围一致。断线及会话重置移除对应范围，不把旧重连会话当作当前玩家。ChunkManager 合并远端玩家的强加载圈，城邦准备观察加载／显示层的并集；城邦自身保留的区块不参与玩家触发判断。源码已加入，未编译或运行联机验证；城邦屏障远端同步和完整实体交接仍待接通。</p>
     <p><strong>最新目标契约（实现待对齐）：</strong>允许短暂字段中间态，保证最终一致；运动发送开始模拟时间、起点和速度向量供客户端外推，运动变化时更新。库存差异补同步，可部分分配的请求先分配可用量再告知缺额。死亡小队操作静默忽略。15 秒未收到有效服务端消息或心跳判掉线；初次进入和重连先准备必要世界状态再开放操作。下面的具体刷新频率和连接细节描述既有实现，不能覆盖本段决定。</p>
     <h3>逻辑端与物理进程必须分开理解</h3>
     <p><strong>LogicServer 是玩法权威，LogicClient 是输入与表现端；PhysicalClient 和 PhysicalServer 描述程序的部署形态。</strong>逻辑端不是“一台机器”的同义词，也不意味着必须各占一个进程。</p>
@@ -150,6 +151,8 @@
       <li><strong>使用 <code>mod_list</code> 和 <code>export_mod_list</code> 命令调试。</strong>对比服务器和客户端的 Mod 列表和校验码是否一致。主菜单的 <strong>MOD 管理器</strong> 也会显示当前 ModList、校验码和加载顺序，并可导出 ModList JSON。</li>
     </ol>
 
+    <h2>城邦实体准备屏障</h2>
+    <p>2026-10-13 <code>runtime:city_loading_barriers</code>为schema_version=1的派生状态通道，payload是<code>{"chunks":[[cx,cz],...]}</code>，坐标沿当前星球标准化并稳定排序。全量或刷新后的差分替换整个集合，未发送通道时保留合成旧值，空数组明确解除；未知／重复字段、重复格子、错误数值／schema／缺完整合成通道拒绝。Engine先准备屏障和强加载候选，再与原生SaveSystem及runtime_state发布一起提交，失败不清旧状态。NETWORK_VERSION仍为1，无新包类型。首快照前客户端等待，新会话重建准入；服务器仍重新检查命令实际目标。验收源码仅静态检查，多人／重连执行验证尚未运行。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

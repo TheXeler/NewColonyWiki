@@ -56,6 +56,7 @@
 local start = engine.locale.translate("ui.menu.start")
 local same = engine.locale.translate_cat("ui", "menu.start")
 local resolved = engine.locale.resolve("blocks.my_mod:copper_ore")</code></pre>
+    <p>Lua UI 命令失败时，<code>error</code> 或 <code>reason</code> 保留机器可读的错误码。客户端将其映射到 <code>ui</code> 分类下的 <code>core:command.reason.&lt;错误码&gt;</code>，并在 <code>command_result.reason_text</code> 中提供当前语言的提示文本；已有的 <code>reason_text</code> 保持原样。提示层显示 <code>reason_text</code>，业务逻辑仍可按原始错误码分支。新增错误码时请同时在 <code>en-us.json</code> 和 <code>zh-cn.json</code> 中添加翻译。缺失当前语言翻译时，<code>reason_text</code> 显示完整的原始翻译键，例如 <code>core:command.reason.task_requirements_invalid</code>。</p>
 
     <h2>Lua API</h2>
     <table>

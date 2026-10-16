@@ -18,14 +18,13 @@
   mod.json                 —— MOD 清单：ID、版本、依赖、入口脚本
   README.md                —— 说明文档（可选）
   scripts/
-    bootstrap.lua          —— 默认入口脚本（on_load、on_world_init、on_tick、on_shutdown）
     systems/               —— Lua 系统脚本（可选）
     ui/                    —— Lua UI 脚本（可选）
   data/                    —— JSON 数据
     blocks/                —— 方块定义（name、hardness、output_table、可选 placeable）
     items/                 —— 独立物品定义
     tags/                  —— 分类 tag 接口
-    entities/              —— 实体原型（组件拼装：Position, Health, AIState…）
+    entities/              —— 实体原型（顶层引擎字段与 capabilities）
     recipes/               —— 配方（inputs、target_item、output_table 和工作点）
     manufacturing_rules/   —— 全局制造公式、品质阈值和产出树深度
     quality_tables/        —— 品质修正表
@@ -72,7 +71,7 @@
   logs/                    —— 运行时输出或诊断日志（可选，不建议打包发布）</code></pre>
 
     <h2>自动注册的数据目录</h2>
-    <p>当前 C++ 加载器会递归扫描物品、方块及其他内容目录；<code>data/professions/</code> 是 <code>jobs</code> 的迁移别名。文件可以放在子目录里，只要位于对应类型根目录下即可。</p>
+    <p>加载器递归扫描物品、方块及其他内容目录；职业定义统一放在 <code>data/jobs/</code>。文件可以放在对应类型根目录的子目录中。</p>
     <ul>
       <li><code>data/blocks/</code></li>
       <li><code>data/items/</code></li>
@@ -113,7 +112,6 @@
       <li><code>data/raids/</code></li>
       <li><code>data/zones/</code></li>
       <li><code>data/audio/</code></li>
-      <li><code>data/professions/</code>（兼容目录，注册为 jobs）</li>
     </ul>
 
     <h2>各目录说明</h2>
@@ -121,10 +119,9 @@
       <thead><tr><th>路径</th><th>必填</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖、入口脚本等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
-        <tr><td><code>scripts/bootstrap.lua</code></td><td>是*</td><td>默认 Lua 入口脚本，返回一个可选生命周期表：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。<code>entry</code> 可在 <code>mod.json</code> 中改成别的路径；按当前加载器实现，最终入口文件必须存在。</td></tr>
         <tr><td><code>data/blocks/</code></td><td>否</td><td>体素方块定义。声明物品身份的 block 记录同时生成同 ID 的当前物品定义；显式 item 记录可按稳定 ID 覆盖该定义。</td></tr>
         <tr><td><code>data/items/</code></td><td>否</td><td>独立物品定义。声明名称、图标、说明、主类别、用途标签、堆叠、价格、重量，以及可选腐坏、配方来源和装备元数据。</td></tr>
-		<tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，用组件拼装来定义实体类型（如殖民者）。JSON 当前解析 Position、Speed、Health、Needs、Mood、ColonistAttributes、Name、ColonistTag、AIState、Job、Equipment、Visual、Animation 和 HeadVisual；背包物品由统一 ItemSystem 实例表达，NavAgent、BlockInteractor、WorkerPriorityConfig 和 PrototypeRef 由运行时自动附加或维护。</td></tr>
+		<tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，通过顶层引擎字段和 capabilities 定义实体类型。JSON 可声明位置、速度、生命、需求、心情、属性、名称、AI、职业、装备与视觉数据；背包物品由统一 ItemSystem 实例表达。声明 ai_state 时运行时附加 NavAgent、MovementTarget、MovementIntent、BlockInteractor 和 WorkPriorityConfig；Job 只在原型声明时附加。</td></tr>
         <tr><td><code>data/recipes/</code></td><td>否</td><td>制造配方。声明输入材料、目标物品、产出表、兼容工作点，以及可选的职业与等级要求。制作成功触发 <code>recipe:crafted</code> 事件。CoreMod 的工作台配方在手工制作点消耗 4 木板且没有职业门槛。</td></tr>
         <tr><td><code>data/manufacturing_rules/</code></td><td>否</td><td>全局制造规则，声明成败/品质线性公式、品质随机范围、六级阈值和产出树最大深度。内容数值可以留空；需要这些规则的配方会进入可见配置屏障。</td></tr>
         <tr><td><code>data/quality_tables/</code></td><td>否</td><td>品质修正表注册数据；品质配方未指定表时引用 <code>core:default</code>。</td></tr>
@@ -137,9 +134,9 @@
         <tr><td><code>data/medicine_slot_rules/</code></td><td>否</td><td>每个人通用的药剂 CD 槽基础容量和科技增量单记录规则，不限于治疗用途。</td></tr>
         <tr><td><code>data/colonist_survival_rules/</code></td><td>否</td><td>需求、状态阶段、恢复和属性倍率的唯一生存规则记录。</td></tr>
         <tr><td><code>data/career_progression_rules/</code></td><td>否</td><td>成功工作基础经验和 1-4 级升级需求的唯一规则记录；缺失时职业经验结算保持配置屏障。</td></tr>
-        <tr><td><code>data/wild_food_rules/</code></td><td>否</td><td>按群落和最终温度维护野生食材资源点的规则；允许为空。</td></tr>
-        <tr><td><code>data/animal_distributions/</code></td><td>否</td><td>按群落、最终温度和树木统计维护动物上限的规则；允许为空。</td></tr>
-        <tr><td><code>data/weather_definitions/</code></td><td>否</td><td>晴、阴、雨、雪、雾的局部光照、温度、视野、战斗环境和表现定义。</td></tr>
+        <tr><td><code>data/wild_food_rules/</code></td><td>否</td><td>按群落和最终温度（摄氏度）维护野生食材资源点的规则；允许为空。</td></tr>
+        <tr><td><code>data/animal_distributions/</code></td><td>否</td><td>按群落、最终温度（摄氏度）和树木统计维护动物上限的规则；允许为空。</td></tr>
+        <tr><td><code>data/weather_definitions/</code></td><td>否</td><td>晴、阴、雨、雪、雾的局部光照、温度修正（摄氏度增量）、视野、战斗环境和表现定义。</td></tr>
         <tr><td><code>data/dynamic_weather_regions/</code></td><td>否</td><td>稳定天气区域、覆盖区块、当前天气和强度接口；不隐含周期、概率或移动公式。</td></tr>
         <tr><td><code>data/visibility_rules/</code></td><td>否</td><td>三态视野更新间隔及单位、建筑、光照倍率的唯一规则记录。</td></tr>
         <tr><td><code>data/mine_rules/</code></td><td>否</td><td>矿井矿物候选、丰度、工作量、产量、耗减和工作点类型的唯一规则记录。</td></tr>
@@ -153,14 +150,14 @@
         <tr><td><code>data/diplomacy_proposals/</code></td><td>否</td><td>外交提议、关系计分、条约效果和前置状态。</td></tr>
         <tr><td><code>data/name_pools/</code></td><td>否</td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材。<code>words</code> 字段为字符串数组。</td></tr>
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
-        <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度范围和产出；当前 CoreMod 农业脚本把阶段 ticks 加总为成熟时间。</td></tr>
+        <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度范围（摄氏度）和产出；当前 CoreMod 农业脚本把阶段 ticks 加总为成熟时间。</td></tr>
         <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水和河床方块。</td></tr>
         <tr><td><code>data/biomes/</code></td><td>否</td><td>群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/raids/</code></td><td>否</td><td>袭击定义目录。每条记录声明阵营、加权敌人组、投送距离和持续时间；<code>RaidSystem</code> 按 <code>raids</code> 类型读取注册表并生成来袭者。详见 <a href="mod-raidregistry.html">袭击注册</a>。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/audio/</code></td><td>否</td><td>音频定义 JSON。与其他自动注册目录一致，它作为 <code>audio</code> 类型进入通用数据注册表；每个文件顶层 <code>id</code> 就是可播放声音 ID。详见 <a href="mod-audioregistry.html">音频注册</a> 与 <a href="mod-assets-audio.html">音乐和音效格式</a>。</td></tr>
-        <tr><td><code>assets/</code></td><td>否</td><td>模型（.obj / .gltf）、纹理（.png）、着色器（.glsl）、音频文件等资源。<code>assets/background/</code> 下的图片会被引擎自动收集为主菜单背景图池，不需要 <code>mod.json</code> 声明，详见 <a href="mod-assets-ui.html">UI 图片资源</a>。</td></tr>
+        <tr><td><code>assets/</code></td><td>否</td><td>实体模型使用 <code>assets/models/entities/*.glb</code>，启动时编译到可重建的本地缓存；方块使用 <code>assets/models/block/*.json</code>。纹理、着色器、音频等资源也放在这里。<code>assets/background/</code> 下的图片会被引擎自动收集为主菜单背景图池，不需要 <code>mod.json</code> 声明，详见 <a href="mod-assets-ui.html">UI 图片资源</a>。</td></tr>
         <tr><td><code>config/</code></td><td>否</td><td>MOD 随附配置文件。CoreMod 使用该目录提供控制台权限、别名和按键配置。</td></tr>
         <tr><td><code>lang/</code></td><td>否</td><td>翻译文件目录，使用 UTF-8 JSON。文件名即 locale ID，例如 <code>en-us.json</code>、<code>zh-cn.json</code>。详见 <a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td><code>logs/</code></td><td>否</td><td>运行时日志或调试导出目录。发布 MOD 时通常不需要包含。</td></tr>

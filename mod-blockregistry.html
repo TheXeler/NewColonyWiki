@@ -48,8 +48,10 @@
         <tr><td><code>placement_support_blocks</code></td><td>data id array</td><td>否</td><td>限制下方支撑的允许方块 ID；仅与 <code>placement_support: "below"</code> 配合使用。树苗使用 <code>["core:dirt", "core:grass"]</code>，所以点击其他方块侧面时，只要侧边候选格下方是泥土或草方块仍可放置。</td></tr>
         <tr><td><code>cuttable</code></td><td>bool</td><td>否</td><td>显式声明方块可作为割除目标。工作为 <code>Cut</code>（编号 15），统一处理树木与野生植被；树特征的树干和 <code>wild_food_rules</code> 引用的食物方块也会进入割除目标列表。</td></tr>
         <tr><td><code>tree_feature</code></td><td>data id</td><td>多方块树干必填</td><td>指定完整树形的地物定义。<code>core:tree</code> 引用 <code>core:oak</code>，本身是单格树干模型；树干和树叶由生成器或树苗生长作为完整组件创建。割除按组件一次移除，产出表按树干格数执行，树叶不重复产木。树干不直接作为整棵树放置，种植使用树苗。旧的 <code>single_voxel_component</code> 声明已移除。</td></tr>
-        <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块占用与遮挡分级：<code>opaque</code> 不透明，遮挡相邻面且不可通行；<code>translucent</code> 半透明，不遮挡相邻面但不可通行；<code>transparent</code> 透明，不遮挡相邻面且可通行。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。</td></tr>
-        <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>旧版半透明标记，默认 <code>false</code>。新内容优先使用 <code>block_class</code>；该字段仍会让方块不遮挡相邻可见面，但导航上仍不可通行。</td></tr>
+        <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块遮挡分级：<code>opaque</code> 不透明且遮挡相邻面；<code>translucent</code> 半透明、<code>transparent</code> 透明，都不遮挡相邻面。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。未声明 <code>passable</code> 时，仅 <code>transparent</code> 默认可通行。</td></tr>
+        <tr><td><code>passable</code></td><td>bool</td><td>否</td><td>独立设置体素通行性，供实体地形碰撞、支撑与寻路共同使用，不改变渲染分类。省略时沿用 <code>block_class</code> 的默认通行性；液体还受液体通行深度规则限制。</td></tr>
+        <tr><td><code>movement_speed_multiplier</code></td><td>number</td><td>否</td><td>实体身体与该方块重叠时，水平移动意图的速度倍率，范围 <code>(0, 1]</code>，默认 <code>1</code>。身体碰到多格方块时只取最小倍率，不逐格叠乘；离开后恢复正常。不改变重力、下落速度或液体状态。</td></tr>
+        <tr><td><code>translucent</code></td><td>bool</td><td>否</td><td>旧版半透明标记，默认 <code>false</code>。新内容优先使用 <code>block_class</code>；该字段仍会让方块不遮挡相邻可见面，默认不可通行，可通过 <code>passable</code> 覆盖。</td></tr>
       </tbody>
     </table>
 
@@ -58,6 +60,8 @@
     </div>
 
     <p>树苗 <code>core:sapling</code> 使用 <code>transparent</code> 分类与 <code>block/cross</code> 模型：保留一格世界位置与生长记录，角色可以穿过，不遮挡相邻方块面，但仍可被鼠标命中。交叉片模型本身不自动决定碰撞；当前射线选中仍按体素格判断，没有独立的小尺寸树苗选中框。</p>
+
+    <p>树叶 <code>core:leaves</code> 保留 <code>translucent</code> 分类，并声明 <code>passable: true</code> 与 <code>movement_speed_multiplier: 0.5</code>。角色可以穿过树冠，身体任一部分（包括头部）进入树叶时水平移动速度降至 50%，离开后恢复；树叶不提供站立支撑，也不会让角色进入液体状态。树苗与作物不声明此倍率时不减速。</p>
 
     <p>成熟作物可声明 <code>crop_id</code>，例如 <code>core:wheat_stage7</code> 引用 <code>core:wheat</code>。该字段由 <code>get_block_info</code> 投影，割除收获时保留区域格并生成可回收地面产物，供后续补种。作物内容仍通过统一 <code>output_table</code> 结算。</p>
 
@@ -104,6 +108,7 @@ data copper_age:copper_ore        —— 查看单个方块的完整 JSON</code>
       <li>热重载时旧元数据自动清理，新元数据重新填入。</li>
     </ul>
 
+    <p>城邦抽象采伐／采矿复用原生方块 output_table、output_table_executions 和 hardness；整树使用显式组件格子，按与来源方块相同的树干数量乘执行次数。产物继续经过 resource_extracting 扩展；实际材料形态由 item_facts 准备，来源消耗与产物／经验在一个候选提交。被托管来源不会根据名称或相邻格子再生成资源。未完成任务转换、农田收获和新生树再提取仍待接入，详见 <a href="city-simulation.html">城邦模拟</a>。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

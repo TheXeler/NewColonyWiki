@@ -1,5 +1,153 @@
 # Mod 脚本运行契约与迁移记录
 
+第226节新增Server `prepare_effect_clinical_tick_references/work(owner,original_archive,from,requested_end)`，捕获完整Tick物品准备并复用既有固定core只读／copy provider。共享Population同时支持prefix和completed kind，核对首次saved marker、最终phase／UUID顺序／exact remaining patients、原clocks／Tasks／claims以及完整居民／team custody。按最终native状态决定整组暂停：真正恢复活动能力不因首次零血而暂停；正HP但仍downed及suffix新患者仍暂停，历史progress／consumed先保留，完成边界继续要求实际settle。Runtime复用实际历史产能投影／进度算法，native入口独立重采完整Tick工作帧，比较首次来源与最终phase／Tick，核对provider flags／kind／owner／名单和整个ManagedState／Tick。完整custody promotion后仍可准备引用／工作，不回退旧prefix，不重放定义或选址。输出仍blocked，不发布city／Work／patient／asset／native Task／Effects／clock／receipt消费／outbox；其它section／实际结算／native接管与联合接受调度仍待。320段Lua5.1仅语法加载（1份实际Effects wrapper），113份完整JSON解析，零执行。新C++closures／Lua规则及实际共享／独立native-provider源码场景未编译执行；系统false，第79节Release不验证80–226。
+
+第225节新增Server `prepare_effect_clinical_tick_items(owner,original_archive,from,requested_end)`，使用捕获的finish／native item adapters，从saved proof／handoff重算完整临床Tick并派生原claims。native completed inspector核对最终phase／UUID顺序、首次患者身份及精确remaining patients，保留实际同Tick恢复，拒绝实际dead；共享物品算法消费精确年龄marker并按最终phase写journal，原section clocks保持。完整overflow保管计划只可扩展相同旧行前缀：沿用namespace／global ordinal／旧site，只为suffix调用只读选址policy，严格拒绝额外／字典键及失败结果，旧plan保持；完整计划验证后保存，retry／ManagedState restore不重放callback或选址。promotion后旧prefix入口拒绝截短；后续item拒绝可保留明确extended intent。输出仍blocked，不发布患者／Work／asset／city／Effects／clock／receipt消费／outbox。最终phase引用／Work、更早边界、其它section及实际患者恢复／联合接受／Runtime调度仍待。151段Lua5.1语法加载（1份实际Effects wrapper）、127份完整JSON解析，零执行；新C++exports／closures及源码场景未编译执行。系统false，第79节Release不验证80–225。
+
+第224节新增Server `finish_effect_clinical_tick(owner,archive,from,requested_end)`，从saved resolution重算首次临床Tick内完整UUID到期阶段，保留首次clinical marker并返回末阶段及剩余患者，避免在第一处零血提前丢弃同Tick后续操作。后续真实HP恢复按native算术反映，source_restore不推进时间；混合实际dead要求联合死亡结算。public入口核对saved proof／精确handoff／原source、使用捕获验证器并最终复核world ManagedState／Tick，不执行效果定义或发送事件。`city_effect_clinical_tick_candidate`保留全部原section clocks，带effect_clinical_tick及age／overflow事实；原finalize／item phase不能把它当canonical custody。结果按需重算、不替换初始proof、不创建最终接受receipt；后缀overflow接管、完整物品组合、其它section及患者／city／Effects／archive／receipt／outbox联合接受和调度仍待。147段Lua5.1语法加载、113份完整JSON解析，零执行；C++签名／closure和场景未编译执行。系统false，第79节Release不验证80–224。
+
+第223节：`Model.prepare_work_progress`与普通advance共享进度算法，按原worker产能／work factors计算，实际native_busy不贡献劳动力，结算仍由原生命周期执行。`Population.prepare_effect_clinical_work`只允许原Work的单调progress变化，随后应用重算的临床材料／整组暂停，不覆盖consumed或native契约，完成工作要求先实际settle。原生效果投影按需采样item之后、cooldown／Mood／effect之前的resident codec／resolved帧；不持久化这些帧。Server `prepare_effect_clinical_work`使用saved proof／handoff及捕获物品准备，独立重算帧，经固定core Runtime只读／copy provider和注册capacity policy逐Tick计算，policy第三参数提供historical simulation_tick／abstract mode，city.last_tick不改。返回blocked Work candidate或首个completion Tick／UUID，不接受caller进度；不发布Work／患者／city／Effects／archive／receipt／outbox。其它section和最终调度联合接受仍待。316段Lua5.1仅语法加载、113份完整JSON解析，零执行；C++新签名／export／binding及场景未编译执行。系统false，第79节Release不验证80–223。
+
+第222节修正实际`Entity.project_residents`：`alive`由原生`ColonistCondition.dead`派生，零HP存活者保留医疗资格，并通过现有`native_busy`从闲置劳动力中排除；原生dead对正HP仍有效。没有新增存活计数、治疗、伤情归一化、死亡intent或import例外。`native_busy`加入能力签名，只有实际可用性变化时也能使依赖规划失效。实际Entity／Model／Leadership／Medical场景源码覆盖临床、恢复、死亡继任及无发布，native观察／record和治疗准备seams明确保留。168段Lua5.1仅语法加载通过，零执行；历史Work推进／字段应用、其它section和临床city／Effects／archive／receipt／outbox联合接受仍待。系统false，第79节Release不验证80–222。
+
+第221节新增Server `city_native.prepare_effect_clinical_references(owner,archive,from,requested_end)`，组合捕获的临床物品准备和固定core Population只读／复制provider。共享C++ provider改为`ModRuntime::prepare_city_effect_references`，临床与死亡分支只选择各自固定core函数。实际规则返回材料字段更新、整组工作暂停指令及保留claims；不返回可覆盖历史进度的完整Work副本，不取消针对存活患者的Task。更早物品边界、混合死亡名单或来源／名单／团队冲突拒绝；可以保留此前已保存的容量custody intent。结果仍为blocked candidate，不提交city、患者、Task、Effects、clock、receipt消费或outbox。字段应用、历史工作推进、其它section及最终联合接受／Runtime调度仍待；源码场景未编译执行，系统false，第79节Release不验证80–221。
+
+第220节把临床物品阶段接入actual retained proof／handoff。native clinical custody只接受真实存活零血患者并保留原owner／Task／AI／combat／reaction／Inventory／medicine reservation检查，普通import／withdraw继续拒绝；同阶段实际dead peer可单独验证，不采样死亡或消费owner。临床／死亡分别验证阶段，共享逐Tick物品算法；个人与溢出地面age marker只消费一次，公共物品／claims／保鲜政策仅到实际clinical Tick。Server prepare_effect_clinical_items使用固定core claims和捕获adapter，组合真实容量overflow custody／冻结AIR／global ID与稳定选址重试，返回blocked文档／effect_item_boundary／历史events和earlier_item_boundary；全部section clocks、Health／Condition保持。clinical可持有个人容量custody，更正旧记录的全互斥表述；death custody仍互斥，死亡入口继续拒绝clinical。只准备并可保留custody intent，不提交患者／city／Effects group／archive／receipt消费／outbox；更早边界重规划与historical listeners仍待。源码场景未编译执行，系统false，第79节Release不验证80–220。
+
+第219节修复第217节临床请求：三种Tick独立校验，Materials.sequence替代不存在的Math.sequence，Model核对完整名单／临床子集、明确dead、phase、原document与signature。准备时要求requested end已经到达实际Tick；持久恢复不依赖临时load时钟。Runtime请求不再publish原始JSON，必须经过native request_clinical_handoff：捕获的retained proof验证器、固定core Population readonly／copy provider、精确候选字段比较和world ManagedState／Tick最终复核后，单个batch原子保存请求。相同请求重试只确认，不替换state／增revision／重放callback／消费Effects receipt。待接受请求阻止抽象推进及普通原档案导入，保留真实来源；患者／Effects／archive／receipt／outbox联合接受仍须继续实现。共享、provider及actual native binding／恢复场景源码已更新，seams显式保留，未编译执行；系统false，第79节Release不验证80–219。
+
+第218节：已接受但delivery_status未delivered的治疗completion_history继续保有城邦实体处理权，覆盖原Task已退休且无病床记录的情况。出院从现有Task／creation_cleanup／完成历史派生等待原因，不增加第二套计数；设施失效仍能转院并继续等待确认。native finish_patient_transfer最终出院前独立复核实际fixed-core jobs，同患者并行Task、cleanup、pending history、显式未送达log或格式错误历史均拒绝，不改Position／bed／state；其它患者历史不阻止，转院保有医疗处理权。共享生命周期、实际ManagedState恢复和native binding／World／床位场景已补源码，尚未编译执行。生产false，第79节Release不验证80–218。
+
+第218节同时核对出第217节未修复的时钟契约问题：handoff.tick被同时要求>=city.last_tick且<=city.last_tick，所写正时段modifier候选场景不能通过；Runtime当前Tick限制与原archive导入也没有接受clinical candidate中的真实患者事实。第217节mode trigger只能算请求准备能力，完整临床交接仍需正确边界及city＋Effects＋archive＋receipt/outbox联合接受，不能以恢复原档案或直接改Health代替。
+
+第217节静态检查覆盖11份UTF-8源码／文档／gate文件、5份C++词法括号检查和168段Lua5.1语法加载，零错误／执行；wiki差异检查通过。未编译、未执行测试，系统false。
+
+第217节为临床零血阶段补上真实模式交接：抽象档案用Population.prepare_clinical_handoff校验candidate的effect_clinical_boundary、完整居民 roster、Health.current<=0和ColonistCondition.dead=false，保存clinical_handoff旁路凭据并保持native_archive原文不变。Activity把它标成native_restore_required，现有NativeBridge进入entity authority；entity侧复用city_treatment／原生Task、bed、medicine和效果事务。交接本身不治疗、不稳定、不清dead、不消费物品，也不运行抽象个人Survival循环。实体退出时重新检查实际native Health／Condition，只有恢复或dead才清除handoff；仍零血存活者保留实体医疗要求。Model校验凭据在重试／恢复中的身份、来源文档和居民集合。新增场景未编译或执行，系统false。
+
+第216节有界静态检查：20份UTF-8源码／header／文档／gate／依赖文件、12份修改文件无尾空白、6份C++词法括号检查（非编译／类型验证）、79段Lua5.1语法加载及88份完整JSON，零fragment／chunk执行；wiki差异检查通过。当前native headers／规则、Engine／TickManager／档案校验与相关missed行在stale graph后回读；root Git config未修改。没有编译、执行测试、配置、暂存、游戏或打包，系统false。
+
+第216节（2026-10-15）：效果投影在private Worlds复用实际ColonistSystem::update_medicine_cooldowns及MoodSystem::update，按Engine的item→cooldown→Mood→core effects顺序逐历史Tick推进，f32固定步长和完整居民名单受校验。选定居民predicate防止无关Mood owner老化；native冷却到期／dead／pending registration规则不另写一套。native_resident_tick独立记录实际阶段，包含在返回和档案中；source_restore零elapsed，clinical部分阶段不被盖成完整居民／城邦Tick。missing clock沿state_tick，显式clock必须匹配from；canonical facts校验类型／边界，finalize与operating import要求存在的clock等于接受Tick。旧档缺字段保持兼容，不声称已处理。
+
+设计第7节禁止抽象模式运行完整个人饥饿／睡眠／健康循环，故本节更正第215节full-Survival后续表述：抽象食物／伤亡仍沿原算法，原Health／Needs／伤情／healing和dying进度保持，治疗恢复走明确实体医疗交接。新场景使用实际native方法比较modifier前Mood、逐Tick过期和连续区间，另覆盖无关owner、pending registration、clinical阶段、完整名单／dt／clock拒绝及finalize/import；均未编译执行。historical listener/provider、Runtime及city＋Effects＋archive＋receipt/outbox联合接受、实体医疗交接和全目标其它组继续，系统false。
+
+第215节有界静态检查：20份UTF-8源码／header／文档／gate文件无尾空白、11份C++词法括号检查（非编译／类型验证）、80段Lua5.1语法加载、102份完整JSON，零fragment／零chunk执行；wiki差异检查通过。stale graph以当前native／shared／Engine与相关missed范围核对；原binding其它区域混合换行保留，root Git config未动。未编译或执行场景，系统false。
+
+第215节（2026-10-15）明确更正207–214节的HP零值死亡假设。Engine在core Tick监听器之后按ColonistCondition.dead处理殖民者死亡；HP为0的存活居民需要生存／临床处理，不能提前退出Task或转移Inventory／Equipment。effect projection以独立city_effect_clinical_candidate和effect_clinical_boundary保存该阶段、原section clocks和历史item事实，不采样死亡产物或memorial；strict projection明确拒绝。
+
+Server inspect／retain返回clinical_settlement_required／boundary.residents，死亡标志为false且无death_document。retain保存独立clinical_boundary={kind='city_effect_clinical_resolution',world_seed,projection}，匹配重试／ManagedState restore重新验证并返回副本；与死亡／custody凭据互斥。后续死亡准备入口全部拒绝；canonical facts/import和overflow也拒绝clinical marker，只有去掉kind不能绕过。实际死亡投影、manifest、Task和Business使用真实dead标记与colonist_dead原因，允许dead=true而HP仍为正；普通切换零血患者仍拒绝，活动归类治疗。逻辑人口／饥饿死亡intent的独立流程未改成该入口。
+
+临床边界、复制／restore／拒绝／无死亡预算／事件保留和实际dead source_restore／正HP死亡场景已写源码；正时段native死亡fixture显式提供dead事实，不再声称数字HP伤害能执行实际临床裁定。完整Survival／cooldown／Mood组合、临床恢复、Runtime及city＋Effects＋archive＋receipt/outbox联合接受与五大开发组仍待。生产false；没有编译、执行测试、配置、暂存、游戏或打包；第79节Release不验证80–215。
+
+第214节有界静态检查：35份UTF-8文件、12份修改文件无尾空白、6份C++词法括号配对（不是编译或类型验证）、77段Lua5.1语法加载、24份完整JSON／State descriptor，零chunk执行。wiki差异通过，仅LF→CRLF提示；native death/custody/Task/codec/stock/import及actual Engine时序已在stale／unknown graph后读当前source和相关missed范围。root Git config未修改，新场景全部未编译执行，系统false。
+
+第214节（2026-10-15）native prepare_city_effect_death_assets要求实际item／Task phase与已消费age markers，独立重算原Task清理，再复验完整保存manifest／native outcome／terrain／identity，包括storage-policy冲突。shared carried-content helper在private Worlds消费居民Inventory／Equipment，加入计划prototype outputs；完整组件／稳定pile ID保留，不额外aging新生pile，stock从实际owner派生，survivor／其它JSON形状保留并清理死者resolved cache。
+
+Server prepare_effect_death_assets捕获真实reference pipeline、复验state/Tick，返回blocked asset kind、私有effect_death_assets摘要journal、stock／consumed_residents／death_piles／death_assets_prepared。原resident DTO标记为phase_residents，residents不再暴露为当前roster。所有原clock保留；canonical fact/import也拒绝仅移除kind的未封存journal。实际native与shared carried-content对照、Equipment／prototype／newborn／数量／拒绝／zero elapsed，以及分离Model-provider seam下actual public pipeline/retry/restore场景均未编译执行。没有live source消费、居民删除、Model/Effects或receipt/global publication；clinical／其它section／最终refs/leadership/policy／terrain/global／Runtime联合接受与全目标继续待，系统false，第79节Release不验证80–214。
+
+第213节有界静态检查：28份UTF-8文件、14份修改源码／header／文档无尾空白、5份C++词法括号配对（不是编译或类型验证）、86段Lua5.1语法加载、16份完整JSON／State descriptor，零chunk执行。wiki差异通过，仅LF→CRLF提示；stale／unknown graph后直接核对当前native/provider／shared source/claim/work/Model/business/team与相关header。root Git config未修改，真实共享算法和独立native/provider场景全部未编译执行，系统false。
+
+第213节（2026-10-15）Server prepare_effect_death_references从实际saved city通过固定core Population provider推导原material owner claims，组合retained native death/item与同一阶段Task清理，再复用真实六类Business和普通人口死亡的Work退出／skip／强制暂停规则。两个provider均readonly/copy及native重入保护，前后复验实际world/city/Tick；后续拒绝允许已保存custody intents继续保留，但不发布city/asset。
+
+Items.prepare_claim_updates供ordinary item和phase共同使用，严格原work/owner/count/id及结果一次性成员，phase再匹配实际aged owner组件；此前aggregate claim也冻结本次派生source。失败或暂停工作释放当前worker/预留，保留历史progress/consumed/contracts。结果phase_claims仍是item-before-effect阶段事实，claims只含幸存原owner预留。reference change set不带city last_tick，保留source revision/signature并被Model禁止成为authority；actual teams检查重复归属，leader_death/policy_revalidation_required留给实际phase的后续继任／重规划。共享真实Model/Items/Population/六模块和分离native/provider seam场景未编译执行；clinical／其它section／实际death资产与source消费／terrain/global／Runtime联合接受及全城邦目标继续待，系统false，第79节Release不验证80–213。
+
+第212节有界静态检查：25份UTF-8文件、14份修改源码／header／文档无尾空白、8份C++仅检查词法括号配对、70段Lua5.1语法加载、17份完整JSON／State descriptor、零chunk执行；wiki差异通过，仅LF→CRLF提示。词法检查不是C++编译或类型验证。native phase／custody／codec／policy／item和Engine notice已直接读取，root Git config未修改，所有新增场景未编译执行，系统false。
+
+第212节（2026-10-15）shared inspect_city_effect_death_boundary检查实际marked phase／terminal名单与native codec/custody；Task死亡清理复用，不改HP。专用prepare_city_effect_boundary_items要求所有居民Inventory的age marker均在actual phase，公共owner沿native scalar逐历史Tick推进，原claims延缓转换／消失，保鲜沿saved policy。连续腐败、先腐败再despawn、同Tick lifetime先行和zero-elapsed source_restore都有明确语义。消费personal/overflow marker一次，写private effect_item_boundary，保留全部原section clocks和blocked kind；ordinary aging和重复中间态继续拒绝。
+
+Server prepare_effect_death_items从actual saved archive取得retained/revalidated death/overflow custody，捕获native codec adapter防公开Lua表替换，使用actual phase Tick而不是requested end，组合updated claims与历史events并返earlier_item_boundary。候选准备没有执行historical listener、重规划更早material边界、消费source personal owners、添加death manifest为库存或提交city／Effects／events／receipt。native逐Tickground对照、shared policy／claims／zero elapsed／phase拒绝、actual public组合／输入造假／adapter替换／retry／ManagedState restore场景为未编译执行源码；clinical／其它section、Model引用、death assets／terrain/global、Runtime联合接受／outbox和全城邦目标继续待，系统false，第79节Release不验证80–212。
+
+第211节有界静态检查：29份UTF-8文件、68段Lua5.1语法加载、14份完整JSON／State descriptor，零chunk执行；修改的源码／文档无尾空白（1份只读Engine依赖排除），wiki差异通过。actual Engine顺序／owner／ground／shared rules／codec／claims／event fields已读；shared header／native refactor／projection／item／binding和场景未编译执行，第79节Release不验证80–211。
+
+第211节（2026-10-15）actual Engine的owner/ground item阶段在core Tick/effects之前；native owner publication抽出prepare_owner_inventory_aging，detached effect projection复用完全相同规则，每历史frame先推进selected个人Inventory，再periodic/end。source_restore零elapsed，不新增Equipment老化。真实capacity/claim规则、count/native组件清除保留，item_events/personal_item_tick和private effect_inventory_clocks保存历史facts/已处理时点，不前移全局item/inventory时钟。
+
+死亡facts/manifest使用实际aged personal，capacity excess含已转换内容且ground从birth下一Tick老化。custody events按tick/owner-kind/owner/slot组合个人和ground事件，空overflow也保留个人events；ordinary advance_items对真实owner匹配/消费age marker一次，拒绝duplicate/future/missing/nonresident标记，新effect source拒绝pending marker。blocked死亡kind继续禁止ordinary item接受。shared/native owner publication/late refusal/claims/stopped/equipment、actual public腐败先于死亡/manifest/restore、完整effect/item组合无重复event和腐败先于溢出数量场景仅源码，未编译执行。原saved effect callbacks和item listener尚未成为虚拟historical provider，clinical/其它section/abstract Model/真实death资产/terrain/global/Runtime联合接受/receipt/outbox及全目标继续待，系统false，第79节Release不验证80–211。
+
+第210节有界静态检查：27份UTF-8文件、65段Lua5.1语法加载、90份完整JSON／State descriptor，零chunk执行、无尾空白，wiki差异通过。actual native引用／retirement／terminal readiness／codec与ordinary business call site已读；Save/Scripting exports／signature／provider／binding／Lua adapter和场景未编译执行，第79节Release不验证80–210。
+
+第210节（2026-10-15）resident custody复用共同检查，explicit terminal cleanup允许真实terminal而ordinary transfer仍拒绝死亡；仅精确effect phase死者在内部fact/retirement validator走该路径，不伪造Health。native prepare_city_effect_death_tasks共享TaskPool死亡引用规则／实际retirement ledger，保留blocked kind和原时钟，退出ownership／target任务并清除skip-only exclusion，creation order／survivor progress/cooldown和非Task事实不变，effect_death_tasks记录exact phase/change set；pending candidate不重复接受，同保存source纯重试可一致。
+
+Server prepare_effect_death_tasks组合saved death/pile intents，prepare_effect_death_business另读取actual saved六类业务、通过固定core readonly／API guard／copied inputs/outputs的ModRuntime provider。Business.prepare_effect_death_tasks从marker/journal派生intents，验证terminal roster／全部非Task字段／Task metadata和creation counter／历史prefix／准确retire和skip，再复用real failed retirement。返回business／death_business_prepared但保留death_business_required供whole model/authority接受；late source/provider拒绝没有Task或业务发布，prior intents可能已保存。actual native／real six-module business／separate guarded provider seam场景未编译执行。phase clocks/clinical、abstract work/person/team/policy、owner消费／真实death asset／terrain/global、Runtime联合接受／receipt/outbox与全目标待，系统false，第79节Release不验证80–210。
+
+第209节有界静态检查：25份UTF-8文件、59段Lua5.1语法加载、12份完整JSON／State descriptor，零chunk执行、无尾空白，wiki差异通过。actual death／Task／asset／codec／source／domain／output-table路径已读；Save exports／helper／binding／receipt校验和场景未编译执行，第79节Release不验证80–209。
+
+第209节（2026-10-15）retain_effect_death_custody要求saved死亡结果、先组合prefix overflow，再用exported Save helper核对phase／原clock／dead roster／HP／实际native death outcome／definitions／完整personal与output／memorial／冻结AIR／planned codec。BLAKE3 city-effect-death-v1加namespace/city/resident/personal-or-output/index，与overflow/import分离；city_segments可选death_custody={uuid,facts_document,document}保存intent，全局collector保留namespace和derived piles。matching retry／restore重算manifest／完整facts比较后复用，变化不覆盖；无pile返回空manifest而不保存namespace。
+
+manifest requests＋完整entity payloads独立于blocked archive，仍未移除resident／消费personal owner或新增stock／live pile。回执保持resolved，前置overflow intent可在后续拒绝后保留；没有Task／business／terrain／global／city／Effects／事件出版或receipt消费。public personal深拷贝／retry／restore／global conflict／manifest tamper及low-level domain separation／full content／native output split／missing terrain场景已写，未编译执行。phase clocks／clinical／Task/business／source消费／死亡资产与global联合接受／Runtime／outbox及全目标待，系统false，第79节Release不验证80–209。
+
+第208节有界静态检查：23份UTF-8文件、57段Lua5.1语法加载、9份完整JSON／State descriptor，零chunk执行、无尾空白，wiki差异通过。native death／deferred context／pending transfer／source／item-kind路径已读；binding／receipt admission／helper和场景未编译执行，第79节Release不验证80–208。
+
+第208节（2026-10-15）retain_effect_boundary在city_segments可选death_boundary={kind,world_seed,projection}保存完整lethal结果；native seed十进制字符串、death_document JSON不经Lua double回写。matching inspect／retain重新用native arithmetic／确定性death resolver比较完整事实与seed，返回保存副本＋reused，变化拒绝不覆盖，不重跑effect callback；无死亡不保存新journal。原callback receipt raw provenance问题仍在，复算是验证，不是新输出接受。
+
+retain_effect_boundary_custody要求saved／revalidated lethal结果，沿既有strict个人坐标provider／namespace／全局identity／冻结terrain／完整codec准备仅prefix excess，支持positive phase和source_restore from本Tick的零elapsed。只老化到phase Tick，保留blocked kind／effect_boundary／原section clocks；placement失败保留death journal，matching retry／ManagedState restore复用custody namespace／坐标不跑policy。空excess无需intent。新增native copy／seed/facts拒绝／restore／policy failure/reuse／positive/zero phase和low-level腐败cutoff／clock forgery场景未编译执行。personal／output death身份托管、item／clinical／其它section phase组合、Task／business／terrain／global死亡联合接受、Runtime／receipt消费／outbox及全目标继续待，系统false，第79节Release不验证80–208。
+
+第207节有界静态检查：22份UTF-8文件、55段Lua5.1语法加载、4份完整JSON／State descriptor，零chunk执行；修改的源码／文档无尾空白（两份只读native依赖排除），wiki差异通过。actual death／Health codec／modifier／kind source已读，native helper／signature／binding及场景未编译执行，第79节Release不验证80–207。
+
+第207节（2026-10-15）inspect_effect_boundary需要actual saved／revalidated effect resolution，复用native逐phase arithmetic；无死亡complete=true，首个HP0 batch保留全部死亡target并停止后续tick／UUID end。blocked kind=city_effect_boundary_candidate＋effect_boundary保持原section clocks，完整entity／extension和先前overflow、当前groups／processed expiry prefix用于后续联合结算。普通project_effect_segment仍拒绝死亡且无document。
+
+actual death outcome／memorial helpers在历史tick、显式全batch pile budget内准备完整personal／prototype outputs／definitions／native seed／memorial，death_document保持JSON精度，不分配identity、删除resident或发布Task／terrain／global／city／Effects／event／receipt。retry／ManagedState restore不再调用effect definition，但仍重读native死亡定义，未新增durable death outcome journal。native no-receipt／complete／budget／saved retry／restore／no-publication和low-level source_restore／periodic／sequential end／simultaneous death／personal full components／budget refusal／blocked repeat场景已补，未编译执行。phase custody／个人时钟／clinical／死亡联合接受／Runtime／outbox及全目标继续待，系统false，第79节Release不验证80–207。
+
+第206节有界静态检查：23份UTF-8文件、46段Lua5.1语法加载、9份完整JSON／State descriptor，零chunk执行、无尾空白，wiki差异通过。实际snapshot／terrain／codec／lifecycle／provider已读，native源码和场景未编译执行，第79节Release不验证80–206。
+
+第206节（2026-10-15）retain_effect_overflow在Server从实际saved／revalidated resolution重新投影，不接收caller余量／operation。非空余量经固定core readonly personal_sites获取坐标，既有city_segments回执可选custody={uuid,preview_document,locations}保存稳定namespace／实际完整余量／coordinate-only位置。matching retry／ManagedState restore不跑policy；全局身份检查仅从private snapshot移除本plan，其它managed／import／effect-plan和native身份继续保留。成功只提交intent，无city／Effects／World／clock／event或receipt消费；首准备失败不保存新intent。
+
+detached ground完整codec／冻结AIR和无inventory检查，UUID由namespace／city／resident／全局row ordinal派生，不使用会在phase间重复的index。每物品从born_tick+1逐tick按shared寿命先于腐败推进，events按历史tick／UUID排序；消失仍有site／event，存活effect_pile_clocks供advance_items消费一次，拒绝重复／未来／不匹配marker并清空，另一次custody准备拒绝pending marker。actual native no-overflow／retain／retry／policy failure／restore／global conflict／preview drift与low-level生命周期／marker场景已补，未编译执行；callback provenance、死亡prefix／clinical、Runtime最终边界组合／联合接受／消费／outbox和全目标仍待，城邦false，第79节Release不验证80–206。
+
+第205节（2026-10-15）project_effect_segment只接受实际saved／revalidated resolution，missing receipt不跑definition。detached属性沿native one-time-before-modifier批处理，end按UUID逐个remove，career／其它source保留；actual OwnerInventory batch记录完整overflow及tick／phase，base稳定，不创建ground或向live spill。HP0立即返回death boundary／无document，后续frame停止。完整codec候选保留extension／peer，返回resolved residents，仅effect_tick准备前移，无city／Effects／asset／event提交或receipt消费。
+
+actual native saved/repeat/no-callback与low-level修改档案／operation fixtures覆盖HP／完整content／metadata／相反capacity逐个expire的中间余量和zero-health拒绝，源码未编译执行。ground／death prefix／clinical derived、Runtime调度／联合接受／receipt消费／outbox与全部其它目标仍待，城邦系统false。
+
+第205节有界检查为23份UTF-8文件、45段Lua5.1语法加载、9份完整JSON解析，零chunk执行、无尾空白，wiki差异通过。actual attribute／capacity／capture／decoder source与header已读取；helper／signature／binding／projection与场景未编译执行，第79节Release不验证80–205。
+
+第204节（2026-10-15）Effects world city_segments独立保存每城邦resolved boundary／archive／selected city和effect proof／resolution。retain_effect_segment经过native独立验证后只提交metadata；matching prepare／retain重新检查并返回副本reused，无definition再调用。selected源／interval／事件变化拒绝，peer／global counter／解释metadata可以变化。新application／immunity及native resident／single／group handover阻止pending targets，final source proof覆盖receipt field。
+
+两处native Effects wrapper复制全部实际@State声明，actual native／ManagedState保存／snapshot复用／source/event拒绝／pending屏障及shared peer场景已补，未编译执行。完整world-load receipt校验、Runtime调度、detached属性／capacity／death、联合city＋Effects接受／消费／historical outbox仍待；保存前callback失败可重复，合法raw receipt值的provenance隔离仍未完成，城邦系统false。
+
+第204节有界检查为20份UTF-8文件、102段Lua5.1语法加载、10份完整JSON解析及两处完整声明Effects wrapper核对；零chunk执行、无尾空白，wiki差异通过。actual ManagedState header／read／restore已直接读取，native receipt／reuse／handover／source guards与场景未编译执行，第79节Release不验证80–204。
+
+第203节（2026-10-15）Effects.prepare_city_segment与fixed-core ModRuntime provider在readonly／API guard下准备1–20历史模拟tick，native deferred_context与实时periodic共用。context显式simulation_tick／simulation_mode=abstract；end沿native expiration private copy规则，返回逐frame modifier／operation／expiry event数据，peer／Effects源不变。Server prepare_effect_segment核对实际abstract档案／clock／codec roster／detached custody，独立canonical contract及source recheck后返回resolution，无state／asset／event发布或receipt保存。
+
+Runtime.advance调用、resolved持久重试、detached HP／capacity／overflow／death、city＋Effects联合接受与historical outbox仍待。重复prepare仍可重复callback，context历史时间不自动改所有engine时间API；raw captured/global隔离／provenance与全目标未完成。shared／provider／actual native场景已写入，未编译执行，城邦系统false。
+
+第203节有界检查为18份UTF-8文件、58段Lua5.1语法加载、7份完整JSON解析，零chunk执行、无尾空白，wiki差异通过。actual tick／expiration／decoder／provider／custody source已直接读取；native export／signature／binding／validation／refactor与场景未编译执行，第79节Release不验证80–203。
+
+第202节（2026-10-15）shared Career abstract preview允许actual capacity产生overflow，但private native_inventory_transfer必须先settle，重复Career准备／普通archive career路径／Runtime.publish拒绝pending。Server jobs.prepare_city_inventory_transfer核对original owner／Civilization、prepared实际capacity／完整contents／base、active abstract authority／Tick，固定core readonly坐标policy后沿冻结archive AIR／无inventory事实形成fresh actual ground closure，重解码并重检全World源，不发布资产或读取loaded terrain补缺。
+
+Items end-boundary结算复制city/context，先转移personal并加入真实余量projection，再联合career／stock output／claim验证，既有Model接受后保存；late拒绝保留原背包／XP／产物/context。native preview／transfer及共享Career／Model／Items场景源码已补，terrain／business binding seams声明，未编译执行。其它effect/capacity触发、callback provenance／持久resolve与captured raw隔离及全部其它目标继续未完成，城邦系统false。
+
+第202节有界检查为29份UTF-8文件、45段Lua5.1语法加载、7份完整JSON、4份明确补全片段和1份实际合成career record解析；零chunk执行、无尾空白，wiki差异通过。actual native source／terrain／stock规则已直接读取，signature／preview／custody／provider／archive事务与场景未编译执行，第79节Release不验证80–202。
+
+第201节（2026-10-15）core city_runtime新增world inventory_imports，值为严格native JSON plan（kind／namespace uuid／city_uuid／actual preview_document／coordinate-only locations）。BLAKE3 domain city-inventory-import-v1与namespace／city／resident／index稳定派生v4 ground身份；不存冗余资源计数。retain API以ManagedStateBatch保存，无native资产发布；相同预览重试复用位置／身份，不重跑policy。source变化经compare-token discard核对abstract归属、其它managed和native引用，再准备一次；blocked unchanged anchor保留原计划或显式discard，malformed保存源明确拒绝。
+
+resident／single／group import拒绝caller inventory_imports写，native将本批完整plan清理与authority共同提交；asset source proof重算actual preview并校验reserved identity／owner／site／life／完整集合，late拒绝保留。communal stock新identity admission也读取派生身份。实际ManagedState snapshot／restore／retry／discard／cleanup和strict decoder源码场景已补，未编译执行；trusted C++ publisher保留自身managed cleanup责任。abstract-only overflow、full callback provenance／captured raw引用隔离与全部其它目标继续未完成，城邦系统false。
+
+第201节有界检查为23份UTF-8文件、49段Lua5.1语法加载、9份完整JSON解析及扩充managed引用拒绝场景后额外语法复查1段，零chunk执行、无尾空白，wiki差异通过。实际ManagedState恢复实现已读取；native导出／hash／decoder／state／reservation／consumption／discard／binding与场景未编译执行，第79节Release不验证80–201。
+
+第200节（2026-10-15）个人overflow preview沿实际codec／Effects／OwnerInventory准备真实余量与生命周期，无UUID分配或资产发布；缺失活动Server／core Effects明确拒绝。固定core personal_sites只接收city／preview副本，在ManagedState只读与既有API guard中返回resident／index／坐标，native补identity／lifecycle并复用真实import验证。状态赋值／保留的受限写API拒绝，raw captured table／upvalue／global完整隔离仍待。
+
+normal single／reconciled／overlap import省略personal sites时自动准备，显式数组（含空）覆盖；group先保留全部校正abstract检查点，policy／business／native拒绝不发布entity资产。实际原生生成sites进入resident import与codec闭包往返、provider与shared forwarding／override场景已写入，未编译执行。准备UUID尚无持久retry intent／来源token；abstract-only overflow、callback provenance及全部其它目标仍待，城邦系统false。
+
+第200节有界检查为20份UTF-8文件、48段Lua5.1语法加载、4份完整JSON解析及wiki差异，零chunk执行、无尾空白；native导出／provider／binding／asset与全部场景未编译执行，第79节Release不验证80–200。
+
+第199节（2026-10-15）resident／single／group import可选个人overflow sites严格绑定resident与fresh ground UUID／位置／生命周期；content／数量从实际owner准备派生。全局managed／native identity和source重检、voxel锁内AIR admission保护原背包扣除＋ground候选一次发布，guard不运行Lua或派发block事件。Runtime手动入口复制透传，自动site选择／预分配与abstract-only career结算仍待。实际asset／codec／guard场景仅源码，未编译执行，城邦系统false。
+
+第199节有界检查为24份UTF-8文件、37段Lua5.1语法加载、6份完整JSON解析及wiki差异检查，零chunk执行；native signature／guard／overflow／binding／shared和场景未编译执行。
+
+第198节（2026-10-15）actual native capacity、effect import与detached career attribute使用共用OwnerInventory内容准备。growth／空尾shrink／可容纳堆拆分不改原base，owner／components保留；受影响claim或非法定义拒绝，需要外部site的abstract overflow不发布。native真实drop沿用实际落位／claim／事务并保留城邦归属；源码场景未编译执行，城邦系统false。
+
+第198节有界检查为17份UTF-8文件、26段Lua5.1语法加载、6份完整JSON解析及wiki差异检查，零chunk执行；shared capacity／native drop／career／import和场景未编译执行。
+
+第197节（2026-10-15）resident-only交接也复用CityEffectTransfer ticket。Lua callback只在readonly／API受限准备阶段执行，并恰好返回一个{state,field,value}活动Server world字段写；实际store／field／copy／shape验证后准备ManagedStateBatch，native最后重检source后只commit／swap，不再在publisher运行Lua。local／foreign／Effects／多返回／非法payload拒绝，旧直接赋值callback需迁移。captured普通Lua引用仍不能撤销，改Effects／city源会拒绝native发布；全部场景未编译执行，城邦系统false。
+
+第197节有界检查为23份UTF-8文件、38段Lua5.1语法加载、5份完整JSON解析及wiki差异检查，零chunk执行；native导出／signature／ownership／provider／binding和场景未编译执行。
+
+第196节（2026-10-15）纯effect restore provider和完整effect validator同样进入受限module API阶段，含之前retained函数与runtime events；调用活动API拒绝，ManagedState仍深拷贝读取／拒绝写。经营资产single／group交接在原生asset barrier重检实际Effects与city源，不接受transfer writes改Effects；导入候选内恢复当前modifier，不执行definition／事件／算术。captured普通Lua引用仍不是隔离事务，改源会使原生交接拒绝。场景源码已补，未编译执行，城邦系统false。
+
+第196节有界检查为17份UTF-8文件、28段Lua5.1语法加载（含actual wrapper和inline场景）、5份完整JSON解析及wiki差异检查，零chunk执行；native asset／API guard／binding和场景未编译执行。
+
+第189节本批检查为19份UTF-8文件、35段Lua5.1语法加载、5份完整JSON解析与wiki差异检查，零chunk执行；新增native导出、readonly scope及module API guard未编译执行验证。
+
+2026-10-15 城邦效果准备源码：ModRuntime从固定private core Effects解析definition，正常原生准备先保存resolved，之后发布属性；重试使用保存结果，不重复callback。definition阶段完整module API（含此前retained函数和runtime添加的event／channel／timer）只允许显式identity／effect-group读取，context写只累积私有结果。ManagedStateStore新增owner-thread嵌套ReadOnlyScope：scope内字段读取深拷贝，world／local赋值、batch准备／提交、声明／恢复／world生命周期写拒绝；退出或异常析构恢复权限。scope前捕获的普通Lua表引用以及upvalue／global副作用不能被这些入口限制撤销，更广引用隔离和持久解析来源保护仍待。新增ManagedState、provider和实际binding场景仅源码／语法检查，未编译执行；城邦系统false，不引用本页其它线程历史测试作为本批验收。
+
 2026-10-13 贸易点改为放置部件：贸易点不再由指令菜单指定世界地点，改为玩家放置的单方块部件 `core:trade_point`（`tags: ["core:trade_point"]`、`building_capabilities: ["trade_point"]`；模型与贴图暂复用 banner 资源，正式美术待补）。`systems.trade_points` 以已加载的该方块为泊位，提供 `list`、`available`、`counts`、`point_at`、`reserve`、`release`、`release_owner` 和 `arrival_status`；一个贸易点只容纳一个商队，占用为运行时状态，世界加载或卸载时清空。未放置返回 `trade_point_missing`，全部占用返回 `trade_points_all_occupied`。删除 `systems.world_locations`、`location.trade_point.set/clear` 命令与其处理前事件、贸易点变更事件、`core:world_locations` 通道与双端 receiver、`ui.world_locations_state`/`world_locations_panel`、指令菜单入口、`core:locations.*` 本地化键及相关监听器与测试用例；`RML_UI_SNAPSHOT_CHANNELS` 由 31 项减为 30 项。新增原生 `engine.tags.loaded_blocks(tag)`，按 (x,y,z) 排序返回已加载的带 tag 方块且不扫描未加载区块。旧用例替换为 `Tests/UnitTests/test_core_trade_points.cpp`。本轮只做 JSON 与文本静态检查，未编译、未运行测试。
 
 2026-10-12 城邦经营交接源码：原生 `ManagedStateBatch` 从连续 `{state,field,value}` 数组准备同 VM 的受管 world 字段，先深拷贝所有相关模块并验证声明，拒绝重复字段、外部 VM、local 字段及关闭／未启用模块。提交再次核对模块表和嵌套内容，任何变化或非法数据在交换前拒绝；成功后通过不抛异常的原生表交换一次发布全部模块，票据只能提交一次。city_native 用它连接城邦权威、生产／制作／建设记录与原生资产，最终提交阶段不执行 Lua 回调。业务模块检测持久表替换并在公开入口刷新缓存；原生 JSON 文本保存在城邦 native_archive，避免空表丢失 JSON 对象／数组区别。完整桥、剩余业务记录和抽象变化回写仍在开发。本轮仅静态检查和 Lua 5.1 语法解析，没有编译、运行测试或启动游戏；本段不能借用下文其他线程的历史验证结果。

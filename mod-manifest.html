@@ -14,14 +14,13 @@
     <p class="subtitle">清单文件告诉游戏：我是谁、从哪启动、依赖谁、默认配置是什么。</p>
 
     <h2>推荐模板</h2>
-    <p>下面是一个完整的 <code>mod.json</code> 模板，可以直接复制。不需要的字段删掉就行。当前加载器只有 <code>id</code> 必填，但如果不写 <code>entry</code>，引擎仍会按默认值查找 <code>scripts/bootstrap.lua</code>。</p>
+    <p>下面是 <code>mod.json</code> 模板。不需要的字段可以删除。清单不声明脚本入口；脚本通过事件、通道和命令注册体系接入，纯数据 MOD 不需要 Lua 文件。</p>
     <pre><code>{
   "id": "copper_age",
   "name": "Copper Age",
   "version": "0.1.0",
   "description": "Adds early copper content.",
   "license": "MIT",
-  "entry": "scripts/bootstrap.lua",
   "lua": {
     "permissions": {
       "io": false
@@ -53,9 +52,8 @@
         <tr><td><code>version</code></td><td>否</td><td>MOD 版本号，建议用语义化版本。不写默认为 <code>0.0.0</code>。</td></tr>
         <tr><td><code>name_key</code></td><td>否</td><td>显示名称的本地化 key；主菜单和 MOD 管理 UI 可用它代替硬编码名称。</td></tr>
         <tr><td><code>description_key</code></td><td>否</td><td>描述文本的本地化 key。</td></tr>
-        <tr><td><code>entry</code></td><td>否</td><td>Lua 入口脚本的路径。默认 <code>scripts/bootstrap.lua</code>；当前加载流程会要求入口文件存在，纯数据 MOD 也应提供一个返回空表的入口脚本，或显式把 <code>entry</code> 指向存在的空脚本。</td></tr>
         <tr><td><code>license</code></td><td>否</td><td>MOD 的许可证标识，如 <code>"MIT"</code>、<code>"GPL-3.0"</code> 等。</td></tr>
-        <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（主机和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
+        <tr><td><code>side</code></td><td>否</td><td>MOD 的运行环境。默认 <code>"both"</code>（服务器和客户端都需要）。设为 <code>"client"</code> 或 <code>"server"</code> 的 MOD 不参与网络校验码计算。详见<a href="mod-network-sync.html">网络同步</a>。</td></tr>
         <tr><td><code>dependencies</code></td><td>否</td><td>必须在这个 MOD 之前加载的其他 MOD。数组格式，每项包含 <code>name</code>（MOD ID）、可选的 <code>minVer</code> 和 <code>maxVer</code>（均为包含边界）。示例：<code>[{"name":"core", "minVer":"0.1.0", "maxVer":"1.0.0"}]</code>。</td></tr>
         <tr><td><code>load_after</code></td><td>否</td><td>希望在指定 MOD 之后加载。目标不存在也不会报错。</td></tr>
         <tr><td><code>load_before</code></td><td>否</td><td>希望在指定 MOD 之前加载。<code>"*"</code> 表示尽量比所有其他 MOD 早。</td></tr>

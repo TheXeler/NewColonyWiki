@@ -97,12 +97,16 @@
     <h2>存档与联机</h2>
     <p>进行中的袭击随世界存档保存（<code>raids_schema_version</code> + <code>raids</code> 实例数组），来袭者本身仍是普通实体记录，成员按稳定实体 ID 恢复。Server 的通用世界状态同步包含同一份数据，客户端不自行触发或推进袭击。</p>
 
+    <h2>主动攻击与反击</h2>
+    <p>2026-10-11：活动袭击成员每半秒在自身 <code>battler.alert_range</code> 内重新选敌。优先选择明确敌对、存活且未倒地的已征召队长或兵模；同优先级选择最近对象，距离相同时按实体 UUID 稳定选择。没有征召目标时选择其他有效敌对生命实体；没有可见敌人时继续前往原袭击建筑／聚落目标。追击通过普通 <code>Move</code> Task 更新目标坐标，在近战接触范围内停止推进。</p>
+    <p>袭击来源和组标记为来袭者提供主动近战许可，沿用已有的敌对检查、命中、穿透、冷却和伤害提交。Reaction 接管时停止刷新追击，只有声明 <code>melee_attack</code> 的 Reaction 允许出手；未征召 battler 受到敌对伤害后可通过 <code>core:combat_retaliate</code> 反击，征召单位继续由 Battle 自动迎战。暂停袭击只冻结波次和时限，已部署成员仍可接敌。征召兵模即使尚处于 Peace，也可被选中并承受血池伤害。源码和回归用例尚未编译或运行。</p>
+
     <h2>CoreMod 测试内容</h2>
     <table>
       <thead><tr><th>ID</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>core:mvp_test_raid</code></td><td>两波、两组权重的系统验证用袭击，目标 1 号警报等级，12000 ticks 后撤离。仅用于贯通加载、随机抽取、投送和结束链路，不代表正式平衡。</td></tr>
-        <tr><td><code>core:mvp_test_raider</code> / <code>core:mvp_test_raider_heavy</code></td><td>来袭者实体原型。没有 <code>ColonistTag</code>，声明移动速度与战斗属性占位值，死亡产出指向 <code>core:mvp_test_raider_death</code>。</td></tr>
+        <tr><td><code>core:mvp_test_raider</code> / <code>core:mvp_test_raider_heavy</code></td><td>来袭者实体原型。没有 <code>ColonistTag</code>；基础近战威力分别为 10、15，沿用一秒攻击冷却及现有命中／穿透判定，死亡产出指向 <code>core:mvp_test_raider_death</code>。仅供简单战斗验证。</td></tr>
         <tr><td><code>core:mvp_test_raider_death</code></td><td><code>weighted_one</code> 产出表：木棍（权重 3）或测试野生食物（权重 1）。</td></tr>
       </tbody>
     </table>

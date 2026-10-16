@@ -37,23 +37,23 @@
     <h2>RML/RCSS 文档资源（RmlUI 入口）</h2>
     <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是当前<strong>正式玩家可见 UI 资源目录</strong>，与 <code>assets/background/</code> 背景图池相互独立，不进方块纹理图集。</p>
 <pre><code>CoreMod/assets/ui/rml/
-├── main.rml      # 入口文档（RmlUiHost 默认加载 main.rml）
+├── main.rml      # 入口文档（RmlUiServer 默认加载 main.rml）
 └── main.rcss     # main.rml 链接的 RCSS 样式
 </code></pre>
-    <p><code>main.rml</code> 是游戏内 UI 入口文档，不是浏览器网页布局。默认玩家构建由 <code>RealRmlUiRuntime</code> 加载并渲染；Null stub 只在显式诊断/失败回退路径下存在，不实际加载文档。HUD 的右上角时间条由 <code>hud.rml</code>/<code>hud.rcss</code> 渲染，并包含暂停、1x、2x、4x、无限速按钮。暂停使用 <code>core:time.pause</code>，其余倍率使用 <code>core:time.speed</code>。依赖状态、CMake option、stub/真 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
+    <p><code>main.rml</code> 是 RmlUI 入口文档。<code>manage_hud.rml</code> 与 <code>battle_hud.rml</code> 是由原生面板注册器管理的同级模式 HUD；<code>status_bar.rml</code> 独立承载暂停和倍速按钮，在两种模式中均可见。暂停使用 <code>core:time.pause</code>，其余倍率使用 <code>core:time.speed</code>。依赖状态、CMake option 和 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
     <div class="callout info">
       字体：CoreMod 和发行包不包含字体文件。真 backend 只加载操作系统的 Unicode 字体，并以统一的 <code>Unicode</code> 家族名提供给 RML/RCSS；缺少系统候选字体不会阻止启动。
     </div>
 
     <h2>加载与热重载</h2>
     <ul>
-      <li>入口：<code>RmlUiHost::init()</code> 默认加载 <code>main.rml</code>。</li>
+      <li>入口：<code>RmlUiServer::init()</code> 默认加载 <code>main.rml</code>。</li>
       <li>热重载：页面发 <code>core:rmlui.reload</code> 命令，或开发期调用 <code>engine.rml_ui().reload()</code>。</li>
-      <li>创建或读取世界时，<code>main.rml</code> 先显示复用启动视觉的加载进度条；只有相机可见半径内的区块全部达到可渲染状态后，Host 才触发 <code>on_world_init()</code> 并重推 <code>world_info</code>。</li>
+      <li>创建或读取世界时，<code>main.rml</code> 先显示复用启动视觉的加载进度条；只有相机可见半径内的区块全部达到可渲染状态后，Server 才触发 <code>on_world_init()</code> 并重推 <code>world_info</code>。</li>
     </ul>
 
     <div class="callout info">
-      完整桥契约（C++ ↔ 文档的快照与命令）、生命周期、当前支持/未支持能力，见 <a href="mod-ui-api.html#rml-ui-host">UI 框架 · 游戏内 RmlUI 宿主层</a>。
+      完整桥契约（C++ ↔ 文档的快照与命令）、生命周期、当前支持/未支持能力，见 <a href="mod-ui-api.html#rml-ui-server">UI 框架 · 游戏内 RmlUI 宿主层</a>。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

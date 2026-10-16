@@ -391,6 +391,8 @@
       <li><a href="mod-assets-ui.html">UI 图片资源</a>——<code>assets/ui/</code> 目录约定（含 RML/RCSS 入口）。</li>
     </ul>
 
+    <h2>城邦准备提示</h2>
+    <p>2026-10-13 <code>status_bar.rml</code>显示typed <code>city_loading_visible</code>／<code>city_loading_label</code>，来源为Engine的city_loading_state JSON。提示依据当前相机display range与真实准备屏障相交，位于状态条下方，不拦相机／菜单，不显示虚构百分比。坏JSON不解除已显示等待，world clear重置缓存／文字／可见性，字段变化沿DirtyVariable后进入现有Context更新。中英文等待及city_loading_pending错误通过CoreMod/lang提供。只完成RML XML／locale／差异静态检查，实际RmlUi渲染验收尚未运行。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

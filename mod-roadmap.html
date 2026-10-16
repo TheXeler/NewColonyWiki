@@ -20,8 +20,8 @@
       <li>要闻：面向玩家的要闻信息，支持条件、冷却、一次性触发和选项。</li>
       <li>Lua 扩展：日志、事件、定时器、数据查询、实体操作、要闻、地形、阵营、本地化和网络命令。</li>
       <li>调试控制台：多个命令，涵盖 MOD 加载、数据注册、配方、实体、背包、阵营、网络、Lua 热重载等。</li>
-      <li>网络同步：TCP Host/Client、快照广播、Host 权威命令结果、重连和 MOD 数据交换。</li>
-      <li>AI 系统：需求驱动、优先级任务分配、A* 寻路、行为树（Sequence/Selector/Decorator）、Blackboard 共享状态。</li>
+      <li>网络同步：TCP Server/Client、快照广播、Server 权威命令结果、重连和 MOD 数据交换。</li>
+      <li>AI 系统：实体通过 TaskPool 统一调度任务，包含需求驱动、优先级分配、A* 寻路和执行状态；战斗 Reaction 与漫游规则待实现。</li>
     </ul>
 
     <h2>近期已完成</h2>
@@ -61,7 +61,7 @@
       <li>MOD 打包、发布和兼容性检查流程。</li>
     </ul>
     <h2>AI Dispatch Notes</h2>
-    <p>WorkPool dispatch keeps the existing worker priority calculation and now uses category/type indexes, same-type preference, utility scoring, and online HTN-style navigation/execute decomposition.</p>
+    <p>TaskPool dispatch keeps the existing worker priority calculation and now uses category/type indexes, same-type preference, utility scoring, and online HTN-style navigation/execute decomposition.</p>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

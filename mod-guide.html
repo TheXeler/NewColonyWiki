@@ -14,13 +14,13 @@
     <p class="subtitle">一个 MOD 就是一套数据文件加一个必须存在的 Lua 入口脚本。游戏先找到 MOD、排序、注册数据，最后跑脚本。搞清楚这个过程，后面加物品、写配方、写 Lua 才知道每样东西在哪个阶段生效。</p>
 
     <h2>一个 MOD 至少需要什么</h2>
-    <p>游戏在 MOD 目录下找 <code>mod.json</code>。找到了就读取这个文件、检查依赖、排好加载顺序，然后递归扫描 <code>data/</code> 下所有受支持的类型目录。入口脚本默认指向 <code>scripts/bootstrap.lua</code>，也可以在 <code>mod.json</code> 的 <code>entry</code> 字段改成别的存在路径。</p>
+    <p>游戏读取 MOD 目录中的 <code>mod.json</code>、检查依赖并确定加载顺序，再扫描数据定义和脚本声明。<code>scripts/listeners/</code> 中的监听器自动注册；普通模块按需 require，通道和命令通过定义指定执行函数。</p>
     <p>mod.json 里最常见的字段还有 <code>side</code>、<code>dependencies</code>、<code>load_after</code>、<code>load_before</code>、<code>conflicts</code>、<code>settings</code> 和 <code>ui</code>。其中 <code>dependencies</code> 条目使用 <code>name</code>、<code>minVer</code>、<code>maxVer</code>；脚本沙箱不提供通用文件系统 IO 权限字段。</p>
     <p>下面是一个典型 MOD 的目录结构。游戏会检查 <code>data/</code> 下是否存在这些类型子目录，存在就走进去递归扫描 JSON 文件。</p>
     <pre><code>mods/my_mod/
   mod.json
   scripts/
-    bootstrap.lua
+    listeners/
   data/
     blocks/
     tags/
@@ -49,12 +49,12 @@
       <li><strong>解析加载顺序。</strong>引擎按照 <code>dependencies</code>、<code>load_after</code>、<code>load_before</code> 三个字段计算最终顺序。<code>dependencies</code> 条目支持 <code>name</code>、<code>minVer</code>、<code>maxVer</code>；<code>load_before: ["*"]</code> 会尝试让该 MOD 排在其他 MOD 前面。循环依赖会直接报错。</li>
       <li><strong>应用玩家配置。</strong>读取运行目录 <code>config/&lt;mod_id&gt;.json</code>，把类型匹配的设置覆盖到清单默认值；<code>enabled</code> 决定非 core MOD 是否参与后续加载。</li>
       <li><strong>注册数据。</strong>引擎递归扫描受支持目录，把每条 JSON 记录放进数据注册表。注意，这时 Lua 脚本还没执行——数据在脚本执行前就已经可用了。</li>
-      <li><strong>校验引用。</strong>配方里的输入输出、职业要求、文明开局物品、方块掉落、群系/地形方块、建筑材料等引用 ID 会被检查是否存在。出错的非 core MOD 会被禁用，依赖它的 MOD 也会被跳过。</li>
-      <li><strong>执行入口脚本。</strong>所有数据注册完毕并通过交叉引用校验后，引擎按加载顺序执行每个已启用 MOD 的入口脚本。脚本返回一个表，引擎会读取 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code> 这些函数。</li>
+      <li><strong>校验引用。</strong>检查数据、依赖及脚本定义之间的引用。启用集合中任何 MOD 加载失败都会拒绝整个候选集合，不会自动禁用出错 MOD 后继续。</li>
+      <li><strong>注册脚本。</strong>准备模块 state，注册静态监听器、通道 receiver、命令和任务类型；双端使用独立 Lua 环境。注册完成后发布 Mod 就绪事件，生命周期逻辑由监听器处理。</li>
     </ol>
 
     <h2>什么时候写 JSON，什么时候写 Lua</h2>
-    <p>能用 JSON 写的东西，都放在 <code>data/</code> 下。当前自动注册基础内容、经营规则、生态、动态天气、视野和难度等多类数据；professions 是 jobs 的迁移别名。Lua 只用来补充 JSON 做不到的事情。</p>
+    <p>静态定义放在 <code>data/</code> 下。当前自动注册基础内容、经营规则、生态、动态天气、视野和难度等多类数据；职业定义使用 <code>data/jobs/</code>。Lua 用来实现事件响应与运行时逻辑。</p>
 
     <div class="callout warn">
       不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询。
@@ -71,7 +71,7 @@
     </div>
 
     <div class="callout warn">
-      当前入口脚本文件必须存在，默认是 <code>scripts/bootstrap.lua</code>，也可以在 <code>mod.json</code> 的 <code>entry</code> 字段改成别的现有路径。纯 JSON 内容包同样需要一个入口文件，最简单的做法是让它 <code>return {}</code>。
+      纯 JSON 内容包不需要脚本入口。需要生命周期逻辑时，在 <code>scripts/listeners/</code> 中声明事件、逻辑端和优先级，并返回监听函数。
     </div>
 
     <h2>下一步</h2>
@@ -83,4 +83,3 @@
 <script src="wiki.js"></script>
 </body>
 </html>
-

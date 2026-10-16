@@ -22,9 +22,9 @@
   "trunk_height": 4, "crown_radius": 2,
   "density": 0.65, "min_spacing": 5,
   "biomes": ["core:plains", "core:forest"],
-  "temperature_optimum": 0.5, "temperature_range": 0.6
+  "temperature_optimum": 10.0, "temperature_range": 36.0
 }</code></pre>
-    <p>树记录必须指定不同的树干 <code>block</code> 和已注册的 <code>leaves_block</code>。<code>trunk_height</code> 为 2 至 16 的整数，缺省 4；<code>crown_radius</code> 为 1 至 3 的整数，缺省 2。实际树间距不小于树冠直径加一。完整单元集合由 C++ 生成器提供，不根据相邻同类方块猜测归属。</p>
+    <p><code>temperature_optimum</code> 与 <code>temperature_range</code> 使用摄氏度口径（引擎气候范围为 <code>-20</code> 至 <code>40</code>），范围是三角衰减的半宽；两项均可省略，缺省为 <code>4.0</code> 与 <code>36.0</code>。树记录必须指定不同的树干 <code>block</code> 和已注册的 <code>leaves_block</code>。<code>trunk_height</code> 为 2 至 16 的整数，缺省 4；<code>crown_radius</code> 为 1 至 3 的整数，缺省 2。实际树间距不小于树冠直径加一。完整单元集合由 C++ 生成器提供，不根据相邻同类方块猜测归属。</p>
 
     <h2>只读接口</h2>
     <ul>
