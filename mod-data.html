@@ -205,6 +205,7 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
     <p>招募生成配置将 0-3 个经历的数量权重作为全局独立分布保存；每个招募等级只提供质量权重、职业总等级下限及高于下限的概率。候选生成前会预检配置，配置无效时不会扣除招募资源。经历附带状态只在候选实体首次创建时施加，招募后经历 ID 与完整候选资料保持持久化。</p>
 
     <h2>药材与性状效果（medicinal_herbs / potion_trait_effects）</h2>
+    <p>种植系统最终设计将首批22种原植物中的20种列为药剂原料：棉花、亚麻除外，木薯粉也不能入药。普通药草用于医疗包等固定医疗用品；焰髓花、岚息叶、月泪莲、地脉根不能替代普通药草制作医疗包。药草及特化药材不供日常选食，医疗包不腐坏；特化药材本身也不腐坏。四性按每份原料计算，与种植温度、营养和衣物效果独立。最终数值见源码文档 <code>NCDOCS/种植系统设计.md</code> 与 <code>NCDOCS/药材内容表.md</code>；当前内容迁移尚未完成。</p>
     <p><code>data/medicinal_herbs/</code> 每条记录包含 <code>id</code>、<code>name</code>、<code>fire</code>、<code>wind</code>、<code>water</code> 和 <code>earth</code>。<code>data/potion_trait_effects/</code> 每条记录包含稳定 <code>id</code>、<code>trait</code>（fire/wind/water/earth）、<code>minimum</code>、<code>maximum</code>、<code>effect_id</code>、<code>value</code>、<code>duration</code> 和布尔 <code>positive</code>。两类目录均可为空，不生成默认内容。</p>
     <p><code>effect_id</code> 是生命周期、日志和免疫使用的效果类型标识，不声明覆盖关系。每瓶药创建独立效果组，所有组无条件叠加。效果 ID 必须由 Lua 注册生命周期定义；缺少定义时配置状态在 <code>missing_effect_ids</code> 中给出具体 ID，并报告 <code>potion_effect_definition_missing</code>。</p>
 
@@ -290,6 +291,7 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
 }</code></pre>
 
     <h2>地物（features）与作物（crops）</h2>
+    <p>新作物格式及迁移进度见 <a href="mod-cropregistry.html">作物数据</a>。成长使用阶段上限和地块每Tick速度，不同时配置独立阶段时长；温度按正常、缓长、停长优先级判定。阶段地块表和掉落表显式配置时整表替换。</p>
 
     <h2>验证命令</h2>
     <p>在控制台中用这些命令确认数据注册成功：</p>

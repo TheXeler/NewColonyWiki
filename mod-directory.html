@@ -150,7 +150,7 @@
         <tr><td><code>data/diplomacy_proposals/</code></td><td>否</td><td>外交提议、关系计分、条约效果和前置状态。</td></tr>
         <tr><td><code>data/name_pools/</code></td><td>否</td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材。<code>words</code> 字段为字符串数组。</td></tr>
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
-        <tr><td><code>data/crops/</code></td><td>否</td><td>作物定义，包含农田类型、生长阶段、温度范围（摄氏度）和产出；当前 CoreMod 农业脚本把阶段 ticks 加总为成熟时间。</td></tr>
+        <tr><td><code>data/crops/</code></td><td>否</td><td>作物阶段配置。新格式使用 defaults 与 growth_stages，按成长上限、任意下方方块速度表及三档温度计算成长；阶段地块和掉落覆盖为整表替换。共用解析与Lua投影已加入，内置内容和运行态迁移仍在进行，见 <a href="mod-cropregistry.html">作物数据</a>。</td></tr>
         <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水和河床方块。</td></tr>
         <tr><td><code>data/biomes/</code></td><td>否</td><td>群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
