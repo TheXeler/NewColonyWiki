@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lua 事件 速查 · NewColony Wiki</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="mod-lua-events-reference">
+<div class="main">
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 事件 速查</div></div>
+  <div class="content">
+    <h1>Lua 事件 速查</h1>
+    <p>2026-10-13 新增 <code>core:city_resident_added</code>：原生抽象城邦新增提交成功后延迟派发，非可取消、非auto_sync。字段为uuid／city_uuid／tick／key／reason／x／y／z／in_fluid／requires_support；表示居民已加入该城邦，不替代玩家recruitment_registered的candidate_uuid／town_hall_uuid语义。纯准备或提交拒绝不派发，清除意图后的重复Runtime提交不重发。系统仍关闭，场景未执行。</p>
+    <p class="subtitle">从 <a href="mod-lua-api-reference.html">Lua API 速查</a> 中拆出的全部事件：事件订阅接口与引擎/CoreMod/UI 事件。用搜索框过滤事件名、字段或说明。</p>
+
+    <div class="callout warn">
+      <code>engine.events.clear</code> 是全局清理入口，会影响同一 Lua runtime 中其他 MOD 的订阅。事件的背景说明见 <a href="mod-events.html">Lua 事件系统</a>。
+    </div>
+
+    <div class="search-box">
+      <input data-api-search type="search" placeholder="搜索事件，例如 tick、inventory、focus、work">
+    </div>
+
+    <div data-lua-api-container data-lua-api-source="__LUA_EVENTS_DATA">
+      <p><em>正在加载事件列表…</em></p>
+    </div>
+
+    <p data-api-empty hidden>没有匹配的事件。换一个关键词试试。</p>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
+  </div>
+</div>
+<script src="lua-events-data.js"></script>
+<script src="wiki.js"></script>
+</body>
+</html>
