@@ -67,6 +67,7 @@
     </ul>
 
     <h2>世界生命周期与系统初始化</h2>
+    <p>2026-10-18 开始按 <code>docs/engine-decomposition-plan.md</code> 推进职责拆分。阶段 1 已将菜单、难度与加载数据构造移到 <code>UI/MenuData.cpp</code>，设置行与 UI 文本移到 <code>UI/SettingsData.cpp</code>，内容浏览器和 MOD 列表移到 <code>UI/ContentBrowserData.cpp</code>，公共接口为 <code>UI/MenuData.hpp</code> 的 <code>nc::ui::menu_data</code>。接口接收显式输入，不持有 Engine、世界、Lua VM 或可变缓存；设置倒计时由调用方传入当前时间。三个文件仍编入现有 NewColonyEngine 内部静态库，没有新增 DLL 接口。Engine.cpp 从 13700 行减到 11998 行；51 个搬移函数完成正文静态比较，尚未编译、运行测试或游戏验收。文件写入、网络连接和窗口操作仍由调用方执行；后续阶段为 Lua 接线、UI 命令处理器、Tick 调度及帧交互。</p>
     <p>2026-10-17 对 <code>Engine.cpp</code> 的结构检查记录见 <code>docs/engine-state-lifecycle-audit.md</code>。检查前文件为 13698 行，初始化、UI 命令分发、帧循环三段合计约占 46%。已有服务抽取尚未覆盖内联 Lua API 接线、Tick 业务调度、菜单快照及帧输入/显示。此次补齐世界边界状态清理与渲染快照代次校验；职责拆分仍为后续工作，未执行大规模搬移。</p>
     <p>Pathfinder 的 NavMesh、地形查询及 AI 线程池在 <code>Engine::init()</code> 接线，不能由 <code>tick == 0</code> 判断首次运行：新世界从早上 8 点（tick 9600）开始，存档使用保存时的 tick。未配置 NavMesh 或实体方块查询的 Pathfinder 拒绝生成路线和可行走判断。</p>
     <p>天气定义和初始区域模板属于内容配置。返回主菜单调用 <code>WeatherSystem::clear_runtime()</code>，只清理当前区域、索引、天气状态及世界地图引用；再次创建或载入世界通过 <code>reset(seed, map, tick)</code> 建立世界状态，保留已加载的定义。世界服务端退出时显式清理 AI 停滞计时、派生工作缓存、移动诊断和物理台阶状态，避免相同 UUID 的存档实体继承旧状态。清理不会删除引擎持有的依赖接线。</p>
