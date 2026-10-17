@@ -43,7 +43,7 @@
     </ul>
 
     <h2>UiCommandDispatcher</h2>
-    <p>位置：<code>Engine/UI/UiCommandDispatcher.hpp</code>。职责：RmlUI 文档到引擎命令的路由总线，替代 <code>Engine::dispatch_rml_ui_command</code> 约 1400 行的 target if-链。</p>
+    <p>位置：<code>Engine/UI/UiCommandDispatcher.hpp</code>。职责：RmlUI 文档到引擎命令的路由总线，逐步替代 <code>Engine::dispatch_rml_ui_command</code> 的 target if-链。2026-10-17 检查时该函数约 1993 行，注册入口仍只有 <code>core:menu.quit</code> 一个 handler，其余分支尚未迁出。</p>
     <ul>
       <li><code>register_handler(target, fn)</code> / <code>unregister_handler</code> 维护 target 到 handler 的注册表。</li>
       <li><code>dispatch(cmd)</code> 查表执行，命中返回 <code>Outcome::Handled</code>，未命中返回 <code>Outcome::Unhandled</code> 交由调用方回退（现状为 <code>ScriptEngine::run_ui_command</code>）。</li>
@@ -67,6 +67,7 @@
     </ul>
 
     <h2>世界生命周期与系统初始化</h2>
+    <p>2026-10-17 对 <code>Engine.cpp</code> 的结构检查记录见 <code>docs/engine-state-lifecycle-audit.md</code>。检查前文件为 13698 行，初始化、UI 命令分发、帧循环三段合计约占 46%。已有服务抽取尚未覆盖内联 Lua API 接线、Tick 业务调度、菜单快照及帧输入/显示。此次补齐世界边界状态清理与渲染快照代次校验；职责拆分仍为后续工作，未执行大规模搬移。</p>
     <p>Pathfinder 的 NavMesh、地形查询及 AI 线程池在 <code>Engine::init()</code> 接线，不能由 <code>tick == 0</code> 判断首次运行：新世界从早上 8 点（tick 9600）开始，存档使用保存时的 tick。未配置 NavMesh 或实体方块查询的 Pathfinder 拒绝生成路线和可行走判断。</p>
     <p>天气定义和初始区域模板属于内容配置。返回主菜单调用 <code>WeatherSystem::clear_runtime()</code>，只清理当前区域、索引、天气状态及世界地图引用；再次创建或载入世界通过 <code>reset(seed, map, tick)</code> 建立世界状态，保留已加载的定义。世界服务端退出时显式清理 AI 停滞计时、派生工作缓存、移动诊断和物理台阶状态，避免相同 UUID 的存档实体继承旧状态。清理不会删除引擎持有的依赖接线。</p>
     <p>相关回归用例覆盖未接线寻路拒绝、天气清理后再次初始化，以及相同实体/任务身份下的停滞计时重置。此次修改未编译或运行测试。</p>
