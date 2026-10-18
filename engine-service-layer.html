@@ -61,7 +61,7 @@
       <li><strong>已完成</strong>：<code>Engine</code> 以可选成员形式持有 <code>BlockEditService</code> 与 <code>TerrainQueryService</code>，在 <code>Engine::init</code> 末尾、模拟线程启动之前按依赖注入构造；<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_*</code> 已委托。被替代的 <code>Engine.cpp</code> 方法体与只服务于它们的 file-scope helper 已删除。</li>
       <li><strong>已实现（首批 12 个菜单 handler）</strong>：<code>MenuCommands</code> 注册 <code>core:menu.quit/page/wiki/wiki_cancel/wiki_confirm</code> 和 <code>core:content_browser.category/open_source/search_focus/search/select/section/wiki</code>。对应旧分支移除，命中 dispatcher 后直接返回。<code>MenuCommandContext</code> 借用菜单和本地化数据，并保存列表刷新、暂停当前世界及退出回调；回调读取当前 Engine 服务，不捕获旧世界或 Lua VM。页面切换继续清理文本编辑状态，内容来源入口仍在世界活动时暂停游戏。Wiki 确认、状态翻译和既有快照通道沿用原流程，菜单命令不额外写入 <code>command_result</code>。</li>
       <li><strong>公共辅助入口</strong>：新旧命令共用 <code>UI/UiCommandPayload.cpp</code> 的字符串载荷读取，以及 <code>MenuCommands</code> 的文本编辑重置；内容浏览器和 MOD 列表刷新通过 Engine 成员方法共用。<code>MenuCommands</code> 编入现有内部静态库，不增加 DLL 接口或世界缓存。</li>
-      <li><strong>待办（其余 handler 迁移）</strong>：继续按设置、MOD 管理、网络、世界流程及建筑设计划分命令族，界定权限、结果通道和异步生命周期后迁移。<code>lua_ui:</code> fast-path 与服务端权威路由保留。依赖脚本执行结果的后置分支需要单独安排。本批未运行静态检查、差异检查、编译、测试或游戏，留待用户统一验收；此前阶段 2 的成功构建不覆盖本批修改。</li>
+      <li><strong>后续命令族已实现，待统一验收</strong>：设置、MOD 管理、网络和世界流程已分别迁入注册模块，建筑工具保留条件处理与脚本回退。<code>lua_ui:</code> fast-path、服务端权威路由、结果序号及世界代次关联沿用原流程。新增实现未运行静态检查、差异检查、编译、测试或游戏；此前阶段 2 的成功构建不覆盖本批修改。统一验收项及证据记录见 <code>docs/engine-decomposition-verification.md</code>。</li>
     </ul>
 
     <h2>与其它拆分工作的关系</h2>
