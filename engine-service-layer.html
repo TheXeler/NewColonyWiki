@@ -53,6 +53,9 @@
       <li>对外契约不变：<code>core:*</code> 引擎级命令仍引擎侧拦截、业务命令仍走 Lua 数据桥，<code>command_result</code> 通道与序号语义不变。</li>
     </ul>
 
+    <p>第三阶段后续实现将剩余命令族迁入 <code>EngineSettingsCommands.cpp</code>、<code>EngineModCommands.cpp</code>、<code>EngineNetworkCommands.cpp</code> 和 <code>EngineWorldCommands.cpp</code>。这些文件属于 Engine 内部集成层，通过私有命名入口注册 handler；设置确认、MOD 导入导出、服务器列表和世界流程各自集中维护。<code>EngineUiCommands.cpp</code> 保留加载屏障、战斗目标预处理、Lua 快速路径和注册命令的客户端执行/服务端转发顺序。<code>EngineBuildingDesignCommands.cpp</code> 返回本地工具是否已处理，条件不满足时继续原脚本回退；构建确认仍关联原请求和世界代次。选择服务器后继续连接配置、UI 锁外延后卸载、显示确认时钟及结果序号所有权沿用原约定。</p>
+    <p><code>UI/MenuStateSupport</code> 提供语言、服务器列表 IO、UTF-8 文本编辑与种子提交；<code>UI/UiCommandPayload</code> 提供共用载荷解析；<code>UI/UiCommandResults</code> 提供同一套通道白名单、结果翻译和序号 JSON 构造。它们不持有世界或 VM。第三阶段实现已覆盖计划中的命令族，新增修改尚未编译、检查、测试或运行游戏，统一验收待执行。</p>
+
     <h2>接线状态</h2>
     <ul>
       <li><strong>已完成</strong>：<code>Engine</code> 以可选成员形式持有 <code>BlockEditService</code> 与 <code>TerrainQueryService</code>，在 <code>Engine::init</code> 末尾、模拟线程启动之前按依赖注入构造；<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_*</code> 已委托。被替代的 <code>Engine.cpp</code> 方法体与只服务于它们的 file-scope helper 已删除。</li>
