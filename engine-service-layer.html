@@ -14,6 +14,7 @@
     <p class="subtitle">把 <code>Engine.cpp</code> 中的 UI 命令分发、地形查询、方块修改三类逻辑抽成独立服务类，降低 <code>Engine</code> 的体量与耦合。</p>
 
     <h2>当前状态</h2>
+    <p><strong>2026-10-18 统一 Release 构建通过：</strong>用户授权后，阶段 1 至 5 的当前迁移版本完成编译、DLL/静态库链接和依赖/资源/CoreMod/Wiki 暂存。构建修复音频配置辅助函数可见性、重复 floor_div 的歧义及输入到拾取的当帧 Escape 标记传递；42/42 步骤完成、退出码 0。最后移除内容搜索焦点 handler 未使用参数名，增量构建 7/7 步骤成功、退出码 0。加载 MSVC 环境后直接使用预设和单任务构建，未运行 checker、额外静态检查、测试、游戏或导出。下文“当批未编译”记录属于实施历史；当前编译证据及仍未执行的运行验收见 <code>docs/engine-decomposition-verification.md</code>。</p>
     <p><strong>逻辑角色与程序部署分离：</strong>单人世界的 PhysicalClient 内同时运行 LogicServer 和 LogicClient，玩法权威属于 LogicServer；PhysicalServer 可以仅运行 LogicServer。进程内共存不代表共享 Lua VM 或可绕过服务端修改世界。<a href="mod-network-sync.html">网络模型概览</a>说明各部署形态。RmlUiServer 是本地 UI 集成类名称，不因此变成 LogicServer 上的玩法系统。</p>
     <ul>
       <li>三个服务类已落地，加入 <code>NewColonyEngine</code> 静态库源列表，可独立编译。</li>
