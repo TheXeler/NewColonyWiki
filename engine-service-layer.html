@@ -67,6 +67,7 @@
     </ul>
 
     <h2>世界生命周期与系统初始化</h2>
+    <p>2026-10-18 阶段 2 继续提取原生选区工具：<code>Scripting/SelectionToolHost.hpp</code> 定义借用式接口，收口选区系统、目标过滤、预览和任务投递；Engine 实现该接口，原预览类型名保留别名。<code>Scripting/LuaBindingsSelectionTools.cpp</code> 的 <code>bind_selection_tool_apis</code> 在原双端接线阶段扩展既有 <code>engine.selection</code> 表，注册工具启停、范围与指令、格子列表、预览及单格任务投递。实体悬停与选择入口继续保留，取消通知使用所属客户端 VM，客户端工具操作与服务端任务投递权限沿用原逻辑。服务端 VM 重建仍通过原闭包重新注册区域和选区 API。本批只实施迁移，未运行静态检查、编译、测试或游戏，留待统一验收。</p>
     <p>2026-10-18 阶段 2 首批将 <code>engine.zone</code> 接线移到 <code>Scripting/LuaBindingsZones.cpp</code>，由 <code>bind_zone_apis(EngineBindingHost&amp;, ScriptEngine&amp;, LogicalSide)</code> 注册。Engine 保留原双端接线位置及服务端 VM 重建闭包，绑定通过宿主实时取得区域、命令殖民地、网络模式和城邦加载屏障；回调只借用宿主和所属 VM。区域 API 名称、返回字段和写入权限沿用原实现；选区工具接线待下一批迁移。按用户统一验收流程，本批不运行静态检查、编译、测试或游戏。</p>
     <p>2026-10-18 开始按 <code>docs/engine-decomposition-plan.md</code> 推进职责拆分。阶段 1 已将菜单、难度与加载数据构造移到 <code>UI/MenuData.cpp</code>，设置行与 UI 文本移到 <code>UI/SettingsData.cpp</code>，内容浏览器和 MOD 列表移到 <code>UI/ContentBrowserData.cpp</code>，公共接口为 <code>UI/MenuData.hpp</code> 的 <code>nc::ui::menu_data</code>。接口接收显式输入，不持有 Engine、世界、Lua VM 或可变缓存；设置倒计时由调用方传入当前时间。三个文件仍编入现有 NewColonyEngine 内部静态库，没有新增 DLL 接口。Engine.cpp 从 13700 行减到 11998 行；51 个搬移函数完成正文静态比较，尚未编译、运行测试或游戏验收。文件写入、网络连接和窗口操作仍由调用方执行；后续阶段为 Lua 接线、UI 命令处理器、Tick 调度及帧交互。</p>
     <p>2026-10-17 对 <code>Engine.cpp</code> 的结构检查记录见 <code>docs/engine-state-lifecycle-audit.md</code>。检查前文件为 13698 行，初始化、UI 命令分发、帧循环三段合计约占 46%。已有服务抽取尚未覆盖内联 Lua API 接线、Tick 业务调度、菜单快照及帧输入/显示。此次补齐世界边界状态清理与渲染快照代次校验；职责拆分仍为后续工作，未执行大规模搬移。</p>
