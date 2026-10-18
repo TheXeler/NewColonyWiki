@@ -18,7 +18,7 @@
     <ul>
       <li>三个服务类已落地，加入 <code>NewColonyEngine</code> 静态库源列表，可独立编译。</li>
       <li><strong>方块修改 / 地形查询已接线</strong>：<code>Engine</code> 持有 <code>BlockEditService</code>、<code>TerrainQueryService</code> 实例，<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_occlusion</code> / <code>gpu_probe_sky_light</code> 均改为委托，行为与原实现逐行等价。</li>
-      <li><strong>UI 命令分发 facade 已接线</strong>：<code>Engine</code> 持有 <code>UiCommandDispatcher</code> 成员，<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前先调用 <code>dispatcher.dispatch(cmd)</code>。<code>core:menu.quit</code> 是已迁移 handler；时间控制由 Lua 数据桥转为 Server <code>UiCommand</code>，并通过 <code>save_state:time_control</code> 回传客户端。其余未命中命令落回现有 if-链与 <code>ScriptEngine</code>。旧静态底栏面板已移除，<code>core:panel.toggle</code> 不再作为游戏内菜单入口。</li>
+      <li><strong>UI 命令分发已接线，菜单命令首批迁移</strong>：<code>Engine</code> 持有 <code>UiCommandDispatcher</code> 成员，<code>dispatch_rml_ui_command</code> 在既有加载屏障及 <code>lua_ui:</code> fast-path 之后、剩余 <code>core:*</code> if-链之前调用 <code>dispatcher.dispatch(cmd)</code>。菜单导航、Wiki 和内容浏览器的 12 个 handler 由 <code>UI/MenuCommands.cpp</code> 注册。时间控制继续经 Lua 数据桥转为 Server <code>UiCommand</code>，通过 <code>save_state:time_control</code> 回传。未命中命令继续走既有分支与脚本回退。旧静态底栏面板已移除，<code>core:panel.toggle</code> 不再作为游戏内菜单入口。</li>
       <li>依赖通过引用注入，服务自身不持有任何子系统生命周期，也不 include <code>Engine.hpp</code>，避免循环依赖。</li>
       <li>接线后 <code>Engine.cpp</code> 中只服务于被替代方法的 file-scope helper（<code>chunk_coord_key</code>、<code>floor_mod</code>、<code>entity_block_id_is_clear_for_feet</code>）已删除；仍有其他调用点的 <code>floor_div</code>、<code>mark_light_radius_dirty</code>、<code>entity_block_id_is_solid</code> 保留原处。</li>
     </ul>
@@ -43,7 +43,7 @@
     </ul>
 
     <h2>UiCommandDispatcher</h2>
-    <p>位置：<code>Engine/UI/UiCommandDispatcher.hpp</code>。职责：RmlUI 文档到引擎命令的路由总线，逐步替代 <code>Engine::dispatch_rml_ui_command</code> 的 target if-链。2026-10-17 检查时该函数约 1993 行，注册入口仍只有 <code>core:menu.quit</code> 一个 handler，其余分支尚未迁出。</p>
+    <p>位置：<code>Engine/UI/UiCommandDispatcher.hpp</code>。职责：RmlUI 文档到引擎命令的路由总线，逐步替代 <code>Engine::dispatch_rml_ui_command</code> 的 target if-链。2026-10-18 第三阶段首批将菜单导航、Wiki 与内容浏览器处理器集中到 <code>UI/MenuCommands.cpp</code>；设置、MOD 管理、网络和建筑设计等命令继续分批推进。</p>
     <ul>
       <li><code>register_handler(target, fn)</code> / <code>unregister_handler</code> 维护 target 到 handler 的注册表。</li>
       <li><code>dispatch(cmd)</code> 查表执行，命中返回 <code>Outcome::Handled</code>，未命中返回 <code>Outcome::Unhandled</code> 交由调用方回退（现状为 <code>ScriptEngine::run_ui_command</code>）。</li>
@@ -56,8 +56,9 @@
     <h2>接线状态</h2>
     <ul>
       <li><strong>已完成</strong>：<code>Engine</code> 以可选成员形式持有 <code>BlockEditService</code> 与 <code>TerrainQueryService</code>，在 <code>Engine::init</code> 末尾、模拟线程启动之前按依赖注入构造；<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_*</code> 已委托。被替代的 <code>Engine.cpp</code> 方法体与只服务于它们的 file-scope helper 已删除。</li>
-      <li><strong>已完成（facade 接线 + handler 样板）</strong>：<code>Engine</code> 以直接成员形式持有 <code>UiCommandDispatcher</code>。<code>dispatch_rml_ui_command</code> 在 <code>lua_ui:</code> fast-path 之后、<code>core:*</code> if-链之前调用 <code>m_ui_command_dispatcher.dispatch(cmd)</code>；命中返回 <code>Outcome::Handled</code> 提前返回，未命中落回原 if-链与 <code>ScriptEngine</code>。当前 handler 样板为 <code>core:menu.quit</code>。<code>core:time.pause</code> / <code>core:time.speed</code> 则统一进入 Server 权威 Lua 命令桥，只接受暂停、1x、2x、4x、无限速五态。</li>
-      <li><strong>待办（其余 handler 迁移）</strong>：逐 target 把剩余 <code>core:*</code> if-链分支体注册为 handler，每注册一个并验证等价后删除 <code>Engine::dispatch_rml_ui_command</code> 对应分支，避免双处理。<code>lua_ui:</code> fast-path 不经 dispatcher，优先级不变。后续低风险候选：<code>core:menu.wiki</code>/<code>wiki_cancel</code>/<code>wiki_confirm</code>、<code>core:content_browser.category</code>。高风险（依赖 <code>ScriptEngine</code> 返回值、位于 <code>run_ui_command</code> 之后）：<code>core:combat.toggle_hud</code>，暂不迁移。</li>
+      <li><strong>已实现（首批 12 个菜单 handler）</strong>：<code>MenuCommands</code> 注册 <code>core:menu.quit/page/wiki/wiki_cancel/wiki_confirm</code> 和 <code>core:content_browser.category/open_source/search_focus/search/select/section/wiki</code>。对应旧分支移除，命中 dispatcher 后直接返回。<code>MenuCommandContext</code> 借用菜单和本地化数据，并保存列表刷新、暂停当前世界及退出回调；回调读取当前 Engine 服务，不捕获旧世界或 Lua VM。页面切换继续清理文本编辑状态，内容来源入口仍在世界活动时暂停游戏。Wiki 确认、状态翻译和既有快照通道沿用原流程，菜单命令不额外写入 <code>command_result</code>。</li>
+      <li><strong>公共辅助入口</strong>：新旧命令共用 <code>UI/UiCommandPayload.cpp</code> 的字符串载荷读取，以及 <code>MenuCommands</code> 的文本编辑重置；内容浏览器和 MOD 列表刷新通过 Engine 成员方法共用。<code>MenuCommands</code> 编入现有内部静态库，不增加 DLL 接口或世界缓存。</li>
+      <li><strong>待办（其余 handler 迁移）</strong>：继续按设置、MOD 管理、网络、世界流程及建筑设计划分命令族，界定权限、结果通道和异步生命周期后迁移。<code>lua_ui:</code> fast-path 与服务端权威路由保留。依赖脚本执行结果的后置分支需要单独安排。本批未运行静态检查、差异检查、编译、测试或游戏，留待用户统一验收；此前阶段 2 的成功构建不覆盖本批修改。</li>
     </ul>
 
     <h2>与其它拆分工作的关系</h2>
