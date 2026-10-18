@@ -71,6 +71,8 @@
     </ul>
 
     <h2>世界生命周期与系统初始化</h2>
+    <p>第五阶段将帧职责分到 <code>EngineFrameInput.cpp</code>、<code>EngineWorldInteraction.cpp</code>、<code>EngineFrameCamera.cpp</code>、<code>EngineFrameUi.cpp</code>、<code>EngineFrameLoading.cpp</code>、<code>EngineFrameRender.cpp</code>、<code>EngineDebugGeometry.cpp</code>、<code>EngineFrameSnapshots.cpp</code> 和 <code>EngineDiagnostics.cpp</code>。<code>Engine::run</code> 保留执行顺序、区块流送/UI 临界区、延后返回菜单的解锁与重锁，以及帧限速。<code>FrameContext</code> 只传递当帧时间和计时标记；加载方法显式借用当前模拟锁，等待服务端前沿原流程解锁。</p>
+    <p>客户端卸载回调后统一调用 <code>clear_client_world_interaction</code>，清理原生选区、实体/群组选中、拖拽与双击、战斗目标、建筑工作区和确认状态，再清理视觉派生缓存与临时几何。F3 重计数与小地图片段改为 Engine 持有的 <code>FrameWorldViews</code>，按世界代次失效并在世界结束时清理；新世界首帧重取计数。界面偏好和配置继续保留。阶段 1 至 5 的计划迁移已实施，整体统一验收尚未执行；阶段 2 的历史成功构建不覆盖后续新增修改，不将实现状态记作验证通过。</p>
     <p>第四阶段将模拟回调装配与 Tick 调度迁入 <code>EngineSimulationTick.cpp</code>，以命名步骤推进物品、工作点、AI、地形、任务通知及脚本结算。原生通知在 <code>EngineNativeEvents.cpp</code>，研究任务/生存问题/狩猎刷新在 <code>EngineSimulationTasks.cpp</code>，死亡、掉落和拆除输出在 <code>EngineSimulationLifecycle.cpp</code>。网络与渲染快照仍在脚本、战斗结算后的原位置发布，保存失败与 Tick 后延迟保存回调继续走同一所有者。</p>
     <p><code>Simulation/NativeEventDeliveryState.hpp</code> 聚合现有完成/激活/停止工作、物品和方块投递游标、票据及重入标记。保存前调用与模拟 Tick 共用同一实现；回调中仍固定记录并在确认前检查世界代次和队列票据。服务端卸载及关闭 VM 前调用 <code>clear_runtime</code> 释放保留的 Lua 投递，保留调用栈 Guard 管理的重入标记，防止在卸载监听器里递归重新进入。既有方块投递测试的访问器随成员归组更新，未执行。本阶段实现尚未静态检查、编译、测试或运行游戏。</p>
     <p>2026-10-18 第二阶段编译记录：按用户要求运行 <code>export-release</code> 配置及 <code>build-export-release --parallel 1</code> 构建。首次编译修复 <code>Engine::selection_system()</code> 重复定义，保留既有访问器并添加 <code>override</code>；随后 Release 增量编译、DLL/静态库链接和资源暂存成功，18/18 步骤完成、退出码 0。加载 MSVC 环境后直接调用预设，跳过 Build.bat 中的源码检查及自动修复。未运行额外静态检查、测试、游戏或导出打包，运行行为仍待验收。</p>
