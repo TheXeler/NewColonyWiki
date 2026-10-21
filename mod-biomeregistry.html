@@ -29,13 +29,13 @@
     </table>
 
     <h2>当前配置屏障</h2>
-    <p>设计文档尚未给出六类群落的正式气候阈值、权重、高度偏移、地表材料、洞穴参数或植被概率。CoreMod 当前提供一组测试生成契约，仅用于验证森林、平原、山地、水域、雪地和荒漠均可生成并贯通开档流程，不代表正式内容平衡。CoreMod 的测试记录必须完整声明材料层、权重、洞穴、气候、高度和植被字段；缺少任一字段会在加载时报告具体文件和字段。</p>
+    <p>设计文档尚未给出六类群落的正式气候阈值、权重、高度偏移、地表材料、洞穴参数或植被概率。CoreMod 当前提供一组测试生成契约，仅用于验证森林、平原、山地、水域、雪地和荒漠均可生成并贯通开档流程，不代表正式内容平衡。CoreMod 的测试记录必须完整声明材料层、权重、气候、高度和植被字段；缺少任一字段会在加载时以 <code>biome_generation_rules_undefined</code> 拒绝加载。</p>
     <p>加载器会验证 CoreMod 类型集合：缺少六类中的任一项或加入第七种 Core 基础类型都会返回 <code>core_biome_set_mismatch</code>。其他 Mod 仍可通过自己的命名空间提供内容。</p>
 
     <h2>只读接口</h2>
     <ul>
       <li><code>engine.terrain.list_biomes()</code>：列出成功加载的群落 ID。</li>
-      <li><code>engine.terrain.get_biome(id)</code>：读取成功加载的定义。</li>
+      <li><code>engine.modding.get_data_json("biomes", id)</code>：读取成功加载的定义（原始 JSON 文本，不存在时返回空字符串）。</li>
       <li><code>engine.terrain.select_biome(seed, cx, cz)</code>：配置无效或没有定义时返回空表，不生成 fallback 群落。</li>
     </ul>
     <div class="footer">NewColony Wiki · UTF-8</div>

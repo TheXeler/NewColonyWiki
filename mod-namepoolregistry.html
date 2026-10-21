@@ -26,7 +26,7 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>data id</td><td>是</td><td>基础池 ID；同一基础 ID 可按语言提供多个文件。</td></tr>
-        <tr><td><code>words</code></td><td>string[]</td><td>是</td><td>非空词汇数组；空字符串会被忽略，最终无可用词时该文件不注册。</td></tr>
+        <tr><td><code>words</code></td><td>string[]</td><td>是</td><td>非空词汇数组；非字符串项会被忽略，最终无可用词时该文件不注册。</td></tr>
       </tbody>
     </table>
 

@@ -19,10 +19,10 @@
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>MOD 发现与加载</td><td><span class="badge done">可用</span></td><td><code>mod.json</code>、依赖与加载顺序（<code>dependencies</code>/<code>load_after</code>/<code>load_before</code>，支持 <code>load_before: ["*"]</code>）、<code>side</code>、<code>conflicts</code>、<code>settings</code>、用户设置覆盖和 MOD 翻译合并均已接入。脚本沙箱不提供通用文件系统 IO 权限。</td></tr>
-        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 稳定加载基础内容、经营规则、生态、动态天气、视野和难度等多类 JSON；<code>professions</code> 是 jobs 别名。</td></tr>
+        <tr><td>数据注册</td><td><span class="badge done">可用</span></td><td><code>ModLoader::load_mod_data</code> 稳定加载基础内容、经营规则、生态、动态天气、视野和难度等多类 JSON；职业定义只从 <code>jobs</code> 读取，没有旧目录别名。</td></tr>
         <tr><td>数据诊断</td><td><span class="badge done">可用</span></td><td>重复 MOD ID、重复数据 ID、无效字段、配方/职业/文明/作物/方块引用错误会报告明确来源。</td></tr>
-        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td>入口脚本支持 <code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</td></tr>
-        <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持 <code>after</code>、<code>every</code>、<code>cancel</code>、<code>clear</code>。</td></tr>
+        <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td><code>scripts/listeners/</code> 下的监听器以 <code>@Event</code>、<code>@Priority</code> 和执行端注释声明，返回回调函数后自动注册；其他模块按需 <code>require</code>。</td></tr>
+        <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持持久任务 <code>create</code>、临时回调 <code>temporary</code>，以及 <code>cancel</code>、<code>freeze</code>、<code>resume</code>、<code>status</code>、<code>query</code> 和 <code>current_tick</code>。</td></tr>
         <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code> 使用 Xoshiro256** 确定性 RNG。</td></tr>
         <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业 1-5 级、装备实例许可、前置职业、配方输入、职业要求、文明配方限制和解锁均已从注册表初始化。公开直通制作已禁用，CoreMod 制作统一走带资源预留的生产订单；固定制作结果由产出表决定。</td></tr>
         <tr><td>文明</td><td><span class="badge partial">接口</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
@@ -32,7 +32,7 @@
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和标准组件集可用；组件集合会随殖民者生存、选择和渲染状态继续演进，不以旧固定数量作为兼容承诺。</td></tr>
         <tr><td>网络同步</td><td><span class="badge partial">部分</span></td><td>TCP Server/Client、Server 权威 UiCommand、命令结果、重连恢复、增量快照和 MOD 数据交换已实现；活体网络往返仍待显式验证。</td></tr>
-        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册约 80 个命令，覆盖 MOD、数据、配方、实体、背包、阵营、网络、存档、Lua 热重载、配置诊断和归档对比。</td></tr>
+        <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 75 个命令（另有 6 个内置别名），覆盖 MOD、数据、配方、实体、背包、阵营、网络、Lua 热重载、配置诊断和归档对比。</td></tr>
       </tbody>
     </table>
 
@@ -50,20 +50,20 @@
         <tr>
           <td>作物与农业</td>
           <td><span class="badge partial">部分</span></td>
-          <td><code>data/crops</code> schema 与加载接口保留；CoreMod 内容为空。种植专项循环未定义时不生成作物、生长阶段、成熟或收获规则。</td>
-          <td>当前只保留接口；不会声称存在作物产出、温湿度或收获循环。</td>
+          <td><code>data/crops</code> schema 与加载接口已接入，CoreMod 提供 22 条作物定义；<code>systems.farming</code> 执行整地、播种、按地块速度与三档温度推进生长阶段，并结算成熟收获。</td>
+          <td>种植专项规则文档仍不完整；成长参数只来自作物记录本身的阶段上限、地块速度表和温度区间，引擎不生成额外默认值。</td>
         </tr>
         <tr>
           <td>区域系统</td>
           <td><span class="badge partial">部分</span></td>
           <td>ZoneSystem、Lua <code>engine.zone</code>、矩形/3D 区域创建、查询、删除和版本化存档已存在；CoreMod 只注册露天仓储区和种植区。</td>
-          <td>露天仓储区已接入统一物品系统；种植专项循环未定义，旧居住、收获和采掘持续区域不存在。</td>
+          <td>露天仓储区已接入统一物品系统，种植区由 <code>systems.farming</code> 推进；旧居住、收获和采掘持续区域不存在。</td>
         </tr>
         <tr>
           <td>建筑系统</td>
           <td><span class="badge partial">部分</span></td>
           <td><code>data/buildings</code> schema、BuildingSystem、施工事务、工作点、存储点、治疗点、耐久、维修和版本化实例存档已接入。</td>
-          <td>NCDOCS 未给出具体建筑形状、材料或工期，CoreMod 内容为空；加入完整定义后才会开放对应建造入口。</td>
+          <td>NCDOCS 未给出其余建筑的具体形状、材料或工期；CoreMod 当前只有 <code>core:workbench</code>、<code>core:crafting_spot</code>、<code>core:smoker</code> 和 <code>core:irrigation_tower</code> 四条定义。</td>
         </tr>
         <tr>
           <td>音频</td>
@@ -74,7 +74,7 @@
         <tr>
           <td>UI 系统</td>
           <td><span class="badge partial">部分</span></td>
-          <td>玩家可见 UI 统一走游戏内 RmlUI：主菜单、HUD、暂停/设置、开发者控制台、小地图和全局提示由静态 RML/RCSS 文档驱动；经营类游戏内菜单通过 Lua <code>on_load</code> 注册到底栏/窗口兼容层。旧即时模式/Lua 可见渲染层已移除。</td>
+          <td>玩家可见 UI 统一走游戏内 RmlUI：主菜单、HUD、暂停/设置、开发者控制台、小地图和全局提示由静态 RML/RCSS 文档驱动；经营类游戏内菜单通过 Lua 在 <code>core:mod_ready</code> 注册到底栏/窗口兼容层。旧即时模式/Lua 可见渲染层已移除。</td>
           <td>Lua UI 兼容 API 已接入 RmlUI-backed 可见层，可显示底栏扩展、窗口/table/tabs_table、动态 RML 面板和浮动提示；<code>MainMenuState</code> 仍承载设置、暂停和世界创建状态。旧 CSS 主题后端不再应用样式，主题扫描只为旧配置兼容保留。</td>
         </tr>
         <tr>
@@ -111,22 +111,22 @@
     <table>
       <thead><tr><th>模块</th><th>文件数</th><th>核心类</th></tr></thead>
       <tbody>
-        <tr><td>Core</td><td>32</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
-        <tr><td>ECS</td><td>11</td><td>World, Archetype, SystemManager 和标准组件</td></tr>
-        <tr><td>Simulation</td><td>45</td><td>TickManager, RecipeSystem, JobSystem, CivilizationSystem, TechTree, BuildingSystem, ZoneSystem, RaidSystem, ReservationSystem</td></tr>
-        <tr><td>AI</td><td>统一任务路径</td><td>AISystem, TaskPool, TaskRegistry, TaskExecution, TaskNavigation, Action, Pathfinder, NavMesh, NavAgent</td></tr>
-        <tr><td>Audio</td><td>6</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
-        <tr><td>Network</td><td>4</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
-        <tr><td>Renderer</td><td>44</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>
-        <tr><td>Scripting</td><td>5</td><td>ScriptEngine, LuaBindings</td></tr>
-        <tr><td>Modding</td><td>9</td><td>ModLoader, ModRegistry, ModPreprocessor, EntityPrototypeFactory, DataId</td></tr>
-        <tr><td>Voxel</td><td>20</td><td>TerrainGenerator, VoxelRaycast, PerlinNoise, BlockEditService, TerrainQueryService</td></tr>
-        <tr><td>Input</td><td>6</td><td>InputManager, KeyBindings, SelectionManager</td></tr>
-        <tr><td>Camera</td><td>2</td><td>OrbitCamera</td></tr>
-        <tr><td>Localization</td><td>2</td><td>LocalizationManager</td></tr>
-        <tr><td>Save</td><td>4</td><td>SaveSystem</td></tr>
-        <tr><td>UI</td><td>43</td><td>RmlUiServer/Runtime/Bridge/DataViews/PanelRegistry、DevConsole、LuaUi、MainMenu</td></tr>
-        <tr><td>WorldMap</td><td>2</td><td>WorldMap</td></tr>
+        <tr><td>Core</td><td>46</td><td>Types, Vec3/Mat4, FixedPoint, PoolAllocator, ArenaAllocator, Logger, FrameProfiler, Threading</td></tr>
+        <tr><td>ECS</td><td>14</td><td>World, Archetype, SystemManager 和标准组件</td></tr>
+        <tr><td>Simulation</td><td>116</td><td>TickManager, RecipeSystem, JobSystem, CivilizationSystem, TechTree, BuildingSystem, ZoneSystem, RaidSystem, ReservationSystem</td></tr>
+        <tr><td>AI</td><td>24</td><td>AISystem, TaskPool, TaskRegistry, TaskExecution, TaskNavigation, Action, Pathfinder, NavMesh, NavAgent</td></tr>
+        <tr><td>Audio</td><td>7</td><td>AudioSystem, SoundBank, AudioConfig, miniaudio backend</td></tr>
+        <tr><td>Network</td><td>12</td><td>NetworkSystem, NetworkProtocol, ModDataExchange</td></tr>
+        <tr><td>Renderer</td><td>73</td><td>Renderer, VulkanContext/Device/SwapChain/Pipeline, ChunkMesher, TextureAtlas, BlockTextureRegistry, BlockModel</td></tr>
+        <tr><td>Scripting</td><td>62</td><td>ScriptEngine, LuaBindings</td></tr>
+        <tr><td>Modding</td><td>14</td><td>ModLoader, ModRegistry, ModPreprocessor, EntityPrototypeFactory, DataId</td></tr>
+        <tr><td>Voxel</td><td>23</td><td>TerrainGenerator, VoxelRaycast, PerlinNoise, BlockEditService, TerrainQueryService</td></tr>
+        <tr><td>Input</td><td>7</td><td>InputManager, KeyBindings, SelectionManager</td></tr>
+        <tr><td>Camera</td><td>3</td><td>OrbitCamera</td></tr>
+        <tr><td>Localization</td><td>3</td><td>LocalizationManager</td></tr>
+        <tr><td>Save</td><td>47</td><td>SaveSystem</td></tr>
+        <tr><td>UI</td><td>63</td><td>RmlUiServer/Runtime/Bridge/DataViews/PanelRegistry、DevConsole、LuaUi、MainMenu</td></tr>
+        <tr><td>WorldMap</td><td>3</td><td>WorldMap</td></tr>
       </tbody>
     </table>
 

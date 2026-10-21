@@ -11,11 +11,11 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>MOD 是怎样加载的</div></div>
   <div class="content">
     <h1>MOD 是怎样加载的</h1>
-    <p class="subtitle">一个 MOD 就是一套数据文件加一个必须存在的 Lua 入口脚本。游戏先找到 MOD、排序、注册数据，最后跑脚本。搞清楚这个过程，后面加物品、写配方、写 Lua 才知道每样东西在哪个阶段生效。</p>
+    <p class="subtitle">一个 MOD 就是一套数据文件，可选再加 Lua 监听器脚本。游戏先找到 MOD、排序、注册数据，最后跑脚本。搞清楚这个过程，后面加物品、写配方、写 Lua 才知道每样东西在哪个阶段生效。</p>
 
     <h2>一个 MOD 至少需要什么</h2>
     <p>游戏读取 MOD 目录中的 <code>mod.json</code>、检查依赖并确定加载顺序，再扫描数据定义和脚本声明。<code>scripts/listeners/</code> 中的监听器自动注册；普通模块按需 require，通道和命令通过定义指定执行函数。</p>
-    <p>mod.json 里最常见的字段还有 <code>side</code>、<code>dependencies</code>、<code>load_after</code>、<code>load_before</code>、<code>conflicts</code>、<code>settings</code> 和 <code>ui</code>。其中 <code>dependencies</code> 条目使用 <code>name</code>、<code>minVer</code>、<code>maxVer</code>；脚本沙箱不提供通用文件系统 IO 权限字段。</p>
+    <p>mod.json 里最常见的字段还有 <code>side</code>、<code>dependencies</code>、<code>load_after</code>、<code>load_before</code>、<code>conflicts</code> 和 <code>settings</code>。其中 <code>dependencies</code> 条目使用 <code>name</code>、<code>minVer</code>、<code>maxVer</code>；脚本沙箱不提供通用文件系统 IO 权限字段。</p>
     <p>下面是一个典型 MOD 的目录结构。游戏会检查 <code>data/</code> 下是否存在这些类型子目录，存在就走进去递归扫描 JSON 文件。</p>
     <pre><code>mods/my_mod/
   mod.json
@@ -38,7 +38,7 @@
     buildings/
     terrain/
     biomes/
-    combat/
+    combat_rules/
     audio/
     zones/</code></pre>
 
@@ -57,7 +57,7 @@
     <p>静态定义放在 <code>data/</code> 下。当前自动注册基础内容、经营规则、生态、动态天气、视野和难度等多类数据；职业定义使用 <code>data/jobs/</code>。Lua 用来实现事件响应与运行时逻辑。</p>
 
     <div class="callout warn">
-      不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>on_tick</code> 里每帧扫描所有实体——用事件订阅和定时器代替轮询。
+      不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>core:tick</code> 监听器里每帧扫描所有实体——用事件订阅和定时器代替轮询。
     </div>
 
     <h2>数据 ID 命名习惯</h2>

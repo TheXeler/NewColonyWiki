@@ -40,7 +40,7 @@ mods/my_mod/data/audio/ui/click.json</code></pre>
     <table>
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
-        <tr><td><code>id</code></td><td>string</td><td>是</td><td>音频数据 ID，也是 <code>engine.audio.play(id)</code> / <code>engine.audio.play_3d(id)</code> 使用的播放 ID。未带命名空间时按所属 MOD 解析。</td></tr>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>音频数据 ID，也是 <code>engine.audio.play(id)</code> / <code>engine.audio.play_3d(id)</code> 使用的播放 ID。播放时按该字段的字面值匹配已注册声音，引擎不按所属 MOD 补全命名空间。</td></tr>
         <tr><td><code>file</code></td><td>string</td><td>是</td><td>音频文件路径。相对路径从 MOD 根目录解析，通常指向 <code>assets/audio/</code>。</td></tr>
         <tr><td><code>category</code></td><td>string</td><td>否</td><td><code>music</code>、<code>ambient</code>、<code>effect</code> 或兼容别名 <code>effects</code>。默认 <code>effect</code>。</td></tr>
         <tr><td><code>streaming</code></td><td>bool</td><td>否</td><td>是否流式加载。长音乐和环境音建议设为 <code>true</code>。</td></tr>

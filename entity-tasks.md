@@ -580,7 +580,7 @@ An active Reaction suppresses new Reaction triggers and runs `on_tick` at the
 interval declared by its Mod JSON definition; `on_end` will explicitly remove its
 `reaction_effects.*` groups.
 The native attribute layer now has a targeted cleanup operation for that
-prefix; wiring it to the Reaction lifecycle remains pending.
+prefix; the native Reaction finish path applies it when a Reaction ends.
 Lua reads the base through `engine.entities.attribute(uuid, "move_speed")`.
 The same accessor reads the ECS-owned `name` value directly when present.
 The current health key is `current_hp`; `map_hp` is rejected in entity content.
@@ -619,8 +619,8 @@ task, so a pending path request is visible before the AI tick assigns a route.
   ID use `task_id` where applicable.
 - Definition directory and registry type: `data/task_definitions/` and
   `task_definitions`.
-- Task-pool channel: `core:task_pool`, projected through the task-pool client
-  modules and UI provider.
+- Task-pool projection: `engine.tasks.ui_rows()`, read by the task-pool panel;
+  no Lua `core:task_pool` channel exists.
 - Save file: `tasks.json`, with a `tasks` array plus reservations. Network world
   state uses a `tasks` document. No old API, file, field, or event aliases exist.
 - Entity `AIState` saves its busy flag, current task UUID and plan step. Restore

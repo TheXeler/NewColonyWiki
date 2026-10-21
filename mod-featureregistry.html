@@ -29,7 +29,7 @@
     <h2>只读接口</h2>
     <ul>
       <li><code>engine.terrain.list_features()</code>：列出成功加载的地物 ID。</li>
-      <li><code>engine.terrain.get_feature(id)</code>：读取已加载定义；不存在时返回空表。</li>
+      <li><code>engine.terrain.find_feature(id)</code>：读取已加载定义；不存在时返回空表。</li>
     </ul>
     <p><code>engine.terrain.generated_tree_at(x,y,z)</code> 返回该位置原生生成器提供的树归属、树干 hash 和逐格坐标/hash；已加载区块的树已改变时返回空。<code>tree_cells(feature_id,x,y,z)</code> 返回在指定根位置生长的完整形状。CoreMod 首次割除时将完整集合登记为带 UUID 的世界组件并保存，后续使用组件记录；树苗长成时登记同样的完整组件。生长提交失败会撤销预登记并保留树苗，成功后才发布组件变化通知，使监听器看到完整树形。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>

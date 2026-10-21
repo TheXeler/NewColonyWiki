@@ -132,7 +132,7 @@
     </table>
 
     <h2>内置实体原型</h2>
-    <p>CoreMod 的通用殖民者原型是 <code>core:colonist</code>。职业不是实体类型；职业由实体的 <code>Job</code> 能力声明，并可在进入世界后通过换装事务变更。</p>
+    <p>CoreMod 的通用殖民者原型是 <code>core:colonist</code>。职业不是实体类型；职业由实体的 <code>Job</code> 能力声明，并可在进入世界后通过换装事务变更。此外还提供 <code>core:mvp_test_animal</code>、<code>core:mvp_test_raider</code>、<code>core:mvp_test_raider_heavy</code> 和 <code>core:squad_soldier</code> 四个非殖民者原型。</p>
     <table>
       <thead><tr><th>原型</th><th>ID</th><th>初始职业</th><th>AI 路径</th></tr></thead>
       <tbody>
@@ -165,13 +165,13 @@
 
     <h2>验证命令</h2>
     <pre><code>list_data entities               -- 列出所有已注册的实体原型
-data core:colonist               -- 查看殖民者原型的完整 JSON
+data entities core:colonist               -- 查看殖民者原型的完整 JSON
 spawn_proto my_mod:pack_animal   -- 在世界中生成非殖民者实体</code></pre>
 
     <h2>实体模型与动画</h2>
     <p>实体的 <code>visual.model</code> 定义几何，<code>visual.texture</code> 独立引用贴图。没有 Visual 或模型 ID 为空的实体不渲染；贴图缺失时使用缺失纹理。<code>model: "gltf:core/player"</code> 对应 Mod 内的 <code>assets/models/entities/player.glb</code>；其他 Mod 使用 <code>gltf:模组ID/模型名</code>。GLB 坐标使用游戏世界单位，<code>model_scale</code> 再乘到模型上；<code>visual.width/height/depth</code> 不会自动缩放 GLB。模型局部 <code>-Z</code> 是正面，渲染时按游戏的 <code>rotation.yaw = 0</code> 朝 <code>+Z</code> 约定转换。</p>
     <p>发布给玩家的 Mod 保留 GLB 原文件。游戏启动时先将启用 Mod 的 <code>assets/models/entities/</code> 中的 GLB 导入本地 <code>generate/模组ID/entity_models/</code> 缓存；运行时从缓存加载并上传 GPU，不重新解析 GLB 或解码贴图。缓存保存网格、UV、索引、材质及 RGBA 贴图、节点层级、动画通道、预采样姿态与包围盒。启动预处理检查源内容、外部图片哈希、缓存校验和及格式版本。相同模型／装配结构共享 GPU 资源，每帧按包含所有部件的包围盒进行视锥测试，再成组绘制。不配置 <code>visual.texture</code> 时使用各 GLB 材质自己的贴图；配置后覆盖主体贴图，独立部件保留各自材质。</p>
-    <p>GLB 的刚性节点可以通过 <code>translation</code>、<code>rotation</code> 和 <code>scale</code> 动画通道移动。预处理以每秒 60 帧采样姿态和包围盒，运行时 CPU 选择帧，GPU 读取共享姿态表变换顶点。不可见帧不会触发动画表注册，新旧表按帧栅栏管理寿命。NCEM 缓存格式为版本 6，旧缓存自动重建；单模型姿态与包围盒合计限制为 64 MiB，超限时回退 CPU 采样，单模型解码贴图合计另限制为 64 MiB，图片每轴最大 4096。启用 <code>animation</code> 后选择 <code>walk</code>／<code>idle</code>，<code>visual.animation</code> 可固定片段名称。当前支持独立 GLB 部件装配与内嵌基础色贴图；skin、morph target、多个片段混合和程序化 GLB 看向目标仍未接入，skin／morph 在预处理时报错。</p>
+    <p>GLB 的刚性节点可以通过 <code>translation</code>、<code>rotation</code> 和 <code>scale</code> 动画通道移动。预处理以每秒 60 帧采样姿态和包围盒，运行时 CPU 选择帧，GPU 读取共享姿态表变换顶点。不可见帧不会触发动画表注册，新旧表按帧栅栏管理寿命。NCEM 缓存格式为版本 9，旧缓存自动重建；单模型姿态与包围盒合计限制为 64 MiB，超限时回退 CPU 采样，单模型解码贴图合计另限制为 64 MiB，图片每轴最大 4096。启用 <code>animation</code> 后选择 <code>walk</code>／<code>idle</code>，<code>visual.animation</code> 可固定片段名称。当前支持独立 GLB 部件装配与内嵌基础色贴图；skin、morph target、多个片段混合和程序化 GLB 看向目标仍未接入，skin／morph 在预处理时报错。</p>
     <p>例如在实体 <code>capabilities</code> 中同时声明 <code>{"type":"visual","model":"gltf:my_mod/colonist","texture":"textures/entity/colonist.png"}</code> 与 <code>{"type":"animation","enabled":true}</code>。当前 CoreMod 临时 GLB 没有动画片段，仍会以静态姿势显示。</p>
     <p>运行时按模型与贴图绑定缓存数字句柄，动画片段名称在切换时解析；位置和播放时间变化会复用既有实例分组。GLB 实例、传统实体网格和地面物品网格分别更新，因此 GLB 播放动画不会重建地面物品网格。实例和 CPU 回退姿态缓冲区在分配存活期间保持映射，在当前帧栅栏完成后写入并刷新，释放分配前解除映射。内容重载会使模型、贴图区域与动画句柄失效，并重新生成依赖旧内容的网格。</p>
     <h3>独立 GLB 部件装配</h3>

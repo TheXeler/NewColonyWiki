@@ -21,11 +21,6 @@
   "version": "0.1.0",
   "description": "Adds early copper content.",
   "license": "MIT",
-  "lua": {
-    "permissions": {
-      "io": false
-    }
-  },
   "dependencies": [
     {"name": "core", "minVer": "0.1.0", "maxVer": "1.0.0"}
   ],
@@ -83,7 +78,7 @@
     </div>
 
     <div class="callout warn">
-      当前没有“无入口脚本”的纯数据 MOD 路径。即使所有内容都在 JSON 里，也要保留一个存在的入口脚本，例如 <code>scripts/bootstrap.lua</code> 写 <code>return {}</code>。
+      纯数据 MOD 不需要 Lua 文件，清单也不声明脚本入口。需要生命周期逻辑时，在 <code>scripts/listeners/</code> 中声明事件、逻辑端和优先级，并返回监听函数。
     </div>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

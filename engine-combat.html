@@ -127,7 +127,7 @@
 
     <p>2026-10-02 非 battler 目标边界：指定攻击命令可接受存活且敌对的普通实体，但警戒和近战接触目前还要求目标具有 <code>battler.is_battler</code>；直接放开筛选会使缺少闪避与近战格挡属性的目标在 Lua 公式中结算失败。非 battler 敌对实体是否可被自动攻击及其缺省防御值待裁定，现未修改该目标筛选。</p>
 
-    <p>2026-10-02 S2 兵模速度：入场时兵模取得队长的解析 <code>move_speed</code>；阵型导航每次重新读取队长权威速度，并在编制与组件校验后同步所有在场兵模。CoreMod 从 <code>engine.combat.soldiers()</code> 取得兵模 UUID、所属队长、槽位与位置，按队长朝向旋转阵型并重新分配目标格，再调用 <code>engine.combat.steer_soldiers</code>；寻路和地表吸附仍由引擎通用导航执行。引擎的 <code>follow_soldiers</code> 保留为基础的相对偏移导航入口，CoreMod 当前不使用它决定槽位。战斗与日常寻路都使用通用 Pathfinder 默认最多下落 3 格；当前地形只允许 1 格深的浅水导航。以上修正尚未编译或运行游戏验收。</p>
+    <p>2026-10-02 S2 兵模速度：入场时兵模取得队长的解析 <code>move_speed</code>；阵型导航每次重新读取队长权威速度，并在编制与组件校验后同步所有在场兵模。CoreMod 从 <code>engine.combat.soldiers()</code> 取得兵模 UUID、所属队长、槽位与位置，按队长朝向旋转阵型并重新分配目标格，再调用 <code>engine.combat.steer_soldiers</code>；寻路和地表吸附仍由引擎通用导航执行。引擎的 <code>follow_soldiers</code> 保留为基础的相对偏移导航入口，CoreMod 当前不使用它决定槽位。战斗导航把通用 Pathfinder 的下落限制设为 1 格，日常寻路沿用默认最多下落 3 格；当前地形只允许 1 格深的浅水导航。以上修正尚未编译或运行游戏验收。</p>
 
     <p>2026-10-02 两层外交展示：<code>core:diplomacy</code> 服务端快照现把每座殖民地的局部关系与玩家对其派系定义的独立关系一同发给客户端；外交列表和详情分列显示“殖民地关系”“派系关系”，无派系记录时显示“未记录”。打开面板会请求当前世界快照，面板保持打开时可用“刷新”再次请求。服务端成功写入派系关系后同步派发 <code>core:player_faction_relation_changed</code>，世界就绪时监听器广播新快照。世界地图中的原关系列也标明是殖民地关系。已添加广播及客户端缓存更新的测试源码，尚未编译或运行 UI/联机。</p>
     <p>2026-10-02 Battle/Task 共用导航入口会在寻路前核对队长位置、任务目标及代理宽高的有限值和坐标范围；无效输入清除旧 NavAgent 路径并拒绝此次寻路。战斗专用的入场、兵模槽位导航、指定攻击、待命追踪及目标刷新入口也校验 Pathfinder 的起点、目的地和代理尺寸；兵模当前位置无效时清除旧路径与移动意图。测试源码已增加非法队长、兵模和任务目标坐标场景，未编译或运行。</p>
@@ -205,13 +205,13 @@
     <p>2026-10-04 S4 手动指令：服务端移动或原地防御命令成功后立即移除冲锋移速修正，避免下一物理 tick 仍按冲锋速度移动；命令失败不清理。自动追击的内部目标刷新不会因此撤销冲锋。已添加防御命令失败与成功的 Lua 绑定断言源码，尚未编译或运行验收。</p>
     <p>2026-10-04 S5 命中提交编排：Lua <code>Projectile.commit_selected_impacts</code> 逐弹体消费已选接触，方块领取一次性命中，敌对实体由武器回调给出伤害后走可取消伤害入口；空接触与敌我未决候选不提交。单个武器回调抛错返回 <code>projectile_damage_provider_failed</code>，非法伤害返回 <code>projectile_damage_invalid</code>；后续弹体继续处理。原生仍核对真实运动与接触；可玩武器、每 tick 调用方及弹体最终清理尚未完成，新增断言源码未运行。</p>
     <p>2026-10-04 S4 击飞推进：物理系统记录本 tick 真正进入速度积分的普通实体，阻挡造成零位移仍算一次推进，弱加载区块里跳过积分者不算。Lua 击飞组在施加之后且目标确实经历一个物理 tick 时移除；目标消失则清理待办。当前只添加源码与断言，区块切换和读档后的实际效果尚未运行验收。</p>
-    <p>2026-10-04 S4/S5 新裁定：非 battler 目标缺韧性时冲锋按韧性零计算伤害；缺韧性或质量时不击飞。弹体成功命中后，<code>Projectile.commit_selected_impacts(rows, damage_for, on_hit)</code> 调用武器 Lua 的 <code>on_hit(projectile_uuid, impact, result)</code>，由武器决定销毁或保留。回调失败单独报告，不撤销已提交命中；未决身份、取消和提交失败不触发回调。新增断言源码尚未编译或运行，可玩武器与 tick 调用方仍缺。</p>
-    <p>2026-10-04 S5 tick 接线：服务端 <code>core:tick</code> 监听器调用 <code>Projectile.update</code>，按发射时保存的武器 ID 在 <code>systems.combat_projectile_weapons</code> 中取得 Lua 策略。同一种弹体原型可供不同武器使用；策略分别提供接触半径、遮挡 tag、伤害和命中后的 <code>on_hit</code>。当前策略表没有可玩武器条目，装备与弹体内容仍待接入；源码和断言未编译或运行。</p>
+    <p>2026-10-04 S4/S5 新裁定：非 battler 目标缺韧性时冲锋按韧性零计算伤害；缺韧性或质量时不击飞。弹体成功命中后，<code>Projectile.commit_selected_impacts(rows, on_hit)</code> 调用武器 Lua 的 <code>on_hit(projectile_uuid, impact, context)</code>，由武器决定销毁或保留。回调失败单独报告，不撤销已提交命中；未决身份、取消和提交失败不触发回调。新增断言源码尚未编译或运行，可玩武器与 tick 调用方仍缺。</p>
+    <p>2026-10-04 S5 tick 接线：服务端 <code>core:tick</code> 监听器调用 <code>Projectile.update</code>，按发射时保存的武器 ID 在 <code>systems.combat_projectile_weapons</code> 中取得 Lua 策略。同一种弹体原型可供不同武器使用；策略分别提供接触半径、遮挡 tag 和命中后的 <code>on_hit</code>。当前策略表没有可玩武器条目，装备与弹体内容仍待接入；源码和断言未编译或运行。</p>
     <p>2026-10-04 S5 tick 隔离：<code>Projectile.update</code> 逐弹体处理本 tick 运动段。一个弹体缺少武器策略、回调失败或接触查询失败，只报告自己的错误；同 tick 其他弹体继续命中。全局运动快照失败仍按整批错误报告；旧 <code>motion_impacts</code> 继续提供完整批次查询。新增坏弹体在前、好弹体继续命中的断言源码，尚未编译或运行。</p>
     <p>2026-10-04 S4 手动命令反馈：移动、原地防御和停止命令成功后立即通过现有战斗频道发布按内容去重的小队快照，使已清理的冲锋标记及时消失；命令拒绝不发布。频道异常单独记录，不撤销已执行的命令。新增断言源码，尚未编译或运行 UI。</p>
     <p>2026-10-04 S4 冲锋攻击计时：冷却领取仍不记录攻击。活动冲锋首次接触明确敌人时，Lua 在伤害与击飞前记录一次攻击事件；零伤害或伤害取消也会刷新 300 tick 脱战计时，只有实际造成或受到伤害才进入战斗状态。新增正伤害与零伤害断言源码，尚未编译或运行。</p>
     <p>2026-10-04 S5 单弹体读取：Lua <code>engine.combat.projectile_flight(uuid)</code> 按 UUID 直接返回弹体的发射来源、队长、发射 tick 与命中位；不存在或缺位置返回 nil。命中提交用它代替每次枚举全部弹体，发射者退场后仍能读取发射时来源。新增断言源码，尚未编译或运行。</p>
-    <p>2026-10-04 S5 发射资格：<code>Projectile.launch</code> 先核对武器 ID 在 <code>systems.combat_projectile_weapons</code> 中有半径、遮挡 tag、伤害和命中后回调；缺任一回调返回 <code>projectile_weapon_policy_missing</code>，不查原型、不发事件、不生成实体。策略表目前为空，正式武器内容接入前不会留下无法处理的弹体。新增断言源码尚未编译或运行。</p>
+    <p>2026-10-04 S5 发射资格：<code>Projectile.launch</code> 先核对武器 ID 在 <code>systems.combat_projectile_weapons</code> 中有半径、遮挡 tag 和命中后回调；缺任一回调返回 <code>projectile_weapon_policy_missing</code>，不查原型、不发事件、不生成实体。策略表目前为空，正式武器内容接入前不会留下无法处理的弹体。新增断言源码尚未编译或运行。</p>
     <p>2026-10-04 S4/S5 边界复核：统一属性接口读取 <code>velocity.x/z</code> 时会重新取得 ECS 速度基值，基值变化后重算击飞修正。当前弹体伤害事件若取消，Lua 不占命中位、不调用 <code>on_hit</code>，弹体继续飞行；“伤害取消是否仍算弹体命中”尚待玩法裁定。此次仅源码核对，未编译或运行。</p>
     <p>2026-10-04 S5 单弹体来源投影：<code>engine.combat.projectile_flight(uuid)</code> 现在提供与列表快照相同的来源派系哈希、实例 UUID、强盗来源标记、位置和速度字段。武器 Lua 可在射手退场后按弹体 UUID 读取发射时身份，不需枚举全体弹体；断言源码未编译或运行。</p>
     <p>2026-10-04 S5 tick 错误日志：持续失败现在按弹体 UUID 与原因共同去重。相同原因不每 tick 刷屏，原因变化或恢复后再次失败会重新记录；不改变弹体命中。源码未编译或运行。</p>

@@ -32,7 +32,7 @@
     "alert_level": 1,
     "max_duration_ticks": 12000
 }</code></pre>
-	<p><code>origin</code> 为必填字段，只接受 <code>settlement</code> 或 <code>generated_bandits</code>。前者的来源 UUID 在触发时明确指定，保存于 Raid 状态及各波袭击者的归属字段；后者没有殖民地来源。控制台用 <code>raid &lt;raid_id&gt; [source_instance_uuid]</code>。</p>
+	<p><code>origin</code> 为必填字段，只接受 <code>settlement</code> 或 <code>generated_bandits</code>。前者的来源 UUID 在触发时明确指定，保存于 Raid 状态及各波袭击者的归属字段；后者没有殖民地来源。控制台用 <code>raid start &lt;raid_id&gt;</code>，来源 UUID 由命令按声明派系的实例自动选择。</p>
 
     <h2>字段说明</h2>
     <table>
@@ -92,10 +92,10 @@
         <tr><td><code>require("systems.raid_data")</code></td><td>Lua 侧薄封装：<code>definitions()</code>、<code>definition(id)</code>、<code>active()</code>、<code>trigger(id, source_instance_uuid)</code>、<code>raw_json(id)</code>、<code>configuration_error()</code>。</td></tr>
       </tbody>
     </table>
-    <p>袭击生命周期会发布 <code>raid:started</code>、<code>raid:wave</code> 和 <code>raid:ended</code> 事件，载荷包含 <code>instance_id</code>、<code>def_id</code>、<code>faction_id</code>、<code>source_instance_uuid</code>、<code>reason</code>、<code>alert_level</code>、<code>wave_index</code>、<code>waves</code>、<code>spawned</code>、<code>alive</code> 和 <code>tick</code>。结束原因目前有 <code>attackers_cleared</code> 和 <code>duration_elapsed</code>。</p>
+    <p>袭击生命周期在引擎脚本环境（<code>ScriptEngine</code>）发布 <code>raid:started</code>、<code>raid:wave</code> 和 <code>raid:ended</code> 事件，载荷包含 <code>instance_id</code>、<code>def_id</code>、<code>faction_id</code>、<code>source_instance_uuid</code>、<code>reason</code>、<code>alert_level</code>、<code>wave_index</code>、<code>waves</code>、<code>spawned</code>、<code>alive</code> 和 <code>tick</code>。结束原因目前有 <code>attackers_cleared</code> 和 <code>duration_elapsed</code>。这些事件没有在 <code>data/events</code> 中声明，MOD 监听器无法订阅；需要袭击状态时请轮询 <code>engine.raids.active()</code>。</p>
 
     <h2>存档与联机</h2>
-    <p>进行中的袭击随世界存档保存（<code>raids_schema_version</code> + <code>raids</code> 实例数组），来袭者本身仍是普通实体记录，成员按稳定实体 ID 恢复。Server 的通用世界状态同步包含同一份数据，客户端不自行触发或推进袭击。</p>
+    <p>进行中的袭击随世界存档保存（<code>next_raid_instance_id</code> + <code>raids</code> 实例数组），来袭者本身仍是普通实体记录，成员按稳定实体 ID 恢复。Server 的通用世界状态同步包含同一份数据，客户端不自行触发或推进袭击。</p>
 
     <h2>主动攻击与反击</h2>
     <p>2026-10-11：活动袭击成员每半秒在自身 <code>battler.alert_range</code> 内重新选敌。优先选择明确敌对、存活且未倒地的已征召队长或兵模；同优先级选择最近对象，距离相同时按实体 UUID 稳定选择。没有征召目标时选择其他有效敌对生命实体；没有可见敌人时继续前往原袭击建筑／聚落目标。追击通过普通 <code>Move</code> Task 更新目标坐标，在近战接触范围内停止推进。</p>
@@ -126,8 +126,8 @@ raid start core:mvp_test_raid -- 启动一场测试袭击
 raid pause [RaidUUID]         -- 暂停全部或指定袭击
 raid resume [RaidUUID]        -- 恢复全部或指定袭击
 raid stop [RaidUUID]          -- 停止全部或指定袭击
-list_data raids               -- 通过数据注册表查询
-data raids core:mvp_test_raid -- 查看原始 JSON</code></pre>
+data type:raids               -- 通过数据注册表查询
+data raids core:mvp_test_raid -- 查看注册记录（含来源文件路径）</code></pre>
 
     <p>战斗接口边界见 <a href="engine-combat.html">战斗规则</a>。</p>
 

@@ -299,34 +299,23 @@
       <strong>沙箱边界</strong>：MOD Lua 不暴露进程和通用文件系统能力。<code>os</code>、<code>io</code>、<code>debug</code>、<code>dofile</code>、<code>loadfile</code>、<code>load</code>、<code>loadstring</code> 不可用；<code>package.loadlib</code>、<code>package.path</code> 和 <code>package.cpath</code> 也不可用。加载同 MOD 下的预编译 Lua 模块请使用 <code>require</code>。少数内容文件入口（例如语言包加载和蓝图导入）限制在 MOD 或 generated 内容目录内。
     </div>
 
-    <h2>入口脚本结构</h2>
-    <p><code>mod.json</code> 里的 <code>entry</code> 指向入口脚本。脚本运行后返回一个表，引擎读取表里的生命周期函数。不需要实现全部四个——只写你需要的即可。</p>
-    <pre><code>local M = {}
-
-function M.on_load()
+    <h2>监听器与模块结构</h2>
+    <p>MOD 没有入口脚本，<code>mod.json</code> 也不提供 <code>entry</code> 字段。引擎扫描 MOD 的 <code>scripts/</code>：<code>scripts/listeners/</code> 下的文件按文件头注释注册成事件监听器，其余文件是可以被 <code>require</code> 的模块。</p>
+    <pre><code>-- scripts/listeners/mod_ready/hello.lua
+-- @Event core:mod_ready
+-- @Priority 0
+-- @ServerSideEvent
+return function(event)
   engine.log.info("[copper_age] data loaded")
-end
+end</code></pre>
 
-function M.on_world_init()
-  engine.log.info("[copper_age] world is ready")
-end
-
-function M.on_tick(tick, dt)
-end
-
-function M.on_shutdown()
-  engine.log.info("[copper_age] shutdown")
-end
-
-return M</code></pre>
-
-    <p>四个生命周期函数的用途：</p>
+    <p>监听器文件头的注释决定注册方式：</p>
     <ul>
-      <li><strong>on_load</strong> —— 适合订阅事件、注册要闻条件、读取配置和恢复非世界领域状态。此时数据与完整领域 API 已绑定，但世界还没生成。</li>
-      <li><strong>on_world_init</strong> —— 适合生成世界相关内容、初始实体、注册 terrain biome/ore/feature。此时地形 API 已可用。</li>
-      <li><strong>on_tick(tick, dt)</strong> —— 每帧执行。这个地方的逻辑要尽量轻，不要在每帧做大规模扫描。</li>
-      <li><strong>on_shutdown</strong> —— 清理工作，比如写日志。</li>
+      <li><strong>@Event</strong> —— 必填且只能写一个，必须是 <code>data/events</code> 中已声明的带命名空间事件 ID；未声明的事件会让该 MOD 的脚本装载失败。</li>
+      <li><strong>@Priority</strong> —— 可选，有符号 32 位整数，越大越早执行，默认 0。</li>
+      <li><strong>@BothSideEvent</strong>、<strong>@ServerSideEvent</strong> 或 <strong>@ClientSideEvent</strong> —— 必须声明其中一个执行端。</li>
     </ul>
+    <p>回调收到事件上下文，业务字段在 <code>current</code> 中。常用生命周期事件：<code>core:mod_ready</code>（MOD 脚本与数据装载完成）、<code>core:world_created</code>、<code>core:world_load_started</code>、<code>core:world_load_completed</code>（读档恢复完成）、<code>core:world_unloaded</code>、<code>core:mod_reload_committed</code>、<code>core:mod_closing</code>，以及每次模拟 tick 的 <code>core:tick</code>（字段 <code>tick</code>、<code>dt</code>）。</p>
 
     <h2>日志和配置</h2>
     <p>读取 MOD 配置时记得给第三个参数 fallback，避免旧配置缺字段时报错。</p>
@@ -365,22 +354,8 @@ engine.log.info("health: " .. tostring(current_hp) .. "/" .. tostring(max_hp))</
     <h2>物品与方块附件</h2>
     <p>物品与方块定义仍可声明 <code>attachments</code> 数组；每项写明 <code>id</code>、<code>type</code> 和 <code>default</code>。这套附件声明不用于实体能力。</p>
     <p>物品附加数据是所有者槽或地面堆的 <code>components</code> 内容。腐坏和地面消失事件按地面堆实体 UUID 或库存所有者及槽位报告变化，不提供独立的物品实例附加数据句柄。</p>
-    <p>物品句柄失效后，每个操作都会像键不存在一样失败，写操作返回 <code>false</code>。</p>
-    <pre><code>engine.events.subscribe("item:ground_despawned", function(event)
-    local item = event.item
-    if not item or not item:valid() then return end
-    if item:has("yourmod:freshness") then
-        item:set("yourmod:freshness", 0.0)
-    end
-end)</code></pre>
     <p>物品附加数据随存档往返、随网络同步，并参与同类物品的堆叠合并判定（附加数据不同的两堆不会合并）。物品定义可以写 <code>attachments</code> 数组声明键与默认值。</p>
-    <p>方块也有附件表。凡是负载里带数值 <code>x</code>／<code>y</code>／<code>z</code> 的事件都会给出 <code>event.block</code>，包括方块事件与相应的工作事件。</p>
-    <pre><code>engine.events.subscribe("block:interacted", function(event)
-    local block = event.block
-    if not block or not block:valid() then return end
-    block:attach("yourmod:tended_at", event.tick or 0)
-end)</code></pre>
-    <p>区块未加载时方块句柄操作返回失败；读取不会为了附件创建区块。方块附件目前只存在内存里，卸载区块即丢失。</p>
+    <p>方块附件声明写在方块定义里，但 Lua 侧没有公开的方块附件读取或写入入口；MOD 监听器收到的事件上下文只有 <code>type</code>、<code>initial</code>、<code>current</code>、<code>cancel</code> 和 <code>is_cancelled</code>，不附带方块或物品附件句柄。需要附加数据时请使用物品所有者槽或地面堆的 <code>components</code>。</p>
 
     <h2>合成和职业</h2>
     <p>Server Lua 用 <code>engine.jobs.register_transition_checker(fn)</code> 注册转职资格规则。应在世界加载完成或 Mod 重载提交后的服务端事件回调中注册；候选 Mod 加载期间不能在模块顶层调用此接口。回调参数依次为实体 UUID、目标职业 ID 和候选物品 ID；只检查职业前置时第三项为空字符串，校验具体装备及提交预约时传物品 ID。允许时返回 <code>true</code>，拒绝时返回 <code>false, reason</code>，其中 <code>reason</code> 是非空原因码。可通过 <code>engine.jobs.definition(id)</code>、<code>engine.jobs.transition_state(uuid)</code> 和 <code>engine.items.definition(item_id)</code> 查询职业、进度与装备声明。资格查询和转职提交前使用同一回调；未注册或回调返回无效结果时拒绝转职。<code>engine.jobs.commit_transition</code> 返回 <code>success, reason</code>；提交时资格回调拒绝的原因原样作为第二个返回值，供 <code>core:career_blocked</code> 事件显示。</p>
@@ -398,13 +373,13 @@ end)</code></pre>
   end
 end</code></pre>
     <p>CoreMod 菜单通过 <code>systems.production.queue</code> 建立可重复或维持库存的订单，再由 <code>systems.crafting.queue</code> 预留所有者槽材料并在 <code>core:task_completed</code> 后结算。完成回调使用 <code>engine.tasks.settle_craft_outputs(reservation_ids, products, state_commit)</code> 在候选世界中一起扣取材料、生成全部地面实体产物并清理 pending 记录；任一来源、产物或状态提交无效会拒绝整次结算。Lua 不提供直接制作入口。</p>
-	<p><code>engine.designs.attribute_ids()</code> 返回只读且有序的引擎属性名表（26 项，索引 1..26），顺序与 <code>Engine/Simulation/AttributeStats.hpp</code> 一致。物品基型的 <code>base_values</code> 键、<code>attributes[].id</code> 以及品质表的 <code>modifiers[].attribute</code> 都取这份名单，表外名字在配置期被拒绝。编辑器与工具应以该入口生成属性下拉，不要再各自硬编码副本。</p>
+	<p><code>engine.designs.attribute_ids()</code> 返回只读且有序的引擎属性名表（23 项，索引 1..23），顺序与 <code>Engine/Simulation/AttributeStats.hpp</code> 一致。物品基型的 <code>base_values</code> 键、<code>attributes[].id</code> 以及品质表的 <code>modifiers[].attribute</code> 都取这份名单，表外名字在配置期被拒绝。编辑器与工具应以该入口生成属性下拉，不要再各自硬编码副本。</p>
 	<p><code>engine.designs</code> 提供锻造基型和不可变设计方案接口。<code>list_item_bases()</code>/<code>get_item_base(id, civilization_index?)</code> 返回基型、科技解锁状态、属性/词条等级、容量、材料与配置错误；<code>preview(base, attributes, affixes)</code> 只计算方案；<code>save(...)</code> 仅允许已解锁基型并始终创建新 design ID，即使方案因容量或选择错误而无效。<code>list()</code>/<code>get(id)</code> 返回已保存方案。方案没有名称或批量数量字段。</p>
 
     <h2>工作池</h2>
     <p>发布工作时必须指定工作所属阵营。<code>faction_id</code> 使用数据 ID 哈希，玩家/殖民地工作通常使用 <code>core:player</code>。AI 只会领取与自己阵营一致的工作。</p>
     <p>TaskPool 内部使用 TaskTag、TaskCategory、TaskTargetKind、TaskAction 和 TaskPayloadKind。Lua 可发布已注册的任务类型；目前没有公开的任务类型注册 API，也不保留旧工作接口兼容入口。</p>
-    <p><code>engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity)</code> 的类型包含 <code>move</code>、<code>build</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>、<code>use_medicine</code>、<code>transfer_patient</code>、<code>job_change</code>、<code>treat</code>、<code>feed_patient</code>、<code>first_aid</code>、<code>battlefield_treat</code>、<code>guard</code> 和 <code>patrol</code>，并接受源码中列出的同义类型。<code>move</code> 使用目标坐标，允许零时长；Mod 应指定执行实体，任务由该实体沿 TaskPool 导航路径完成。其他类型仍按各自规则校验时长。未知类型或无效参数返回 nil。<code>target_entity</code> 是可选实体目标；非零 <code>payload_id</code> 作为 Custom payload 保存。一次性 Mine/Chop 只能由指定工具确认后经 Server 命令创建；研究工作只由已付款的研究项目派生。</p>
+    <p><code>engine.tasks.post(type, faction_id, x, y, z, duration, payload_id, target_entity, colony_uuid, queue_weight)</code> 的类型包含 <code>move</code>、<code>build</code>、<code>repair</code>、<code>mine_operation</code>、<code>haul</code>、<code>craft</code>、<code>use_medicine</code>、<code>transfer_patient</code>、<code>job_change</code>、<code>treat</code>、<code>feed_patient</code>、<code>first_aid</code>、<code>battlefield_treat</code>、<code>guard</code> 和 <code>patrol</code>，并接受源码中列出的同义类型。<code>move</code> 使用目标坐标，允许零时长；Mod 应指定执行实体，任务由该实体沿 TaskPool 导航路径完成。其他类型仍按各自规则校验时长。未知类型或无效参数返回 nil。<code>target_entity</code> 是可选实体目标；非零 <code>payload_id</code> 作为 Custom payload 保存。一次性 Mine/Chop 只能由指定工具确认后经 Server 命令创建；研究工作只由已付款的研究项目派生。</p>
     <p>Server Lua 用 <code>engine.tasks.register_speed_callback(fn)</code> 注册 Task 速度计算。回调在 Task 开始执行时接收实体 UUID、Task UUID 和数字 Tag，返回有限正数倍率；同一次执行只调用一次。未注册时倍率为 1。回调报错或返回无效值会中断并延后该 Task，不推进本次进度。CoreMod 在 Lua 中读取统一属性接口计算各类工作速度；缺失的可选倍率属性按中性值 1 处理，存在但不是数字或非有限数的属性会报错。</p>
     <p>Command results include <code>target</code> and an <code>error</code> code on failure. If execution raises an exception, the result also includes <code>detail</code> for the player-facing error message. The <code>core:zone_created</code> event is emitted after a zone is created with <code>zone_uuid</code>, <code>type_id</code>, and <code>instance_id</code>. Core stockpile zones register an <code>outdoor_stockpile</code> policy and Lua hauling chooses a vacant cell in the zone, carries the item there, and leaves it as a non-recoverable ground pile without a despawn timer. At activation, hauling limits the claimed count to the worker's available backpack stack capacity; a larger ground pile is moved in multiple trips. Zone removal removes the policy. The final optional boolean of <code>engine.tasks.return_carried_claim_to_ground</code> requests a permanent ground pile.</p>
     <pre><code>local player_faction = engine.util.data_id_hash("core:player")
@@ -423,31 +398,30 @@ local task_id = engine.tasks.post("haul", player_faction, 16.5, 65.0, 16.5, 3.0,
 	<p><code>engine.colonists.work_policy(entity)</code> 返回有效开关、小时表、模板 ID 和覆盖掩码；<code>engine.colonists.set_work_policy(entity, spec)</code> 是模板系统写入有效状态的低级接口。玩家界面通过 <code>work_policy_state</code> 快照及 <code>core:work_plan.*</code>、<code>core:schedule.*</code>、<code>core:work_policy.*</code> 命令管理模板，不直接修改 AI 内部类别优先级。</p>
 
     <h2>事件</h2>
-    <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>on_tick</code> 里反复扫描所有实体。</p>
-    <pre><code>local handler = engine.events.subscribe("inventory:changed", function(evt)
-  if evt.item_key == "copper_age:copper_ingot" then
-    engine.log.info("copper ingot changed by " .. tostring(evt.delta))
+    <p>订阅事件时保存返回的 handler id，之后可以取消订阅。优先用事件响应具体变化，不要在 <code>core:tick</code> 里反复扫描所有实体。</p>
+    <pre><code>local handler = engine.events.subscribe("core:stockpile_changed", 10, function(evt)
+  if evt.current.item_id == "copper_age:copper_ingot" then
+    engine.log.info("copper ingot changed by " .. tostring(evt.current.delta))
   end
-end, 10)
+end, false)
 
-engine.events.unsubscribe("inventory:changed", handler)</code></pre>
+engine.events.unsubscribe(handler)</code></pre>
 
     <p>常用引擎事件如下；CoreMod 游戏系统还会发出 stockpile、production、treatment 等自定义事件：</p>
     <table>
       <thead><tr><th>事件名</th><th>payload 字段</th></tr></thead>
       <tbody>
-        <tr><td><code>inventory:changed</code></td><td>entity_id, reason, item_id, item_key, delta</td></tr>
-        <tr><td><code>recipe:crafted</code></td><td>entity_id, recipe_id, output_item_id, output_item_key, output_count</td></tr>
+        <tr><td><code>core:stockpile_changed</code></td><td>item_id, count, delta, reason</td></tr>
+        <tr><td><code>core:manufacturing_completed</code></td><td>task_uuid, worker_uuid, recipe_id, target_item_key, output_count, quality, success</td></tr>
         <tr><td><code>core:job_assigned</code></td><td>entity_uuid, job_id, rank, level</td></tr>
-        <tr><td><code>block:interacted</code></td><td>entity_id, x, y, z, action_type, action</td></tr>
-        <tr><td><code>core:task_completed</code></td><td>instance_id, worker, tag, category, target_kind, action, payload_kind, payload_id, faction_id, x, y, z, target_entity, tick</td></tr>
-        <tr><td><code>core:task_cancelled</code> / <code>core:task_interrupted</code></td><td>instance_id, worker, tag, payload_id, faction_id, source_id, tick</td></tr>
-        <tr><td><code>colonist:death</code></td><td>entity_id, name, tick, x, y, z；死亡实体随后会被销毁，并可通过 <code>engine.colonists.memorials()</code> 查询纪念记录。</td></tr>
-        <tr><td><code>focus:chosen</code></td><td>focus_id, instance_id, choice_id, choice_action, tick</td></tr>
-        <tr><td><code>focus:dismissed</code></td><td>focus_id, instance_id, tick</td></tr>
+        <tr><td><code>core:task_completed</code></td><td>task_uuid, tick</td></tr>
+        <tr><td><code>core:task_cancelled</code> / <code>core:task_interrupted</code></td><td>task_uuid, tick, suspended（仅中断）</td></tr>
+        <tr><td><code>core:colonist_died</code></td><td>entity_uuid, name, tick, x, y, z；死亡实体随后会被销毁，并可通过 <code>engine.colonists.memorials()</code> 查询纪念记录。</td></tr>
+        <tr><td><code>core:focus_chosen</code></td><td>focus_uuid, focus_id, choice_id, choice_action, tick</td></tr>
+        <tr><td><code>core:focus_dismissed</code></td><td>focus_uuid, focus_id, tick</td></tr>
       </tbody>
     </table>
-    <p>也可以用 <code>engine.events.emit("core", "name", payload)</code> 发送自定义 Lua 事件；来源必须放在事件名前面。</p>
+    <p>引擎脚本环境还会发出 <code>block:interacted</code>、<code>raid:*</code> 和日历变更等事件，但它们没有在 <code>data/events</code> 声明，MOD 监听器无法订阅。也可以用 <code>engine.events.emit("core:name", payload)</code> 发送自定义 Lua 事件。</p>
 
     <h2>装备系统</h2>
     <p>装备组件只有一个固定槽位：<code>Equipment</code>。Lua API 使用 <code>equipment.item</code> 表示当前装备，不支持旧的主手、副手、护甲、饰品槽，也没有双手占槽规则。</p>
@@ -486,7 +460,7 @@ end</code></pre>
     <p>心情系统经统一属性接口读取解析后的 <code>condition.mood_offset</code> 作为状态心情贡献，同时用基础 <code>mood.mood_value</code> 和此前已应用的偏移计算持续心情底值。加入或移除该属性的修正组时，下一次心情更新会重新计算贡献；印象的衰减仍由心情系统负责。</p>
     <p><code>systems.survival.advance_health</code> 只接收活动状态效果汇总后的伤害速率；严重饥饿伤害来自 <code>status_effects.malnutrition.damage_per_second</code>，不另设独立速率。CoreMod 将该值设为每秒 <code>1</code> 滴，在 20 TPS 下每 20 tick 扣 1 滴；不足 1 滴的进度保存在实体状态中。<code>advance_dying</code> 计算倒地、稳定、死亡和濒死进度；<code>advance_breakdown</code> 计算压力阶段、恍惚和崩溃计时。仅 LogicServer 可调用 <code>engine.difficulty.get()</code> 读取需求速度、环境状态、恢复窗口倍率和死亡开关。生存配置数值必须能表示为 ECS <code>float</code>；超出范围的 JSON 数字会拒绝整份配置。</p>
     <p><code>engine.colonists.set_medicine_slot_capacity</code> 是系统应用个人通用药剂 CD 槽上限的低级入口；<code>reserve_medicine_slot</code>、<code>commit_medicine_slot</code> 和 <code>release_medicine_slot</code> 分别对应药剂使用工作激活、成功和失败/中断。<code>medicine_slots</code> 返回总数、预留数、占用数、药剂物品 ID 和剩余秒数。CoreMod 从唯一 <code>medicine_slot_rules</code> 数据记录读取基础容量和科技增量；<code>systems.medicine.slot_capacity_state(entity)</code> 返回期望/实际容量、预留、占用、逐槽状态、容量来源和配置错误。CoreMod 当前基础容量为 2，状态显示在人员界面的个人信息中；记录缺失时仍保留 <code>medicine_slot_rules_missing</code> 屏障。</p>
-    <p><code>engine.json.decode(text)</code> 在基础 Lua API 绑定阶段注册，因此 MOD 的 <code>on_load</code> 可以把 <code>engine.modding.get_data_json(type, id)</code> 返回的原始 JSON 解码为 Lua 值；空字符串或无效 JSON 返回 <code>nil</code>。<code>engine.runtime_state.set(key, table)</code> 和 <code>get(key)</code> 提供按稳定 key 保存 JSON 兼容 Lua 值的低级状态仓。状态仓可由异步存档线程安全快照；系统应在状态变化后写入，并在 <code>on_world_init</code> 中恢复。玩法领域载荷必须保存当前 <code>schema_version = 1</code> 并拒绝明确的未知版本；项目尚未发布，不维护旧领域结构的兼容读取。函数、userdata 和循环表不能作为持久化值。</p>
+    <p><code>engine.json.decode(text)</code> 在基础 Lua API 绑定阶段注册，因此 MOD 在模块顶层或 <code>core:mod_ready</code> 回调里可以把 <code>engine.modding.get_data_json(type, id)</code> 返回的原始 JSON 解码为 Lua 值；空字符串或无效 JSON 返回 <code>nil</code>。<code>engine.runtime_state.set(key, table)</code> 和 <code>get(key)</code> 提供按稳定 key 保存 JSON 兼容 Lua 值的低级状态仓。状态仓可由异步存档线程安全快照；系统应在状态变化后写入，并在 <code>core:world_load_completed</code> 中恢复。玩法领域载荷必须保存当前 <code>schema_version = 1</code> 并拒绝明确的未知版本；项目尚未发布，不维护旧领域结构的兼容读取。函数、userdata 和循环表不能作为持久化值。</p>
     <p><code>engine.colonists.memorials()</code> 返回死亡殖民者的实体 ID、姓名、职业、等级、死亡 tick 和位置；纪念记录会写入 <code>world.json</code>。建筑治疗点 API 详见<a href="mod-buildingregistry.html">建筑蓝图注册</a>。</p>
 	<p><code>engine.buildings.raid_target()</code> 返回当前袭击目标的 <code>valid</code>、稳定错误 ID、建筑实例/定义、角色、价值、位置和当前难度 <code>raid_multiplier</code>。选择顺序固定为已完成城镇大厅优先，否则最高价值玩家建筑；该接口不创建袭击，也不定义额外的袭击公式。</p>
 	<p><code>engine.buildings.repair_status(instance_id)</code> 和 <code>repair_statuses()</code> 返回耐久、配置上限、授权、材料、职业、工作量、单元恢复量和稳定问题 ID。<code>damage</code> 是战斗/事故提交建筑伤害的低级接口；<code>set_repair_authorized</code> 是 Server 授权入口，<code>apply_repair_unit(task_uuid)</code> 只在匹配 UUID 的 Repair 工作完成派发期间结算，目标建筑从原生任务 payload 取得，不由脚本重复指定。CoreMod <code>systems.repair</code> 负责 Repair 工作、激活预留、原子提交、取消释放和经营日志；玩家操作走 <code>building.repair_authorize</code> Server 命令及 <code>building/repairs</code> 数据通道。</p>
@@ -530,18 +504,17 @@ end</code></pre>
 local hash = engine.util.data_id_hash("example:item")</code></pre>
 
     <h2>定时器</h2>
-    <p>定时器按模拟 tick 执行，不是按真实时间。</p>
-    <pre><code>engine.timers.after(20, function(tick)
-  engine.log.info("runs once at tick " .. tostring(tick))
+    <p>定时器按模拟 tick 执行，不是按真实时间。<code>engine.timers.temporary(delay, period, calls, fn)</code> 注册临时回调，不写入存档；<code>period = 0</code> 表示只执行一次，<code>calls = 0</code> 表示无限重复，回调不接收参数。</p>
+    <pre><code>-- 20 tick 后执行一次
+engine.timers.temporary(20, 0, 1, function()
+  engine.log.info("runs once")
 end)
 
-local timer_id
-timer_id = engine.timers.every(100, function(tick)
-  engine.log.info("heartbeat " .. tostring(tick))
-  if tick > 1000 then
-    engine.timers.cancel(timer_id)
-  end
+-- 每 100 tick 执行一次；不需要时用 engine.timers.cancel(heartbeat) 取消
+local heartbeat = engine.timers.temporary(100, 100, 0, function()
+  engine.log.info("heartbeat at " .. tostring(engine.timers.current_tick()))
 end)</code></pre>
+    <p>需要跨存档保留的定时任务用 <code>engine.timers.create(name, delay, period, calls, data?)</code>。<code>name</code> 必须对应本 MOD 的 <code>scripts/timers/&lt;name&gt;.lua</code> 模块，该模块返回带 <code>serialize</code> 和 <code>deserialize</code> 函数的表；缺少模块时创建会报告未知定时器类型。已有的定时任务可用 <code>freeze</code>、<code>resume</code>、<code>status</code> 和 <code>query</code> 管理，且只有创建它的 MOD 能操作。</p>
 
     <h2>天气</h2>
     <p>天气由版本化动态天气区域状态提供。MOD 可以读取当前天气和指定区块的局部天气、最终温度、战斗环境及表现接口，用于作物、事件、音效或 UI 展示；未在文档中定义的区域移动/切换公式不会由 API 猜测。</p>
@@ -576,17 +549,16 @@ engine.focus.register_choice_action("copper_age:accept", function(choice)
   engine.log.info("choice accepted: " .. choice.choice_id)
 end)
 
-engine.focus.subscribe(function(focus)
-  engine.log.info("focus triggered: " .. focus.id)
-end)
-
-engine.events.subscribe("focus:chosen", function(evt)
-  engine.log.info(evt.focus_id .. " -> " .. evt.choice_id)
-end)</code></pre>
+engine.events.subscribe("core:focus_chosen", 0, function(evt)
+  engine.log.info(evt.current.focus_id .. " -> " .. evt.current.choice_id)
+end, false)</code></pre>
 
     <h2>地形扩展</h2>
     <p>地形 API 提供世界初始化后的只读查询。群系和地物只能通过 <code>data/biomes</code> 与 <code>data/features</code> 注册；世界生成由 C++ <code>TerrainGenerator</code> 加载 JSON 数据，不存在 Lua worldgen 注册旁路。旧普通矿脉注册入口已移除，矿物由 <code>mine_rules</code> 的区块矿井契约提供。</p>
-    <pre><code>function M.on_world_init()
+    <pre><code>-- scripts/listeners/world_load_completed/log_height.lua
+-- @Event core:world_load_completed
+-- @ServerSideEvent
+return function(event)
   local h = engine.terrain.height_at(0, 0)
   engine.log.info("height at origin: " .. tostring(h))
 end</code></pre>

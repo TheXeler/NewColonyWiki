@@ -109,7 +109,7 @@ project; peers must use the same current engine protocol implementation.
 
 ## Compilation and resource sharing
 
-Source GLBs compile to NCEM version 8. Materials retain decoded RGBA pixels,
+Source GLBs compile to NCEM version 9. Materials retain decoded RGBA pixels,
 sampler/alpha/PBR state, and external-image hashes alongside rigid geometry,
 optional deformation data, nodes, channels, baked poses, and bounds. A changed external image invalidates the
 source cache at startup. Runtime drawing does not decode PNGs or parse GLBs.
@@ -236,11 +236,11 @@ and publish immutable snapshots, without calling Renderer from those threads.
 
 Each `generate/entity_assemblies/<hash>.ncem` has a `<hash>.deps` record. This local
 binary record contains NCAD1 magic (metadata version 1), assembly compiler revision
-7, the assembly hash, and up to 17 model-name/content-hash dependencies (body plus
+8, the assembly hash, and up to 17 model-name/content-hash dependencies (body plus
 16 parts), followed by a checksum. Integer fields are little-endian 64-bit; names
 use a 64-bit byte length followed by their UTF-8 bytes. Dependency hashes cover
 the complete input NCEM files, including decoded images and baked animation.
-NCEM is version 8; this sidecar does not change the shipped GLB format.
+NCEM is version 9; this sidecar does not change the shipped GLB format.
 
 After every successful entity-model/declared-assembly preprocess, cleanup compares
 records against NCEM paths derived from the enabled source GLBs. Leftover generated
@@ -332,13 +332,13 @@ coefficients override authored/animated values; without it an array selects all
 its entries. Save files write `look_node_id` as the stable node-name hash.
 Prototype and Lua inputs reject malformed values before publication.
 
-Lua uses `ecs.set_visual_pose(entity_uuid, json_string)` and
-`ecs.clear_visual_pose(entity_uuid)` under the existing authority guard.
+Lua uses `engine.ecs.set_visual_pose(entity_uuid, json_string)` and
+`engine.ecs.clear_visual_pose(entity_uuid)` under the existing authority guard.
 Setting a pose replaces the control state; it does not change outfit geometry.
 For example:
 
 ```lua
-ecs.set_visual_pose(entity_uuid,
+engine.ecs.set_visual_pose(entity_uuid,
   '{"secondary_animation":"idle","secondary_time":0.2,"blend":0.5,' ..
   '"look_node":"head","look_yaw":0.3,"morph_weights":[0.8]}')
 ```

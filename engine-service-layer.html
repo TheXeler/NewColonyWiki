@@ -21,7 +21,7 @@
       <li><strong>方块修改 / 地形查询已接线</strong>：<code>Engine</code> 持有 <code>BlockEditService</code>、<code>TerrainQueryService</code> 实例，<code>modify_block_at</code>、<code>terrain_block_at</code>、<code>terrain_standable_y_at</code>、<code>gpu_probe_occlusion</code> / <code>gpu_probe_sky_light</code> 均改为委托，行为与原实现逐行等价。</li>
       <li><strong>UI 命令分发已接线，菜单命令首批迁移</strong>：<code>Engine</code> 持有 <code>UiCommandDispatcher</code> 成员，<code>dispatch_rml_ui_command</code> 在既有加载屏障及 <code>lua_ui:</code> fast-path 之后、剩余 <code>core:*</code> if-链之前调用 <code>dispatcher.dispatch(cmd)</code>。菜单导航、Wiki 和内容浏览器的 12 个 handler 由 <code>UI/MenuCommands.cpp</code> 注册。时间控制继续经 Lua 数据桥转为 Server <code>UiCommand</code>，通过 <code>save_state:time_control</code> 回传。未命中命令继续走既有分支与脚本回退。旧静态底栏面板已移除，<code>core:panel.toggle</code> 不再作为游戏内菜单入口。</li>
       <li>依赖通过引用注入，服务自身不持有任何子系统生命周期，也不 include <code>Engine.hpp</code>，避免循环依赖。</li>
-      <li>接线后 <code>Engine.cpp</code> 中只服务于被替代方法的 file-scope helper（<code>chunk_coord_key</code>、<code>floor_mod</code>、<code>entity_block_id_is_clear_for_feet</code>）已删除；仍有其他调用点的 <code>floor_div</code>、<code>mark_light_radius_dirty</code>、<code>entity_block_id_is_solid</code> 保留原处。</li>
+      <li>接线后 <code>Engine.cpp</code> 中只服务于被替代方法的 file-scope helper（<code>chunk_coord_key</code>、<code>floor_mod</code>、<code>entity_block_id_is_clear_for_feet</code>）已删除；仍有其他调用点的 <code>floor_div</code>、<code>mark_light_radius_dirty</code>、<code>entity_block_id_is_solid</code> 保留在其他编译单元。</li>
     </ul>
 
     <h2>BlockEditService</h2>
@@ -30,7 +30,7 @@
       <li><code>edit(x, y, z, block_id)</code> 等价于 <code>Engine::modify_block_at</code>。</li>
       <li>副作用顺序与现状一致：写 chunk store、<code>GpuLightRegistry::on_block_changed</code> 失效、把自身 chunk 与光照半径内 chunk 标记 dirty、边界方块额外标记邻接 chunk dirty、<code>BlockUpdateSystem::notify_block_change</code>（BUD）、流体方块调度 <code>FluidSystem::schedule_flow_check</code>。</li>
       <li>依赖：<code>ChunkManager</code>、<code>simulation::GpuLightRegistry</code>、<code>voxel::BlockUpdateSystem</code>、<code>voxel::FluidSystem</code>、<code>TickManager</code>。</li>
-      <li><code>floor_div</code> 与 <code>mark_light_radius_dirty</code> 作为本编译单元内的同名 helper 复刻，逻辑与 <code>Engine.cpp</code> 内 file-scope 版本逐行一致。</li>
+      <li><code>floor_div</code> 作为本编译单元内的同名 helper 复刻，逻辑与 <code>Engine.cpp</code> 内 file-scope 版本逐行一致；<code>mark_light_radius_dirty</code> 由 <code>ChunkManager</code> 提供，服务直接调用。</li>
     </ul>
 
     <h2>TerrainQueryService</h2>

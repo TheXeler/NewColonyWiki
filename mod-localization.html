@@ -47,7 +47,7 @@
     </ul>
 
     <div class="callout warn">
-      MOD 入口脚本执行时，该 MOD 自己的 <code>lang/</code> 还没有完成合并。需要依赖 MOD 翻译内容的 UI 查询，建议放到 <code>on_world_init</code>、UI 打开时或更晚的运行时逻辑中。
+      已启用 MOD 的 <code>lang/</code> 在该 MOD 的 Lua 模块注册之前完成合并，因此脚本执行期间即可查询本 MOD 的翻译文本。
     </div>
 
     <h2>查询规则</h2>

@@ -18,7 +18,7 @@
       <li>确认目录是 <code>mods/&lt;mod_id&gt;/</code>。</li>
       <li>确认根目录有 <code>mod.json</code> 且是合法的 JSON（可以用在线 JSON 校验工具检查）。</li>
       <li>确认 <code>id</code> 字段不为空、不和其他 MOD 重复。</li>
-      <li>确认 <code>entry</code> 指向的 Lua 文件存在；没有写 <code>entry</code> 时默认要求 <code>scripts/bootstrap.lua</code> 存在，所以纯数据 MOD 也需要放一个最小入口脚本。</li>
+      <li>纯数据 MOD 不需要 Lua 文件；如果有 <code>scripts/listeners/</code>，确认每个监听器文件头的 <code>@Event</code> 和执行端注释完整。</li>
       <li>查看 <code>logs/latest.log</code> 是否有报错。</li>
     </ul>
 
@@ -60,14 +60,14 @@ data copper_age:copper_ore</code></pre>
     <ul>
       <li>确认文件在 <code>data/focuses</code> 目录下。</li>
       <li>确认 <code>conditions</code> 数组不为空。</li>
-      <li>用了 <code>lua</code> 条件的话，确认已经在 <code>on_load</code> 里通过 <code>engine.focus.register_condition</code> 注册。</li>
+      <li>用了 <code>lua</code> 条件的话，确认已经通过 <code>engine.focus.register_condition</code> 注册。</li>
       <li><code>engine.focus.subscribe</code> 只负责把触发通知交给 Lua 脚本；是否显示给玩家还取决于当前 UI/要闻系统是否消费该要闻。</li>
     </ul>
 
     <h2>Lua 脚本没有执行</h2>
     <ul>
-      <li>入口脚本末尾是否有 <code>return M</code>。</li>
-      <li>生命周期函数名是否拼写正确：<code>on_load</code>、<code>on_world_init</code>、<code>on_tick</code>、<code>on_shutdown</code>。</li>
+      <li>监听器文件是否返回回调函数，例如 <code>return function(e) ... end</code>。</li>
+      <li>监听器注释是否声明了 <code>@Event</code>，以及唯一的 <code>@ServerSideEvent</code>／<code>@ClientSideEvent</code>／<code>@BothSideEvent</code>。</li>
       <li>查看 <code>logs/latest.log</code> 里是否有 Lua 报错。</li>
       <li>如果用了 <code>dofile</code> 或 <code>loadfile</code>，换成 <code>require</code>。沙箱只允许加载引擎预注册的同 MOD Lua 模块。</li>
     </ul>

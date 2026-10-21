@@ -63,7 +63,7 @@
 
     <p>树叶 <code>core:leaves</code> 保留 <code>translucent</code> 分类，并声明 <code>passable: true</code> 与 <code>movement_speed_multiplier: 0.5</code>。角色可以穿过树冠，身体任一部分（包括头部）进入树叶时水平移动速度降至 50%，离开后恢复；树叶不提供站立支撑，也不会让角色进入液体状态。树苗与作物不声明此倍率时不减速。</p>
 
-    <p>成熟作物可声明 <code>crop_id</code>，例如 <code>core:wheat_stage7</code> 引用 <code>core:wheat</code>。该字段由 <code>get_block_info</code> 投影，割除收获时保留区域格并生成可回收地面产物，供后续补种。作物内容仍通过统一 <code>output_table</code> 结算。</p>
+    <p>成熟作物可声明 <code>crop_id</code>，例如 <code>core:wheat_stage4</code> 引用 <code>core:wheat</code>。该字段由 <code>get_block_info</code> 投影，割除收获时保留区域格并生成可回收地面产物，供后续补种。作物内容仍通过统一 <code>output_table</code> 结算。</p>
 
     <p><code>core:smoker</code> 是可放置的不透明烟熏炉方块，归入 <code>functional</code> 调色板，允许四个水平方向并要求下方支撑。采掘引用 <code>core:smoker_output</code>，固定回收 1 个烟熏炉物品。用于面包加工时，应从建筑菜单建造同 ID 的建筑；它显式登记 <code>core:smoker</code> 工作点，普通方块放置本身不登记工作点。制作材料与面包配方见<a href="mod-reciperegistry.html">配方数据</a>。</p>
 
@@ -95,7 +95,7 @@
     <p>在控制台（按物理 Grave/反引号键）中确认方块注册成功：</p>
     <pre><code>mods                             —— 确认 MOD 已加载
 list_data blocks prefix=copper_age:  —— 列出该前缀下所有方块
-data copper_age:copper_ore        —— 查看单个方块的完整 JSON</code></pre>
+data blocks copper_age:copper_ore        —— 查看单个方块的完整 JSON</code></pre>
 
     <h2>引擎内部处理</h2>
     <p>方块类型在 ModRegistry 中有特殊处理：</p>

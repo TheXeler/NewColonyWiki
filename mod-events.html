@@ -18,47 +18,36 @@
     </div>
 
     <h2>监听事件</h2>
-    <pre><code>local handler_id = engine.events.subscribe("core:stockpile_changed", function(evt)
-  if evt.item_id == "core:wood" then
-    engine.log.info("wood delta=" .. tostring(evt.delta))
+    <pre><code>local handler_id = engine.events.subscribe("core:stockpile_changed", 10, function(evt)
+  if evt.current.item_id == "core:wood" then
+    engine.log.info("wood delta=" .. tostring(evt.current.delta))
   end
-end, 10) -- priority 越大越早执行；默认是 0
+end, false) -- 第二个参数是优先级，越大越早执行；默认是 0
 
--- 在 MOD 卸载或不再需要时取消（来源也可放在最前）
-engine.events.unsubscribe("core:stockpile_changed", handler_id)
-engine.events.unsubscribe("core", "core:stockpile_changed", handler_id)</code></pre>
-    <p><code>subscribe(name, fn, priority?)</code> 省略来源时匹配所有来源；也可以把来源放在最前：<code>subscribe("ui", "panel:opened", fn)</code>。来源为 <code>e</code>（引擎）、<code>core</code>（CoreMod）或 <code>ui</code>。相同 priority 的回调保持注册顺序。</p>
+-- 在 MOD 卸载或不再需要时取消
+engine.events.unsubscribe(handler_id)</code></pre>
+    <p><code>subscribe(event_id, priority, fn, world_bound)</code> 的回调收到事件上下文：<code>type</code>、<code>initial</code>、<code>current</code>、<code>cancel()</code> 与 <code>is_cancelled()</code>，payload 字段在 <code>current</code> 里。事件 ID 必须在 <code>data/events</code> 中声明，未声明的事件注册会直接报 <code>Unknown listener event</code>。相同 priority 的回调保持注册顺序。</p>
 
     <h2>按来源和前缀监听</h2>
-    <pre><code>-- 只监听 CoreMod 的 stockpile_changed
-engine.events.subscribe("core", "core:stockpile_changed", on_inventory, 0)
-
--- 监听 UI 来源下的所有 ui:panel:* 事件
-local id = engine.events.subscribe_prefix("ui", "panel", function(evt)
-  engine.log.info("panel event")
-end)</code></pre>
-    <p><code>subscribe_prefix(prefix, fn, priority?)</code> 或 <code>subscribe_prefix(source, prefix, fn, priority?)</code> 支持嵌套前缀。上例会匹配 <code>ui:panel:opened</code> 和 <code>ui:panel:closed</code>，不会匹配 <code>ui:panelist</code>。发布时来源放在最前：<code>engine.events.emit("ui", "panel:opened", payload)</code>。</p>
+    <p>当前 Lua 事件 API 不提供来源参数或前缀订阅：<code>engine.events</code> 只有 <code>subscribe</code>、<code>unsubscribe</code> 和 <code>emit</code>，事件 ID 必须写完整并已在 <code>data/events</code> 中声明。需要在一组事件上复用逻辑时，分别订阅每个事件 ID。</p>
 
     <h2>发布自定义事件</h2>
     <pre><code>-- mod_a
-engine.events.emit("core", "copper_age:ore_found", {
+engine.events.emit("copper_age:ore_found", {
   x = 12, y = 48, z = -3,
   block_id = "copper_age:copper_ore"
 })
 
 -- mod_b
-engine.events.subscribe("copper_age:ore_found", function(evt)
-  engine.log.info(string.format("ore at %d,%d,%d", evt.x, evt.y, evt.z))
-end)</code></pre>
-    <p><code>emit(source, name, payload)</code> 只在当前 Lua runtime 内分发，不会自动进入 C++ 事件总线、网络同步或存档。payload 必须是 Lua table；非 table payload 会被忽略并记录警告。</p>
+engine.events.subscribe("copper_age:ore_found", 0, function(evt)
+  engine.log.info(string.format("ore at %d,%d,%d", evt.current.x, evt.current.y, evt.current.z))
+end, false)</code></pre>
+    <p><code>emit(event_id, payload)</code> 先按 <code>data/events</code> 的字段 schema 校验 payload，再在当前 Lua runtime 内分发，不会自动进入 C++ 事件总线、网络同步或存档。未声明的事件和非 table payload 会被拒绝，schema 未列出的字段不会出现在 <code>current</code> 中。引擎权威的任务生命周期事件不允许由 Lua 发布。</p>
 
     <h2>清理订阅</h2>
-    <pre><code>-- 删除指定订阅
-local removed = engine.events.unsubscribe("copper_age:ore_found", handler_id)
-
--- 删除某个事件的全部订阅（会影响同一 runtime 的其他 MOD）
-engine.events.clear("copper_age:ore_found")</code></pre>
-    <p><code>clear(name)</code> 是全局操作，除非确定事件由本 MOD 独占，否则优先使用 <code>unsubscribe</code>。</p>
+    <pre><code>-- 删除本 MOD 注册的指定订阅
+local removed = engine.events.unsubscribe(handler_id)</code></pre>
+    <p><code>unsubscribe(id)</code> 只删除本 MOD 自己的订阅；公开 API 没有按事件名批量清除其他 MOD 订阅的入口。</p>
 
     <h2>常用内置事件</h2>
     <table>
@@ -72,25 +61,23 @@ engine.events.clear("copper_age:ore_found")</code></pre>
         <tr><td><code>core:task_completed</code></td><td>任务实例完成</td><td>task_uuid, tick</td></tr>
         <tr><td><code>core:task_cancelled</code></td><td>任务被取消</td><td>task_uuid, tick</td></tr>
         <tr><td><code>core:task_interrupted</code></td><td>实体解除当前任务并释放未消耗预约。suspended=true 时保留任务进度，等待显式恢复和清理确认后才可调度。</td><td>task_uuid, tick, suspended（可选 boolean）；Task 快照也提供 suspended</td></tr>
-        <tr><td><code>world:restored</code></td><td>实体、建筑、工作和运行时状态全部恢复完成</td><td>slot_id, tick</td></tr>
-        <tr><td><code>treatment:blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>task_id, patient, reason</td></tr>
-        <tr><td><code>recruitment:registered</code></td><td>新人完成城镇大厅登记</td><td>entity_id, candidate_id, town_hall_instance_id</td></tr>
-        <tr><td><code>recipe:crafted</code></td><td>配方产物完成</td><td>entity_id, recipe_id, output_item_key, output_count</td></tr>
-        <tr><td><code>block:interacted</code></td><td>实体与方块交互</td><td>entity_id, x, y, z, action</td></tr>
-        <tr><td><code>block:placed</code> / <code>block:removed</code></td><td>世界方块变化</td><td>x, y, z, block_id</td></tr>
-        <tr><td><code>building:completed</code></td><td>建筑完成（CoreMod）</td><td>instance_id, def_id, x, y, z</td></tr>
-        <tr><td><code>research:started</code> / <code>research:completed</code></td><td>科技状态变化</td><td>tech_id, civilization_index</td></tr>
-        <tr><td><code>colonist:death</code></td><td>死亡殖民者写入纪念记录并销毁实体前通知</td><td>entity_id, name, tick, x, y, z</td></tr>
-        <tr><td><code>focus:chosen</code> / <code>focus:dismissed</code></td><td>要闻被选择或关闭</td><td>focus_id, instance_id, choice_id, tick</td></tr>
-        <tr><td><code>faction:spawned</code></td><td>阵营实例生成</td><td>instance_id, def_id, display_name, reason</td></tr>
-        <tr><td><code>raid:started</code> / <code>raid:wave</code> / <code>raid:ended</code></td><td>袭击开始、后续波次投送、袭击结束</td><td>instance_id, def_id, faction_id, reason, alert_level, wave_index, waves, spawned, alive, tick</td></tr>
-        <tr><td><code>day_changed</code> / <code>season_changed</code> / <code>year_changed</code></td><td>模拟日历变化</td><td>day/season/year, previous_*</td></tr>
+        <tr><td><code>core:world_load_completed</code></td><td>读档恢复完成</td><td>world_id, from_save</td></tr>
+        <tr><td><code>core:treatment_blocked</code></td><td>正式治疗激活时缺少资源或药品 CD 槽</td><td>task_uuid, patient_uuid, reason</td></tr>
+        <tr><td><code>core:recruitment_registered</code></td><td>新人完成城镇大厅登记</td><td>entity_uuid, candidate_uuid, town_hall_uuid</td></tr>
+        <tr><td><code>core:recipe_crafted</code></td><td>配方产物完成</td><td>recipe_id, target_item_key, output_count, quality, success</td></tr>
+        <tr><td><code>core:block_placed</code> / <code>core:block_removed</code></td><td>世界方块变化</td><td>x, y, z, block_id, data</td></tr>
+        <tr><td><code>core:building_completed</code></td><td>建筑完成（CoreMod）</td><td>building_uuid, def_id, x, y, z</td></tr>
+        <tr><td><code>core:research_started</code> / <code>core:research_completed</code></td><td>科技状态变化</td><td>tech_id, civilization_uuid</td></tr>
+        <tr><td><code>core:colonist_died</code></td><td>死亡殖民者写入纪念记录并销毁实体前通知</td><td>entity_uuid, name, tick, x, y, z</td></tr>
+        <tr><td><code>core:focus_chosen</code> / <code>core:focus_dismissed</code></td><td>要闻被选择或关闭</td><td>focus_uuid, focus_id, choice_id, choice_action, tick</td></tr>
+        <tr><td><code>core:faction_spawned</code></td><td>阵营实例生成</td><td>faction_uuid, def_id, display_name, relation, spawned_tick, reason</td></tr>
       </tbody>
     </table>
+    <p>引擎脚本环境（<code>ScriptEngine</code>）还会发出 <code>block:interacted</code>、<code>raid:started</code>/<code>raid:wave</code>/<code>raid:ended</code> 和 <code>day_changed</code>/<code>season_changed</code>/<code>year_changed</code>；它们没有在 <code>data/events</code> 中声明，MOD 监听器无法订阅。需要这些状态时请使用 <code>core:tick</code> 负载、<code>engine.time</code> 或 <code>engine.raids.active()</code> 查询。</p>
     <p>完整签名可在 <a href="mod-lua-api-reference.html">Lua API 速查</a> 的“事件”分组查看。内置事件的 payload 以当前引擎和 CoreMod 实现为准，MOD 不应假定未列出的字段长期稳定。</p>
 
-    <h2>与 on_tick 的选择</h2>
-    <p>对“某件事发生后才需要运行”的逻辑使用事件；只有需要按固定模拟 tick 轮询的逻辑才使用 <code>on_tick</code>。事件回调中避免修改正在遍历的同一业务集合，复杂操作可记录状态后交给下一 tick 处理。</p>
+    <h2>与 tick 事件的选择</h2>
+    <p>对“某件事发生后才需要运行”的逻辑使用事件；只有需要按固定模拟 tick 轮询的逻辑才使用 <code>core:tick</code> 事件或 <code>engine.timers</code>。事件回调中避免修改正在遍历的同一业务集合，复杂操作可记录状态后交给下一 tick 处理。</p>
   </div>
 </div>
 <script src="wiki.js"></script>

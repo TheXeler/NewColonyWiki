@@ -15,7 +15,7 @@
 
     <h2>完整目录树</h2>
     <pre><code>mods/my_mod/
-  mod.json                 —— MOD 清单：ID、版本、依赖、入口脚本
+  mod.json                 —— MOD 清单：ID、版本、依赖
   README.md                —— 说明文档（可选）
   scripts/
     systems/               —— Lua 系统脚本（可选）
@@ -118,11 +118,11 @@
     <table>
       <thead><tr><th>路径</th><th>必填</th><th>用途</th></tr></thead>
       <tbody>
-        <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖、入口脚本等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
+        <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
         <tr><td><code>data/blocks/</code></td><td>否</td><td>体素方块定义。声明物品身份的 block 记录同时生成同 ID 的当前物品定义；显式 item 记录可按稳定 ID 覆盖该定义。</td></tr>
         <tr><td><code>data/items/</code></td><td>否</td><td>独立物品定义。声明名称、图标、说明、主类别、用途标签、堆叠、价格、重量，以及可选腐坏、配方来源和装备元数据。</td></tr>
 		<tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，通过顶层引擎字段和 capabilities 定义实体类型。JSON 可声明位置、速度、生命、需求、心情、属性、名称、AI、职业、装备与视觉数据；背包物品由统一 ItemSystem 实例表达。声明 ai_state 时运行时附加 NavAgent、MovementTarget、MovementIntent、BlockInteractor 和 WorkPriorityConfig；Job 只在原型声明时附加。</td></tr>
-        <tr><td><code>data/recipes/</code></td><td>否</td><td>制造配方。声明输入材料、目标物品、产出表、兼容工作点，以及可选的职业与等级要求。制作成功触发 <code>recipe:crafted</code> 事件。CoreMod 的工作台配方在手工制作点消耗 4 木板且没有职业门槛。</td></tr>
+        <tr><td><code>data/recipes/</code></td><td>否</td><td>制造配方。声明输入材料、目标物品、产出表、兼容工作点，以及可选的职业与等级要求。制作成功触发 <code>core:recipe_crafted</code> 事件。CoreMod 的工作台配方在手工制作点消耗 4 木板且没有职业门槛。</td></tr>
         <tr><td><code>data/manufacturing_rules/</code></td><td>否</td><td>全局制造规则，声明成败/品质线性公式、品质随机范围、六级阈值和产出树最大深度。内容数值可以留空；需要这些规则的配方会进入可见配置屏障。</td></tr>
         <tr><td><code>data/quality_tables/</code></td><td>否</td><td>品质修正表注册数据；品质配方未指定表时引用 <code>core:default</code>。</td></tr>
         <tr><td><code>data/output_tables/</code></td><td>否</td><td>有限树形产出表。组声明选择方式与执行次数，物品项声明数量、权重和是否受制造模式影响。</td></tr>

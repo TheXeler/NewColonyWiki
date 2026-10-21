@@ -93,11 +93,11 @@ void main() {
         <tr><td>方块渲染</td><td><code>block.vert</code> + <code>block.frag</code></td><td>体素方块的标准渲染管线。</td></tr>
         <tr><td>天空盒</td><td><code>skybox.vert</code> + <code>skybox.frag</code></td><td>全屏无限远天空渲染；包含大气散射、昼夜星空、天气遮蔽，以及沿昼夜轨迹移动的太阳和月亮贴图。不使用深度测试和深度写入。</td></tr>
         <tr><td>GPU 调试几何</td><td><code>debug.vert</code> + <code>debug.frag</code></td><td>绘制带深度测试的调试线框和半透明调试面。</td></tr>
-        <tr><td>SSAO</td><td><code>ssao.vert</code> + <code>ssao.frag</code></td><td>屏幕空间环境光遮蔽。</td></tr>
-        <tr><td>SSAO 模糊</td><td><code>ssao_blur.vert</code> + <code>ssao_blur.frag</code></td><td>AO 结果模糊。</td></tr>
-        <tr><td>体积光遮罩</td><td><code>volumetric_light_mask.vert</code> + <code>volumetric_light_mask.frag</code></td><td>生成体积光遮罩。</td></tr>
-        <tr><td>体积光模糊</td><td><code>volumetric_light_blur.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
-        <tr><td>合成</td><td><code>composite.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
+        <tr><td>SSAO</td><td><code>fullscreen.vert</code> + <code>ssao.frag</code></td><td>屏幕空间环境光遮蔽。</td></tr>
+        <tr><td>SSAO 模糊</td><td><code>fullscreen.vert</code> + <code>ssao_blur.frag</code></td><td>AO 结果模糊。</td></tr>
+        <tr><td>体积光遮罩</td><td><code>fullscreen.vert</code> + <code>volumetric_light_mask.frag</code></td><td>生成体积光遮罩。</td></tr>
+        <tr><td>体积光模糊</td><td><code>fullscreen.vert</code> + <code>volumetric_light_blur.frag</code></td><td>体积光模糊。</td></tr>
+        <tr><td>合成</td><td><code>fullscreen.vert</code> + <code>composite.frag</code></td><td>合成场景、AO 和体积光。</td></tr>
         <tr><td>区块剔除 Compute</td><td><code>chunk_cull.comp</code></td><td>区块 GPU 剔除管线入口，会按 chunk AABB 与当前 frustum 写回 indirect command 的 instance count，并统计 GPU 可见 chunk/draw 数；关闭或不可用时渲染器会把当前帧 indirect instance count 重置为全可见。</td></tr>
         <tr><td>模拟光照 Compute</td><td><code>sim_light.comp</code></td><td>天空光参考 kernel，只服务开发者探针（控制台 <code>gpu_probe_light</code>），保留列初始化与天空传播两个 mode。权威方块光传播是 CPU 稀疏 BFS，已无 GPU 光源表与 GPU BFS 路径；该 shader 不再声明 LightSSBO / frontier binding。</td></tr>
         <tr><td>模拟遮挡 Compute</td><td><code>sim_occlusion.comp</code></td><td>模拟侧区块高度/遮挡辅助入口；失败或关闭时回退到 CPU 高度扫描。</td></tr>

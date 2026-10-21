@@ -15,7 +15,7 @@
     <p class="subtitle">从 <a href="mod-lua-api-reference.html">Lua API 速查</a> 中拆出的全部事件：事件订阅接口与引擎/CoreMod/UI 事件。用搜索框过滤事件名、字段或说明。</p>
 
     <div class="callout warn">
-      <code>engine.events.clear</code> 是全局清理入口，会影响同一 Lua runtime 中其他 MOD 的订阅。事件的背景说明见 <a href="mod-events.html">Lua 事件系统</a>。
+      <code>engine.events</code> 只有 <code>subscribe</code>、<code>unsubscribe</code> 和 <code>emit</code>，没有按来源或前缀批量清理的入口；事件 ID 必须在 <code>data/events</code> 中声明，回调字段在 <code>current</code> 里。事件的背景说明见 <a href="mod-events.html">Lua 事件系统</a>。
     </div>
 
     <div class="search-box">

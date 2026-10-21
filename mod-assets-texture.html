@@ -44,7 +44,7 @@
 
     <h2>多元素方块模型纹理</h2>
     <p>物品图标不再作为世界立方体的六面材质。<code>models/item/</code> 可指定 generated/handheld 物品模型；PNG 的透明像素决定外轮廓，完整图片 UV 跨图集 tile 映射。浆果丛的世界贴图和浆果物品图标分别引用，方块形状与物品形态互不覆盖。</p>
-    <p>使用 Blockbench/Minecraft 风格模型的方块可以有更大的纹理图，通过模型 JSON 中的 <code>texture_size</code> 字段指定尺寸（如 64×64）。纹理仍会按 16×16 tile 切分，模型中的 UV 像素坐标会映射到对应 tile。模型声明的尺寸必须与实际 PNG 尺寸一致，否则 UV 可能索引到缺失纹理。详见 <a href="mod-assets-model.html">模型格式</a>。</p>
+    <p>使用 Blockbench/Minecraft 风格模型的方块可以有更大的纹理图，tile 行列数由 PNG 实际像素宽高各除以 16 得出（例如 64×64 得到 4×4 个 tile）。纹理仍会按 16×16 tile 切分，模型中的 UV 像素坐标会映射到对应 tile。详见 <a href="mod-assets-model.html">模型格式</a>。</p>
     <pre><code>assets/textures/block/
   grass.png                  -- 16×16 顶面纹理
   grass_side.png             -- 16×16 侧面纹理

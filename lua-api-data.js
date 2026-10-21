@@ -14,7 +14,7 @@ window.__LUA_API_DATA = {
     "risk_candidates": [
       "殖民者需求、治疗结果、待登记移除和患者搬运只通过带工作或候选上下文校验的领域接口提交。",
       "engine.world.place_block/remove_block/set_block_data 只允许 Server/单机写入；玩法请求统一走 Server 处理的 UiCommand，不提供旧的直接网络写入口。",
-      "engine.events.clear 与 engine.timers.clear 是全局清理入口，会影响同一 Lua runtime 中其他 MOD 的订阅和定时器。",
+      "engine.events 只提供 subscribe/unsubscribe/emit，没有按来源或前缀批量清理的入口；定时任务只对本 MOD 创建的任务生效。",
       "engine.locale.reload/load_locale 是开发向能力，不适合作为普通内容 MOD 的核心运行时依赖。"
     ]
   },
@@ -45,13 +45,13 @@ window.__LUA_API_DATA = {
         { "api": "engine.time.get_season()", "params": "-", "returns": "integer", "note": "当前季节索引。" },
         { "api": "engine.time.get_season_name()", "params": "-", "returns": "string", "note": "当前季节名。" },
         { "api": "engine.time.get_year()", "params": "-", "returns": "integer", "note": "当前年份。" },
-        { "api": "engine.time.now()", "params": "-", "returns": "number", "note": "自脚本引擎创建以来的单调秒数。沙箱没有 os 库，Lua 系统用它给自身计时（例如统计各系统在 on_tick 中的耗时）。" }
+        { "api": "engine.time.now()", "params": "-", "returns": "number", "note": "自脚本引擎创建以来的单调秒数。沙箱没有 os 库，Lua 系统用它给自身计时（例如统计各系统在 core:tick 回调中的耗时）。" }
       ]
     },
     {
       "name": "设置与天气",
       "items": [
-        { "api": "engine.settings.set_auto_save(mode)", "params": "string", "returns": "bool", "note": "设置自动保存频率：never、daily、monthly 或 yearly。" },
+        { "api": "engine.settings.set_auto_save(mode)", "params": "string", "returns": "bool", "note": "设置自动保存频率：never、12h、1d、3d、7d 或 15d。" },
         { "api": "engine.settings.get_auto_save()", "params": "-", "returns": "string", "note": "返回当前自动保存频率文本。" },
         { "api": "engine.settings.get_auto_save_frequency()", "params": "-", "returns": "integer", "note": "返回自动保存频率枚举值。" },
         { "api": "engine.weather.get()", "params": "-", "returns": "table", "note": "返回当前天气：type、intensity、temperature、humidity、wind_x、wind_z、started_tick、next_transition_tick、precipitating。" },
@@ -107,29 +107,14 @@ window.__LUA_API_DATA = {
         { "api": "engine.ecs.get_all_entities()", "params": "-", "returns": "table", "note": "query_all_entities() 的同义接口。" },
         { "api": "engine.ecs.get_entity_type(entity)", "params": "entity id", "returns": "string 或 nil", "note": "按组件粗略返回 colonist、item、worker 或 entity；实体不存在时返回 nil。" },
         { "api": "engine.ecs.query_colonists()", "params": "-", "returns": "table", "note": "返回有 Position 和 ColonistTag 的实体条目。" },
-        { "api": "engine.ecs.query_with_position()", "params": "-", "returns": "table", "note": "返回有 Position 组件的实体条目。" },
-        { "api": "engine.ecs.query_with_health()", "params": "-", "returns": "table", "note": "返回有 Health 组件的实体条目。" },
         { "api": "engine.ecs.has_equipment(entity)", "params": "entity id", "returns": "bool", "note": "实体是否有 Equipment 组件。" }
-      ]
-    },
-    {
-      "name": "脚本数据组件",
-      "items": [
-        { "api": "engine.data.ensure(entity)", "params": "entity id", "returns": "bool", "note": "给存活实体创建脚本数据组件；已存在时保持原数据。" },
-        { "api": "engine.data.has(entity)", "params": "entity id", "returns": "bool", "note": "实体是否有脚本数据组件。" },
-        { "api": "engine.data.set(entity, path, value)", "params": "entity, string, any", "returns": "bool", "note": "按点分路径写入值，自动创建中间 compound。" },
-        { "api": "engine.data.get(entity, path, fallback)", "params": "entity, string, any?", "returns": "any", "note": "按点分路径读取值；不存在时返回 fallback 或 nil。" },
-        { "api": "engine.data.remove(entity, path)", "params": "entity, string", "returns": "bool", "note": "删除路径上的值。" },
-        { "api": "engine.data.type(entity, path)", "params": "entity, string", "returns": "string", "note": "返回 Lua 类型名；表返回 compound，函数/userdata 也会按实际类型名返回。" },
-        { "api": "engine.data.get_all(entity)", "params": "entity id", "returns": "table 或 nil", "note": "返回整个数据 compound。" },
-        { "api": "engine.data.clear(entity)", "params": "entity id", "returns": "bool", "note": "清空实体脚本数据组件。" }
       ]
     },
     {
       "name": "Modding 查询",
       "items": [
         { "api": "engine.modding.get_data_json(type, id)", "params": "data type, data id", "returns": "string", "note": "返回注册表中的原始 JSON，未找到时返回空字符串。" },
-        { "api": "engine.json.decode(text)", "params": "JSON string", "returns": "Lua value or nil", "note": "基础 API；在 MOD on_load 前可用。解析无效或空 JSON 时返回 nil。" },
+        { "api": "engine.json.decode(text)", "params": "JSON string", "returns": "Lua value or nil", "note": "基础 API；在 MOD 脚本装载阶段即可用。解析无效或空 JSON 时返回 nil。" },
         { "api": "engine.modding.resolve_block_id(hash)", "params": "hashed id", "returns": "string", "note": "把方块哈希解析为数据 ID；未找到时返回空字符串。" },
         { "api": "engine.modding.list_by_type(type)", "params": "blocks/raids 等", "returns": "table", "note": "列出指定数据类型的全部 ID。" },
         { "api": "engine.modding.get_block_info(hash)", "params": "integer", "returns": "table", "note": "返回 id/hash/exists、material、category、food_value、has_item_block、mineable/cuttable/selectable、tree_feature、hardness 和统一产出表配置状态。" },
@@ -159,8 +144,8 @@ window.__LUA_API_DATA = {
         { "api": "systems.resources.summary()", "params": "-", "returns": "table", "note": "CoreMod 资源汇总入口；当前返回 stockpile 快照，供主界面、科技、制造和建造聚合读取。" },
         { "api": "systems.resources.stockpile_snapshot()", "params": "-", "returns": "table", "note": "返回 stockpile 账本数组：{ item_hash, item_id, count }。" },
         { "api": "systems.resources.preview(requirements)", "params": "table", "returns": "table", "note": "按需求数组返回 { item_hash, item_id, required, available, missing }。" },
-        { "api": "systems.crafting.queue(entity, recipe, faction, x, y, z, duration, force_storage)", "params": "entity, data id, hashed id, position, number?, bool?", "returns": "table", "note": "CoreMod 制作执行器。通过 engine.tasks reservation ledger 预留 stockpile 输入并发布 Craft 任务；完成时提交预留，取消时释放。" },
-        { "api": "systems.production.queue(worker, recipe, faction, count, priority, designated_worker, duration, maintain)", "params": "entity, data id, hashed id, integer, integer, entity?, number?, bool?", "returns": "table", "note": "创建生产订单；支持目标次数或维持库存、优先级和指定工人。另有 pause/resume/cancel/snapshot。" },
+        { "api": "systems.crafting.queue(entity, recipe, faction, x, y, z, duration, work_point_id)", "params": "entity, data id, hashed id, position, number?, integer?", "returns": "table", "note": "CoreMod 制作执行器。通过 engine.tasks reservation ledger 预留 stockpile 输入并发布 Craft 任务；完成时提交预留，取消时释放。" },
+        { "api": "systems.production.queue(worker, recipe, faction, count, priority, designated_worker, maintain, filter, colony_uuid)", "params": "entity, data id, hashed id, integer, integer, entity?, bool?, table?, string?", "returns": "table", "note": "创建生产订单；支持目标次数或维持库存、优先级和指定工人。另有 pause/resume/cancel/snapshot。" },
         { "api": "systems.food.create_plan/copy_plan/rename_plan/assign_plan/set_min_nutrition/set_category", "params": "plan/entity/category", "returns": "bool", "note": "CoreMod 饮食计划 API；snapshot_plans 返回计划。进食从 stockpile 选择 category=food 且达到最低 food_value 的物品。" },
         { "api": "systems.treatment.create_template/copy_template/rename_template/set_template_*", "params": "template/injury/resource", "returns": "bool", "note": "CoreMod 治疗模板 API；食物、药品和医疗包按 injury 分别保存。queue 发布 Treat 工作并占用治疗点，snapshot/snapshot_templates 返回运行态。" },
         { "api": "engine.buildings.list_definitions()", "params": "-", "returns": "table", "note": "列出已加载的建筑定义 ID。" },
@@ -212,7 +197,7 @@ window.__LUA_API_DATA = {
 		{ "api": "engine.tasks.set_locked(id, locked)", "params": "task UUID, bool", "returns": "bool", "note": "复用 blocked_until_tick 的永久阻塞哨兵锁定或立即解锁任务；锁定任务继续存在但不可领取。" },
         { "api": "engine.tasks.set_metadata(id, source_id, priority, designated_worker?)", "params": "task UUID, integer, 0-9, entity?", "returns": "bool", "note": "写来源、优先级和指定实体；0 是特殊优先级，1-9 是普通优先级。" },
         { "api": "engine.tasks.set_qualification(id, job_id, job_level)", "params": "task UUID, definition ID string, integer", "returns": "bool", "note": "职业使用定义字符串，不传内部数字哈希；未知定义或无效等级返回 false，不改已有要求。" },
-        { "api": "engine.tasks.set_available/available/reserved/reserve/commit_reservation/release_reservation", "params": "item hash、数量、reservation id", "returns": "mixed", "note": "共享资源 reservation ledger；CoreMod stockpile、crafting 和生产订单使用。" },
+        { "api": "engine.tasks.available/reserved/reserve/commit_reservation/release_reservation", "params": "item hash、数量、reservation id", "returns": "mixed", "note": "共享资源 reservation ledger；CoreMod stockpile、crafting 和生产订单使用。" },
         { "api": "engine.tasks.cancel_matching(task_tag, faction_id?, payload_id?)", "params": "string, hashed id?, integer?", "returns": "integer", "note": "按任务标签、阵营和可选 payload_id 批量取消任务，返回取消数量。" },
         { "api": "engine.tasks.is_valid(id)", "params": "task UUID", "returns": "bool", "note": "检查任务是否仍有效。" },
         { "api": "engine.tasks.total()", "params": "-", "returns": "integer", "note": "返回任务池中活跃任务数量。" },
@@ -238,13 +223,8 @@ window.__LUA_API_DATA = {
         { "api": "engine.selection.start(options)", "params": "table", "returns": "bool", "note": "开始一次性通用选取；shape 可为 2d 或 3d。2D 从鼠标命中表面的外侧格开始（顶面通常为 Y+1），3D 从命中的实际方块开始。调用方可通过 filter.blocks、filter.items（ID 别名）或 filter.tags 提供允许的方块 ID/TAG 列表。" },
         { "api": "engine.selection.cancel()", "params": "-", "returns": "-", "note": "取消当前选区。" },
         { "api": "engine.selection.restart()", "params": "-", "returns": "-", "note": "仅限 Client。保留当前工具配置、过滤、优先级与指定执行者，清空上一轮框选的起点和范围；工具未激活时不做任何操作。" },
-        { "api": "engine.selection.confirm_zone()", "params": "-", "returns": "bool", "note": "将当前选区创建为持久区域。" },
         { "api": "engine.selection.cells()", "params": "-", "returns": "table", "note": "返回当前选取的完整几何范围；预览范围不等于有效目标，实际目标由 start(options) 提供的 ID/TAG 过滤得到。每行包含 x、y、z、block_hash、block_id 和 solid。" },
         { "api": "engine.selection.state()", "params": "-", "returns": "table", "note": "返回当前选区形状、起点、当前点、范围和深度偏移；debug_enabled 表示运行时 --DEBUG 开关。CoreMod 确认面板只在此开关开启时显示，正常模式框选松开直接以优先级 5、不指定执行者提交。" },
-        { "api": "engine.selection.confirm_mine()", "params": "-", "returns": "table", "note": "消费当前 3D 选取中匹配 filter 的方块并发布 mine 工作；选取随后结束，返回 { ok, count }。" },
-        { "api": "engine.selection.confirm_chop()", "params": "-", "returns": "table", "note": "消费当前 2D 选取中匹配 filter 的方块并发布 chop 工作；选取随后结束，返回 { ok, count }。" },
-        { "api": "engine.zone.set_drag_active(active)", "params": "bool", "returns": "-", "note": "传 false 时取消当前区域拖拽指定。" },
-        { "api": "engine.zone.is_drag_active()", "params": "-", "returns": "bool", "note": "当前是否处于区域拖拽指定状态。" },
         { "api": "engine.zone.set_setting(instance_id, key, value)", "params": "integer, string, string|bool|number|nil", "returns": "bool", "note": "写入区域实例的 settings 键值对（值会被转成字符串）；传 nil 删除该键。失败返回 false。" },
         { "api": "engine.zone.get_setting(instance_id, key, fallback)", "params": "integer, string, any", "returns": "string|any", "note": "读取区域实例的 settings 键；不存在时返回 fallback 或 nil。返回值始终是字符串。" }
       ]
@@ -252,10 +232,11 @@ window.__LUA_API_DATA = {
     {
       "name": "定时器",
       "items": [
-        { "api": "engine.timers.after(ticks, fn)", "params": "integer, function", "returns": "timer id", "note": "一次性定时器，回调参数为 tick、dt、timer_id。" },
-        { "api": "engine.timers.every(ticks, fn)", "params": "integer, function", "returns": "timer id", "note": "重复定时器，ticks 为 0 时按 1 处理。" },
-        { "api": "engine.timers.cancel(id)", "params": "timer id", "returns": "bool", "note": "取消定时器。" },
-        { "api": "engine.timers.clear()", "params": "-", "returns": "-", "note": "[experimental] 清空全部 Lua 定时器；会影响同一 runtime 的其他 MOD。" }
+        { "api": "engine.timers.create(name, delay, period, calls, data?)", "params": "string, integer, integer, integer, table?", "returns": "timer id", "note": "持久定时任务，随存档往返；period=0 表示只执行一次，calls=0 表示无限重复。" },
+        { "api": "engine.timers.temporary(delay, period, calls, fn)", "params": "integer, integer, integer, function", "returns": "timer id", "note": "临时回调，不写入存档。" },
+        { "api": "engine.timers.cancel(id)", "params": "timer id", "returns": "bool", "note": "取消本 MOD 创建的定时任务。" },
+        { "api": "engine.timers.freeze(id) / resume(id)", "params": "timer id", "returns": "bool", "note": "冻结或恢复本 MOD 创建的定时任务。" },
+        { "api": "engine.timers.status(id) / query(id) / current_tick()", "params": "timer id", "returns": "mixed", "note": "读取 running/frozen/ended 状态、剩余 Tick 与次数，或当前定时器时钟。" }
       ]
     },
     {
@@ -263,12 +244,10 @@ window.__LUA_API_DATA = {
       "items": [
         { "api": "engine.focus.register_condition(name, fn)", "params": "string, function", "returns": "bool", "note": "注册焦点条件，回调返回 bool。" },
         { "api": "engine.focus.register_choice_action(name, fn)", "params": "string, function", "returns": "bool", "note": "注册焦点选项动作。" },
-        { "api": "engine.focus.subscribe(fn)", "params": "function", "returns": "handler id", "note": "监听焦点触发通知。" },
-        { "api": "engine.focus.unsubscribe(id)", "params": "handler id", "returns": "bool", "note": "取消焦点触发监听。" },
         { "api": "engine.focuses.list()", "params": "-", "returns": "table", "note": "列出焦点定义 ID。" },
         { "api": "engine.focuses.active()", "params": "-", "returns": "table", "note": "列出当前活跃的焦点实例和 choices。" },
-        { "api": "engine.focuses.choose(instance, choice)", "params": "instance id, string", "returns": "bool", "note": "执行选项动作并触发 focus:chosen。" },
-        { "api": "engine.focuses.dismiss(instance)", "params": "instance id", "returns": "bool", "note": "关闭焦点并触发 focus:dismissed。" }
+        { "api": "engine.focuses.choose(instance, choice)", "params": "instance id, string", "returns": "bool", "note": "执行选项动作并触发 core:focus_chosen。" },
+        { "api": "engine.focuses.dismiss(instance)", "params": "instance id", "returns": "bool", "note": "关闭焦点并触发 core:focus_dismissed。" }
       ]
     },
     {
@@ -287,18 +266,14 @@ window.__LUA_API_DATA = {
         { "api": "engine.ui.rml.is_registered(handle_or_id)", "params": "handle|string", "returns": "bool", "note": "查询某 RML 面板当前是否已注册。" },
         { "api": "engine.ui.rml.clear(mod_id?)", "params": "string?", "returns": "-", "note": "清空已注册面板；传 mod_id 只清该 MOD，省略则清空全部。" },
         { "api": "engine.ui.rml.reload(mod_id?)", "params": "string?", "returns": "bool", "note": "强制热重载面板文档：递增内部 reload_epoch，runtime 在下一帧 lua_ui_rml_panels 快照中检测到变化即 Close+LoadDocument，即使 .rml 路径未变也会重新读取磁盘内容。传 mod_id 只重载该 MOD，返回是否有面板被标记。" },
-        { "api": "engine.ui.data.resources()", "params": "-", "returns": "table", "note": "资源快照，汇总 stockpile 账本和殖民者手持物品，返回 totals 和 rows。" },
-        { "api": "engine.ui.data.career_detail(entity_id)", "params": "entity_id: integer", "returns": "table", "note": "按需构建某个殖民者的职业树（current_job + options），供人员面板职业页使用。它有意不进入 colonist_list 通道载荷：该载荷每 0.2s 被序列化成 JSON 交给 RML 桥，职业树的逐职业 abilities/equipment 选项曾占其大头（实测随载荷传输时 colonist_list 20.8ms、移除后模拟线程 UiChannels 从 2.5-3.3ms 降到 1.0-1.2ms）。未选中/未知实体返回空树。" },
-        { "api": "engine.ui.data.colonists()", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、文档基础/工作/战斗属性、background、equipment.item、inventory。class_tree 已从该快照移除：职业树改为按需接口 engine.ui.data.career_detail(entity_id) 提供，不再随 colonist_list 载荷序列化。" },
-        { "api": "engine.ui.data.work()", "params": "-", "returns": "table", "note": "工作/订单快照，包含工作池实例，以及可建造定义和可制造配方列表。" },
-        { "api": "engine.ui.data.research()", "params": "-", "returns": "table", "note": "科技快照，包含当前文明研究状态、科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。" },
-        { "api": "engine.ui.data.events()", "params": "-", "returns": "table", "note": "事件/焦点快照，包含 instance_id、severity、详情和可执行 actions。" },
-        { "api": "engine.ui.data.battle_hud()", "params": "-", "returns": "table", "note": "接口未定快照，只包含 visible、interface_defined=false、status=combat_interface_undefined 和空 commands。" },
-        { "api": "engine.ui.data.channels()", "params": "-", "returns": "table", "note": "返回 Web UI 使用的快照通道名列表。" },
+        { "api": "engine.ui.data.snapshot(\"resources\")", "params": "-", "returns": "table", "note": "资源快照，汇总 stockpile 账本和殖民者手持物品，返回 totals 和 rows。" },
+        { "api": "require(\"network.career_client\").query(uuid)", "params": "entity UUID string", "returns": "table", "note": "按需构建某个殖民者的职业树（current_job + options），供人员面板职业页使用。它有意不进入 colonist_list 通道载荷：该载荷每 0.2s 被序列化成 JSON 交给 RML 桥，职业树的逐职业 abilities/equipment 选项曾占其大头（实测随载荷传输时 colonist_list 20.8ms、移除后模拟线程 UiChannels 从 2.5-3.3ms 降到 1.0-1.2ms）。未选中/未知实体返回空树。" },
+        { "api": "engine.ui.data.snapshot(\"colonists\")", "params": "-", "returns": "table", "note": "殖民者快照，供人员界面派生 colonists_list 与 selected_colonist_view；selected_colonist_view 包含 name/entity/status/Job/job_level/job_xp/role/health/health_max、mood_value、mood_thoughts、文档基础/工作/战斗属性、background、equipment.item、inventory。class_tree 已从该快照移除：职业树改为按需接口 require(\"network.career_client\").query(uuid) 提供，不再随 colonist_list 载荷序列化。" },
+        { "api": "engine.ui.data.snapshot(\"tech_tree\")", "params": "-", "returns": "table", "note": "科技快照，包含当前文明研究状态、科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。" },
+        { "api": "engine.ui.data.snapshot(\"event_list\")", "params": "-", "returns": "table", "note": "事件/焦点快照，包含 instance_id、severity、详情和可执行 actions。" },
+        { "api": "engine.ui.data.snapshot(\"battle_hud\")", "params": "-", "returns": "table", "note": "接口未定快照，只包含 visible、interface_defined=false、status=combat_interface_undefined 和空 commands。" },
         { "api": "engine.ui.command.run(target, payload)", "params": "string, table?", "returns": "bool|table", "note": "统一 UI 命令入口；已定义的玩法写入经 Server UiCommand，包括生产、研究、治疗、招募、仓储、区域、地面回收与焦点。外交操作尚未定义，不在命令白名单中。" },
-        { "api": "engine.ui.command.panel_open(panel)", "params": "string", "returns": "bool", "note": "打开经营面板的快捷命令，内部转发 panel.open。" },
-        { "api": "engine.ui.command.panel_close(panel)", "params": "string", "returns": "bool", "note": "关闭经营面板的快捷命令，内部转发 panel.close。" },
-        { "api": "ScriptEngine::get_ui_snapshot(channel)", "params": "string", "returns": "JSON string", "note": "C++ RmlUiServer 包装函数：调用 engine.ui.data.snapshot(channel) 并序列化为页面快照 JSON。" },
+        { "api": "Engine::make_rml_ui_snapshot_json(channel)", "params": "string", "returns": "JSON string", "note": "C++ RmlUiServer 包装函数：调用 engine.ui.data.snapshot(channel) 并序列化为页面快照 JSON。" },
         { "api": "ScriptEngine::run_ui_command(target, json_payload)", "params": "string, JSON string", "returns": "JSON string", "note": "C++ RmlUiServer 包装函数：把页面 JSON payload 转成 Lua table 后调用 engine.ui.command.run(target, payload)。" }
       ]
     },
@@ -334,7 +309,6 @@ window.__LUA_API_DATA = {
       "items": [
         { "api": "engine.network.send_ui(target, payload)", "params": "string, table", "returns": "table", "note": "提交 Server 权威 UiCommand，返回 submitted/pending 状态；普通 MOD 优先使用 engine.ui.command.run。" },
         { "api": "engine.network.is_handling_command()", "params": "-", "returns": "bool", "note": "当前是否正在 Server 的已接收命令处理上下文中；供命令桥避免递归提交。" },
-        { "api": "engine.network.set_command_handler(fn)", "params": "function", "returns": "-", "note": "设置收到网络命令后的 Lua 回调；回调表包含 type、type_name、sequence 和命令字段。" },
         { "api": "engine.network.is_connected()", "params": "-", "returns": "bool", "note": "网络层是否已初始化。" },
         { "api": "engine.network.mode()", "params": "-", "returns": "string", "note": "返回当前网络模式名称。" }
       ]

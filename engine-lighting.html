@@ -41,7 +41,7 @@
       <li><code>adds</code> / <code>removes</code> 是本 tick 消费的 pending 变更数，<code>queued</code> 是本次入队的 frontier 条目数，<code>remaining</code> 是仍未排空的 frontier。</li>
       <li><code>remaining</code> 非零（并附加 <code>budget_hit=1</code>）表示本次撞到每 tick 体素预算，剩余部分由后续 tick 继续；<code>Engine</code> 每 tick 传入 <code>LIGHT_VOXEL_BUDGET_PER_TICK</code>。预算同时覆盖删除清除与 BFS 排空：删除批次会快照到独立容器，并按 y 层逐层切分，因此一次批量删除（例如卸载一个含多个光源的区块）不会独占一个 tick。批量化只改变到达不动点的时机，不改变结果：传播是单调 max 泛洪，收敛后的取值一致。</li>
       <li><code>changed_chunks</code> 表示本次 block light 写回导致的 mesh dirty fanout；后续 mesh rebuild 会通过 <code>[Chunks] dirty dispatch</code> 和 <code>[Chunks] dirty upload</code> 记录。</li>
-      <li>存档会把动态光照保存为 chunk-level <code>lights</code> 数组，block payload 只保存 <code>[id,data]</code> state。</li>
+      <li>存档会把动态光照保存为 chunk-level <code>lights</code> 数组，block payload 只保存 <code>[id,data,direction]</code> state。</li>
     </ul>
 
     <h2>Dirty Mesh 调度</h2>
@@ -72,8 +72,8 @@
     <h2>当前限制</h2>
     <ul>
       <li><code>ChunkDataStore::set_block_light()</code> 当前写入 per-column light overlay，不再修改 sub-chunk 内的 <code>BlockState</code> voxel storage，因此 block light 写回不会打散 uniform/palette sub-chunk。</li>
-      <li><code>Block</code> 本体只保留 <code>id/data</code> 状态；<code>LightData</code> 不再是 block 字段。</li>
-      <li><code>ChunkDataStore::ChunkSnapshot</code> 的 uniform、palette 和 dense payload 使用 <code>BlockState{id,data}</code>；region 存档 payload 也只写 state payload，动态光照保留在独立 <code>lights</code> overlay。</li>
+      <li><code>Block</code> 本体只保留 <code>id/data/direction</code> 状态；<code>LightData</code> 不再是 block 字段。</li>
+      <li><code>ChunkDataStore::ChunkSnapshot</code> 的 uniform、palette 和 dense payload 使用 <code>BlockState{id,data,direction}</code>；region 存档 payload 也只写 state payload，动态光照保留在独立 <code>lights</code> overlay。</li>
       <li>GPU pack 路径现在显式接收 <code>BlockState</code> 和 <code>LightData</code>。mesh 构建对已加载 chunk 和临时 dense chunk 都通过 light accessor 采样 overlay；旧的 dense <code>Block.light</code> 写回和读取兼容路径已删除。</li>
       <li>跨 chunk mesh 边界光照通过显式 <code>neighbor_light(wx,y,wz)</code> accessor 读取已加载 neighbor snapshot 的 block-light overlay，并根据邻区列遮挡补充直接天空光。</li>
     </ul>

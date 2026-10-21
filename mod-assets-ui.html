@@ -38,7 +38,7 @@
     <p>游戏内 RmlUI 的文档资源放在 <code>&lt;core_assets&gt;/ui/rml/</code>（即 <code>CoreMod/assets/ui/rml/</code>）。这是当前<strong>正式玩家可见 UI 资源目录</strong>，与 <code>assets/background/</code> 背景图池相互独立，不进方块纹理图集。</p>
 <pre><code>CoreMod/assets/ui/rml/
 ├── main.rml      # 入口文档（RmlUiServer 默认加载 main.rml）
-└── main.rcss     # main.rml 链接的 RCSS 样式
+└── world_loading.rcss # main.rml 链接的加载遮罩样式
 </code></pre>
     <p><code>main.rml</code> 是 RmlUI 入口文档。<code>manage_hud.rml</code> 与 <code>battle_hud.rml</code> 是由原生面板注册器管理的同级模式 HUD；<code>status_bar.rml</code> 独立承载暂停和倍速按钮，在两种模式中均可见。暂停使用 <code>core:time.pause</code>，其余倍率使用 <code>core:time.speed</code>。依赖状态、CMake option 和 backend 边界见 <a href="ui-rmlui.html">游戏内 RmlUI</a>。</p>
     <div class="callout info">

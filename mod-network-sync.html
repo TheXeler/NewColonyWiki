@@ -97,13 +97,13 @@
 
     <h2>Chunk Terrain Sync</h2>
     <p>服务器维护 terrain dirty chunk 集合。新客户端连接后会收到 DirtyList，并按 chunk 请求权威端的 delta；单个方块变更也会通过 BlockUpdate 实时广播。</p>
-    <p>ChunkDelta 由服务器把当前 <code>ChunkSnapshot</code> 与同 seed 生成的原始地形对比得到。生成 delta 时会按 sub-chunk 遍历，完全一致的 sub-chunk 不发送；连续相同 <code>BlockState{id,data}</code> 的修改会编码成 run，短修改保留为单点 entry。客户端解码后把 run 展开到现有 block entry 应用路径，因此应用层仍按 block_index/id/data 写入本地 <code>ChunkDataStore</code>。</p>
+    <p>ChunkDelta 由服务器把当前 <code>ChunkSnapshot</code> 与同 seed 生成的原始地形对比得到。生成 delta 时会按 sub-chunk 遍历，完全一致的 sub-chunk 不发送；连续相同 <code>BlockState{id,data,direction}</code> 的修改会编码成 run，短修改保留为单点 entry。客户端解码后把 run 展开到现有 block entry 应用路径，因此应用层仍按 block_index/id/data 写入本地 <code>ChunkDataStore</code>。</p>
 
     <h2>握手流程</h2>
     <ol class="step-list">
       <li><strong>Client → Hello</strong>：客户端发送 peer_name、world_seed、shared_secret、last_applied_tick，以及按 Registry 分类排序的分类 hash 和逐条目 hash。</li>
       <li><strong>Server → Welcome</strong>：服务器验证密钥、世界 seed 和 Registry 指纹，返回 world_seed、server_tick、authenticated、Server 指纹及明确拒绝原因。分类或条目缺失、条目内容不同都会在进入正常同步前拒绝，并报告具体分类/条目。</li>
-      <li><strong>Server → ModList + ModDataManifest</strong>：握手完全匹配后，服务器发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
+      <li><strong>Server → ModList + ModDataExchange（Manifest）</strong>：握手完全匹配后，服务器发送 Mod 列表（含校验码）和 Mod 数据清单，作为已匹配连接的诊断与兼容通道。</li>
       <li><strong>Client → RequestRecords</strong>（可选）：客户端对比哈希清单，找出缺失或不匹配的 Mod 数据，向服务器请求这些记录。这里按 Registry 条目比较，不看客户端本地是否安装或启用了对应 Mod：该通道用于让两端持有同一份权威数据，真正的门禁是握手阶段的 Registry 指纹。</li>
       <li><strong>Server → Records</strong>：服务器发送请求的 Mod 数据原始 JSON（只从服务器已加载内容里取，禁用 Mod 的数据不会被服务）。</li>
     </ol>
@@ -128,13 +128,13 @@
 
     <h2>Lua 脚本在网络中的行为</h2>
     <h3>服务器上的 Lua</h3>
-    <p>作为服务器的玩家运行完整的游戏逻辑。Lua 脚本的所有行为与单机模式一致：<code>on_tick</code> 每帧执行、事件正常触发。服务器 Lua 可通过 <code>engine.entities.spawn(id)</code> 或 <code>engine.entities.spawn(id, payload)</code> 生成实体；生成结果会进入 Server 快照。</p>
+    <p>作为服务器的玩家运行完整的游戏逻辑。服务端每个模拟 tick 都会发出 <code>core:tick</code>，事件正常触发。服务器 Lua 可通过 <code>engine.entities.spawn(id)</code> 或 <code>engine.entities.spawn(id, payload)</code> 生成实体；生成结果会进入 Server 快照。</p>
 
     <h3>客户端上的 Lua</h3>
     <p>纯客户端不推进本地玩法模拟，游戏状态由服务器快照驱动。底层 Lua 写接口会在执行前固定拒绝，而不是先改本地状态再等待快照覆盖。拒绝范围包括 ECS、方块、data/runtime state、工作和预留、统一物品、建筑施工/治疗容量、设计方案、研究、要闻、经营日志/问题以及阵营关系和外交结算。视图、选择、蓝图编辑、本地语言和内容注册不属于 Server 权威玩法状态。</p>
 
     <h3>区分服务器和客户端</h3>
-    <p><code>engine.network.mode()</code> 返回 <code>server</code>、<code>client</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不执行玩法 <code>on_tick</code>；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Server 权威 target 编码成 <code>UiCommand</code>。</p>
+    <p><code>engine.network.mode()</code> 返回 <code>server</code>、<code>client</code>、<code>loopback</code> 或 <code>disabled</code>，只用于选择表现和诊断分支。纯 Client 不推进玩法模拟，只运行客户端侧监听器；玩家操作应调用现有的 <code>engine.ui.command.run(target, payload)</code>，由数据桥把已注册的 Server 权威 target 编码成 <code>UiCommand</code>。</p>
 
     <div class="callout warn">
       <strong>常见错误：</strong>尝试直接发移动、方块或给物命令，或直接写组件。此类入口不存在；玩法请求必须使用已注册、由 Server 处理的专项 <code>UiCommand</code>。

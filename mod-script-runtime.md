@@ -378,7 +378,7 @@ DEBUG 显式重载仅在有世界 Server 时接受，关闭会话清除其待执
 
 ## 最新已确认方案（目标契约，尚非全部已实现）
 
-网络连接心跳已接入源码：NETWORK_VERSION=9，Heartbeat=12、空载荷；两端 socket worker 每秒发送心跳，连续 15 秒未收到完整有效协议包则断开并发布 timeout。使用 steady_clock，与模拟 Tick/暂停无关；发送不延长接收期限。ConnectionActivity 边界和协议编解码测试 2/2 通过，NetworkSystem 对象编译成功；真实双端停止 service/Tick/快照 16 秒仍保活已通过，NetworkServerClientTest 12/12 通过；Server 对已认证但停止发送的真实 TCP 对端约 15 秒断开、timeout 通知及会话保留已验证；Client 接收方向静默约 15 秒超时、timeout 通知及旧脚本会话失效也已通过真实 TCP 验证；最新完整构建仍待完成。
+网络连接心跳已接入源码：NETWORK_VERSION=1，Heartbeat=12、空载荷；两端 socket worker 每秒发送心跳，连续 15 秒未收到完整有效协议包则断开并发布 timeout。使用 steady_clock，与模拟 Tick/暂停无关；发送不延长接收期限。ConnectionActivity 边界和协议编解码测试 2/2 通过，NetworkSystem 对象编译成功；真实双端停止 service/Tick/快照 16 秒仍保活已通过，NetworkServerClientTest 12/12 通过；Server 对已认证但停止发送的真实 TCP 对端约 15 秒断开、timeout 通知及会话保留已验证；Client 接收方向静默约 15 秒超时、timeout 通知及旧脚本会话失效也已通过真实 TCP 验证；最新完整构建仍待完成。
 
 制作完成联合测试已连接真实 JobSystem/ECS：真实 EventRuntime 成功修改经验为 8，实际 crafting.lua 在产物成功后更新 Job 与 CareerProgress；扣料失败、产物失败及重复完成不增加经验，无材料制作再成功后累计为 16。CoreManufacturingEvents 5/5 通过；物品创建仍为替身，尚不替代原生完成派发、真实产物和经验同时联动的全流程验收。
 
@@ -784,7 +784,7 @@ ModRuntime、ScriptModules 的生命周期令牌和候选提交门闩使用原�
 
 生态和招募缓存的深复制现在检测循环引用；循环载荷不会替换原快照。隔离测试源码已补，未执行。
 
-工作存档身份审计已记录于 `NCDOCS/Task-identity-audit.md`。当前 `work.uuid`/`work_point_uuid` 是公开身份，但工作句柄、预约、物品分配、实体和部分派系/来源仍是运行时数字值；不能直接把字段名替换为 UUID。后续按所有者分层迁移，更新磁盘/网络/CoreMod/夹具和测试，不提供旧格式回退。
+工作存档身份审计结论如下。当前 `work.uuid`/`work_point_uuid` 是公开身份，但工作句柄、预约、物品分配、实体和部分派系/来源仍是运行时数字值；不能直接把字段名替换为 UUID。后续按所有者分层迁移，更新磁盘/网络/CoreMod/夹具和测试，不提供旧格式回退。
 
 模拟主循环失败后不再启动退出自动保存，避免失败 Tick 的部分执行状态覆盖已有存档。已启动的独立保存继续按既有流程清理。异常退出的完整资源回收和回调边界仍在审计，未运行验证。
 
@@ -838,7 +838,7 @@ ModRuntime、ScriptModules 的生命周期令牌和候选提交门闩使用原�
 
 初始物资进度按发放批次记录，多个批次允许指向同一合并栈 UUID；居民身份仍拒绝重复。恢复合并栈记录不会重新发放物资。相关测试源码已补，未运行。
 
-engine.ecs.create_initial_colonist 成功直接返回居民 UUID，失败返回空字符串，与初始物资创建保持一致；初始殖民地模块不再转换居民数字编号。绑定和测试样例已同步，测试未运行；创建与保存进度事务仍未完成。
+engine.entities.spawn("core:colonist") 成功直接返回居民 UUID，失败返回空字符串，与初始物资创建保持一致；初始殖民地模块不再转换居民数字编号。绑定和测试样例已同步，测试未运行；创建与保存进度事务仍未完成。
 
 engine.items.create_initial_supply 成功返回物品 UUID 字符串，失败返回空字符串；发生堆叠合并时返回已有栈的 UUID。初始殖民地不再扫描全物品表查找身份。原生查询与合并栈测试源码已补，未运行；创建/保存事务仍待完成。
 
@@ -1366,7 +1366,7 @@ CoreMod 已删除空 bootstrap 兼容入口。Lua 预处理统一处理 scripts 
 
 `core:events.act` / `core:events.dismiss` 改为服务端注册命令，使用 `focus_uuid`，选择还需 `choice_id`；各有可取消前置事件，成功发布 `core:focus_changed`。旧桥接分支已删除，面板操作参数改 UUID。面板快照通道尚待接入，当前仍读原生列表；测试源码未运行。
 
-关注事件实例新增服务器分配的 `uuid`，定义重载保留。`focuses` 文档 schema 2 保存 UUID；旧 schema 1 只在正常读档迁移时生成，新文档及网络恢复不重新生成。网络协议现为 8。Lua `focuses.active()` 提供 UUID，但事件列表通道和选择/关闭命令的 UUID 接入尚未完成；内部编号仍保留。身份恢复测试源码已补充，未运行。
+关注事件实例新增服务器分配的 `uuid`，定义重载保留。`focuses` 文档 schema 2 保存 UUID；旧 schema 1 只在正常读档迁移时生成，新文档及网络恢复不重新生成。网络协议现为 1。Lua `focuses.active()` 提供 UUID，但事件列表通道和选择/关闭命令的 UUID 接入尚未完成；内部编号仍保留。身份恢复测试源码已补充，未运行。
 
 生存、职业成长和可见性配置问题现在也在 `core:mod_reload_committed` 后刷新，分别由独立服务端监听器处理。有世界且为权威端时才更新；候选准备不更新问题列表。规则修复后解除对应问题，仍无效则报告当前错误。测试源码已补充，未运行。
 
@@ -1396,7 +1396,7 @@ orders_kinds 新增真实模块组合测试源码，覆盖延迟宿主读取、�
 
 初始服务端 mod_ready 在模拟线程进入循环前派发，启动方通过 promise/future 等待派发结束后才返回初始化成功。监听器错误继续隔离并记录；派发框架或线程创建异常向启动方传播并回收线程。返回主菜单保持该线程存活，不重复派发 mod_ready。客户端 mod_ready 在主线程执行。服务端创建、重载和读档仍有主线程路径，整体固定 owner 尚未完成；未编译运行验证。
 
-`bootstrap.lua` 当前仅保留空兼容入口；旧 Bridge.init 不再接入 mod_ready。独立注册监听器承担已迁移业务，剩余数据提供器与旧入口机制尚待迁移和移除，完整 CoreMod 启动仍未验收。
+`bootstrap.lua` 已删除，不再保留空兼容入口；旧 Bridge.init 不再接入 mod_ready。独立注册监听器承担已迁移业务，剩余数据提供器与旧入口机制尚待迁移和移除，完整 CoreMod 启动仍未验收。
 
 有世界的重载提交后，服务端 mod_reload_committed 通过带世界代次的通知交给模拟线程，在后续保存/命令/Tick 前派发；过时通知丢弃。难度监听器应用准备好的解析结果并同步快照，非权威端跳过。失败记日志，不回滚已提交内容；未编译运行验证，完整 VM 线程归属仍待完成。
 
@@ -1660,7 +1660,7 @@ mod_ready 现在可携带可选 world_id：初始启动无世界时省略，重�
 
 居民、治疗/招募、仓储/饮食策略、战略面板通过各自客户端 mod_ready/world_unloaded/mod_closing 监听器初始化、清理世界状态和释放底栏，bootstrap 不再负责这些调用。卸载清除窗口及患者、居民、仓储、支付和策略选择；关闭先清句柄以允许清理重入。新增生命周期测试源码未执行，面板内部旧数据/命令和数字身份仍待迁移。
 
-工作池面板通过 `core:task_pool` 通道接收服务端快照，再由客户端本地事件更新缓存；显示工作 UUID 和工人名称，不读取原生工作列表。世界加载/每 4 Tick 发布，打开面板主动请求快照，断线和卸载清缓存。普通请求不会解除断线屏蔽，只有连接恢复事件重新开启接收并请求当前世界数据。测试源码未运行，暂停期间命令后的持续刷新与同世界会话代次仍待完善。
+工作池面板改为直接读取本地权威 TaskPool（`engine.tasks.ui_rows()`），不再通过 Lua `core:task_pool` 通道接收服务端快照；远程客户端读取 C++ 网络同步后的本地副本。显示工作 UUID 和工人名称，不读取原生工作列表。断线和卸载时清理面板缓存。暂停期间命令后的持续刷新与同世界会话代次仍待完善。
 
 工作池面板使用独立客户端生命周期监听器，世界卸载关窗但保留底栏，Mod 关闭释放底栏；关闭不依赖原生回调来清除打开标记。生命周期和快照测试源码尚未运行。
 
@@ -2274,17 +2274,17 @@ Task notification scopes capture the building UUID before dispatch for Building 
 
 `post_construction` returns zero when an active Build work with a Building payload already targets that building. Generic Custom payload numbers do not count as building references. An explicit new call may post after the previous work is cancelled; CoreMod does not automatically repost cancelled records.
 
-The remaining data_bridge resident-list provider now requires the registered `engine.colonists.list` API. Its alternate per-entity ECS enumeration and duplicate HTML-era row assembly have been removed. Resident-list migration to a server channel and client cache is still pending.
+The resident-list collection in `systems.resident_snapshot` now requires the registered `engine.colonists.list` API. Its alternate per-entity ECS enumeration and duplicate HTML-era row assembly have been removed. Resident-list migration to a server channel and client cache is still pending.
 
 Resident-list normalization requires the equipment and inventory tables already emitted by the native summary. It no longer performs a second equipment query or substitutes an alternate inventory shape. An empty backpack remains an empty list.
 
-`systems.resident_snapshot` now collects resident summaries, current-work data and recruitment profiles independently of selection, UI caches and localization. It returns detached data with resident UUIDs. data_bridge still calls it synchronously; its numeric references and native row shapes are not yet an approved network payload. Channel/schema/cache migration remains pending.
+`systems.resident_snapshot` now collects resident summaries, current-work data and recruitment profiles independently of selection, UI caches and localization. It returns detached data with resident UUIDs. `network.residents_server` still calls it synchronously; its numeric references and native row shapes are not yet an approved network payload. Channel/schema/cache migration remains pending.
 
 Resident current-work projection carries work UUID, tag, priority, progress, duration, position and optional related-object UUIDs. It does not forward reservation IDs, numeric work/payload/worker handles or arbitrary nested native work fields. A missing active work has no current-work projection. Other resident fields still await network schema review.
 
 Resident collection now explicitly selects display fields instead of copying the entire native summary. Career trees, medicine-slot internals and unknown native extensions are excluded. Current work is read from server AI state and resolved through the work index; it is not assumed to exist in the native resident summary. Nested network contracts and client handle conversion remain pending.
 
-Resident snapshot rows use `entity_uuid` and omit numeric entity identities. During the unfinished UI migration, the data_bridge and panel now use UUIDs directly; the temporary second return value and local-handle map have been removed. Remaining native detail APIs still resolve UUIDs on the server boundary.
+Resident snapshot rows use `entity_uuid` and omit numeric entity identities. During the unfinished UI migration, the panel now uses UUIDs directly; the temporary second return value and local-handle map have been removed. Remaining native detail APIs still resolve UUIDs on the server boundary.
 
 The Lua resident panel keeps selected UUIDs and uses snapshot UUIDs for list commands, personal-work/career/medicine requests and work-policy commands. Existing native open/selection entry points still convert a local handle once at the boundary. Native RmlUI resident-table migration and removal of the temporary local-handle map remain pending.
 
@@ -2320,7 +2320,7 @@ The C++ shared-state store compares encoded values, advances a version only on c
 
 Resident snapshots omit the duplicate aggregate `attributes` table. Base/work/combat groups project declared finite numeric fields, and the event schema declares those same nested keys. Unknown native attribute extensions are not automatically exposed.
 
-`ui.residents_view` formats cached residents for `colonist_list`, `colonists` and `combat_state`; `listeners/mod_ready/residents_views.lua` registers these providers. The remaining data bridge delegates to the same module while its consumers are migrated. The view uses current snapshot job/attribute fields without native job-hash lookup. Mood uses the native 0-to-100 scale directly: 0.5 stays 0.5, rather than being interpreted as a normalized fraction. Provider registration and presentation tests are source-only and have not been executed.
+`ui.residents_view` formats cached residents for `colonist_list`, `colonists` and `combat_state`; `listeners/mod_ready/residents_views.lua` registers these providers. The remaining consumers delegate to the same module while they are migrated. The view uses current snapshot job/attribute fields without native job-hash lookup. Mood uses the native 0-to-100 scale directly: 0.5 stays 0.5, rather than being interpreted as a normalized fraction. Provider registration and presentation tests are source-only and have not been executed.
 
 The `CoreNativeHaulingScan` integration test uses a real ECS ground pile, an item definition with its production hash, a block inventory, a storage policy, native Lua bindings and TaskPool. The actual `hauling.lua` scans that state and posts a UUID task.
 

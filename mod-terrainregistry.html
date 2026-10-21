@@ -67,9 +67,9 @@
 
     <h2>验证命令</h2>
     <p>在控制台（按物理 Grave/反引号键）中确认地形配置注册：</p>
-    <pre><code>list_data terrain               -- 列出所有已注册的地形配置
-data core:default               -- 查看默认地形配置 JSON
-data type:terrain               -- 查看 terrain 类型下的注册数据</code></pre>
+    <pre><code>list_data prefix=core:          -- 按前缀列出注册数据（含地形配置）
+data terrain core:default       -- 查看默认地形配置记录（含来源文件路径）
+data type:terrain               -- 列出 terrain 类型下的注册数据</code></pre>
 
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>

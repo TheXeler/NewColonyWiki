@@ -50,8 +50,8 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>mods</code></td><td>查看已安装的 MOD 列表与其中真正加载的数量；禁用（或已启用但需重启）的条目会带 <code>[disabled]</code> / <code>[enabled, restart required]</code> 标记。</td></tr>
         <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
         <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值（禁用 MOD 的配置同样可查，条目会带 <code>[disabled]</code> 标记）。</td></tr>
-        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看注册表。type 可使用基础内容、经营规则、生态、动态天气、视野和难度等已注册类型；不写 type 时列出全部类型。</td></tr>
-        <tr><td><code>data &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
+        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看注册表。type 只接受 blocks、entities、recipes、jobs、civilizations、techs、focuses；不写 type 时列出全部类型。</td></tr>
+        <tr><td><code>data &lt;type&gt; &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
         <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。</td></tr>
         <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
         <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原型 ID 生成非殖民者实体；带 <code>ColonistTag</code> 的原型固定拒绝，自动补全也不会列出。</td></tr>
@@ -74,9 +74,6 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
         <tr><td><code>locale_list</code> / <code>locale_set &lt;id&gt;</code> / <code>locale_reload</code></td><td>查看、切换和重载本地化资源。</td></tr>
         <tr><td><code>reload</code> / <code>reload rml</code></td><td>仅 <code>--DEBUG</code> 可用。<code>reload</code> 向服务端发送注册表重载请求，由服务端在可用帧间准备双端 Lua、状态、UI、原生定义和渲染资源；候选准备失败保留旧环境。保存或载入期间延后。Lua 文件变化由自动监听单独处理，不能传 Lua 路径给此命令。<code>reload rml</code> 在请求客户端重载游戏内 RML/RCSS。</td></tr>
         <tr><td><code>ui_lab</code> / <code>ui_lab show</code> / <code>ui_lab hide</code> / <code>ui_lab toggle</code> / <code>ui_lab components</code> / <code>ui_lab tech_tree</code></td><td>切换、显示、隐藏真实 RmlUI 设计实验室，或直接打开指定预览场景。仅 <code>--DEBUG</code> 运行会加载该文档；普通/Release 路径不可用。Components 与 Tech Tree fixture 场景都使用真实共享 RCSS；修改后执行 <code>reload rml</code> 即可刷新。</td></tr>
-        <tr><td><code>save [name]</code> / <code>load [name]</code> / <code>save_list</code></td><td>保存、加载和列出存档。</td></tr>
-        <tr><td><code>list_entities [page] [size]</code></td><td>分页查看当前世界所有实体。</td></tr>
-        <tr><td><code>list_civs</code></td><td>查看文明系统状态。</td></tr>
       </tbody>
     </table>
 
@@ -89,7 +86,7 @@ help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
       <li><code>list_data civilizations prefix=copper_age:</code> —— 检查文明是否注册。</li>
       <li><code>list_data focuses prefix=copper_age:</code> —— 检查 要闻 是否注册。</li>
       <li><code>data type:factions</code> —— 检查 NPC 阵营定义是否注册。</li>
-      <li><code>data copper_age:copper_clan</code> —— 查看单条记录详情。</li>
+      <li><code>data &lt;type&gt; copper_age:copper_clan</code> —— 查看单条记录详情。</li>
       <li><code>list_recipes 1 20 prefix=copper_age:</code> —— 检查配方是否注册。</li>
     </ol>
 

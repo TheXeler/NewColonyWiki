@@ -47,7 +47,7 @@
       <thead><tr><th>区域</th><th>ID</th><th>颜色</th><th>形状</th><th>目标</th><th>用途</th></tr></thead>
       <tbody>
         <tr><td>储存区</td><td><code>core:stockpile</code></td><td><span style="color:#8B7355">&#9632;</span> #8B7355</td><td>2d</td><td>items</td><td>殖民者将物品搬运到此处集中存放。</td></tr>
-        <tr><td>种植区</td><td><code>core:growing</code></td><td><span style="color:#4A7C3F">&#9632;</span> #4A7C3F</td><td>2d</td><td>blocks</td><td>殖民者在此区域播种和管理作物。</td></tr>
+        <tr><td>种植区</td><td><code>core:growing</code></td><td><span style="color:#4A7C3F">&#9632;</span> #4A7C3F</td><td>2d</td><td>[]（空）</td><td>殖民者在此区域播种和管理作物。</td></tr>
       </tbody>
     </table>
 
@@ -57,7 +57,7 @@
     <p>点击储存区或种植区后可从选择摘要打开区域管理面板。面板在打开时绑定所选区域实例，之后不再跟随选中或悬停变化。当前面板只提供带二次确认的“删除区域”操作；仓储汇总与策略不放在该面板中。删除成功后面板立即关闭，不显示空的兜底内容；区域因重叠划区被清空而消失时面板也会关闭。</p>
 
     <h3>种植区 <code>core:growing</code></h3>
-	<p>种植区默认种植小麦：在泥土或草地上派翻地工作，耕地空格派播种工作；播种和自动补种不需要种子，不预约或消耗背包、仓储材料。作物按最终温度和室外条件推进八个生长阶段，成熟后割除收获并继续补种。收获物形成可回收地面堆，不删除种植区，收获产出只保留小麦（种子物品已随"播种不需要种子"一并移除）；详见<a href="mod-cropregistry.html">作物数据</a>。农业待办不持有材料预约，删除区域会取消其待办工作并停止自动管理。</p>
+	<p>种植区默认种植小麦：在泥土或草地上派翻地工作，耕地空格派播种工作；播种和自动补种不需要种子，不预约或消耗背包、仓储材料。作物按最终温度和室外条件推进五个生长阶段，成熟后割除收获并继续补种。收获物形成可回收地面堆，不删除种植区，收获产出只保留小麦（种子物品已随"播种不需要种子"一并移除）；详见<a href="mod-cropregistry.html">作物数据</a>。农业待办不持有材料预约，删除区域会取消其待办工作并停止自动管理。</p>
 
     <h2>区域实例</h2>
     <p>区域实例属于当前世界，随该存档的 <code>world.json</code> 中的 <code>zones</code> 数组保存，<code>next_zone_instance_id</code> 保存实例编号分配器。返回主菜单、新建世界和读档激活时会清空旧世界的区域实例并重置编号分配器，保留 MOD 注册的区域类型；读档随后从目标存档恢复区域及分配器。新世界不会继承上一个世界的区域。此生命周期修复及回归测试源码尚未编译或执行。</p>
@@ -107,9 +107,9 @@
 
     <h2>验证命令</h2>
     <p>在控制台（按物理 Grave/反引号键）中确认区域类型注册：</p>
-    <pre><code>list_data zones                  -- 列出所有已注册的区域类型
-data core:stockpile              -- 查看单个区域类型的完整 JSON
-data core:growing                -- 查看种植区类型</code></pre>
+    <pre><code>data type:zones                  -- 列出所有已注册的区域类型
+data zones core:stockpile        -- 查看单个区域类型的注册记录
+data zones core:growing          -- 查看种植区类型的注册记录</code></pre>
 
 <h2>城邦区域候选编辑</h2>
 <p>2026-10-13 第73节新增C++ prepare_city_additions／prepare_city_expansion／commit_city_zones，供后续城邦农区事务联合使用。添加要求明确UUID和零handle，独立预留全局身份、拒绝碰撞／区域交叠，并保留已有区域内容；创建会按普通容器语义使旧指针可能失效，沿handle重新查询。扩张只能改几何并包含全部旧格子，保留地址／UUID／handle／settings／分配器，其他区域占用或改变元数据拒绝。两者都核对完整原区域／revision／计数器，发布失败保持事实；活动与detached模式须明确一致。该底层尚未开放新的Lua农田编辑接口，真实地形、Task及业务准入与联合权威仍待接入，验收源码未编译执行。</p>

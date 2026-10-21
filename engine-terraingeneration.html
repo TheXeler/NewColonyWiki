@@ -32,7 +32,7 @@
       <li><code>data/biomes/*.json</code>：群落类型与生成参数。</li>
       <li><code>data/features/*.json</code>：具体地物形状与生成条件；<code>oak.json</code> 提供树干高度、树叶方块、树冠半径和分布参数。</li>
       <li><code>data/terrain/*.json</code>：基础地形材料引用；不替代缺失的群落规则。</li>
-      <li><code>engine.terrain.list_biomes()</code>、<code>list_features()</code>、<code>get_biome()</code> 和 <code>get_feature()</code>：只读诊断接口。</li>
+      <li><code>engine.terrain.list_biomes()</code>、<code>list_features()</code>、<code>select_biome(seed, cx, cz)</code> 和 <code>find_feature(id)</code>：只读诊断接口。</li>
     </ul>
     <h2>世界派生缓存与失效契约</h2>
     <p>树归属查询通过同一原生地形生成流程重建完整单元集合，按世界世代缓存最多 32 个区块；实际方块有变化时不把程序化集合当成有效组件。首次割除保存组件 UUID 与逐格 hash；一次割除移除整棵树，按整棵树执行产出表，不乘以树干格数。核心树木每棵随机产出 9-15 个木头和 0-3 个树苗（均包含端点）。树苗生长沿权威方块批量事务创建相同形状。已保存的区块不会因更新生成规则而自动重写。</p>

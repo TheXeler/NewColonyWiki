@@ -50,7 +50,7 @@
 }</code></pre>
 
     <p>方块是体素单元。新物品独立放在 <code>data/items/</code>，不需要成为可放置方块。可采方块的正数 <code>hardness</code> 直接表示一次性采掘/伐木工作时长秒数；缺失或无效时目标进入配置屏障。产物必须引用统一 <code>output_table</code>，旧 <code>drops</code> 不再属于当前 schema。</p>
-    <p>独立食品可声明正整数 <code>food_value</code>（饱腹值）与 <code>category</code>（进食方案分类）；未写 <code>category</code> 时使用物品定义的 <code>primary_category</code>。<code>systems.food</code> 在物品没有方块定义时读取独立物品记录，按现有分类、标签、品质和预约规则选择食物。<code>core:bread</code> 是 <code>food</code> 分类的独立物品，饱腹值为 20，由烟熏炉烘烤配方产出，不是可放置方块。</p>
+    <p>独立食品可声明正整数 <code>food_value</code>（饱腹值）与 <code>category</code>（进食方案分类）；未写 <code>category</code> 时使用物品定义的 <code>primary_category</code>。<code>systems.food</code> 在物品没有方块定义时读取独立物品记录，按现有分类、标签、品质和预约规则选择食物。<code>core:bread</code> 是 <code>food</code> 分类的独立物品，饱腹值为 10.24，由烟熏炉烘烤配方产出，不是可放置方块。</p>
     <pre><code>{
   "id": "copper_age:copper_ore_block",
   "name": "Copper Ore",
@@ -67,7 +67,6 @@
       <li>程序生成 fallback：没有材质映射的基础方块会按固定颜色生成临时纹理，例如 stone、wood、leaves、water 等。</li>
     </ul>
     <pre><code>{
-  "texture_size": [64, 64],
   "elements": [
     {
       "from": [0, 0, 0],
@@ -156,7 +155,7 @@
 	"compatible_work_points": ["core:workbench"]
 }</code></pre>
 	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时仍会受到工人的制作速度乘数影响。CoreMod 工作台配方为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
-    <p>生产完成时会触发 <code>recipe:crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
+    <p>生产完成时会触发 <code>core:recipe_crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
     <p>生产订单支持目标次数、维持库存、优先级、指定工人、暂停、恢复和取消。创建生产订单不等于已经创建具体工作：只有材料、合格工人和兼容工作点条件满足时，订单才会向 TaskPool 发布 Craft 工作；命令结果通过 <code>task_created</code>、<code>status</code> 和 <code>waiting_reason</code> 区分两种状态。工作激活后通过所有者槽位预约材料，材料保留在原槽直到结算；完成时提交材料，并在工作点坐标生成 ECS 地面单品堆产物。取消或中断释放预约，未消费的材料仍留在原所有者槽位。</p>
 	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Server 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
 
@@ -196,7 +195,7 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
 	<pre><code>"parts": [
   { "id": "bed", "type": "bed", "cells": [[0, 0, 0], [0, 0, 1]] }
 ]</code></pre>
-    <p>CoreMod 施工入口 <code>systems.construction.order(def_id, x, y, z)</code> 会创建建筑订单；材料足够时立即从 stockpile 账本预留并推进施工，材料不足时返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code> 并等待后续库存补足。等待订单会在 <code>stockpile:changed</code> 后立即重试预留，并每 60 tick 做一次兜底检查。<code>systems.construction.preview_materials(def_id)</code> 可用于只预览材料可用性，不会作为硬阻止。</p>
+    <p>CoreMod 施工入口 <code>systems.construction.order(def_id, x, y, z)</code> 会创建建筑订单；材料足够时立即从 stockpile 账本预留并推进施工，材料不足时返回 <code>{ ok=true, status="waiting_materials", materials=..., missing=... }</code> 并等待后续库存补足。等待订单会在 <code>core:stockpile_changed</code> 后立即重试预留，并每 60 tick 做一次兜底检查。<code>systems.construction.preview_materials(def_id)</code> 可用于只预览材料可用性，不会作为硬阻止。</p>
     <p>HTML 建造面板读取 <code>build_defs</code> 快照，行结构为 <code>{ id, label, label_key, category, size, cost, materials, missing, available, can_order, status }</code>；已下单建筑读取 <code>construction_active</code> 快照，行结构为 <code>{ instance_id, def_id, status, position, materials, missing, reserved_materials }</code>。页面发送 <code>core:build.begin { id }</code> 时进入 placement；只有带 <code>x/y/z</code> 时才实际下单。</p>
 
     <h2>殖民者经历（experiences）</h2>
@@ -274,7 +273,7 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
 }</code></pre>
 
     <h2>NPC 阵营（factions）</h2>
-	<p><code>data/factions/</code> 保留其他殖民地定义 schema；<code>data/name_pools/</code> 保留名称模板词池。NCDOCS 尚未定义关系上下限、初始关系、影响半径或实例生成规则，因此 CoreMod 当前不提供 NPC 阵营定义，不能把旧示例数值当作稳定玩法契约。</p>
+	<p><code>data/factions/</code> 保留其他殖民地定义 schema；<code>data/name_pools/</code> 保留名称模板词池。NCDOCS 尚未定义影响半径或实例生成规则；CoreMod 目前只提供 <code>core:player</code> 和 <code>core:mvp_test_raiders</code> 两条测试定义，不能把旧示例数值当作稳定玩法契约。</p>
 
     <h2>阵营自动生成规则（faction_spawn_rules）</h2>
 	<p><code>data/faction_spawn_rules/</code> 保留注册目录，但 NCDOCS 未定义数量、密度、距离或位置生成公式。CoreMod 目录为空，新世界不随机生成 NPC 阵营；旧 Lua/控制台生成入口已移除。</p>
@@ -297,10 +296,11 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
     <p>在控制台中用这些命令确认数据注册成功：</p>
     <pre><code>list_data blocks prefix=copper_age:
 list_data recipes prefix=copper_age:
-list_data buildings prefix=copper_age:
+list_data entities prefix=copper_age:
 list_data jobs prefix=copper_age:
 list_data civilizations prefix=copper_age:
 list_data focuses prefix=copper_age:
+data type:buildings
 data type:factions
 data type:faction_spawn_rules
 data type:diplomacy_proposals
