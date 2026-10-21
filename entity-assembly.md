@@ -310,9 +310,20 @@ Core metallic-roughness PBR channels include base color, metallic/roughness
 (G/B), normal XY scale, occlusion R/strength and emissive RGB. Base/emissive
 images use sRGB; the other maps use linear UNORM. TEXCOORD_0 and TEXCOORD_1
 selectors and each texture's sampler state are preserved. Lighting uses GGX,
-Smith visibility, Schlick Fresnel, sun and procedural sky terms. This is the
-engine's procedural environment lighting. Imported HDR environments and the
-broader KHR material-extension family are outside the supported material contract.
+Smith visibility, Schlick Fresnel and reference sun terms. Without a selected
+HDR environment, indirect lighting uses the engine's procedural sky fallback.
+HDR environments and the extended material contract are described below.
+
+Entity day/night display illumination shares `world_lighting.glsl` with blocks:
+25% overnight (19:00-05:00), a linear rise to 100% during 05:00-08:00, full
+daylight until 16:00, and a linear fall to 25% during 16:00-19:00. PBR uses a
+fixed noon reference direction, matching blocks' fixed face shading; sky and
+screen-space shadows still use the moving sun. Reflected light, including HDR
+environment diffuse/specular and extended-material lobes, receives the shared
+factor after tone mapping or LDR clamping. Emissive contributions and unlit
+materials retain their authored brightness. Fog is composed afterward. Screen
+transmission removes the captured scene's existing factor before material
+evaluation to avoid applying the day/night factor twice.
 
 `visual.pose` contains `secondary_animation`, `secondary_time`, `blend` (0..1),
 `look_node` (authored node name), `look_yaw`/`look_pitch` (local radians), and

@@ -1,5 +1,13 @@
 # Entity TaskPool
 
+2026-10-19 source change, not compiled or executed: immutable navigation searches
+now retain the dependencies of actual endpoint body-footprint queries even when
+no standing start or goal is admitted. Missing endpoints remain unavailable;
+their zero-version dependencies can request data and invalidate the old result
+after loading. Search-phase cache resets do not discard this endpoint evidence.
+City battle command preflights use the same search and existing command planner;
+saved data requests never become routes or simulation authority by themselves.
+
 Updated: 2026-10-08. Source migration is in progress; this change has not been
 compiled or tested. Static content and reference checks do not establish runtime
 correctness.
@@ -87,8 +95,11 @@ does not count as fluid or provide support, and does not slow gravity or falling
 Floating-point navigation requests retain the requested world destination in
 `NavAgent`. The pathfinder searches a sequence of walkable voxel cells, using
 the cell containing the entity's feet when possible. If the columns containing
-the endpoints do not connect, it may enter or finish through an adjacent
-standing cell within the task arrival range. The cell search considers every
+the endpoints do not connect, generic callers may enter or finish through an
+adjacent standing cell. Task navigation disables this substitution with
+`PathfinderConfig::allow_adjacent_endpoints=false`, because its destination is
+already a selected work stance. An adjacent endpoint is not necessarily within
+task reach. The cell search considers every
 permitted height transition in a neighboring column, including an upward step
 when that column also has a walkable level at the current height.
 The assigned route compresses straight, level cell runs into turn points.
@@ -100,7 +111,55 @@ share one multi-source search and one additional node budget, instead of
 restarting a full search for every pair. This search prefers the original goal
 cell and retains a reached adjacent goal as a backup. A floating-point request
 therefore uses at most two search budgets, independent of endpoint count.
-Normal successful routes still finish during the primary search.
+Normal successful routes still finish during the primary search. Task routes
+use only their selected start/goal cells; generic float queries retain the
+optional endpoint fallback.
+
+### Mining interaction box and exhausted endpoints (2026-10-17)
+
+Mining treats the colonist as one cell wide/deep and two cells high. Relative
+to the feet cell `(x,y,z)`, targets occupy `x-1..x+1`, `z-1..z+1` and
+`y-1..y+2`: one floor layer, two body layers, one layer above the head. The two
+body cells cannot themselves contain valid mining targets, leaving 34 possible
+target cells out of 36. All horizontal directions, corners and overhead
+positions share this range. The former special same-column `y+3` reach is
+removed. A supported, body-clear stance and an unobstructed tool segment are
+required; an intervening solid face/edge/corner rejects mining through it.
+These are interaction bounds, not permission to mine every block in the box
+simultaneously through obstructions or without a posted task.
+
+`can_mine_from` provides the shared range/standing/occlusion check for stance
+selection and execution. A miner already in range retains its actual position
+instead of approaching another cell centre. Navigation searches possible feet
+cells at target offsets `dx/dz=-1..1, dy=-2..1`. AI begins execution as soon as
+the real target is in reach, cancels obsolete guidance, and rechecks before
+advancing progress on later ticks. Losing reach after a push or terrain edit
+returns the task to navigation. The range is specific to Mine; Cut and Build
+retain their existing stance rules.
+
+The inspected 2026-10-17 22:16:50--22:28:49 runtime log recorded 13 stalled
+routes. Twelve belonged to one worker near `(14.800,72,-0.6)`; several of
+those tasks were later completed by another worker. The final save retained
+two busy miners with zero progress and exhausted single-cell routes ending
+in x=15 while the requested work stances were x=16.5. Their current horizontal
+distances to those stances were about 1.10 and 1.04 blocks, outside the old
+one-block arrival radius. Adjacent endpoint substitution could repeatedly
+produce these routes without arrival, while installing each new route reset
+the stall timer. At the x=16 chunk seam, the hierarchical region search can
+accept a neighboring goal in the starting chunk before traversing to the
+original goal's chunk, even on otherwise connected flat ground.
+AI now disables that substitution for both synchronous and
+resumable task navigation. This prevents an adjacent fallback cell from being
+reported as a completed task route. The log contains no DEBUG contact probes,
+so it does not identify the exact collision partner for each earlier stall.
+
+Designation previews and designated-worker submission also use the mining
+reach check instead of treating horizontal proximity alone as arrival. Their
+path checks use the same exact-endpoint mode as task execution.
+
+Regression sources cover all 36 relative cells, obstruction, reach before a
+route centre, lost reach, exact-endpoint failure, and a route across x=16. This change has
+not been compiled, tested, or replayed in the saved world.
 
 Unreachable scheduled tasks back off for 20, 40, 80, then at most 160 ticks
 (1, 2, 4, 8 simulation seconds at 20 TPS). The failure history belongs to the
@@ -115,6 +174,60 @@ its failures, and terrain changes are discovered at the next scheduled retry.
 The retry state is derived runtime data and is not serialized.
 Regression test source has been added; this change has not been compiled,
 tested or measured in a running game.
+
+### Worker retry memory and proximity allocation (2026-10-17)
+
+TaskPool also remembers failures by both task UUID and worker UUID. Returning
+an assigned or claimed task through `interrupt_task`, or explicitly interrupting
+a worker's queue with a nonzero skip duration, prevents that worker from
+reclaiming it for 200, 400, 800 and at most 1200 ticks (10, 20, 40 and 60
+simulation seconds). The task's shorter global block remains separate, so
+another worker can try after that block and lifecycle cleanup expire. Different
+workers do not overwrite one another's retry records. Public selection, direct
+assignment, batch seeds/neighbours and pending personal queues all enforce this
+memory; batch neighbours also honor the ECS path blacklist.
+
+The per-worker table is runtime-only, while the existing last-worker skip
+fields retain their normal save behavior. Completion, cancellation, changed
+target position and pool teardown discard the relevant runtime records.
+Navigation failures additionally reset worker exclusions when their recorded
+NavMesh dependencies change. A full minute beyond an expired exclusion resets
+its escalation on the next failure. A zero skip during an explicit queue
+handoff clears that worker's exclusion instead of imposing failure backoff.
+
+The scheduler compares eligible free worker/task pairs by instruction priority
+and straight-line 3D proximity before filling personal queues. A batch leaves
+cells closer to another eligible idle worker in the public pool. Ordinary
+unactivated claims are selected again from the worker's current position;
+already activated delivery chains retain their sequence. Qualifications,
+faction/designation, schedules, materials and the existing two-metre recent-tag
+preference still apply. Scores use double precision so small distance
+differences are not rounded into creation-order ties by the priority bonus.
+This is proximity allocation, not a globally optimal assignment or a comparison
+of computed route lengths.
+
+Native farming keeps the publication budget of 16 orders per 20 ticks, but
+orders cells by their minimum squared distance to current colonist positions
+before applying that budget. Coordinate strings break equal-distance ties
+only. Native task claiming still checks eligibility; publication distance does
+not designate a worker. The whole-field till-before-sow prerequisite remains.
+
+The completed 23:18-23:21 run in `2026-10-17.1.log` records mining stalls near
+`(0.5,70,0.999)` with a lower waypoint `(0,69,0)`, and repeated farm approach
+stalls near `(0.601,70,1.053)` toward `(1,71,1)`. The matching save's remaining
+farm orders are tilling. Mining reach now checks actual partial-footprint voxel
+support instead of requiring floor support under the centre column, allowing a
+miner to work from a supported hole edge. At stair/drop height transitions,
+movement steers toward the waypoint centre to correct lateral offset beside
+taller neighboring terrain. The 23:22-23:28 `latest.log` separately shows a
+single stalled Cut task released at 23:23:22 and completed by the same worker
+at 23:23:24. It also records Attention tick cost spikes; these are distinct
+from route stalls. No contact-level debug trace identifies every blocker.
+
+Regression sources cover independent worker exclusions, eventual/escalating
+retries, moved targets, blacklist-aware batching, proximity queue selection,
+cross-worker allocation, nearby farm publication, hole-edge mining and lateral
+stair guidance. No build, test execution or saved-world replay was run.
 
 ### Resumable hierarchical navigation (2026-10-12)
 
@@ -212,7 +325,8 @@ into the restored world.
 Navigation provides the route without writing movement targets or velocity.
 The entity movement controller advances its route and follows the fixed
 direction of each segment while inside its half-block lateral corridor. Near a
-turn, or outside that corridor after a collision, it steers toward the route
+turn, during a height transition, or outside that corridor after a collision,
+it steers toward the route
 point using the actual horizontal distance. An exhausted forward projection
 does not zero the request while a sideways correction remains. This changes
 MovementIntent only; physics still owns Position and collision. Height
@@ -285,7 +399,7 @@ If already overlapping starting bodies have no terrain-clear separation,
 `[physics][contact]` logs that condition once until it clears. Collision
 response updates effective Speed and physical Position inside physics;
 MovementIntent, NavAgent, and route guidance retain the controller's request.
-The movement controller now predicts approaching grounded colonists using a
+The movement controller now predicts approaching grounded mobile entities using a
 half-second sweep of their requested horizontal motion. Equal-mass head-on
 contacts otherwise cancel forward movement symmetrically every tick. A local
 encounter chooses parallel passing lanes, preferring each body's right and
@@ -308,6 +422,110 @@ and facing only; Nav supplies guidance and physics remains responsible for
 all position changes, stair movement and final entity collision resolution.
 The new local-passing and tight-contact regression sources have not been
 compiled or executed.
+
+### Standing ground and yielding (2026-10-17)
+
+`AIState::stand_ground` is a derived contact stance, separate from stopping
+locomotion. Ordinary active tasks set it to true; idle AI sets it to false.
+For conscripted squads, `Defend` sets it to true, while normal `Hold` (Stop)
+and `Move` leave it false even while the persistent Battle task remains busy.
+Incapacitation, inactive entities and active Reactions clear the ordinary
+stance. AI refreshes it after scheduling and the engine refreshes it again
+after task callbacks, immediately before movement and physics. Combat orders
+also update it immediately. Soldier bodies inherit their leader's stance.
+
+The contact solver reads this flag for both soft repulsion and horizontal
+rigid response. A standing body does not take an external horizontal push;
+its unanchored neighbor takes the correction, regardless of their mass ratio.
+Two standing bodies stop at contact instead of pushing one another. Own
+locomotion, terrain collision, gravity and vertical contact remain active.
+Pairs without a standing body retain the existing mass response. Pushes keep
+full-body terrain clearance and require support along a grounded horizontal
+displacement; a blocked or unsupported push stops at contact. Already
+penetrating standing bodies cannot forcibly displace one another and retain
+the existing unresolved-overlap diagnostic if no legal separation exists.
+
+Local passing also includes stationary grounded mobile entities whose stance is
+false. The stationary entity takes the whole lateral shift at no more than
+its resolved movement speed or the approaching body's speed. Without a safe
+side, it retreats at half that speed, at most two blocks, while the mover
+waits and rechecks for a passing pocket. A stance change, new movement order,
+or completed encounter cancels this temporary movement. The controller clears
+its own temporary request next tick; it never installs a permanent route for
+yielding. Downed/dead entities and active Reactions do not receive voluntary
+yield requests. Terrain, support, loaded-chunk and final entity-contact checks
+still apply. A corridor with no passing space can still block traffic.
+
+The stance and local encounter/request state are derived server runtime data,
+not additional save fields or network payload. Loading rebuilds the stance
+from task and squad state before simulating movement. Regression test sources
+cover stance transitions, soft/rigid pushing, unsafe pushes and stationary
+yielding; they have not been compiled or executed for this change.
+
+As of 2026-10-18, standing-ground contact applies across entity types and factions;
+voluntary local passing applies across entity types within the same faction,
+without requiring `ColonistTag`. Animals, monsters,
+colonists and other mobile bodies use the same rule. Local passing accepts
+grounded bodies with Position, Speed, PhysicsCollider and MovementIntent;
+stationary bodies also need positive resolved movement speed to step aside.
+An entity without AIState is unanchored by default and can voluntarily yield
+if it has these movement capabilities. Soldier bodies without their own AI
+inherit their leader's stance in both local passing and physics, so Defend
+also prevents a voluntary sidestep. Bodies without locomotion intent still use
+the existing physical contact response; this does not grant them AI or walking
+capabilities. Collision-disabled bodies, projectile flight and collision-exempt
+leader/soldier pairs retain their existing exclusions. Terrain and support
+checks still gate displacement. This extension has not been verified, compiled,
+tested or replayed in-game.
+
+Passing lanes, stationary sidesteps and bounded retreat require matching
+nonempty faction instance UUIDs. When neither entity has an instance UUID,
+matching nonzero civilization/faction hashes qualify instead. Distinct faction
+instances sharing a definition do not qualify. World-facing faction hashes
+use the combat system's resolver: legacy colonists default to player and
+unaffiliated non-colonists default to neutral. A zero/unresolved hash in a local
+snapshot does not qualify. Soldier bodies without affiliation inherit their
+leader's affiliation.
+Changing affiliation cancels an existing passing encounter on the next movement
+update. Different factions still collide and use normal mass/standing-ground
+physical push rules; they do not voluntarily make way for each other.
+
+### Mining designation collision admission (2026-10-18)
+
+Mining preview and authoritative submission share `designation_cell_collides`.
+Previously every entity with Position contributed a box derived from visual
+dimensions, falling back to a 1x1x1.8 body even without PhysicsCollider.
+GroundItemPile entities therefore rejected nearby mining cells although they
+had no physical collision. The 11:12 save contains 44 such piles. Rejected
+preview cells are omitted by ordinary confirmation, so no task or persistent
+mark is created; a later debug preview continues to report `target_collision`.
+This explains a reproducible code path for the reported symptom, though the
+log does not identify the exact rejected cells from the user's selection.
+
+The shared admission now uses enabled PhysicsCollider bounds and the terrain
+contact epsilon, ignoring entities without a collider, collision-disabled
+bodies and projectile flight. Model dimensions no longer create collision
+occupancy, and tiny floor/wall contact rounding does not reject adjacent cells.
+Building occupancy and the existing formation-visual exclusion remain.
+Block placement settlement shares the corrected query. Regression sources
+cover piles, actual collider/model differences, contact tolerance and disabled
+or projectile bodies; verification has not been run.
+
+Idle colonists with unreserved backpack contents now receive designated Haul
+delivery work after task completion, interruption or cancellation. These events
+queue a check for the affected worker on the next simulation update, after
+settlement and native assignment cleanup. Duplicate worker checks are combined;
+successful partial unloading also triggers the next check. The existing
+40-tick hauling scan remains a fallback for already idle workers, expired retry
+delays and newly available storage. Priority 9 leaves
+ordinary higher-priority work ahead of unloading. Source and storage-block
+capacity are reserved on activation. Normal qualifications and work policy
+remain applicable. No storage, interruption or rejected deposit leaves the
+contents in the backpack; failed unloading waits 200 ticks before reposting.
+See `item-storage-visuals.html` for destination rules, APIs and the optional
+`source_inventory_slot` persisted hauling-row field. Implementation and
+regression source are present; no verification was run.
+
 World block collapse uses `BuildingSupportSolver::evaluate_world_cell`, reversing
 the building design solver's upward support and eight-neighbor horizontal
 propagation, with the shared seven-cell horizontal span limit. Solid blocks at

@@ -99,11 +99,24 @@ engine.audio.play_3d("sfx_block_place", x, y, z, 0.8)
 engine.audio.stop(handle)
 engine.audio.stop_all()
 
+-- 独占背景音乐：播放时自动停止上一首，按 JSON 中的 loop 设置循环
+-- 省略音量参数时使用 JSON 中声明的 volume
+engine.audio.play_music("bgm_gameplay")
+engine.audio.play_music("bgm_gameplay", 0.5)  -- 显式覆盖音量
+engine.audio.stop_music()
+local playing = engine.audio.is_music_playing()
+
 -- 音量控制
 engine.audio.set_master_volume(0.8)
 engine.audio.set_music_volume(0.65)
 engine.audio.set_effects_volume(0.75)
 engine.audio.set_ambient_volume(0.55)</code></pre>
+
+    <h2>引擎背景音乐</h2>
+    <p><code>engine.audio.play_music()</code> 使用非空间音频播放，音乐不会随相机位置、朝向或与世界原点的距离而衰减。最终音量由曲目音量、音乐分类音量和总音量相乘决定；需要世界坐标和距离衰减的音效使用 <code>engine.audio.play_3d()</code>。</p>
+    <p>引擎初始化成功、音频注册表加载完成后，在进入主循环时启动 <code>bgm_gameplay</code>，因此主菜单出现时就开始播放。进入世界、加载或切换世界、返回主菜单时，同一曲目继续循环，不会因世界生命周期变化而停止或重新从头播放。该实例由 <code>AudioSystem</code> 独占持有，不会在循环换轨的瞬间被完成音效的垃圾回收清除；关闭引擎时释放，也可以用 <code>stop_music()</code> 停止它，或用 <code>stop_all()</code> 停止全部声音。音乐音量滑块会实时作用于正在播放的曲目。</p>
+    <p><code>CoreMod/data/audio/bgm_gameplay.json</code> 当前指向 <code>assets/audio/music/bhkcat_kingdom.mp3</code>（<code>streaming</code> + <code>loop</code>，无限循环）。替换该 JSON 的 <code>file</code> 字段即可更换主菜单和游戏内使用的背景音乐。</p>
+    <p>音频设置的“失焦时静音”（<code>mute_when_unfocused</code>）在主菜单、暂停菜单和游戏内均生效。启用时，引擎依据 GLFW 窗口焦点临时静音总输出；重新获得焦点后恢复当前配置的总音量。静音不会改写总音量设置，也不会停止或重启曲目，失焦期间新播放的声音同样受总输出静音控制；关闭此开关后，失焦时仍正常播放。</p>
 
     <h2>格式选择建议</h2>
     <ul>

@@ -19,6 +19,7 @@
     <p>方块模型放在 <code>assets/models/block/&lt;name&gt;.json</code>，物品形态放在 <code>assets/models/item/&lt;name&gt;.json</code>；两类模型都在启动时预处理。纹理使用相对 <code>assets/textures/</code> 的命名空间资源 ID。只处理<strong>启用中的 MOD</strong>。缓存只有一种当前格式；签名不匹配时直接重建，不读取旧结构。</p>
     <h2>物品形态与植被</h2>
     <p><code>minecraft:item/generated</code> 和 <code>minecraft:item/handheld</code> 为虚拟父模型，支持 <code>layer0</code> 至 <code>layer4</code>。从 PNG alpha 生成前后面和外露像素轮廓的侧面，厚度为一个模型像素；透明区域不变成立方体面，相邻不透明像素不生成内部侧面。手持父模型目前提供相同的生成几何，不解析 Minecraft 的视角 <code>display</code> 变换。显式 <code>elements</code> 可覆盖生成形态。</p>
+    <p>生成薄片物品在地面物品堆中绕 X 轴旋转 90 度后平放，再应用按物品堆 UUID 固定的水平朝向；渲染与鼠标拾取共用同一变换。独立物品的图标兜底同样平放，显式 <code>elements</code> 覆盖生成形态后保留自定义模型方向。NCB3 模型缓存保存生成物品标记，旧签名由启动预处理自动重建。</p>
     <pre><code>{
   "parent": "minecraft:item/handheld",
   "textures": {"layer0": "core:items/test_sword"}

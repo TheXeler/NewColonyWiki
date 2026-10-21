@@ -32,6 +32,9 @@
   stone.png                  -- 16×16 方块贴图
   my_custom_block.png        -- 自定义方块贴图</code></pre>
 
+    <p>内置原木 <code>core:wood</code> 通过 <code>models/block/wood.json</code> 使用从 assets 仓库导入的 <code>oak_log.png</code>（侧面）和 <code>oak_log_top.png</code>（上下端面）。树干 <code>core:tree</code> 使用同一组橡木纹理。</p>
+    <p>水 <code>core:water</code> 使用从 assets 仓库导入的 <code>textures/block/water_still.png</code>。当前取纵向动画条的第一帧 16×16 像素，乘以 <code>#3F76E4</code> 蓝色并保留源图透明度；尚不播放 <code>.mcmeta</code> 动画，也不按流向切换贴图。原木和水不再使用程序化噪声占位纹理。</p>
+
     <h2>物品纹理</h2>
     <p>物品图标可以放在 <code>assets/textures/items/</code> 下，并由物品或方块记录的 <code>icon</code> 字段以相对 <code>assets/</code> 的路径引用。</p>
     <pre><code>assets/textures/items/

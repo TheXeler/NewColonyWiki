@@ -217,6 +217,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.tasks.is_valid(id)", "params": "task UUID", "returns": "bool", "note": "检查任务是否仍有效。" },
         { "api": "engine.tasks.total()", "params": "-", "returns": "integer", "note": "返回任务池中活跃任务数量。" },
 		{ "api": "engine.tasks.list()", "params": "-", "returns": "table", "note": "当前任务实例，包含身份、目标、进度、资格和队列信息。" },
+		{ "api": "engine.tasks.can_unload_inventory(worker_uuid)", "params": "entity UUID", "returns": "bool", "note": "只读查询殖民者是否可开始空闲背包卸载：必须有背包且无当前或已领取工作、征召、失能、登记、路线、移动目标和活动 Reaction。实际分派继续遵守搬运资格和工作政策。" },
 		{ "api": "engine.tasks.set_qualification_expression()", "params": "task_id, expression", "returns": "bool", "note": "保存由 #职业ID_RANK_LEVEL、AND、OR 和括号组成的权威资格表达式。" },
         { "api": "engine.tasks.set_duration(task_uuid, seconds)", "params": "task UUID string, seconds", "returns": "bool", "note": "按任务 UUID 修改时长，不接受数字任务号。时长改变时清零进度，未改变时保留；制作与移动允许零时长。" }
       ]

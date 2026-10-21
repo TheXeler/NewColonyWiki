@@ -47,7 +47,7 @@
         <tr><td><code>placement_support</code></td><td>string</td><td>可放置方块可选</td><td><code>below</code> 表示候选格必须有下方支撑。候选格始终沿命中面的外法线取相邻空格：顶面在上方、底面在下方、侧面在对应外侧，不会强制改到命中方块顶部。</td></tr>
         <tr><td><code>placement_support_blocks</code></td><td>data id array</td><td>否</td><td>限制下方支撑的允许方块 ID；仅与 <code>placement_support: "below"</code> 配合使用。树苗使用 <code>["core:dirt", "core:grass"]</code>，所以点击其他方块侧面时，只要侧边候选格下方是泥土或草方块仍可放置。</td></tr>
         <tr><td><code>cuttable</code></td><td>bool</td><td>否</td><td>显式声明方块可作为割除目标。工作为 <code>Cut</code>（编号 15），统一处理树木与野生植被；树特征的树干和 <code>wild_food_rules</code> 引用的食物方块也会进入割除目标列表。</td></tr>
-        <tr><td><code>tree_feature</code></td><td>data id</td><td>多方块树干必填</td><td>指定完整树形的地物定义。<code>core:tree</code> 引用 <code>core:oak</code>，本身是单格树干模型；树干和树叶由生成器或树苗生长作为完整组件创建。割除按组件一次移除，产出表按树干格数执行，树叶不重复产木。树干不直接作为整棵树放置，种植使用树苗。旧的 <code>single_voxel_component</code> 声明已移除。</td></tr>
+        <tr><td><code>tree_feature</code></td><td>data id</td><td>多方块树干必填</td><td>指定完整树形的地物定义。<code>core:tree</code> 引用 <code>core:oak</code>，本身是单格树干模型；树干和树叶由生成器或树苗生长作为完整组件创建。割除按组件一次移除，产出表按整棵树执行，不乘以树干格数。核心树木每棵随机产出 9-15 个 <code>core:wood</code> 和 0-3 个 <code>core:sapling</code>（均包含端点；树苗各数量概率为 25%），树叶不额外产出。树干不直接作为整棵树放置，种植使用树苗。旧的 <code>single_voxel_component</code> 声明已移除。</td></tr>
         <tr><td><code>block_class</code></td><td>string</td><td>否</td><td>方块遮挡分级：<code>opaque</code> 不透明且遮挡相邻面；<code>translucent</code> 半透明、<code>transparent</code> 透明，都不遮挡相邻面。未填写时根据 <code>translucent</code> 和 <code>material</code> 推断，默认 <code>opaque</code>。未声明 <code>passable</code> 时，仅 <code>transparent</code> 默认可通行。</td></tr>
         <tr><td><code>passable</code></td><td>bool</td><td>否</td><td>独立设置体素通行性，供实体地形碰撞、支撑与寻路共同使用，不改变渲染分类。省略时沿用 <code>block_class</code> 的默认通行性；液体还受液体通行深度规则限制。</td></tr>
         <tr><td><code>movement_speed_multiplier</code></td><td>number</td><td>否</td><td>实体身体与该方块重叠时，水平移动意图的速度倍率，范围 <code>(0, 1]</code>，默认 <code>1</code>。身体碰到多格方块时只取最小倍率，不逐格叠乘；离开后恢复正常。不改变重力、下落速度或液体状态。</td></tr>
@@ -59,7 +59,7 @@
       存量方块可派生同 ID 的兼容物品定义，但世界对象产出只能读取统一产出表。伐木、采石和野采会先填执行者统一背包，溢出在目标位置形成自动回收授权地面实例；不会直接写入仓储或旧 HeldItem。
     </div>
 
-    <p>树苗 <code>core:sapling</code> 使用 <code>transparent</code> 分类与 <code>block/cross</code> 模型：保留一格世界位置与生长记录，角色可以穿过，不遮挡相邻方块面，但仍可被鼠标命中。交叉片模型本身不自动决定碰撞；当前射线选中仍按体素格判断，没有独立的小尺寸树苗选中框。</p>
+    <p>树苗 <code>core:sapling</code> 使用 <code>transparent</code> 分类与 <code>block/cross</code> 模型：保留一格世界位置与生长记录，角色可以穿过，不遮挡相邻方块面。普通鼠标选择仍可命中树苗；选区工具激活时，指针射线穿过可通行方块和液体，落到后方或下方的实体表面，树苗、作物和可通行树叶不会阻挡选区定位。交叉片模型本身不自动决定碰撞；普通射线选中仍按体素格判断，没有独立的小尺寸树苗选中框。</p>
 
     <p>树叶 <code>core:leaves</code> 保留 <code>translucent</code> 分类，并声明 <code>passable: true</code> 与 <code>movement_speed_multiplier: 0.5</code>。角色可以穿过树冠，身体任一部分（包括头部）进入树叶时水平移动速度降至 50%，离开后恢复；树叶不提供站立支撑，也不会让角色进入液体状态。树苗与作物不声明此倍率时不减速。</p>
 

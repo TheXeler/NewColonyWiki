@@ -37,6 +37,8 @@ CoreMod 的全局经营快照已改为写入共享状态，包括制作目录、
 
 仓储视图也不再每 4 Tick 无条件扫描物品来源、策略和仓储点。仓储策略面板打开时立即请求一次，保持打开时每秒请求更新，服务端按单调时钟全局节流为每秒一次；结果写入 `core:storage` 共享键。客户端先检查版本，仅在变化后解码共享 JSON，展示时仍复制返回值。
 
+制作目录 `core:craft_catalog` 与 `core:production.queue_recipe` 的科技检查只作用于科技定义的 `unlocks` 中明确列出的 `recipe:<配方ID>`。没有此解锁关系的配方不要求文明科技状态存在；其可用性仍由配方配置、目标产物可达性等原有条件决定。有科技需求时，缺少有效科技状态返回 `research_state_unavailable`，尚未研究则返回 `research_unavailable`。目录中的无科技配方配置错误或产物不可达会显示各自原因，不会被科技状态缺失覆盖。
+
 食物计划的完整视图已经移除每 4 Tick 的重算。计划写入命令成功后触发 `core:food_plans_changed`，世界载入和模组重载也各发布一次；C++ 共享状态仓接收新值并负责客户端同步。
 
 焦点列表也不再每 4 Tick 重建。新增焦点、选择选项、忽略焦点分别触发 `core:focus_triggered`、`core:focus_chosen`、`core:focus_dismissed`；世界载入和模组重载仍发布当前完整值。

@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>建筑数据 - NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
 <body data-page="mod-buildingregistry"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑蓝图注册</div></div><div class="content">
 <h1>建筑数据</h1>
-<p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod 当前提供制作点 <code>core:crafting_spot</code>、工作台 <code>core:workbench</code> 与烟熏炉 <code>core:smoker</code>，均显式声明蓝图、材料、正工期、入口和工作点。</p>
+<p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod提供制作点 <code>core:crafting_spot</code>、工作台 <code>core:workbench</code>、烟熏炉 <code>core:smoker</code> 与小型灌溉水塔 <code>core:irrigation_tower</code>。普通建筑声明正工期；水塔使用成品搬运后零工时放置，入口与工作点按各设施实际角色配置。</p>
 <h2>定义契约</h2>
 <ul>
   <li>稳定建筑 ID、体素占位、部件集合、碰撞、遮挡和通行。</li>
@@ -11,7 +11,12 @@
   <li>输入/输出暂存属于工作点，不是储存体素。</li>
   <li>可选城镇大厅角色、袭击价值角色、拆除产出表和维修契约。</li>
 </ul>
-<p>缺少正 <code>construction_ticks</code> 的定义会被拒绝，不回退 100 tick。建筑功能不得通过名称特判；例如治疗点只读取显式容量和能力，休息不再硬编码 <code>core:bed</code>。</p>
+<p>普通建筑要求正 <code>construction_ticks</code>，缺失不回退100 Tick。成品安装例外必须明确声明 <code>placement_item</code>、<code>construction_ticks: 0</code>，且材料表恰好包含同ID成品1个；不允许用零工期绕过实际成品消耗。建筑功能读取显式角色，例如治疗点读取容量和能力，休息不再硬编码床ID。</p>
+<h2>小型灌溉水塔</h2>
+<p><code>core:craft_irrigation_tower</code> 在工作台使用木板16、石料8，标准工作量30秒，固定产出1个 <code>core:irrigation_tower</code> 成品。从建筑菜单选择水塔后，<code>systems.installation</code> 等待可领取的本殖民地成品，派工前往实际来源；领取时将物品预约转入工人背包，并与送达任务及持久安装状态共同提交。搬运者必须具备建造资格；抵达目标后才进入放置结算，没有额外施工时长。</p>
+<p>水塔占地1×1、高3格，覆盖基准地面同层9×9，排除自身中心格。覆盖内所有普通耕地都会变为水田，不要求属于种植区，无需外部水源、燃料或人工补水。来源按事件维护，多塔覆盖不叠加；最后来源失效后宽限300模拟Tick，恢复有效供水取消失水。宽限与待更新地块独立保存，拆塔后仍继续处理；区块未加载时保留待办，加载后落实。只有等待加载的水塔来源与延迟地块会重试，耕地不查询附近水塔。</p>
+<p>正常拆除已建好的水塔返还1个成品并保留原殖民地归属；取消未放置蓝图不产生免费成品，尚在搬运的物品按预约清理后返回可回收地面堆。放置受阻不消耗成品，重置计划供重试。“种植与灌溉”窗口显示领取／搬运状态、供水状态、启停按钮和失水宽限剩余Tick。来源与安装状态均随世界保存，严禁通过读档再发一次成品。</p>
+<p>本轮收口实体场景中的水塔链路。NPC城邦有水塔待安装时以 <code>city_installation_pending</code> 保留实体模拟，完成或取消后再允许交接；抽象安装与跨城邦边界灌溉不在本轮完成声明内。木石模型与物品图标仍为占位素材。新增回归测试只有源码，未编译、未执行；接口及数据静态核对不能作为游戏验收通过。</p>
 <h2>当前内容屏障</h2>
 <p>其他城镇大厅、矿井、储存体素、治疗设施和工艺设施仍需具体内容定义；运行时不会生成替代建筑。</p>
 <h2>烟熏炉</h2>

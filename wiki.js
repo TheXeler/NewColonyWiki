@@ -92,7 +92,8 @@ const WIKI_NAV = [
     title: "附录",
     links: [
       ["mod-lua-api-reference", "Lua API 速查", "mod-lua-api-reference.html"],
-      ["mod-lua-events-reference", "Lua 事件 速查", "mod-lua-events-reference.html"]
+      ["mod-lua-events-reference", "Lua 事件 速查", "mod-lua-events-reference.html"],
+      ["mod-console-reference", "控制台命令速查", "mod-console-reference.html"]
     ]
   }
 ];
@@ -472,6 +473,17 @@ function escapeHtml(s) {
   }[c]));
 }
 
+// Shared quick-reference tables. The Lua API and Lua event pages use the
+// default field/column set; other reference pages can override them on the
+// container with data-api-fields, data-api-columns and data-api-code-fields.
+const API_TABLE_DEFAULT_FIELDS = ["api", "params", "returns", "note"];
+const API_TABLE_DEFAULT_COLUMNS = ["API", "参数", "返回", "备注"];
+
+function parseListAttribute(value) {
+  if (!value) return [];
+  return value.split(",").map((part) => part.trim()).filter((part) => part !== "");
+}
+
 function renderLuaApiTable() {
   const container = document.querySelector("[data-lua-api-container]");
   if (!container) return;
@@ -483,6 +495,13 @@ function renderLuaApiTable() {
     return;
   }
 
+  const customFields = parseListAttribute(container.getAttribute("data-api-fields"));
+  const fields = customFields.length > 0 ? customFields : API_TABLE_DEFAULT_FIELDS;
+  const customColumns = parseListAttribute(container.getAttribute("data-api-columns"));
+  const columns = customColumns.length === fields.length ? customColumns : API_TABLE_DEFAULT_COLUMNS;
+  const codeFields = parseListAttribute(container.getAttribute("data-api-code-fields"));
+  const codeSet = new Set(codeFields.length > 0 ? codeFields : [fields[0]]);
+
   const fragment = document.createDocumentFragment();
   for (const group of data.groups || []) {
     const h = document.createElement("h3");
@@ -492,7 +511,13 @@ function renderLuaApiTable() {
 
     const table = document.createElement("table");
     const thead = document.createElement("thead");
-    thead.innerHTML = "<tr><th>API</th><th>参数</th><th>返回</th><th>备注</th></tr>";
+    const headRow = document.createElement("tr");
+    for (const column of columns) {
+      const th = document.createElement("th");
+      th.textContent = column;
+      headRow.appendChild(th);
+    }
+    thead.appendChild(headRow);
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
@@ -500,18 +525,13 @@ function renderLuaApiTable() {
       const tr = document.createElement("tr");
       tr.className = "api-row";
       tr.setAttribute("data-api-row", "");
-      const tdApi = document.createElement("td");
-      tdApi.innerHTML = "<code>" + escapeHtml(item.api) + "</code>";
-      const tdParams = document.createElement("td");
-      tdParams.textContent = item.params;
-      const tdReturns = document.createElement("td");
-      tdReturns.textContent = item.returns;
-      const tdNote = document.createElement("td");
-      tdNote.innerHTML = escapeHtml(item.note);
-      tr.appendChild(tdApi);
-      tr.appendChild(tdParams);
-      tr.appendChild(tdReturns);
-      tr.appendChild(tdNote);
+      for (const field of fields) {
+        const value = item[field] === undefined || item[field] === null ? "" : String(item[field]);
+        const td = document.createElement("td");
+        if (codeSet.has(field)) td.innerHTML = "<code>" + escapeHtml(value) + "</code>";
+        else td.textContent = value;
+        tr.appendChild(td);
+      }
       tbody.appendChild(tr);
     }
     table.appendChild(tbody);

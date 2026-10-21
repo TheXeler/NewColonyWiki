@@ -1832,7 +1832,7 @@ construction_active 提供器现读取客户端缓存。core:construction 通道
 
 建筑完成发布 core:building_completed，字段 building_uuid、def_id、x/y/z；组件登记和仓储更新通过独立服务端静态监听器执行。仓储策略变更发布 core:storage_policy_changed。搬运产物每 40 Tick 由静态监听器扫描，不再依赖 bootstrap 初始化闭包定时器。客户端旧数据桥通知及其他建筑事件仍待迁移；回归测试仅新增源码，未运行。
 
-采矿和割除先发布可修改的 `core:resource_extracting`，监听器的 `current.products` 是最终产物定义和数量；随后 `engine.world.settle_mining_outputs` 准备全部产物，与整组方块删除共同发布。多方块树由原生生成集合或树苗生长集合登记 UUID，不推断邻接归属；按树干格数执行产出表，树叶随整棵树移除但不额外产木。野生食物按单格结算，保留原有产出表和生态刷新规则。提交失败不清理组件或区域，重试保留组件 UUID。提交成功后发布 `core:block_mined`/`core:block_cut`；`core:resource_blocked` 报告失败原因。区域清理坐标写入世界状态并由专属 tick 监听器重试。事件和经济日志不回滚已提交的方块与产物；测试源码未执行。
+采矿和割除先发布可修改的 `core:resource_extracting`，监听器的 `current.products` 是最终产物定义和数量；随后 `engine.world.settle_mining_outputs` 准备全部产物，与整组方块删除共同发布。多方块树由原生生成集合或树苗生长集合登记 UUID，不推断邻接归属；按整棵树执行产出表，不乘以树干格数，树叶随整棵树移除但不额外产出。`core:tree_block_output` 每次随机产出 9-15 个 `core:wood` 和 0-3 个 `core:sapling`（均包含端点），两项均不受制造模式影响。树苗使用 `weighted_one` 分组：权重 1 的空 `all` 组表示无掉落，权重 3 的物品项随机产出 1-3 个，四种数量各占 25%；零掉落不会创建零数量物品。当前加载城市与离线城市资源结算共用 `Mining.output_request`。野生食物按单格结算，保留原有产出表和生态刷新规则。提交失败不清理组件或区域，重试保留组件 UUID。提交成功后发布 `core:block_mined`/`core:block_cut`；`core:resource_blocked` 报告失败原因。区域清理坐标写入世界状态并由专属 tick 监听器重试。事件和经济日志不回滚已提交的方块与产物；测试源码未执行。
 
 进食失败发布 core:need_blocked，字段 task_uuid、可选 entity_uuid、need、reason；不可取消、不自动同步。经济问题由独立服务端静态监听器处理，失败待办在报告前保存移除，避免通知异常后重复结算。测试源码已添加，未执行。
 
