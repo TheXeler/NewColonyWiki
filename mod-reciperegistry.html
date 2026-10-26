@@ -17,7 +17,7 @@
     <pre><code>{
   "id": "core:craft_wood_plank",
   "inputs": [
-    { "id": "core:wood", "count": 1 }
+    { "tag": "c:logs", "count": 1 }
   ],
   "target_item": "core:wood_plank",
   "manufacturing_mode": "none",
@@ -58,6 +58,7 @@
       </tbody>
     </table>
     <p><code>id</code> 与 <code>tag</code> 必须恰好出现一个：同时出现（语义歧义）或都不出现都会被拒绝。</p>
+    <p><code>tag</code> 面向通用物品组，既支持独立 <code>items</code>，也支持有物品身份的方块，适用于木材、木板、食材等。成员来自内联 <code>tags</code>/<code>usage_tags</code> 和 <code>data/tags/</code>。例如 <code>{ "tag": "c:logs", "count": 4 }</code> 可用两种木头各 2 份满足；多个输入重叠时联合分配，既不重复占用库存，也不会让宽泛组抢走指定材料。空组不能发布制作工作。分组格式及 Lua 查询见 <a href="mod-tagregistry.html">标签数据</a>。</p>
 
     <h2>校验与配置屏障</h2>
     <p>字段类型、取值和结构性错误会让整个文件加载失败；语义缺失则保留配方并写入稳定原因，使入口进入配置屏障而不是静默回退默认值。</p>
@@ -81,7 +82,7 @@
     <table>
       <thead><tr><th>配方 ID</th><th>材料</th><th>目标物品</th><th>工时</th><th>兼容工作点</th><th>产出表（结果）</th></tr></thead>
       <tbody>
-        <tr><td><code>core:craft_wood_plank</code></td><td>1 x <code>core:wood</code></td><td><code>core:wood_plank</code></td><td>5</td><td><code>core:handcraft</code>、<code>core:workbench</code></td><td><code>core:wood_plank_output</code>（4 木板）</td></tr>
+        <tr><td><code>core:craft_wood_plank</code></td><td>1 x <code>c:logs</code> Tag（当前成员 <code>core:wood</code>）</td><td><code>core:wood_plank</code></td><td>5</td><td><code>core:handcraft</code>、<code>core:workbench</code></td><td><code>core:wood_plank_output</code>（4 木板）</td></tr>
         <tr><td><code>core:craft_stick</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:stick</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:stick_output</code>（4 木棍）</td></tr>
         <tr><td><code>core:craft_wood_floor</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:wood_floor</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:wood_floor_output</code>（2 木地板）</td></tr>
         <tr><td><code>core:craft_workbench</code></td><td>4 x <code>core:wood_plank</code></td><td><code>core:workbench_item</code></td><td>15</td><td><code>core:handcraft</code></td><td><code>core:workbench_output</code>（1 工作台）</td></tr>
