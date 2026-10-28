@@ -18,6 +18,7 @@
 { "id": "example:rice", "usage_tags": ["crop", "grain"] }</code></pre>
 <p>上述片段展示标签字段，其他物品或方块必填字段仍需填写。方块的 <code>tags</code> 同时加入世界方块索引；独立物品的标签和 <code>usage_tags</code> 不会让世界方块查询匹配到不存在的体素。独立标签文件中明确列出的方块仍可供世界查询使用。</p>
 <h2>配方用法</h2>
+<p>首批料理使用 <code>core:raw_cooking_grains</code>（小麦、玉米、高粱、燕麦、水稻）和 <code>core:raw_cooking_tubers</code>（马铃薯、芋头、山药、木薯粉）。这是投入资格组；<code>grain</code> 等展示用途标签还可能包含面包，不能用作禁止熟食再加工的边界。Tag决定可替换材料，实际成品营养及寿命由本次消耗原料的烹饪组件决定。</p>
 <pre><code>"inputs": [
   { "tag": "c:logs", "count": 4 },
   { "id": "example:binding", "count": 1 }

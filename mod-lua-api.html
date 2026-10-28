@@ -10,6 +10,11 @@
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
+    <h2>可食用与烹饪组件</h2>
+    <p><code>core:treatment_completing.heal_amount</code> 的事件类型为number：供餐 <code>stage="feed"</code> 使用实际食物营养、允许小数并恢复饱食度；其他治疗阶段仍校验为整数生命治疗量。既有事件名、身份、来源、预留及失败恢复约束保持。</p>
+    <p><code>engine.items.food(id, payload_json?, spoilage_progress?)</code> 以定义ID、物品栈原始载荷（默认空串）和实际腐坏进度（默认0）解析组件，返回 <code>nutrition</code>、<code>duration_ticks</code>、<code>ground_ticks</code>、<code>medicine</code> 和存在定义时的 <code>category</code>。缺少可食用数据返回营养0，非法声明会被拒绝。动态熟食缺少寿命或已过期时不提供可用营养。</p>
+    <p><code>engine.items.definition</code> 额外返回 <code>edible_nutrition</code>、<code>dynamic_food</code> 和可选 <code>cooking</code>（<code>nutrition</code>、<code>duration_ticks</code>）。CoreMod <code>systems.food_components.read(item)</code> 接受库存行、个人物品或带 <code>components</code> 的归档行，所有营养消费者复用该入口。<code>cooked_payload(inputs)</code> 只接受实际1份具体原料并准备成品载荷，不消费库存。</p>
+    <p>招募支付按实际库存栈选择并保留组件；<code>engine.items.place_player_output</code> 最后增加可选组件表参数，仅用于已授权的产出／退款路径。省略时沿用旧行为，提供时保留完整品质、载荷、腐坏及附件，不改变原有写入权限。营养药剂的普通进食转入现有 <code>use_medicine</code> 工作，成功结算同时提交营养、效果义务和CD。</p>
     <p>2026-10-21，<code>engine.city_native.advance_items</code> 的签名和返回结构保持：claims 仍仅表示公共 ground_pile／block_inventory 材料声明。个人安装预留从规范档案中的 installation_custody 经共享原生编解码器读取，不能通过 claim_rows 冒充。只有原 Task／订单／人物／槽位／句柄／数量／完整组件与来源相符、完整声明集合成立时才允许保留个人槽位预约。原生老化继续累计腐败进度，预留延后物品转换；不增加公共库存、经验或通知。</p>
     <p>通用居民档案对账、真实撤出档案形成、老化前后及重导入源码均已接入相同托管编解码器。它只检查候选数据，实际发布仍需要已有同 VM core 权威／来源比较及联合提交。未知或缺失预约继续拒绝；失败保留原输出和真实状态。集中真实撤出来源的老化／重试／拒绝场景只有源码，尚未编译执行；离线交付结算及取消／死亡、完整 Runtime／磁盘验收仍未完成，自动交接屏障保持。</p>
     <p>2026-10-21，内部 Installation 新增纯数据 validate_city_custody(facts,native)、prepare_city_custody_withdraw(orders,facts,native) 和 prepare_city_custody_import(orders,facts,native)。facts 必须保留原完整 orders_source、Task／建筑／人物／槽位声明来源；原城升级与终态通知须已交付。组撤出从各城真实来源移除准确订单后组合一个写入；返回只追加准确原行，保留当前全部历史及无关状态，完整解码继续验证原取货／声明／中断／转换关系。Business 在有规范托管时组合该写入；原生固定业务核验相应增加 core:systems.installation／orders 的准确完整比较，普通七业务契约保持。</p>

@@ -10,6 +10,14 @@
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>注册物品、方块和规则</div></div>
   <div class="content">
+    <h2>基础料理物品组件</h2>
+    <p>提供营养的物品定义使用 <code>edible: {"nutrition": 10}</code>；原料使用独立 <code>cooking: {"nutrition": 10, "duration_ticks": 2016000}</code>，该寿命是最终熟食的完整仓储寿命。原粮不会因烹饪营养而成为可直接食用物品。营养必须是有限非负数，缺省为0；寿命为非负32位整数。既有 <code>food_value</code>、<code>directly_edible</code>、<code>cooking_ingredient</code> 和 <code>cooked_nutrition</code> 在定义加载时兼容读取，显式组件优先。</p>
+    <p>动态食品标记 <code>dynamic_food: true</code>，制作时依据实际消耗材料，把 <code>edible</code> 和 <code>food_lifetime</code> 写入既有物品栈 <code>payload_json</code>。同一食品ID可有不同营养与寿命；无实例营养为0，无实例寿命视为过期，进入正常腐坏处理，不补默认原料值。药剂效果及CD独立存在，纯药剂不因此获得营养。</p>
+    <pre><code>{
+  "edible": {"nutrition": 10},
+  "food_lifetime": {"duration_ticks": 2016000, "ground_ticks": 1008000}
+}</code></pre>
+    <p>普通进食、口粮、治疗供餐及招募支付共同读取该组件。药剂食品实际食用时同时处理营养、药效和药剂CD，资源支付不触发药效。营养或寿命不同不能堆叠；纯基础食品载荷只因JSON字段顺序不同仍可合并。详情和首批配方见 <a href="mod-reciperegistry.html">配方数据</a>。</p>
     <h1>注册物品、方块和规则</h1>
     <p class="subtitle">所有内容数据都放在 <code>data/</code> 下。引擎在加载阶段自动扫描这些目录，不需要你在 Lua 里手动注册。</p>
 
