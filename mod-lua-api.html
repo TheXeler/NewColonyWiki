@@ -820,5 +820,16 @@ engine.log.info(locale .. ": " .. engine.locale.translate_cat("ui", "menu.start"
   </div>
 </div>
 <script src="wiki.js"></script>
+<div class="main"><div class="content">
+  <h2 id="crafting-order-options">制造目录、分类与订单选项（2026-10-31）</h2>
+  <p>新增只读 <code>engine.crafting.ui_categories()</code>、<code>ui_metadata(type,id)</code>、<code>item_data_id(hash)</code>、<code>output_preview(table_id,executions)</code>。产出预览从已解析结果表计算每个物品的 <code>min_count/max_count/mean_count</code>，不抽签、不创建产物、不改变 RNG。随机选择的下界保守取零；失败制造的成功条件仍由真实制造结算决定，不能把预览当作保产承诺。</p>
+  <p>分类数据位于 <code>data/recipe_categories/*.json</code>，字段为 <code>id</code>、本地化 <code>name_key</code> 和整数 <code>order</code>。配方和 item base 使用 <code>ui_category_tags</code> 引用；药剂沿用实际配方分类。它与材料匹配 Tag 分离，未引用或无有效分类的内容归杂项。分类定义示例：</p>
+  <pre><code>{"id":"example:smelting","name_key":"ui.example:category.smelting","order":20}
+{"id":"example:bar","ui_category_tags":["example:smelting"],"...":"其他配方字段"}</code></pre>
+  <p>三个 <code>core:production.queue_*</code> 命令保留原参数，新增可选 <code>ingredient_limits</code>、<code>stock_target_item</code>、<code>client_request_id</code>。限制格式为 <code>[{input:1,items:["example:ore"]}]</code>，输入索引从 1 开始；省略表示任意兼容种类，显式空列表不能创建订单。限制进入实际需求、预留和开始契约，不只是页面过滤。</p>
+  <p><code>stock_target_item</code> 必须是来源结果表可能产出的物品。固定模式的 count 是批数；库存模式是该物品件数。固定数量产出按每批件数及在途批次换算；随机产出、品质等不确定条件采用单批在途后重评估。订单保存请求身份、材料限制与目标产物，旧记录缺字段保持不限材料及原目标产物。</p>
+  <p><code>client_request_id</code> 是客户端本次创建操作的 UUID，同一殖民地相同身份与参数返回已有订单，参数冲突拒绝。<code>core:production.request_status</code> 以该 UUID 查询已保存结果；不要用新的身份盲目重试未知结果。订单在成功保存后才派工。新窗口只读订单和确认取消；现有修改 API 不因 UI 迁移删除。网络版本保持 1。</p>
+  <p><code>craft_screen_state</code> 为客户端展示通道；<code>core:craft_screen.action</code> 处理本地筛选、草稿、对话框和下单入口，不能绕过服务器生产命令。新增回归测试仅为源码，尚未运行；没有构建或实际 RmlUI 验收结论。</p>
+</div></div>
 </body>
 </html>
