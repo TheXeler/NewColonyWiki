@@ -822,6 +822,7 @@ engine.log.info(locale .. ": " .. engine.locale.translate_cat("ui", "menu.start"
 <script src="wiki.js"></script>
 <div class="main"><div class="content">
   <h2 id="crafting-order-options">制造目录、分类与订单选项（2026-10-31）</h2>
+  <p>页面当前殖民地读取只读 <code>engine.factions.local_colony_uuid()</code>，它解析本地用户名的实际殖民地绑定。<code>command_colony_uuid()</code> 仍只代表服务器命令执行期间的操作者上下文，不能拿来作为定时 UI 刷新的身份来源；UI 身份不能替代服务器授权。</p>
   <p>新增只读 <code>engine.crafting.ui_categories()</code>、<code>ui_metadata(type,id)</code>、<code>item_data_id(hash)</code>、<code>output_preview(table_id,executions)</code>。产出预览从已解析结果表计算每个物品的 <code>min_count/max_count/mean_count</code>，不抽签、不创建产物、不改变 RNG。随机选择的下界保守取零；失败制造的成功条件仍由真实制造结算决定，不能把预览当作保产承诺。</p>
   <p>分类数据位于 <code>data/recipe_categories/*.json</code>，字段为 <code>id</code>、本地化 <code>name_key</code> 和整数 <code>order</code>。配方和 item base 使用 <code>ui_category_tags</code> 引用；药剂沿用实际配方分类。它与材料匹配 Tag 分离，未引用或无有效分类的内容归杂项。分类定义示例：</p>
   <pre><code>{"id":"example:smelting","name_key":"ui.example:category.smelting","order":20}
