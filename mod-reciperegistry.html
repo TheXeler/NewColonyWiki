@@ -13,6 +13,9 @@
     <h1>配方数据</h1>
     <p class="subtitle">固定制作配方位于 <code>data/recipes/*.json</code>。配方只声明材料、目标物品、工时和兼容工作点，实际结果与数量由产出表决定。</p>
 
+    <h2>材料可用性预览</h2>
+    <p>制作界面通过 <code>systems.production_options.preview(inputs, limits, available, batches)</code> 对材料共同分配库存，重叠的候选材料不能在不同输入行中重复计数。<code>available(id)</code> 的第一个返回值是数值库存；库存读取器还可返回 <code>known</code> 等附加信息，预览算法先将第一个返回值保存为局部数值，再限制容量不低于零，不能把函数的全部返回值直接传给 <code>math.max</code>。数量之后的布尔值由展示调用方按需使用，不参与数值比较。此修正解决 <code>craft_screen_state</code> 快照报 <code>bad argument #3 to 'max' (number expected, got boolean)</code> 的源码原因；对应回归测试源码已补充，尚未编译或执行。</p>
+
     <h2>格式</h2>
     <pre><code>{
   "id": "core:craft_wood_plank",
