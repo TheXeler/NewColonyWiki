@@ -14,6 +14,7 @@
     <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。存量方块记录会派生同 ID 的兼容物品定义；不需要成为体素的新物品应放在 <code>data/items/</code>。</p>
 
     <h2>JSON 格式</h2>
+    <p>两格家具通过建筑安装创建：红床 <code>core:bed</code>＋<code>core:bed_foot</code> 横向两格，橡木门 <code>core:door</code>＋<code>core:door_top</code> 上下两格。四向模型及门的 <code>door_open</code>／<code>door_top_open</code> 变体是内部方块，均 <code>placeable:false</code>、<code>has_item_block:false</code>。独立成品物品仍为 <code>core:bed</code>、<code>core:door</code>，通过工作台制作和建筑菜单搬运安装。门的开关变体分别声明 <code>passable:true/false</code>，薄门模型不改变体素碰撞规则；开关一次提交整扇门。床与关闭的门均不可通行，也不提供支撑；详情见<a href="mod-buildingregistry.html">建筑数据</a>。本批尚未运行验证。</p>
     <pre><code>{
   "id": "copper_age:copper_ore",
   "name": "Copper Ore",
