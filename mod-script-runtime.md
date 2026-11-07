@@ -2347,3 +2347,37 @@ runtime verification have not been run for this fix.
 Fixed impact damage and runtime structural collapse are described in
 [Entity tasks and movement](entity-tasks.md). Added checks are source-only;
 this change has not been compiled or runtime-tested.
+
+## Career tree presentation
+
+The personal-information page opens the Lua-owned `ui.career_tree` panel.
+`systems.career_snapshot` preserves each loaded job's `parent`, `rank`,
+`max_level`, and `sort_order`, plus the resident's `levels` entries containing
+`job_id`, `rank`, `level`, and `xp`. Existing requirements, abilities, eligibility,
+and equipment source locators retain their meanings. These fields flow through
+the existing career server/client shared-state channel; the UI does not read
+source-tree definitions or keep a separate progression ledger.
+
+`career_tree_state` is a client UI provider, consumed through typed
+`career_tree` bindings. `core:career_tree.action` is a client play command with
+string `action` and optional string `value`. The cancellable
+`core:career_tree_action_requested` event precedes it. Supported actions are
+`select`, `equipment`, `confirm`, `dismiss`, `back`, `close`, and `escape`.
+Confirmation delegates the selected resident UUID, loaded job id, and original
+equipment source locator to `core:colonists.change_class`; that server command
+continues to own admission, reservation, and queueing. Request completion uses
+the existing `core:ui_command_completed` event. UI success means work queued.
+
+RML owns the node and edge-segment lists. The reusable native `graph-viewport`
+interaction consumes `data-graph-canvas`, `data-graph-layout`,
+`data-graph-tooltip-id`, and optional `data-graph-hint`. Canvas node buttons use
+`data-graph-node` and `data-graph-tooltip`; edge containers use
+`data-graph-from` and `data-graph-to`. The helper applies `is-dimmed` and
+`is-emphasized` classes, preserves data-view ownership of the DOM, and pans the
+canvas in both axes. The page stylesheet assigns highlighted edges a higher
+stacking level than ordinary edges and keeps all nodes above the links. Lua
+generates dashed segments for every incoming link to a job with multiple
+prerequisites. Hover walks include all transitive prerequisites, not just the
+layout parent. World unload, disconnect, Mod shutdown, document replacement,
+and UI reload clear the relevant transient state. This source change has not
+been built, statically validated, or run in the game.
