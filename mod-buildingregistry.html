@@ -3,15 +3,12 @@
 <body data-page="mod-buildingregistry"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑蓝图注册</div></div><div class="content">
 <h1>建筑数据</h1>
 <p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod提供制作点 <code>core:crafting_spot</code>、工作台 <code>core:workbench</code>、烟熏炉 <code>core:smoker</code>、箱子 <code>core:chest</code> 与小型灌溉水塔 <code>core:irrigation_tower</code>。普通建筑声明正工期；箱子与水塔使用成品搬运后零工时放置，入口与工作点按各设施实际角色配置。</p>
-<h2>定义契约</h2>
 <h2>两格家具：红床与橡木门</h2>
-<p><code>core:bed</code> 横向占两格，尺寸 <code>[1,1,2]</code>，床头为局部 <code>[0,0,0]</code>、床尾为 <code>[0,0,1]</code>。<code>core:door</code> 上下占两格，尺寸 <code>[1,2,1]</code>。两者均用一个 <code>parts</code> 部件持有完整两格和原建筑 owner UUID，沿已有保存、快照、整体选中与拆除流程处理。四向旋转同时变换部件、入口和每格模型；内部床尾、门上半部及方向／开门变体不提供独立物品或直接放置入口。</p>
-<p>工作台配方 <code>core:craft_bed</code> 使用6木板＋6棉纤维，工作量20秒；<code>core:craft_door</code> 使用6木板，工作量15秒，均产出1个成品。随后从建筑菜单选择红床或橡木门，由居民按既有成品安装流程领取、搬运并一次放置完整两格，额外施工工时为0。正常拆除整件家具返还1个原成品，取消尚未安装的计划不生成成品。</p>
-<p>选中门的任一格，现有RmlUI摘要按钮显示“开门”或“关门”。客户端通过 <code>core:door.set_open</code> 请求服务器，校验建筑殖民地归属、已完成状态、真实两格原模型和加载状态；原生批量编辑一次提交上下两格，随后沿普通地形通知更新网格、寻路和碰撞。开启后两格均可通行；关闭恢复阻挡，门道有实体碰撞体时拒绝关闭。门不会自动为行人开启。开关状态直接来自实际方块变体并随区块保存，不另存第二份开关标志；整体部件识别及拆除同时接受同方向的开／关变体。</p>
-<p>居民出现休息需求时，优先选择本殖民地完整、空闲且可达的床，从旋转后的侧边入口前往；找不到床仍使用原地休息。现有Rest／Sleep任务以Building载荷持有床位，活动任务是独占与保存的唯一来源。走向床的途中不恢复体力，到达后显示躺卧姿态并按1.5倍恢复，体力达到95后结束；严重饥饿会让出床位处理进食。中断、取消、失去任务、床损坏或拆除会释放床位。没有新增床主绑定或治疗床能力，耗尽体力的强制睡眠仍原地执行。</p>
-<p>蓝图逐格可声明长度为4的 <code>facing_blocks</code>，按顺时针0／90／180／270度指定实际方块ID，首项须等于 <code>block</code>；<code>open_blocks</code> 同样按四向指定开门变体。两种字段仅用于明确 <code>pos</code> 的单格记录，各引用须已注册。床另声明 <code>bed: {"head":[0,0,0],"recovery_multiplier":1.5}</code>；床头须在定义尺寸内，恢复倍率为1至4之间的有限数。运行时从原定义及实例朝向派生几何，不注册旋转建筑副本。</p>
-<p>素材来自 <code>minecraft_assets/textures/entity/bed/red.png</code>、<code>textures/block/oak_door_bottom.png</code>、<code>oak_door_top.png</code> 与 <code>textures/item/oak_door.png</code>。Minecraft的床使用实体图集，CoreMod新增床头／床尾床垫与四腿的静态方块模型；物品图标使用原床垫图集组合。<code>tools/import_furniture_assets.py</code> 是限定范围的一次性源资产导入器，已存在输出会拒绝覆盖。</p>
-<p>本批仅完成源码、素材、文档与回归场景源码；没有运行构建、测试、静态检查或游戏。待统一验收：四向及跨区块放置、上下门同步开关、关门占人拒绝、两居民争抢一床、到床前不恢复、睡眠中断／拆床、开门与睡眠中保存读档，以及多人归属与状态同步。</p>
+<p>红床横向占两格，橡木门上下占两格，仍沿工作台成品制作、搬运安装和整体拆除流程使用。玩法通过共享能力Tag <code>c:sleepable</code> 和 <code>c:toggleable</code> 识别，不依赖床／门ID、部件type或固定格数。普通睡袋MOD在其建筑／部件定义或蓝图方块上声明 <code>c:sleepable</code> 即可复用睡眠脚本；入口、恢复倍率和模型动画名有默认约定，可选 <code>interactions.sleep</code> 调整。</p>
+<p><code>systems.furniture</code> 在Lua管理选址、独占、到达、体力恢复、醒来与清理；C++只提供通用需求任务回调、部件状态原子修改和模型动画控制。实际躺卧姿势属于模型中的 <code>sleep</code> 动画；引擎不写死床专用姿势或旋转。实体的通用可视偏移与朝向偏移由Lua申请，沿既有外观机制保存及同步，不移动物理位置。</p>
+<p>任意部件格都能解析共同身份、Tag与开关状态。逐格 <code>active_block</code> 声明可切换变体，原生一次提交所有状态格并保留朝向；目标为实体阻挡状态且有人占用时拒绝。门使用该通用机制，未加入自动开门。朝向由所有方块共有的状态字段表达，模型只需一份，不使用方向专用方块ID或 <code>facing_blocks/open_blocks</code>。</p>
+<p>完整数据契约、睡袋示例、默认规则与待执行验收见<a href="furniture-capabilities.md">家具能力与模型姿态</a>。当前批次未运行编译、测试、静态检查、资源暂存或游戏。</p>
+<h2>定义契约</h2>
 <ul>
   <li>稳定建筑 ID、体素占位、部件集合、碰撞、遮挡和通行。</li>
   <li>一个或多个入口，以及入口到内部工作点的实际通行状态。</li>
