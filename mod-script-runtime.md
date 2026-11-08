@@ -1,5 +1,48 @@
 # Mod 脚本运行契约与迁移记录
 
+已提交工作、事件完成确认和普通殖民者死亡的最新失败规则见本文“已提交结果与后续脚本错误”。这些结果的后续观察失败只记 ERROR，既不撤回结果，也不保留一个等待监听器成功的全局队头。
+
+## 服务器行为步骤与错误边界（2026-11-08）
+
+`engine.server.run_step(operation, context, callback)` 是服务器端同步执行入口，返回
+`ok, value, error`。`callback` 在当前调用者原有权限下执行，最多返回一个业务值；
+没有返回值时 `value` 为 nil。普通的 `false` 返回值是业务结果，不自动视为异常。
+回调异常统一记 ERROR，包含 operation、调用者提供的小型 context、脚本来源和错误，
+返回 `false, nil, error`；不恢复已经修改的世界，不创建待处理记录，不自动重试。
+客户端、候选准备或其他无发布权限阶段不能用这个入口绕过权限检查。
+
+事件监听器也复用相同的原生错误边界，某个监听器报错后继续后续监听器。
+事件载荷仍按既有事件契约发布成功修改；这不会撤销监听器已经完成的世界行为。
+各原生能力继续验证真实调用上下文、对象身份和物理事实。物品转移等单项操作
+可以保证自身的数据一致，但不能因此把死亡、掉落计算、物品生成和拾取绑成
+一个失败时复活对象的大事务。
+
+```lua
+local ok, products = engine.server.run_step("combat.calculate_drops", {
+    target_uuid = target_uuid,
+}, function()
+    return calculate_drops(definition, death_facts)
+end)
+-- 死亡此前已经生效。计算失败只记 ERROR，不复活目标、不重放死亡。
+if ok then
+    engine.server.run_step("combat.create_drops", {target_uuid = target_uuid}, function()
+        return create_drops(products)
+    end)
+end
+```
+
+采掘已接入这一入口：破坏方块完成后，清理、产出计算、物品生成和通知分别执行，
+后续报错只记录 ERROR，完成队列继续。`engine.server.destroy_task_blocks(task_uuid, cells)`
+验证原始已完成破坏任务与真实方块；`engine.server.create_task_outputs(task_uuid, products, pickup)`
+创建该次任务产物，可选自动入包被拒绝时留为地面产物。这两个能力只允许真实完成派发
+上下文，同步范围内防止重复执行，不接受 Lua 自行提供的资产证明。
+新路径不创建前后历史资产文档，不克隆全 ECS，不以历史重建、掉落或通知成功作为
+已经完成的方块破坏的确认条件。产物准备只复制执行者与相关落地点的物品堆；
+地面物品堆发现仍遍历相应 ECS 查询，不宣称已经有空间索引。
+
+本轮未编译、运行测试或游戏。统一执行入口可供其他 Lua 玩法复用；历史城邦、
+临床、制造等领域的专用验收和持久化协议尚未逐一迁移，怪物死亡实现本轮未修改。
+
 第226节新增Server `prepare_effect_clinical_tick_references/work(owner,original_archive,from,requested_end)`，捕获完整Tick物品准备并复用既有固定core只读／copy provider。共享Population同时支持prefix和completed kind，核对首次saved marker、最终phase／UUID顺序／exact remaining patients、原clocks／Tasks／claims以及完整居民／team custody。按最终native状态决定整组暂停：真正恢复活动能力不因首次零血而暂停；正HP但仍downed及suffix新患者仍暂停，历史progress／consumed先保留，完成边界继续要求实际settle。Runtime复用实际历史产能投影／进度算法，native入口独立重采完整Tick工作帧，比较首次来源与最终phase／Tick，核对provider flags／kind／owner／名单和整个ManagedState／Tick。完整custody promotion后仍可准备引用／工作，不回退旧prefix，不重放定义或选址。输出仍blocked，不发布city／Work／patient／asset／native Task／Effects／clock／receipt消费／outbox；其它section／实际结算／native接管与联合接受调度仍待。320段Lua5.1仅语法加载（1份实际Effects wrapper），113份完整JSON解析，零执行。新C++closures／Lua规则及实际共享／独立native-provider源码场景未编译执行；系统false，第79节Release不验证80–226。
 
 第225节新增Server `prepare_effect_clinical_tick_items(owner,original_archive,from,requested_end)`，使用捕获的finish／native item adapters，从saved proof／handoff重算完整临床Tick并派生原claims。native completed inspector核对最终phase／UUID顺序、首次患者身份及精确remaining patients，保留实际同Tick恢复，拒绝实际dead；共享物品算法消费精确年龄marker并按最终phase写journal，原section clocks保持。完整overflow保管计划只可扩展相同旧行前缀：沿用namespace／global ordinal／旧site，只为suffix调用只读选址policy，严格拒绝额外／字典键及失败结果，旧plan保持；完整计划验证后保存，retry／ManagedState restore不重放callback或选址。promotion后旧prefix入口拒绝截短；后续item拒绝可保留明确extended intent。输出仍blocked，不发布患者／Work／asset／city／Effects／clock／receipt消费／outbox。最终phase引用／Work、更早边界、其它section及实际患者恢复／联合接受／Runtime调度仍待。151段Lua5.1语法加载（1份实际Effects wrapper）、127份完整JSON解析，零执行；新C++exports／closures及源码场景未编译执行。系统false，第79节Release不验证80–225。
@@ -1130,15 +1173,19 @@ HUD 和快捷键的 core:time.pause/speed 已注册为 server/play 命令，各�
 
 维修列表通过 `core:repair` 通道、`core:repair_snapshot` 本地事件和 `ui.repair_state` 缓存提供给菜单；建筑和工作公开引用使用 UUID，状态字段显式声明，不传材料预约记录。连接、世界、重载和周期刷新已接线，断线关闭面板。新增命令测试源码未运行；维修内部存档版本字段、数字持久引用和消耗材料/恢复耐久事务仍待迁移。
 
-## 矿井列表与启停
+## 矿井数据与启停接口
 
-矿井列表通过 `core:mine` 逻辑通道传输，receiver 发布 `core:mine_snapshot`，客户端监听器更新 `ui.mine_state`。快照声明嵌套字段，工作点和工人使用 UUID，不传输原生工作、建筑和工作点编号。菜单选择保存工作点 UUID，断线清理窗口及缓存；世界加载、连接、重载后刷新，服务端每四 Tick 发布快照。
+独立矿井管理面板、指令菜单入口及面板的断线/世界卸载/Mod 关闭监听器已移除。矿井生产系统、受管理状态、数据通道和启停命令仍保留；当前没有用于列表、勘探、启停或定位的独立矿井窗口，矿井问题也不再提供打开该窗口的解决入口。
 
-`core:mine.toggle` 是 server/play 注册命令，带可取消 `core:mine_toggle_requested` 前置事件。参数为 `work_point_uuid` 和布尔 `enabled`，服务端解析当前工作点；错误类型直接报错，工作点或矿井消失返回失败，成功发布 `core:mine_state_changed` 刷新列表。旧桥启停分支已移除，测试源码已补充，未运行。
+矿井数据通过 `core:mine` 逻辑通道传输，receiver 发布 `core:mine_snapshot`，客户端监听器更新 `ui.mine_state`。快照声明嵌套字段，工作点和工人使用 UUID，不传输原生工作、建筑和工作点编号。世界加载、连接、重载后刷新，服务端每四 Tick 发布快照，断线清理缓存。
+
+`core:mine.toggle` 是 server/play 注册命令，带可取消 `core:mine_toggle_requested` 前置事件。参数为 `work_point_uuid` 和布尔 `enabled`，服务端解析当前工作点；错误类型直接报错，工作点或矿井消失返回失败，成功发布 `core:mine_state_changed` 刷新快照。该命令不再由独立矿井面板调用。旧桥启停分支已移除，测试源码已补充，未运行。
 
 矿点创建工作时，未指定工人传空 UUID 字符串；原生任务的元数据、资格表达式或工作点设置任一步失败，都取消新任务且不登记 pending。对应失败分支测试源码已补，尚未运行。
 
-光标位置的矿藏勘探通过同一通道的 `survey` / `survey_result` 传输，服务端检查整数区块坐标和请求编号，使用连接上下文定向回复。receiver 发布 `core:mine_survey`，监听器缓存声明字段；不传输原生工作点编号。切换区块立即清除旧结果，匹配请求编号才接收，关闭/断线清理；同一位置每秒刷新，等待五秒后使用单调时钟重试。面板已移除 `systems.mine` 直接调用。回复匹配、超时、位置变化与断线清理测试已添加源码，未运行。
+矿藏勘探接口保留同一通道的 `survey` / `survey_result` 传输，服务端检查整数区块坐标和请求编号，使用连接上下文定向回复。receiver 发布 `core:mine_survey`，监听器缓存声明字段；不传输原生工作点编号。客户端查询接口支持切换区块清除旧结果、请求编号匹配、每秒刷新和五秒超时重试；独立面板移除后不再从窗口渲染中发起光标查询。回复匹配、超时、位置变化与断线清理测试已添加源码，未运行。
+
+CoreMod 当前未提供 `mine_rules` 记录或矿井建筑定义。持续开采需要唯一规则记录声明工作点类型、资格表达式、工作量、产量、耗减、矿物候选、丰度档位和衰减表，并提供匹配工作点的可建造建筑及其物品/方块/表现资源。当前难度表仅提供不耗尽的测试选项。移除界面未补齐这些内容，也未运行构建、测试或游戏验收。
 
 采矿 state.jobs 仅保存 mines/pending，不包含版本字段。恢复先构造独立候选，严格检查连续数组、重复工作点/工作编号、整数范围、有限数、布尔和字符串字段；不强转数字字符串，坏候选不会清空当前状态。配置加载异常恢复原配置缓存，保存和恢复记录与调用方表隔离。相关失败保持测试源码已更新，未运行。
 
@@ -1618,7 +1665,7 @@ mod_ready 现在可携带可选 world_id：初始启动无世界时省略，重�
 
 区域管理面板使用独立客户端卸载/关闭监听器，卸载同时关闭窗口、重置删除确认并注销旧 data:changed 订阅；重开重新订阅。新增重入及确认重置测试源码未运行。动态通知本身尚未替换，区域快照和 UUID 删除命令仍在待办范围。
 
-设计、矿场、事件和城镇信息面板通过独立客户端卸载/关闭监听器清理，移除 bootstrap 关闭调用。世界卸载丢弃编辑中的锻造/药剂选择、矿场选择和事件详情，窗口句柄先清空再注销。设计/矿场重入清理测试源码未执行，内部业务迁移仍在进行。
+设计、事件和城镇信息面板通过独立客户端卸载/关闭监听器清理，移除 bootstrap 关闭调用。世界卸载丢弃编辑中的锻造/药剂选择和事件详情，窗口句柄先清空再注销。独立矿井面板及其清理监听器已删除，原设计/矿场重入清理场景仅保留设计面板覆盖；测试源码未执行，内部业务迁移仍在进行。
 
 采矿和砍伐选择工具由独立客户端卸载/关闭监听器清理，仅取消自身活动选择；共享确认窗口自行处理世界卸载及 Mod 关闭，不由无关工具关窗。新增隔离和重复清理测试源码未运行。
 
@@ -2381,3 +2428,15 @@ prerequisites. Hover walks include all transitive prerequisites, not just the
 layout parent. World unload, disconnect, Mod shutdown, document replacement,
 and UI reload clear the relevant transient state. This source change has not
 been built, statically validated, or run in the game.
+## 已提交结果与后续脚本错误
+
+服务器操作按 Lua 的顺序调用原生能力。原生能力成功发布后，后续日志、通知、经验投影或观察监听器失败只写入 ERROR；这些失败不会恢复方块、实体、库存、效果、研究进度或已生成的产物，也不会把已完成 Task 放回队头。完成队列保存一个生命周期内的发布观察，用来确认本次结果已经接受；它不是持久回执，也不触发重放。监听器已经执行后，确认回调异常同样只记录错误并消费本次交付。
+
+尚未发布的物理前置检查仍可以拒绝操作，例如目标变化、预约失效、来源不存在、权限错误或资源不足。这些检查发生在实际修改之前。死亡处理把纪念信息、掉落、实体移除、墓碑和死亡通知分成独立步骤；掉落表计算或墓碑通知失败不会让死亡实体复活，也不会在下一 tick 重算同一掉落。
+
+法术释放如果已经扣除 Needs 后才失败，会删除本次未完成的法术实体并记录 ERROR，保留已扣除的 Needs；Lua 结束本次吟唱，避免重复扣费。招募初始化仍可在新实体的初始化失败时清理该新实体，位置设置在姓名和待登记标记之后执行。
+
+2026-11-08招募契约更新见 [招募与城镇中心登记](recruitment.md)。当前实现使用注册的recruitment_rules和experiences、按殖民地隔离的状态、逐栈付款、虚拟满级可达的职业抽取、长期属性修正与带小数余量的经验获取。取消接口及进食品质策略已删除，旧全局招募/品质策略状态拒绝恢复，不做静默迁移。此条覆盖本页此前招募配置、取消退款、town_hall_uuid和经历add/mul/set的历史记录；构建、测试及游戏验收尚未运行。
+
+招募收尾同步了候选及入场状态恢复验证：冻结职业顺序、总等级、指定方向、经历摘要和付款来源均需合法，拒绝时不替换此前运行态。登记已提交的原实体在恢复后直接完成业务确认，不再次生成或填满资源。研究确认来源只向所属殖民地投影；付款提交重检库存归属，工作点及任务绑定同一殖民地，替换或转属会使旧任务失效。原生研究启动先准备项目存储，再通过现有预约提交材料，随后日志/通知失败仅记录错误。新增对应回归场景源码，尚未执行任何检查、编译、测试或游戏验收。
+

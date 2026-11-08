@@ -48,6 +48,25 @@
     <p><code>RmlUiRealRuntime.cpp</code> 仍保留稳定底座：创建 <code>nc</code> DataModel、绑定十二个原始 JSON 通道、缓存引擎推送的 UI 控制变量、处理通用 <code>data-command</code> / <code>data-action</code> click 事件、驱动 RmlUI 生命周期与 Vulkan 渲染。主菜单已迁到 RML 的完整页面 shell（Create World、Load Game、Multiplayer、Settings、Mod Manager、Content Browser、Wiki、Credits、Exit）；游戏内 HUD 底栏挂载 Lua 在 <code>core:mod_ready</code> 注册的放置、伐木、采掘、区域、指令、制造、仓储、科技、招募、策略和日志槽位，并在实现阶段暂时增加人员列表。工作池窗口改由 F3+T 切换。独立的“放置”入口先选择 <code>placeable</code> 方块，再复用通用 selection 划区、选择优先级/执行者并下达逐格 Build 工作；建筑设计不属于该入口，指令菜单也不再包含放置或建筑设计。人员详情使用个人信息、装备、转职和工作计划四个原生兼容层 Tab。原角色菜单与个人信息合并为首个“个人信息”页，统一展示姓名、职业等级与经验、心情、背景、基础/工作/战斗属性、当前工作与队列、招募来源、经历及效果、职业总等级；背景只显示一次，表格列为字段、值和详情，“中断全部工作”操作保留在该页。各页操作只显示在对应 Tab 内；外层“返回人员列表”按钮通过兼容层按钮的 <code>align="right"</code> 元数据放在内容右下角，页签内按钮仍维持各自布局。通用药剂冷却槽的容量、占用、预留、逐槽剩余时间和容量来源显示在个人信息页，不归入治疗专属导航。本次合并仅完成源码修改，未运行静态检查、构建、测试或游戏验收。运行中底栏已移除难度按钮及其只读面板，难度设置保留在新建世界阶段。后续面板不得替换原始通道名契约；typed view 只能作为面板专用的附加绑定。</p>
     <p>人员转职页从储存区内的地面物品堆和方块库存列出可用装备；储存区外的地面装备不会成为候选。没有符合当前职业的装备时显示储存区提示。Battle HUD 在选中对象没有小队时把小队引用保持为 nil，避免读取布尔值上的小队字段。</p>
 
+	<h2 id="debug-log-browser">DEBUG 日志浏览器与调试设置</h2>
+	<p>仅以 <code>--DEBUG</code> 启动时，原生面板注册表才加载 <code>log_browser.rml</code>。窗口标题为“日志浏览器”，不显示图标或启动参数装饰；窗口使用视口比例确定宽高，在较小窗口中保留标题、筛选和底部操作，仅中间日志区滚动。日志列为时间、级别和内容，长文本自动换行。它是独立、非模态浮窗，可以与主菜单、加载、游戏、暂停、设置及建筑设计界面共存，指针只在窗口内被捕获；关闭按钮和 <code>Esc</code> 关闭窗口，关闭日志不会同时返回设置或改变游戏暂停状态。开发者控制台打开时保留控制台的 Esc 优先级。</p>
+	<p>DEBUG、INFO、WARN、ERROR 四个级别默认全部不选；全部不选和全部选中均显示全部日志，选中部分级别时仅显示相应记录。筛选按钮显示当前缓存中各级别的条数，底部显示筛选后的条数与缓存总数，并提供“滚动到底部”。筛选只影响浏览，不改变文件日志阈值。新打开窗口时定位到当前可见记录的底部；浏览期间日志刷新不强制跳到底部。</p>
+	<p>设置增加仅在 DEBUG 模式可见的“调试设置”分类，包含“出现 ERROR 时自动弹出日志浏览器”和手动打开入口。自动弹出默认开启，通过 <code>settings.json</code> 的布尔字段 <code>debug_log_auto_popup</code> 保存；旧设置文件缺少该字段时采用开启默认值。开关立即影响随后观察到的新 ERROR，确认设置才写盘，放弃更改恢复已保存值，恢复本页默认值重新开启。普通启动隐藏整个调试分类，并忽略自动弹出开关；普通启动仍按原有规则写日志文件。</p>
+	<p>日志缓存由 Core Logger 拥有，客户端在启动时根据 <code>--DEBUG</code> 显式启用；不把日志镜像到命令控制台，也不从远程服务端传送日志。缓存按接收顺序保留最近 2048 条 DEBUG/INFO/WARN/ERROR，超过容量时淘汰最早记录。单条 UI 文本保留至 16384 字节的完整 UTF-8 边界，超长记录附截断提示；文件日志继续使用完整消息。缓存属于进程诊断状态，不写入世界存档，也不重读旧日志文件。所有日志生产线程只写入受锁保护的缓存及错误修订号，RmlUI 帧线程负责显示；窗口隐藏时不复制记录，显示时至多每 0.1 秒刷新一次，筛选和打开操作可立即刷新，修订号未变化时不重建行。</p>
+	<p>自动弹出依据新 ERROR 的修订号，与当前级别筛选无关；同一条 ERROR 不重复弹窗。关闭自动弹出期间观察到的错误仍可手动查看，重新开启不会重放这些旧错误；后续新增 ERROR 可再次弹出。窗口跨 RML 文档重载保留本次运行的筛选和显隐请求，UI 关闭时清理绑定存储；日志线程不保留 RmlUI 元素、事件回调或 VM 引用。</p>
+	<table>
+		<thead><tr><th>入口或数据</th><th>契约</th></tr></thead>
+		<tbody>
+			<tr><td><code>core:log_browser.open / close / escape / bottom</code></td><td>客户端 UI 命令，无载荷；打开、关闭、仅在窗口显示时消费 Escape、滚动到底部。非 DEBUG 模式不执行日志操作，也不消费日志 Escape。</td></tr>
+			<tr><td><code>core:log_browser.filter</code></td><td><code>{"level":"DEBUG|INFO|WARN|ERROR"}</code>，切换一个级别；未知级别不改变状态。</td></tr>
+			<tr><td><code>core:settings.page</code></td><td>DEBUG 模式接受 <code>{"page":"debug"}</code>；普通模式不进入调试分类。</td></tr>
+			<tr><td><code>core:settings.toggle</code></td><td><code>{"key":"debug_log_auto_popup"}</code>，DEBUG 模式才接受，复用设置 dirty、确认、默认和恢复路径。</td></tr>
+			<tr><td><code>log_browser_rows</code></td><td>原生 typed DataView 数组，每行具有 <code>time</code>、<code>level</code>、<code>text</code> 字符串，由 RML 的 <code>data-for</code> 呈现；日志消息作为文本绑定，不拼接成 RML。</td></tr>
+			<tr><td>文案与资源</td><td>文案来自引擎级 <code>assets/lang/*.json</code> 的 <code>core:rml.log_browser_*</code> 和 <code>core:settings.debug*</code>。窗口资源位于 <code>CoreMod/assets/ui/rml/log_browser.rml</code> 与 <code>log_browser.rcss</code>，通过现有 CoreMod staging/export 管线生成运行副本。</td></tr>
+		</tbody>
+	</table>
+	<p>本次仅修改源代码、RML/RCSS 和文档，未运行静态检查、构建、测试或游戏验收。待执行验收应覆盖普通启动无调试分类/窗口、DEBUG 默认全不选显示全部、组合筛选、ERROR 弹出及关闭后不重放、禁用/恢复/保存后重启、主菜单与游戏内设置入口，以及较窄/较矮窗口和较长本地化文案。</p>
+
     <h2>资源入口</h2>
     <p>RmlUI 文档根为 <code>&lt;core_assets&gt;/ui/rml</code>（<code>Engine::init()</code> 时传入 <code>RmlUiServer::init()</code>）。RML/RCSS 文档放在该目录下：</p>
 <pre><code>CoreMod/assets/ui/
@@ -151,13 +170,13 @@
     <p><strong>持续区域表现与点击：</strong><code>shape_mode="2d"</code> 的持续区域按地表平面渲染，不画一格高的六面体；3D/vertical 区域仍显示体积边框。2D 区域的可见平面参与世界射线拾取，并按实际区域格集合复核命中，所以储物区和种植区可直接点击选中；区域平面比其下方地形更近时优先，真正位于平面前方的实体仍保持实体选择优先级。选中后 HUD 摘要与管理入口继续读取同一稳定区域实例。</p>
     <p><strong>旧 Lua UI 可见层：</strong><code>LuaUi</code> 现在保存完整注册定义，并把底栏槽位、窗口/table/tabs_table 内容和浮动提示渲染为已转义 RML 片段。<code>manage_hud.rml</code> 通过 <code>lua_ui_bottom_bar_rml</code>、<code>lua_ui_floating_rml</code> 与 <code>#lua-ui-window-layer</code> 下的逐窗口元素挂载这些片段；点击兼容按钮会发送 <code>lua_ui:&lt;handle&gt;:...</code> 内部命令，由引擎回调原 Lua <code>on_click(ctx)</code> / <code>on_close(ctx)</code> / <code>on_click(row)</code> / <code>on_click(button)</code> 后刷新兼容通道。table row 与 button 的回调 target 保持稳定，优先使用声明的 <code>id</code>，否则使用遍历位置，避免 5 Hz 快照刷新无意义重建 RML 并打断 hover 状态。<code>engine.ui.window.register</code> 和 <code>engine.ui.rml.register_panel</code> 都支持 <code>background_argb</code> 和 <code>draggable</code>，默认采用小地图同款 <code>0xe815191d</code> 半透明背景；窗口拖拽缺省跟随 <code>flags = { "movable" }</code>。<code>engine.ui.rml.register_panel</code> 额外通过 <code>lua_ui_rml_panels</code> 推送已校验的 document 路径、背景色和拖拽开关，真实 runtime 在同一个 RmlUI context 内动态加载/显示/关闭这些 MOD 面板文档，并为动态文档挂接与入口文档相同的命令和拖拽事件监听器。内置 <code>battle_hud.rml</code> 由原生注册器加载，不走这条动态面板通道。所有二级页面的纵向滚动区统一使用 <code>overflow-y: auto</code>，只有内容实际超过容器高度时才出现滚动条。科技树通过兼容窗口嵌入文档 body，HUD 入口显式加载其专用 RCSS；科技分类使用等宽横向栏，主体采用约 38/62 的列表/详情双栏并分别滚动，底部当前研究状态保持独立对齐。</p>
 	<p><strong>经营问题：</strong>底栏入口、持续问题列表、聚合警报栏和世界警告气泡均已移除。仅带 <code>--DEBUG</code> 的运行会以单条提示窗口显示新问题或原因变化，普通运行不展示经营问题提示。后台问题登记、解除和 WARN 运行日志继续供工作系统和诊断使用，日志不镜像到游戏内控制台。提示窗口的排队、去重与清理规则见下文 DEBUG 经营问题提示。</p>
-	<p><strong>生产、治疗与招募操作面板：</strong>制造入口通过独立合成窗口创建殖民地全局生产订单。新订单可设置批次或库存目标、优先级、指定工作者及过滤条件；已有订单完整只读展示，唯一变更操作是确认取消。工作点管理保留输入/输出暂存、当前工作与执行者、道路/内部路径、兼容配方、上次结果和定位，并提供兼容配方的合成入口。治疗/招募面板显示治疗点容量和状态、患者阶段、治疗模板按每种伤病/状态分别配置的食物/药品/医疗包条件、个人药品槽及科技来源，以及五级招募的具体付款选择、实际付款、退款预览、候选确认和待入场状态。科技界面同步显示付款来源、累计进度、参与者、工作点和单元状态；暂停提示已付款与进度永久保留，且不提供取消入口。</p>
+	<p><strong>生产、治疗与招募操作面板：</strong>制造入口通过独立合成窗口创建殖民地全局生产订单。新订单可设置批次或库存目标、优先级、指定工作者及过滤条件；已有订单完整只读展示，唯一变更操作是确认取消。工作点管理保留输入/输出暂存、当前工作与执行者、道路/内部路径、兼容配方、上次结果和定位，并提供兼容配方的合成入口。治疗/招募面板显示治疗点容量和状态、患者阶段、治疗模板按每种伤病/状态分别配置的食物/药品/医疗包条件、个人药品槽及科技来源，以及五级招募的方向、具体付款选择、寻访中状态、候选确认或整批放弃和待入场队列。寻访不可取消，候选确认不再收费，放弃不退款。科技界面同步显示本殖民地付款来源、累计进度、参与者、工作点和单元状态；暂停提示已付款与进度永久保留，且不提供取消入口。</p>
 	<p><strong>设计方案：</strong>生产入口的设计面板分别承载锻造和药剂。锻造页从已解锁物品基型选择基础属性与词条最终等级，持续显示容量、难度、材料、有效性和错误；载入旧方案后保存会产生新方案。药剂页选择等级、剂型和逐味药材，显示每味与累计四性、固定材料、预计效果和最终 CD；缺药材/性状内容、许可、科技或容量时显示原因并禁用保存。空内容表保持空，不生成演示默认条目。</p>
 	<p><strong>人员策略与候选详情：</strong>工作计划和排班页支持模板创建、复制、重命名、六类开关、24 小时时段及共同分配。殖民者可覆盖单个工作开关或小时，再清除覆盖回到实时关联模板。人员详情中的属性摘要、工作来源、装备槽、职业等级、属性修正、排班状态和模板列均通过 <code>CoreMod/lang/*.json</code> 的 <code>core:colonists.*</code> 键本地化。招募候选选中后除列表摘要外，还显示完整经历、属性修正、倾向、当前状态、职业履历及招募等级来源。</p>
 	<p><strong>确认与禁用：</strong>狩猎和建筑确认都提供特级/1-9级与当前合格指定者选择，指定者按职业、工作计划、排班和当前目标路径筛选。采集、采掘和区域的选区确认面板只在以 <code>--DEBUG</code> 启动时显示；Debug 模式下拖拽松开只更新预览，再由面板确认。正常游玩时区域采用 <code>2d</code> 平面框选，采集、采掘和区域拖拽松开直接提交，使用优先级 5、不指定执行者；采掘保留地表框选加滚轮调整纵向范围的方式。采集/采掘继续过滤无效目标，把有效逐目标命令发给 Server，区域携带类型和边界由 Server 创建。提交后清空上一轮框选，工具保持激活，可继续框选下一块区域。采掘指示只在采掘工具激活时绘制，按六向连通区域合并为整体外框并叠加淡黄色半透明表面，退出采掘模式后既不保留边框也会把被隐藏的目标体素按原样恢复渲染，采掘模式内的鼠标方块射线忽略已经由采掘覆盖隐藏的方块，并在相机位于实体层内时先穿出不可见的起始实体段再命中实际显示表面。配置无效或过滤目标不可达成的生产来源不能从双击或确认按钮下单；招募付款必须同时达到营养与金币要求。仓储 UI 只能修改既有策略的过滤、入库/取用优先级、保留状态，坐标、容量、冷藏由 Server 保留，也不提供绕过区域删除确认的直接策略删除。进食方案同时明示整库保留排除和营养溢出后比较实际路径的选择顺序。建筑和区域工具保持到右键或 Esc 退出；采集和采掘只以 Esc 退出，右键仍旋转镜头。</p>
     <p><strong>视觉反馈：</strong>全局命令提示按信息、成功、警告和错误使用独立的高对比背景色；游戏内底部菜单使用不透明度更高的蓝黑面板背景和底边层次，选中对象的问题提示也使用独立的暖色提示底。采掘工作的标记复用选中方块的高对比金色，并同时绘制深度测试边线，避免在明亮地形上难以辨认。</p>
 	<p><strong>Debug 选区确认面板：</strong>以 <code>--DEBUG</code> 启动后，采集、采掘与区域共用的确认面板固定在屏幕右侧，距离右边缘 16px、顶部 110px，不支持拖动。窗口大小改变或预览内容刷新时仍按右边缘定位。右键不取消这些选区工具，也不关闭确认面板；可通过 Esc、标题栏关闭按钮或“退出工具”按钮退出。区域工具的右键取消操作只用于正常模式。</p>
-	<p><strong>仓储、策略与矿井操作面板：</strong>仓储入口显示仓储位置/容量、物品明细、预留、品质、腐坏、冷藏和待清运状态，可修改入库/取用优先级、整库保留及物品/分类/标签过滤；策略入口聚合进食方案、治疗模板、工作计划与排班，其中进食方案支持创建、复制、重命名、分配以及营养、品质、腐坏、风险和食物过滤。矿井面板从指令入口打开，会先显示当前选中或悬停区块天然可见的矿物与丰度，即使该区块尚未建矿；已有矿井另显示剩余量、道路、执行者、输出待清运和问题，并可启停与定位。规则或难度表为空时显示配置屏障。</p>
+	<p><strong>仓储与策略操作面板：</strong>仓储入口显示仓储位置/容量、物品明细、预留、品质、腐坏、冷藏和待清运状态，可修改入库/取用优先级、整库保留及物品/分类/标签过滤；策略入口聚合进食方案、治疗模板、工作计划与排班，其中进食方案支持创建、复制、重命名、分配以及营养、品质、腐坏、风险和食物过滤。独立矿井管理面板及其指令菜单入口已移除；底部采掘框选工具仍用于一次性体素挖掘。</p>
 	<p><strong>世界创建难度：</strong>Create World 从唯一 <code>difficulty_rules</code> 记录动态显示数据定义的预设；展开自定义后分别选择资源丰度、矿井耗尽、环境状态、需求、袭击、死亡和恢复窗口档位。预设与选项名称在引擎生成界面快照时按 <code>label_key</code> 本地化。缺失、重复或无效难度表会显示配置屏障并阻止开档，不会采用代码默认难度；CoreMod 当前提供一组中性测试难度用于系统验证，不代表正式平衡方案。选择结果在世界初始化前写入运行时状态，随存档与 Server 运行时状态同步。</p>
 	<p><strong>地面物品与区域管理：</strong>地面物品详情读取当前选中或悬停体素，显示实例名称、数量、归属、腐坏/消失计时、回收授权、问题、来源和关联日志数量。允许/禁止自动回收通过 Server 命令修改；禁止时立即取消该实例尚未提交的回收工作并释放其预留。区域管理面板在打开时绑定当时选中的区域实例，之后不再跟随选中或悬停变化，当前只显示一个带二次确认的“删除区域”按钮。确认命令仍在 Server 上重新核算影响，取消未提交工作和目标格预留、移除露天仓储策略后才删除区域，已结算结果不回滚；删除成功后该窗口立即自行关闭，不再回退到“选择或悬停一个区域”之类的空态占位，该占位文案已从语言文件中移除。区域实例因重叠划区被清空而消失时，窗口同样按 <code>zone/management</code> 数据变化事件关闭。</p>
 	<p><strong>Lua 窗口文本输入：</strong>通用 table 行支持 <code>kind = "input_text"</code>、当前值和 <code>on_change(value)</code>。兼容层渲染真实 RmlUI input，<code>change</code> 事件把当前 UTF-8 值送回稳定 Lua action callback。进食方案重命名使用该路径，不再生成占位名称；蓝图等既有 input_text 行也复用同一契约。</p>
@@ -290,6 +309,7 @@
     <p><strong>顶点坐标约定：</strong>RmlUI 供应的顶点是屏幕像素坐标（原点在左上、纵向向下），<code>rmlui.vert</code> 用 push constant 里的视口尺寸把它映射到 Vulkan 裁剪空间。Vulkan 视口同样原点在左上、纵向向下且高度为正，因此纵向分量必须用直接映射（像素 / 视口 × 2 − 1）；若误用 OpenGL 的翻转写法，整张 UI 会上下颠倒——topbar 落到窗口底部、主菜单跑到下方、字形头朝下。</p>
 
     <h2 id="input-routing">输入路由与焦点捕获</h2>
+    <p>全屏透明 HUD 的文档 <code>body</code> 与内部布局壳层都必须设置 <code>pointer-events: none</code>，实际面板再显式启用输入。RmlUi 默认会把被点击的文档提升到前面；只让内部 <code>#hud</code> 穿透、却保留透明 <code>body</code> 接收鼠标，会让普通 HUD 在建筑设计的世界放置点击后盖住设计按钮。引擎对文档壳层返回 <code>wants_mouse=false</code> 不能代替 RmlUi 自身的命中穿透规则。</p>
     <p><code>InputManager</code> 是 GLFW 输入入口。初始化 RmlUI server 后，Engine 会把 <code>RmlUiServer</code> 指针交给 <code>InputManager</code>；每个 GLFW 回调先注入 RmlUI，再保留现有游戏输入状态，游戏侧随后通过 <code>ui_wants_mouse()</code> / <code>ui_wants_keyboard()</code> 决定是否处理相机、选择、建造和快捷键。</p>
     <table>
       <thead><tr><th>GLFW 事件</th><th>RmlUI 调用</th><th>说明</th></tr></thead>
@@ -302,7 +322,7 @@
       </tbody>
     </table>
     <p>Key 映射覆盖字母、数字、F1-F24、Escape/Enter/Tab/Backspace/Space、方向键、Home/End/Page、Insert/Delete、锁定键、左右 Shift/Ctrl/Alt/Super、数字小键盘和常用 US 符号键。Modifier 由 GLFW <code>mods</code> 与当前按键状态合并，映射到 RmlUI 的 Ctrl/Shift/Alt/Meta/CapsLock/NumLock 位；窗口启用 <code>GLFW_LOCK_KEY_MODS</code> 以便 GLFW 在支持的平台上提供 CapsLock/NumLock 状态。</p>
-    <p>捕获规则：当鼠标按下起点位于实际 UI 交互区域，或光标 hover 在按钮、带 <code>data-command</code>/<code>data-action</code>/<code>onclick</code> 的元素、输入控件、或计算样式为 <code>pointer-events:auto</code> 的非 <code>rml/body</code> 区域内时，<code>wants_mouse=true</code>，游戏不处理鼠标点击、拖拽和滚轮驱动的选择/相机逻辑；只用于覆盖展示的 HUD 壳层应保持 <code>pointer-events:none</code>，不会阻挡右键相机拖拽。当 RmlUI 有焦点元素时，<code>wants_keyboard=true</code>，游戏不处理文本输入和冲突快捷键。按 <code>Escape</code> 时，如果 RmlUI 当前持有键盘焦点，Engine 优先调用 <code>RmlUiServer::clear_focus()</code>，不触发暂停菜单/取消建造等游戏动作。Null backend 下所有输入安全忽略，<code>wants_mouse</code> 和 <code>wants_keyboard</code> 始终为 false。</p>
+    <p>捕获规则：当鼠标按下起点位于实际 UI 交互区域，或光标 hover 在按钮、带 <code>data-command</code>/<code>data-action</code>/<code>onclick</code> 的元素、输入控件、或计算样式为 <code>pointer-events:auto</code> 的非 <code>#root/rml/body</code> 区域内时，<code>wants_mouse=true</code>，游戏不处理鼠标点击、拖拽和滚轮驱动的选择/相机逻辑；只用于覆盖展示的 HUD 壳层应保持 <code>pointer-events:none</code>，不会阻挡右键相机拖拽。透明 HUD 穿透后的空白画面可能命中 RmlUI context 的 <code>#root</code> 根元素；引擎将它与 <code>rml/body</code> 一起视为壳层，避免其默认鼠标样式误占用输入而导致右键旋转和滚轮缩放同时失效。当 RmlUI 有焦点元素时，<code>wants_keyboard=true</code>，游戏不处理文本输入和冲突快捷键。按 <code>Escape</code> 时，如果 RmlUI 当前持有键盘焦点，Engine 优先调用 <code>RmlUiServer::clear_focus()</code>，不触发暂停菜单/取消建造等游戏动作。Null backend 下所有输入安全忽略，<code>wants_mouse</code> 和 <code>wants_keyboard</code> 始终为 false。</p>
 
     <h2 id="snapshot-publish-policy">快照发布策略（主线程 UI 数据路径）</h2>
     <p>桥通道不是每帧无条件重算的。<code>Engine::run()</code> 的每帧块按"谁在屏幕上"分组发布，因为真 backend 会逐通道比较 JSON、只在内容变化时 <code>DirtyVariable</code>，而<strong>生成</strong> JSON 才是主线程的开销：<code>content_browser_state</code> 会重新解析所选注册表类型的每条数据，<code>ui_text</code> 有约 271 个本地化字段。</p>
@@ -424,6 +444,7 @@
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<p>2026-11-08：招募页显示寻访中，不再显示进度或取消；候选就绪仅使用现有floating通知，不自动打开面板。支持可选二阶职业方向、逐栈自动配款与手调、旗帜登记队列。窗口使用兼容层viewport_relative能力适应视口，详细规则见 <a href="recruitment.md">招募与登记</a>。尚未运行原生界面验收。</p>
 <script src="wiki.js"></script>
 </body>
 </html>
