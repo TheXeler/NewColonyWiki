@@ -213,7 +213,7 @@ engine.ui.command.run("core:craft.queue", { id = "my_mod:example_recipe", entity
 	<p><code>engine.selection.start(options)</code> 的 2D/3D 选区支持 <code>preview_mode = "transparent"</code>（默认的整体透明范围）和 <code>preview_mode = "block_fill"</code>（逐格半透明方块填充并绘制轮廓）。单格放置复用 <code>shape = "3d"</code>，并设置 <code>hover_follows_cursor = true</code>、<code>click_to_confirm = true</code>；目标随鼠标悬停更新，左键释放发出客户端本地 <code>core:selection_click_confirmed</code> 事件并提交放置命令，不引入独立放置形状。待放置方块还会显示蓝色半透明方块虚影和经过深度测试的轮廓；单机与主机读取本地权威工作池，远程客户端读取现有 <code>save_state:tasks</code> 网络同步后的工作池副本，使用相同绘制路径。移开鼠标或退出放置工具仍保留，未领取、等待材料或暂停的工作也保留。虚影直接读取原有 Build/Custom 方块工作，不另存放置记录；工作取消、移除或目标格已有实体方块时消失。普通建筑施工的 Building 载荷不会误画为单格方块。远程的下单、取消和完成随服务端状态通道刷新后反映到虚影；默认间隔为 20 个模拟 Tick，20 TPS 下约 1 秒，不把客户端命令提交直接当成服务端已接受的任务。</p>
 	<p><code>engine.selection.state().debug_enabled</code> 返回运行时 <code>--DEBUG</code> 开关，与是否使用 Debug 编译配置无关。CoreMod 的选区确认面板据此只在 Debug 模式注册；正常模式的区域划分使用 <code>shape = "2d"</code>，采集、采掘和区域在左键释放后自动提交，指令使用优先级 5、不指定执行者。<code>core:zone_selection_ready</code> 的 <code>zone_id</code> 在正常模式下也可为 <code>core:cut</code> 或 <code>core:mine</code>，由对应工具消费有效目标。<code>engine.selection.restart()</code> 是仅限 Client 的接口，保留当前工具配置、过滤与指令参数，清空当前框选起点及范围，使提交后的工具可连续使用；工具未激活时不做任何操作。</p>
 
-    <p>仓储明细的 <code>core:storage</code> 共享快照由 Server 每4个模拟 tick（正常20 TPS时约0.2秒）发布，并在 <code>core:stockpile_changed</code> 后立即更新。客户端面板读取共享版本，物品取用、搬入搬出、预约和腐坏变化无需关闭重开面板。明细同时包含方块容器和露天储存区中的真实地面物品堆；露天归属使用原生 owner observation 的 <code>storage_zone_uuids</code>，区外地面物品不计入，重叠区域中的同一物品堆只显示一次。地面行使用物品堆实体 UUID 区分，同格多个物品堆不会共用行标识。</p>
+    <p>仓储数据的 <code>core:storage</code> 共享快照由 Server 每4个模拟 tick（正常20 TPS时约0.2秒）发布，并在 <code>core:stockpile_changed</code> 后立即更新。游戏内菜单的仓储按钮和仓储子面板已移除，容器选择也不再打开仓储页；<code>core:resource.manage</code> 和 <code>core:resource_management_requested</code> 已删除。快照及服务端仓储策略命令继续保留。明细同时包含方块容器和露天储存区中的真实地面物品堆；露天归属使用原生 owner observation 的 <code>storage_zone_uuids</code>，区外地面物品不计入，重叠区域中的同一物品堆只统计一次。地面项使用物品堆实体 UUID 区分，同格多个物品堆不会共用标识。进食方案仍由策略入口打开，其窗口不包含仓储页签。本次修改未运行静态检查、构建、测试或游戏。</p>
 
     <h2>浮动提示 API</h2>
     <p>浮动提示用于短生命周期的屏幕提示、教程提示和告警。当前稳定模式是 <code>mode = "screen"</code>；<code>mode = "world"</code> 字段已预留，但 <code>LuaUi.cpp</code> 还没有做世界坐标投影，只会把提示放到屏幕中心附近并应用偏移。</p>
@@ -466,7 +466,7 @@ end</code></pre>
     </div>
 
     <h3>与旧 Lua UI 的关系</h3>
-    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）的即时模式实现已移除，但兼容 API 现在会生成 RmlUI-backed 可见界面；保留的 C++ 类负责注册仓库、逐窗口 RML 元素生成、回调命令和数据通道。DevConsole、MainMenu、HUD、Pause/Settings、小地图和全局提示仍由静态 RML/RCSS 文档驱动。Tech Tree 的结构仍来自 <code>tech_tree.rml</code>，并通过 <code>engine.ui.window.register({ document = ... })</code> 进入与日志、仓储相同的 HUD 兼容窗口元素管理路径；科技数据通道和 <code>core:research.start</code> 不变。</p>
+    <p>RmlUI 是唯一玩家可见 UI 路线。旧 Lua UI（底边栏/窗口/浮动提示）的即时模式实现已移除，但兼容 API 现在会生成 RmlUI-backed 可见界面；保留的 C++ 类负责注册仓库、逐窗口 RML 元素生成、回调命令和数据通道。DevConsole、MainMenu、HUD、Pause/Settings、小地图和全局提示仍由静态 RML/RCSS 文档驱动。Tech Tree 的结构仍来自 <code>tech_tree.rml</code>，并通过 <code>engine.ui.window.register({ document = ... })</code> 进入与日志、进食方案相同的 HUD 兼容窗口元素管理路径；科技数据通道和 <code>core:research.start</code> 不变。</p>
 
     <h3>文档侧数据契约</h3>
     <p>文档侧按通道名读取快照、以 <code>{ target, payload }</code> 发命令，与 <code>RmlUiBridge</code> 对接。通道名字符串、命令 target 命名、<code>command_result</code> 反馈通道均为稳定契约，不随后端实现变化。当前玩家可见 UI 文档都维护在 <code>CoreMod/assets/ui/rml/</code>。</p>

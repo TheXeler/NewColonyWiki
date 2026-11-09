@@ -1756,7 +1756,7 @@ mod_ready 现在可携带可选 world_id：初始启动无世界时省略，重�
 
 初始内容生成事件 `core:generate_initial_content` 由模拟线程执行。加载界面在区块就绪后提交带世界代次的请求，后续帧接收成功/失败结果；世界卸载清除待处理请求和结果，过期代次不执行。Lua 执行由 watchdog 覆盖。未编译或运行加载验证；其他创建/读档/重载/关闭入口仍在迁移，不能将此视为整个服务端 VM 已固定线程。
 
-资源栏按钮通过客户端注册命令 `core:resource.manage` 打开仓储面板，参数 `id` 是物品定义字符串 ID，前置事件 `core:resource_management_requested` 可取消。执行时检查定义存在且 ID 匹配；面板创建失败返回 storage_management_unavailable，未知物品返回 item_not_found。移除旧 data_bridge 分支；测试源码未运行，仓储内容数据和修改策略命令仍待迁移。
+游戏内菜单的仓储按钮和仓储子面板已移除，旧资源管理命令 `core:resource.manage`、前置事件 `core:resource_management_requested` 及其处理脚本一并删除；储存容器选择摘要不再提供仓储管理入口。`ui.storage_food_policy_panel` 仅保留由策略入口打开的进食方案窗口，不再注册仓储底栏槽位、仓储页签或仓储刷新请求。进食方案的物品过滤改为在窗口内填写完整物品定义 ID 并匹配有效定义，不再依赖仓储页的物品选择。服务端仓储快照、策略命令和存储搬运逻辑继续保留。本次修改未运行静态检查、构建、测试或游戏。
 
 世界地图城市标记、城市列表双击及外交按钮统一调用客户端注册命令 `core:world_map.select_city`，参数为字符串 `id`，先发布可取消的 `core:world_map_city_selection_requested`，执行时重新查找阵营再打开外交面板。缺失城市返回 city_not_found，打开异常由命令框架处理；已删除 data_bridge 旧分支。测试源码未执行，阵营查询仍使用既有原生客户端接口，快照隔离尚待完成。
 
