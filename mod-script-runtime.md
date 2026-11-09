@@ -2,6 +2,43 @@
 
 已提交工作、事件完成确认和普通殖民者死亡的最新失败规则见本文“已提交结果与后续脚本错误”。这些结果的后续观察失败只记 ERROR，既不撤回结果，也不保留一个等待监听器成功的全局队头。
 
+## 科技界面本地化（2026-11-09）
+
+`tech_tree` 客户端提供器先用 `ui.research_view.build(snapshot, categories)`
+构建展示投影，再由 `ui.research_presentation.apply(trees)` 解析当前语言的文本。
+服务端研究快照及 `prerequisites`、`unlocks`、`opening_materials`、
+`required_workstations`、`required_job` 中的原始身份保持不变，研究资格与命令参数
+继续使用这些身份。展示层不修改研究、材料支付或存档状态。
+
+前置科技和科技标题使用 `techs.<命名空间:ID>`；配方、建筑、物品、方块和职业
+分别使用 `recipes`、`buildings`、`items`、`blocks`、`jobs` 分类。
+从已加载内容注册表读取的定义若带 `name_key`，优先使用该完整翻译键；其次使用
+分类与 ID 对应的翻译，再回退到定义名称或原始 ID。物品也支持已有的方块名称翻译。
+定义只在一次展示投影期间缓存，不读取源目录文件。
+
+解锁字符串的 `recipe:`、`building:`、`tech:`、`item:`、`block:`、`job:`、
+`recruitment:` 前缀分别映射到对应翻译分类，并通过
+`ui.core:research.unlock_<类型>` 显示类型与名称。招募等级名称使用
+`recruitment.<命名空间:ID>`。其他扩展类型可提供
+`research_unlocks.<完整解锁字符串>`；没有名称翻译时保留原始标识。
+空列表显示本地化的“无”。材料数量、支付来源和研究工作单元的说明也在客户端
+通过 `ui.core:research.*` 模板生成，UUID、坐标和数量作为原始值传入。
+配置原因有 `ui.core:command.reason.<原因>` 时使用对应翻译，否则保留原始诊断。
+
+原生 RmlUI 数据视图优先消费 `prerequisites_text`、`unlocks_text`、
+`materials_text`、`workstations_text`、`required_job_text`，保留原有原始字段解析
+作为兼容回退。栏目、支付确认、取消、暂停、继续及支付状态通过 `ui_text` 绑定，
+新增栏目键使用 `ui.core:rml.tech_*`。
+
+`engine.locale.find(category, key)` 是可选翻译查询：返回当前语言中的字符串副本，
+缺键返回 `nil`，不记录缺键警告、不跨语言回退，也不修改本地化状态。
+它用于允许缺少翻译的 Mod 内容；必需的界面文本仍使用普通翻译接口。
+
+本次仅完成源代码和翻译数据修改，未运行静态检查、构建、测试或游戏验收。
+手动验收应覆盖中文及英文的磨制石器前置、石器配方解锁、水塔建筑解锁、
+招募等级、材料、工作台、学者名称和研究确认/暂停/继续状态；较小窗口及
+较长 Mod 翻译文本也需在原生界面确认。
+
 ## 服务器行为步骤与错误边界（2026-11-08）
 
 `engine.server.run_step(operation, context, callback)` 是服务器端同步执行入口，返回
@@ -39,6 +76,26 @@ end
 新路径不创建前后历史资产文档，不克隆全 ECS，不以历史重建、掉落或通知成功作为
 已经完成的方块破坏的确认条件。产物准备只复制执行者与相关落地点的物品堆；
 地面物品堆发现仍遍历相应 ECS 查询，不宣称已经有空间索引。
+
+采掘产物写入失败的 ERROR 保留 `completed_outputs_publication_refused` 前缀，
+并附带具体 `reason`、相关 `entity_uuid`、`component`、`component_type` 以及
+`existing/incoming` 实体数量。原因区分重复待替换身份、原实体缺失、原实体或
+候选实体的组件不支持无异常交换、新身份已占用、发布前回调拒绝；组件名称是
+当前编译器的原生类型名称，类型编号只用于本次进程诊断，不是存档或 Mod ID。
+这些信息沿用服务器错误边界中的任务、执行者和坐标上下文，不新增重试或补偿。
+
+启用 DEBUG 日志时，`[TaskOutputs]` 按任务 UUID 记录完成事件派发开始、产物准备
+开始、写入开始、写入完成、派发返回和完成确认。失败时 ERROR 代替写入完成；
+派发返回同时记录本次同步上下文中的 `blocks_destroyed/outputs_created`。
+如果日志中断，可据最后一条阶段记录缩小位置；阶段记录本身不能证明死锁。
+此前用于采掘排查的通用 `completion delivery pending` 日志及旧验收原因缓存已移除。
+
+Windows/MSVC 下，哈希表的移动构造不保证无异常，不能以默认移动交换代替
+实际容器交换。物品附件、物品内容及其装备、地面物品堆和属性组件现在提供
+成员级交换，供现有 ECS 发布安全检查使用；属性来源、附件节点缓存和物品
+预约随原对象内容一起交换，不绕过 `supports_nothrow_removal` 检查。
+DEBUG 错误自动打开日志浏览器后，浏览器仅分页排版当前记录；具体规则见
+[RmlUi 日志浏览器](ui-rmlui.html#debug-log-browser)。
 
 本轮未编译、运行测试或游戏。统一执行入口可供其他 Lua 玩法复用；历史城邦、
 临床、制造等领域的专用验收和持久化协议尚未逐一迁移，怪物死亡实现本轮未修改。
