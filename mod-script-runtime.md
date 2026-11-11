@@ -350,6 +350,12 @@ CoreMod 自动搬运保留 `owner_output_task`，每行携带殖民地 UUID、�
 
 搬运的 `tasks.move_ground_claim_to_inventory`、`deposit_carried_claim_to_block`、`return_carried_claim_to_ground` 和 `release_reservation` 可在末尾传入可选 `{state,field,value}` 管理状态提交。接口在物理候选准备完成后验证并提交 `ManagedStateBatch`，之后只进行原生状态交换；拒绝不会提前发布管理状态。CoreMod 用该机制把原搬运行切到送达任务或删除已结算行，避免物理结果已接受后因后续脚本通知失败再次执行。
 
+搬运取物、存入容器及退回地面成功后，原生同时标记当前原完成项的结果已接受。`tasks.completion_result_status(task_uuid)` 只查询当前完成队列头：`false` 表示尚未接受，`true` 表示已接受，`nil` 表示不是当前有效完成项。物理结果与管理状态一旦提交，后续通知错误不会使其再次转移。
+
+`core:task_completed` 只发送一次。原结果尚未接受时，原队列头、任务 UUID、工人和原完成 Tick 保留；后续模拟 Tick 通过服务器本地、不可取消的 `core:task_completion_pending` 重试结果处理，字段为原 `task_uuid` 与原完成 `tick`。每个模拟 Tick 至多尝试一次；这不是重新发送普通完成事件。CoreMod 的搬运和中立资源模块分别监听这个事件，完成观察者不会因此重复调用。监听器必须先查询结果是否已接受，并通过原有原生提交接口接受结果；返回或抛错本身不表示接受。世界卸载会撤销保留的事件游标；未结算完成队列仍沿既有存档边界阻止保存，不另建持久化终结账本。
+
+失败清理使用 `tasks.release_completed_claims(task_uuid,{state,field,value})`。接口只允许当前原完成上下文，拒绝其他任务、已经接受的结果以及不受支持的预留；原生按真实任务查找全部剩余预留，不接受调用者提供的句柄清单。它联合发布原预留释放与管理状态，然后才标记结果已接受。没有剩余预留时仍需接受管理状态。拒绝或状态准备错误保留物品、预留、搬运行与原完成项，供后续待结算事件重试。空闲卸载失败释放原背包预留、保留实际货物；普通送达失败沿既有退回地面的处理，退回不成功时继续保留原货物和预留。普通更新不再把尚在完成队列中的搬运行当成失效任务删除。这些源码与新增回归场景均未执行验证。
+
 `tasks.reserve_owner_item(source,count,source_task,target_task,target_entity,state_commit,destination)` 的最后两项可选；联合预约模式要求 `state_commit`，且原任务实际工人与 `target_entity` 一致。候选管理状态额外声明 `result_path`，为指向零值预约句柄的稠密键数组，例如 `{"owner_output_task",1,"reservation_id"}`。原生使用真实分配的句柄替换该叶子，再准备管理状态。`destination` 可为 `{x,y,z,slot}` 方块槽，归属须与任务殖民地一致；来源数量、目的容量、账本及状态全部准备后一起接受。CoreMod 的地面取物与空闲卸载已接入该模式，中断时联合释放并保存零句柄。该接口只写请求者自身注册管理状态，不接收调用者编造的物理资产证明；源码接线不代表构建或完整恢复场景已经通过。
 
 新建室外堆放区沿 `items.claim_zone_contents(zone_id)` 领取区内全部中立内容，不依赖筛选；接口检查实际命令殖民地、区域归属和已发布室外仓储策略，外殖民地有主物品保持原归属。筛选拒收的内容保留本殖民地归属并进入普通搬运重定位。空闲卸载在普通派工前检查背包，保留任务已预约材料；个人携带方案目前返回空保留集合，没有新增配置界面。
