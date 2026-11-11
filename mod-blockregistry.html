@@ -10,6 +10,8 @@
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块注册</div></div>
   <div class="content">
+    <h2>可破坏能力与站立表面</h2>
+    <p><code>mining_whitelist</code> 缺省表示不限制，空列表拒绝；非空列表按顺序检查 OR 组，每组必须是非空 AND 条件数组。条件仅支持 <code>{"type":"technology","id":"mod:tech"}</code> 和 <code>{"type":"job_level","id":"mod:job","minimum_level":3}</code>，不支持黑名单、NOT 或空组。职业条件只看当前职业链，祖先按其等级上限，不计无关历史职业。派工预筛及实际开工检查，已接纳的一轮可完整完成。攻击在实际伤害结算重新检查完整白名单，未通过乘 0.5；无来源环境伤害不变。<code>surface_standable</code> 缺省为普通表面规则，false 禁止将方块顶部作为导航站立面，与视觉和通行能力分开。</p>
     <h1>方块注册</h1>
     <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。存量方块记录会派生同 ID 的兼容物品定义；不需要成为体素的新物品应放在 <code>data/items/</code>。</p>
 

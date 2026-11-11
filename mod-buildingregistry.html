@@ -2,6 +2,10 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>建筑数据 - NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
 <body data-page="mod-buildingregistry"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>建筑蓝图注册</div></div><div class="content">
 <h1>建筑数据</h1>
+<h2>世界设施与中立资源源</h2>
+<p><code>world_generated_only=true</code> 将定义排除在玩家放置与建筑列表外。<code>durability_max</code> 可独立于维修配置声明正耐久。<code>engine.buildings.spawn_completed(id,x,y,z,rotation)</code> 为已注册世界设施原子创建实体方块与原始建筑／工作点身份，验证支撑、占地、身体碰撞与朝向，不压平地形或要求可达路线。<code>surface_standable=false</code> 是方块的独立表面站立能力；普通导航与地形站立查询均使用它。</p>
+<p>可选 <code>resource_source</code> 由 <code>systems.mine</code> 解释，必填 <code>work_point</code>、<code>work_technology</code>、正 <code>work_amount</code>、正 <code>haul_work_amount</code>、<code>output_table</code>、整数 <code>ground_radius</code> 与 <code>infinite=true</code>。产物由已加载输出表生成。当前契约只实现无限资源；有限资源不可默默套用无限规则。初始生成可声明 <code>initial_spawn={count:1,minimum_edge_distance:8,preferred_edge_distance:16,maximum_edge_distance:64}</code>；距离与数量属于内容配置。其他 Mod 可使用自己的名字空间、大小、蓝图、输出表和外部工作位置。</p>
+<p>各殖民地启用许可独立保存于 Lua；中立工作点在实际开始时共用独占／释放处理。缓冲复用建筑原点方块的普通库存，按需增加槽位；不会另建物品账本。<code>geometry_condition(uuid)</code> 区分未加载、缺失、支撑、完整性与耐久；Lua 决定销毁，<code>discard_geometry(uuid,state_commit)</code> 联合接受原设施方块清理、缓冲释放、建筑删除及管理状态，并在提交后通知观察者。完整玩法与待执行验收见 <a href="stone-mining.md">石材矿脉、切石机与搬运</a>。</p>
 <p>建筑定义位于 <code>data/buildings/*.json</code>。CoreMod提供制作点 <code>core:crafting_spot</code>、工作台 <code>core:workbench</code>、烟熏炉 <code>core:smoker</code>、箱子 <code>core:chest</code> 与小型灌溉水塔 <code>core:irrigation_tower</code>。普通建筑声明正工期；箱子与水塔使用成品搬运后零工时放置，入口与工作点按各设施实际角色配置。</p>
 <h2>两格家具：红床与橡木门</h2>
 <p>红床横向占两格，橡木门上下占两格，仍沿工作台成品制作、搬运安装和整体拆除流程使用。玩法通过共享能力Tag <code>c:sleepable</code> 和 <code>c:toggleable</code> 识别，不依赖床／门ID、部件type或固定格数。普通睡袋MOD在其建筑／部件定义或蓝图方块上声明 <code>c:sleepable</code> 即可复用睡眠脚本；入口、恢复倍率和模型动画名有默认约定，可选 <code>interactions.sleep</code> 调整。</p>

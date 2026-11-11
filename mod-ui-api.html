@@ -11,6 +11,7 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>UI 框架</div></div>
   <div class="content">
     <h1>UI 框架</h1>
+    <p>普通选中对象卡支持可选客户端数据提供者 <code>engine.ui.data.register("object_information", build)</code>。返回 <code>nil</code> 保留原生对象摘要；返回对象时使用既有 <code>selection_summary</code> 字段：<code>visible/count/title/ownership/status/details/capabilities/problem/management/manage_label</code>。这只是客户端展示，不提供世界写权限；动作仍通过现有 <code>core:selection.manage</code> 及服务器命令验证。CoreMod 的中立资源和研究前采掘标记复用该卡片，不打开矿井管理窗口。提供者随既有客户端模块与 VM 生命周期撤销；本批次未运行 UI 或构建验收。</p>
     <p class="subtitle">通过 Lua 注册底边栏按钮、窗口和浮动提示。旧即时模式 UI 渲染层已经移除；当前 Lua UI API 已由 RmlUI 文档渲染为玩家可见界面。</p>
 
     <h2>设计思路</h2>
