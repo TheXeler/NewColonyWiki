@@ -348,7 +348,9 @@ CoreMod 自动搬运保留 `owner_output_task`，每行携带殖民地 UUID、�
 
 地面堆预约在每个句柄上保存可选 `colony_uuid`，同殖民地数量互斥，跨殖民地分别计算。`items.ground_pile(uuid,colony_uuid)` 可读指定殖民地的预约量，列表快照附 `reserved_by_colony`。实际提交拾取时重查剩余物品和背包容量；部分领取按句柄顺序缩减竞争预约，来源、目的槽预留和原生预约账本在候选世界及容器快照准备后一起提交。仅保留实时任务的实体目标失效会通过 AI 通用取消路径清理；已经离池、正在接受完成结果的原操作不在此取消集合中。未运行构建、测试、静态检查或游戏；矿脉生产与完整恢复边界仍在开发。
 
-搬运的 `tasks.move_ground_claim_to_inventory`、`deposit_carried_claim_to_block`、`return_carried_claim_to_ground` 和 `release_reservation` 可在末尾传入可选 `{state,field,value}` 管理状态提交。接口在物理候选准备完成后验证并提交 `ManagedStateBatch`，之后只进行原生状态交换；拒绝不会提前发布管理状态。CoreMod 用该机制把原搬运行切到送达任务或删除已结算行，避免物理结果已接受后因后续脚本通知失败再次执行。领取前的来源／目的预约联合持久化仍需完成，不能把这些完成阶段接口视作整个搬运生命周期已验证。
+搬运的 `tasks.move_ground_claim_to_inventory`、`deposit_carried_claim_to_block`、`return_carried_claim_to_ground` 和 `release_reservation` 可在末尾传入可选 `{state,field,value}` 管理状态提交。接口在物理候选准备完成后验证并提交 `ManagedStateBatch`，之后只进行原生状态交换；拒绝不会提前发布管理状态。CoreMod 用该机制把原搬运行切到送达任务或删除已结算行，避免物理结果已接受后因后续脚本通知失败再次执行。
+
+`tasks.reserve_owner_item(source,count,source_task,target_task,target_entity,state_commit,destination)` 的最后两项可选；联合预约模式要求 `state_commit`，且原任务实际工人与 `target_entity` 一致。候选管理状态额外声明 `result_path`，为指向零值预约句柄的稠密键数组，例如 `{"owner_output_task",1,"reservation_id"}`。原生使用真实分配的句柄替换该叶子，再准备管理状态。`destination` 可为 `{x,y,z,slot}` 方块槽，归属须与任务殖民地一致；来源数量、目的容量、账本及状态全部准备后一起接受。CoreMod 的地面取物与空闲卸载已接入该模式，中断时联合释放并保存零句柄。该接口只写请求者自身注册管理状态，不接收调用者编造的物理资产证明；源码接线不代表构建或完整恢复场景已经通过。
 
 新建室外堆放区沿 `items.claim_zone_contents(zone_id)` 领取区内全部中立内容，不依赖筛选；接口检查实际命令殖民地、区域归属和已发布室外仓储策略，外殖民地有主物品保持原归属。筛选拒收的内容保留本殖民地归属并进入普通搬运重定位。空闲卸载在普通派工前检查背包，保留任务已预约材料；个人携带方案目前返回空保留集合，没有新增配置界面。
 
