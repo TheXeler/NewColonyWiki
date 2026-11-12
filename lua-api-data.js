@@ -196,6 +196,7 @@ window.__LUA_API_DATA = {
         { "api": "engine.tasks.interrupt_all(worker)", "params": "entity", "returns": "integer", "note": "解除该实体已领取的任务并返回数量，发布 core:task_interrupted。" },
 		{ "api": "engine.tasks.set_locked(id, locked)", "params": "task UUID, bool", "returns": "bool", "note": "复用 blocked_until_tick 的永久阻塞哨兵锁定或立即解锁任务；锁定任务继续存在但不可领取。" },
         { "api": "engine.tasks.set_metadata(id, source_id, priority, designated_worker?)", "params": "task UUID, integer, 0-9, entity?", "returns": "bool", "note": "写来源、优先级和指定实体；0 是特殊优先级，1-9 是普通优先级。" },
+        { "api": "engine.tasks.worker_qualified(id, worker_uuid)", "params": "task UUID, entity UUID", "returns": "bool", "note": "只读复用调度器当前归属、物理交互能力、职业许可及任务资格表达式判定；不预留、不寻路、不授予已开工轮次的继续权限。中立工作点仅在新轮次实际开工时调用；无职业不等于无物理能力，显式职业要求仍需满足。" },
         { "api": "engine.tasks.set_qualification(id, job_id, job_level)", "params": "task UUID, definition ID string, integer", "returns": "bool", "note": "职业使用定义字符串，不传内部数字哈希；未知定义或无效等级返回 false，不改已有要求。" },
         { "api": "engine.tasks.available/reserved/reserve/commit_reservation/release_reservation", "params": "item hash、数量、reservation id", "returns": "mixed", "note": "共享资源 reservation ledger；CoreMod stockpile、crafting 和生产订单使用。" },
         { "api": "engine.tasks.cancel_matching(task_tag, faction_id?, payload_id?)", "params": "string, hashed id?, integer?", "returns": "integer", "note": "按任务标签、阵营和可选 payload_id 批量取消任务，返回取消数量。" },
