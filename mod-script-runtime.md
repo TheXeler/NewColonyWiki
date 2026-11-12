@@ -2,6 +2,30 @@
 
 已提交工作、事件完成确认和普通殖民者死亡的最新失败规则见本文“已提交结果与后续脚本错误”。这些结果的后续观察失败只记 ERROR，既不撤回结果，也不保留一个等待监听器成功的全局队头。
 
+## 中立来源信息卡与当前快照契约（2026-11-12）
+
+`Mine.snapshot()` 只读投影来源几何，将不可用、毁坏、失去支撑和不完整分别
+写入现有 `problem_id`：`source_unavailable`、`source_destroyed`、
+`source_unsupported`、`source_incomplete`。几何无异常时保留原工作点原因。
+这不改变许可、任务、库存或存档字段。客户端普通对象信息卡翻译已知原因，
+保留未知 Mod 原因原文；实际原因不被科技提示覆盖，缺失耐久显示未知值。
+
+`core:mine_snapshot` 事件定义改为当前来源快照，顶层为 `rules_valid`、
+`mines`、`waiting`，不再要求旧 `difficulty_valid`／耗竭及区块矿物字段。
+来源项声明原建筑／工作点身份、启用与研究许可殖民地数组、坐标和可选范围／
+名称、工人字符串（允许空）、进度、原缓冲项及搬运许可、可选耐久、来源科技
+和无限标志。等待项保留原坐标／方块／殖民地／优先级／指定工人及缺少科技。
+`ui.mine_state` 的空缓存也使用当前顶层结构。没有协议版本或新通道变更。
+
+实际显示沿已有 `object_information` 提供者、EngineFrameUi 的
+`selection_summary` 发布、RmlUiHudDataViews 的 `problem` 解析／存储／
+`DirtyVariable`／绑定和 manage_hud.rml 的文本插值；本次不改布局或新增窗口。
+新增场景源码使用实际 native geometry、Mine／发布者、原生 shared state、
+两个 Lua VM、EventRuntime 及原缓存监听器和实际中英文词典，描述失效原因、
+事件字段接受／非法身份拒绝、复制隔离与断线清空。选择、本地玩家、空待办
+标记及连通性是显式输入；不可用／缺失耐久是显式收到的展示事实。没有实际
+RmlUI 渲染、网络包、完整 Tick 或磁盘恢复执行，源码尚未编译或运行。
+
 ## 来源等待销毁时不重新建单（2026-11-12）
 
 `systems.mine.update` 在最后发布新工作前重新调用已有
