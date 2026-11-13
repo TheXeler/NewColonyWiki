@@ -19,18 +19,20 @@
 }</code></pre>
     <p>普通进食、口粮、治疗供餐及招募支付共同读取该组件。药剂食品实际食用时同时处理营养、药效和药剂CD，资源支付不触发药效。营养或寿命不同不能堆叠；纯基础食品载荷只因JSON字段顺序不同仍可合并。详情和首批配方见 <a href="mod-reciperegistry.html">配方数据</a>。</p>
     <h1>注册物品、方块和规则</h1>
-    <p class="subtitle">所有内容数据都放在 <code>data/</code> 下。引擎在加载阶段自动扫描这些目录，不需要你在 Lua 里手动注册。</p>
+    <p class="subtitle">数据文件注册表：在受支持的 <code>data/</code> 类型目录中声明 JSON，引擎在加载阶段自动扫描并登记。通过 Lua 定义的分类、回调和提供器见<a href="mod-coderegistry.html">代码注册表</a>。</p>
 
     <h2>通用规则</h2>
     <p>生存规则的数值校验分工：C++ 校验 AI 直接读取的 <code>need_task_duration_seconds</code>；CoreMod Lua 校验其他生存基础数值以及 <code>status_effects</code> 的 ID、字段和值。无效配置会阻止生存规则加载。</p>
-    <p>不管哪种数据类型，下面几条规则是通用的：</p>
+    <p>一般数据记录遵循下面的规则；Tag、名称池及脚本声明的例外也需同时遵守：</p>
     <ul>
-      <li>每个 JSON 都必须有唯一的 <code>id</code>，推荐格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</li>
-      <li>引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
+      <li>一般记录使用非空 <code>id</code>，推荐完整格式 <code>&lt;mod_id&gt;:&lt;name&gt;</code>；本 Mod 的短 ID 由加载器补前缀。Tag 文件使用 <code>tag</code>，不要求 <code>id</code>；名称池登记键还包含语言文件名，见各自专页。</li>
+      <li>通用数据表以 <code>(type, id)</code> 为键：同一 ID 可以分别用于不同类型。后加载的同键记录仅在自身 <code>reload: true</code> 时覆盖旧记录；缺省或 false 时记录警告并保留旧记录。该字段是覆盖许可，不是是否参与 DEBUG 热重载的开关。事件、通道和命令还受脚本注册器的所属 Mod、重复声明和引用校验约束。</li>
+      <li>跨 Mod 引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>；本 Mod 短引用是否补前缀以具体字段的解析规则为准。</li>
       <li>配方、职业、文明和方块掉落会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要文件在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
-      <li>当前引擎注册类型包含 <code>items</code>、<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>attributes_pack</code>、<code>combat_rules</code>、<code>recipes</code>、<code>manufacturing_rules</code>、<code>quality_tables</code>、<code>output_tables</code>、<code>item_bases</code>、<code>experiences</code>、<code>medicinal_herbs</code>、<code>potion_trait_effects</code>、<code>hunting_rules</code>、<code>medicine_slot_rules</code>、<code>colonist_survival_rules</code>、<code>career_progression_rules</code>、<code>wild_food_rules</code>、<code>animal_distributions</code>、<code>weather_definitions</code>、<code>dynamic_weather_regions</code>、<code>visibility_rules</code>、<code>mine_rules</code>、<code>difficulty_rules</code>、<code>jobs</code>、<code>task_definitions</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>raids</code>、<code>zones</code>、<code>audio</code>。职业定义只从 <code>data/jobs/</code> 加载，不提供旧目录别名。</li>
+      <li>当前引擎注册类型包含 <code>items</code>、<code>blocks</code>、<code>tags</code>、<code>entities</code>、<code>attributes_pack</code>、<code>events</code>、<code>channels</code>、<code>commands</code>、<code>combat_rules</code>、<code>combat_formations</code>、<code>reactions</code>、<code>spell_runes</code>、<code>spell_staff_work</code>、<code>recipes</code>、<code>recipe_categories</code>、<code>manufacturing_rules</code>、<code>quality_tables</code>、<code>output_tables</code>、<code>item_bases</code>、<code>experiences</code>、<code>medicinal_herbs</code>、<code>potion_trait_effects</code>、<code>hunting_rules</code>、<code>medicine_slot_rules</code>、<code>colonist_survival_rules</code>、<code>career_progression_rules</code>、<code>wild_food_rules</code>、<code>animal_distributions</code>、<code>weather_definitions</code>、<code>fluid_rules</code>、<code>dynamic_weather_regions</code>、<code>visibility_rules</code>、<code>mine_rules</code>、<code>difficulty_rules</code>、<code>jobs</code>、<code>task_definitions</code>、<code>civilizations</code>、<code>techs</code>、<code>focuses</code>、<code>factions</code>、<code>faction_spawn_rules</code>、<code>diplomacy_proposals</code>、<code>name_pools</code>、<code>features</code>、<code>crops</code>、<code>buildings</code>、<code>terrain</code>、<code>biomes</code>、<code>raids</code>、<code>zones</code>、<code>audio</code>。职业定义只从 <code>data/jobs/</code> 加载，不提供旧目录别名。</li>
     </ul>
+    <p>科技界面分类通过公共 Lua 模块 <code>core:ui.research_categories</code> 的 <code>register(id, {name_key, order})</code> 注册，内置调用集中在 <code>scripts/ui/research_category_defaults.lua</code>。科技 JSON 的 <code>category</code> 引用完整分类 ID，省略命名空间时按所属 Mod 补全。界面动态生成标签页和排序，扩展方式见 <a href="mod-techregistry.html">科技注册</a>；分类没有独立的数据类型或 JSON 目录。</p>
     <p>物品数值加成只使用 <code>equipment_bonuses</code> 数组；旧字段 <code>bonuses</code> 会使定义加载失败。每项使用 <code>stat</code> 完整属性路径和有限数值 <code>value</code>；可选的 <code>mode</code> 为 <code>add</code> 或 <code>base_percent</code>，省略时按 <code>add</code> 处理。<code>position</code>、<code>velocity</code>、<code>rotation</code> 父节点与字符串 <code>name</code> 不能作为数值修正目标。</p>
 	<p><code>medicine_slot_rules</code> 是可选的单记录全局表：<code>base_capacity</code> 必须为 1-16，<code>technology_bonuses</code> 为 <code>{"technology_id":"mod:tech","slots":N}</code> 数组，同一科技不可重复，基础值加全部科技增量不得超过 16。槽位是每个人都有的通用药剂属性，不限于治疗用途，并显示在人员界面的个人信息中。CoreMod 当前提供两个基础槽位；其他 MOD 若缺少此表，仍保留 <code>medicine_slot_rules_missing</code> 配置屏障。</p>
 	<p><code>colonist_survival_rules</code> 是单记录生存规则表。需求与状态转换字段为 <code>hunger_depletion_per_second</code>、<code>fatigue_depletion_per_second</code>、<code>need_task_duration_seconds</code>、<code>fatigue_recovery_per_second</code>、<code>depleted_stage_seconds</code>、<code>recovery_stage_seconds</code>、<code>temperature_stage_seconds</code>、<code>stress_mood_threshold</code>、<code>stress_recovery_mood_threshold</code>、<code>stress_stage_seconds</code>、<code>stress_recovery_stage_seconds</code>、<code>dazed_duration_seconds</code>、<code>well_fed_healing_per_second</code>、<code>dying_limit</code> 和 <code>dying_per_second</code>。精力消耗使用统一字段，不自行增加昼夜差速或时间边界。需求工作时长与休息恢复速度必须来自该记录；缺失时不会回退到旧的 3 秒或每秒 6 点。压力在低心情或存在负面心情印象时恶化，只有心情达到恢复阈值且不存在负面印象时恢复；崩溃触发配置时长的恍惚，结束后压力降低一级。</p>
@@ -47,6 +49,23 @@
 	<p>旧 <code>ores</code> 体素矿脉目录不再加载。矿物不会作为普通矿物体素随机散布；世界种子和区块坐标稳定决定天然可见的矿物类型与丰度档位。带有 <code>mine_rules.work_point_type</code> 的建筑按工作点世界坐标实施每区块唯一约束，交互式放置预览会以 <code>chunk_unique_work_point_conflict</code> 拒绝第二座矿井。连续产物在工作点坐标生成带来源工作点句柄的 ECS 地面单品堆，再由搬运清运。</p>
 	<p>玩家殖民者行动、生产溢出或死亡产生的地面物品是带实体 UUID 的单品堆；<code>recovery_authorized</code> 决定自动搬运是否可领取。搬运完成并进入方块容器后，内容成为该方块所有者的槽位属性，不另建物品 UUID；存档保存所有者和内容。</p>
 	<p>每个 ECS 地面堆实体进入只读渲染快照，并显示其中物品自身的缩小方块模型；没有完整模型时使用物品自身的方块贴图或图标生成代理，只有缺少这些资源时才回退到特殊方块 <code>core:item_pile</code>。该方块没有物品形态、不能由玩家放置，也不会写入或覆盖地形；物品定义、数量与运行状态由 <code>GroundItemPile</code> 组件持有，权威坐标由实体 <code>Position</code> 持有。同一格的不同物品堆按实体 UUID 生成稳定偏移和朝向。</p>
+
+    <h2 id="additional-registries">脚本声明与专项数据入口</h2>
+    <table>
+      <thead><tr><th>data 下的类型目录</th><th>用途与代码边界</th><th>参考</th></tr></thead>
+      <tbody>
+        <tr><td><code>events/</code></td><td>事件字段、继承、取消及同步声明。监听器另外由 Lua 登记，不能用订阅未声明事件的方式创建 schema。</td><td><a href="mod-events.html">事件系统</a></td></tr>
+        <tr><td><code>channels/</code></td><td>字段到 Server、Client 接收入口的映射；入口指向本 Mod 的 scripts 模块及直接导出函数。</td><td><a href="mod-network-sync.html">网络同步</a></td></tr>
+        <tr><td><code>commands/</code></td><td>命令 route、permission、before_event、parameters 与 execute 入口；处理函数由 Lua 提供，不是控制台原生命令清单。</td><td><a href="mod-lua-api.html">Lua API</a></td></tr>
+        <tr><td><code>combat_rules/</code>、<code>combat_formations/</code>、<code>reactions/</code></td><td>战斗规则、阵型和事件反应定义。Reaction 的事件引用须有效，运行时再连接对应处理逻辑。</td><td><a href="engine-combat.html">战斗规则</a></td></tr>
+        <tr><td><code>spell_runes/</code>、<code>spell_staff_work/</code></td><td>符文数据与法杖更新工作定义。更新工作提供时长、资格及工作点约束，玩家命令不提供这些规则值。</td><td><a href="spell-system.md">法术系统</a></td></tr>
+        <tr><td><code>recipe_categories/</code></td><td>配方分类数据。科技界面分类使用独立 Lua 注册接口，不从本目录读取。</td><td><a href="mod-reciperegistry.html">配方数据</a></td></tr>
+        <tr><td><code>fluid_rules/</code></td><td>流体传播规则，由 ModLoader 读取并交给 FluidSystem 使用。</td><td>源码：Engine/Voxel/FluidSystem.cpp</td></tr>
+        <tr><td><code>attributes_pack/</code></td><td>属性包定义，供实体与相关能力系统读取。</td><td><a href="mod-entityregistry.html">实体定义</a></td></tr>
+        <tr><td><code>task_definitions/</code></td><td>原生实体 Task 使用的定义数据；与 scripts/timers 下的持久 Lua 定时器类型分开。</td><td><a href="entity-tasks.md">实体 Task</a></td></tr>
+      </tbody>
+    </table>
+    <p>事件、通道和命令既进入通用内容数据，也由 ScriptRegistry 根据同一捕获快照建立脚本声明。它们需通过所属 Mod、重复定义和入口引用校验，不能只依据通用表的覆盖规则判断是否可加载。网络接收也不允许用不同的声明替换本地已经加载的这三类脚本注册内容。</p>
 
     <h2>方块（blocks）</h2>
     <p>方块是体素世界的基本构成单位，放在 <code>data/blocks/</code> 下。<code>stack_size</code> 表示一个背包格子能堆叠多少个，范围 1~999；不填时普通物品（含方块物品）默认为 32，声明 <code>equipment: true</code> 的装备默认为 1。显式配置的值优先。<code>category</code> 用来分类，可以取 <code>material</code>、<code>tool</code>、<code>food</code>、<code>equipment</code> 等。</p>

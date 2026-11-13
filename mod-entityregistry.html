@@ -51,7 +51,8 @@
 	<p><code>attributes_pack</code> 文件顶层必须是 JSON 对象，包含 <code>id</code> 和 <code>attributes</code> 数组；空文件或顶层类型错误会拒绝整份定义。pack 引用使用 <code>default</code> 指定默认 pack ID，<code>name</code> 和 <code>custom_values</code> 都可省略。生成时按能力槽前缀展开为属性 Map 键，例如 <code>battler.melee_hit</code>；<code>custom_values</code> 可以覆盖本 pack 已声明的同类型值或增加新值。pack 内的嵌套属性名可用点号分段，但不能以点号开头、结尾或含连续点号。重复赋值使原型或生成请求失败并记录 WARN。普通殖民者原型只引用 <code>colonist</code> pack，其视野由顶层 <code>vision_range</code> 给出；战斗属性由战斗职业首级能力的 <code>battler</code> pack 授予，其 <code>is_battler</code> 默认值为 <code>true</code>。非 battler 实体的自动状态效果不会创建 <code>battler.*</code> 目标。无法展开到属性 Map 的数组、null 和空对象会使生成失败。<code>name</code>、<code>move_speed</code>、<code>vision_range</code>、<code>current_hp</code> 和 <code>max_hp</code> 等引擎字段由 ECS 持有并通过统一接口读取。统一读取接口也支持 <code>position.x</code>、<code>velocity.x</code> 和 <code>rotation.yaw</code> 等引擎子字段。</p>
 	<p>自定义属性键可包含点号，例如 <code>core:reactions.threat_uuid</code>；Reaction 的上下文以这类已声明的标量属性保存。标准属性包默认值是共享基础值，实体属性 Map 是能力属性的唯一基础存储。pack 根键使用独立的 <code>pack</code> 类型，内部持有字符串模板 ID；生成或运行时添加时立即展开为 <code>&lt;name&gt;.&lt;value_name&gt;</code> 子键。读取根键返回 <code>{type="pack", value="模板ID"}</code>，读取 <code>&lt;name&gt;.*</code> 返回包含相对子键及解析值的 table。pack 模板和 <code>custom_values</code> 可以引用嵌套 pack，引擎按完整路径递归展开，循环引用或缺失模板在展开时报告 ERROR 并拒绝。服务器 Lua 使用 <code>engine.entities.add_attribute(uuid, key, type, value, source)</code> 增加单个值或 pack，或使用 <code>engine.entities.add_attribute(uuid, capabilities, source)</code> 展开并增加一组 pack 或标量声明，记录调用者提供的来源。不同 <code>name</code> 的 pack 展开到不同前缀；批量增加遇到已有键时整批拒绝，单值增加只拒绝本次操作。新增 <code>colonist.backpack_stack_capacity</code> 时，如果实体已有背包，先在候选世界协调堆叠与落地，成功后再一起提交。修改已有 pack 根键的 ID 只更新备查值；若新 ID 未注册则报告 WARN，已展开子键仍保持原值。删除 pack 根键会删除其全部展开子键。解析缓存无效时会拒绝并恢复该次操作前的 Map。新增值沿用 Map 存档和同步。</p>
 	<p>根层 <code>position</code>、<code>velocity</code>、<code>rotation</code> 是引擎子字段的父节点，不能另行声明为标量 Map 键，也不能作为属性写入或修正目标；应使用 <code>position.x</code> 等具体子字段。对应子字段由 ECS 持有，未知子字段如 <code>position.extra</code> 也不能占用这些保留前缀或作为修正目标。pack 前缀下的同名字属性不占用根层引擎节点。</p>
-	<p>生命值降到 0 的非殖民者实体会直接在当前位置执行死亡产出表并移除，不创建尸体。结果生成 ECS 单品地面堆实体，自动允许玩家回收；进入方块仓储前不计入玩家仓储资源。产出表缺失或结构无效时原型保留，<code>engine.modding.get_entity_info(id)</code> 返回稳定屏障原因及来源路径；不会用默认掉落代替。</p>
+	<p>生命值降到 0 的普通非殖民者实体在当前位置计算死亡产出并移除，不创建尸体。产出表的全部执行次数和嵌套组先算成最终物品列表，再与背包、装备的完整内容一起准备地面堆，最后开始生成；不会先生成一部分，再因后续计算失败删除已有掉落。物品自动允许玩家回收，进入方块仓储前不计入玩家仓储资源。产出表缺失或结构无效仍由 <code>engine.modding.get_entity_info(id)</code> 报告具体原因及来源路径；普通死亡清理记录 ERROR，不提供默认掉落、不恢复生命值，也不因表计算失败保留实体并在后续 tick 重算。随身物品独立处理；已生成掉落不会因日志或合并失败撤回。城邦档案和队伍托管死亡仍有各自的交接流程。</p>
+	<p>普通非托管殖民者死亡的纪念、掉落、实体移除、墓碑和 <code>core:colonist_died</code> 通知也是独立步骤。纪念文档、死亡产出表、墓碑位置或通知失败只记录 ERROR；死亡实体不会因后续观察或通知失败恢复，已接受的掉落不会回收。队伍／城邦托管死亡继续由其拥有者处理档案和预约交接，不会绕过原拥有者直接删除。</p>
 	<p>狩猎只接受当前被单选或多选的具体 <code>animal=true</code> 实体，并要求有效死亡产出表。面板显示每个目标的攻击性、可达性和合格执行者数量。确认后每个动物对应一个独立 Hunt 工作；动物移动时工作目标随之更新，死亡、消失或玩家从目标来源取消后授权结束。系统不创建持续狩猎区，也不会把后续刷新的动物加入旧指定。</p>
 	<p>狩猎工作量由唯一的 <code>data/hunting_rules/</code> 记录提供，例如 <code>{ "id": "mod:hunting", "work_amount": 100 }</code>。该内容表可以为空；缺失时入口显示配置屏障，不使用代码默认值。职业通过 <code>allowed_task_tags: ["hunt"]</code> 声明资格。</p>
 
@@ -69,7 +70,7 @@
         <tr><td><code>Needs</code></td><td><code>hunger</code>, <code>fatigue</code> (float, 0~100)</td><td>剩余饱食度和精力值。两项随时间下降；低于阈值后 AI 会生成进食或休息需求，归零后开始累积对应负面状态。</td></tr>
         <tr><td><code>Mood</code></td><td><code>mood_value</code> (float, 0~100)</td><td>心情值在能力数组中写为 <code>{"type":"mood","mood_value":50.0}</code>。</td></tr>
         <tr><td><code>ColonistTag</code></td><td>（无字段）</td><td>标记为殖民者。拥有此组件的实体参与殖民者相关的 AI 逻辑和统计。</td></tr>
-        <tr><td><code>AIState</code></td><td><code>lod_level</code> (int)</td><td>实体统一通过 TaskPool 调度任务；lod_level 控制更新频率。内存运行态记录当前任务 UUID 和执行步骤，无行为树选择字段。AIState 不隐式创建 Health、Needs、Mood 或 Name；空 Job 由实体工厂统一创建。</td></tr>
+        <tr><td><code>AIState</code></td><td><code>lod_level</code> (int)</td><td>实体统一通过 TaskPool 调度任务；lod_level 控制更新频率。内存运行态记录当前任务 UUID 和执行步骤，无行为树选择字段。AIState 不隐式创建 Health、Needs、Mood、Name 或 Job；只有声明职业或需要首次转职的殖民者才获得 Job。无职业实体依实际能力执行普通任务；物理破坏庄稼使用 damage_crop，不需要殖民者标签、收获精度或职业经验。</td></tr>
 		<tr><td><code>NavAgent</code></td><td>不从 JSON 读取</td><td>拥有 <code>AIState</code> 的原型生成实体时会自动附加导航代理。寻路只写入路线；实体 locomotion 层在 ECS 查询前解析位置与移速，把局部目标转换为有水平和垂直极值的三维移动矢量，跳跃也通过垂直速度实现。导航或关注目标产生的身体朝向在查询后经统一属性接口写入 <code>rotation.yaw</code>。物理层解析速度修正、积分矢量并解算碰撞；动画依据本 tick 实际发生的水平位移播放。</td></tr>
         <tr><td><code>Speed</code> runtime</td><td><code>grounded</code>, <code>in_fluid</code></td><td>运行时物理状态，用于重力、落地和流体碰撞处理。水不会提供固体支撑；受重力影响的实体入水后仍会下沉，但竖直速度会受到水的阻力。NCDOCS 未定义摔落伤害或水流推动实体，因此引擎不提供这些隐式玩法。</td></tr>
 		<tr><td><code>PhysicsCollider</code></td><td><code>half_width</code>, <code>height</code>, <code>half_depth</code>, <code>collision_enabled</code>, <code>affected_by_gravity</code></td><td>引擎定义的权威物理属性，Mod 只能配置初始值，不能替换其语义或碰撞规则。位置表示脚底中心，碰撞箱向上延伸；<code>collision_enabled</code> 控制体素碰撞以及静止实体间的重叠分离，<code>affected_by_gravity</code> 控制重力，两者默认均为 true。移动中的实体不会互相阻挡，但仍与地形碰撞；两者静止且碰撞箱重叠时会互相挤开。物理层每 tick 重新检查脚下支撑，并处理墙面滑动、落地及流体接触。组件随存档保存。</td></tr>
@@ -78,7 +79,7 @@
         <tr><td><code>Equipment</code></td><td><code>id,num,components</code></td><td>单一装备栏。组件值为 <code>{"id":"core:tool","num":1,"components":{"quality":"","quality_value":0,"affixes":[],"effects":[],"payload_json":"","spoilage_progress":0,"attachments":{}}}</code>；省略或写空对象表示没有装备。num 必须为 1，各实体独立持有完整内容。穿戴装备随实体保存，不创建独立库存 UUID；该接线尚待测试。</td></tr>
         <tr><td><code>Attributes</code></td><td>展开后的属性 Map</td><td>殖民者、战斗者等 pack 在生成时展开；原型不再声明 <code>colonist_attributes</code> 能力块。</td></tr>
         <tr><td><code>Name</code></td><td><code>data</code> (string)</td><td>显示名称。</td></tr>
-        <tr><td><code>Backstory</code></td><td><code>data</code> 或 <code>value</code> (string)</td><td>角色经历文本。人员界面的角色菜单会通过聚合接口展示该字段。</td></tr>
+        <tr><td><code>Backstory</code></td><td><code>data</code> 或 <code>value</code> (string)</td><td>角色经历文本。人员界面合并后的个人信息页会通过聚合接口展示该字段。</td></tr>
         <tr><td><code>PrototypeRef</code></td><td>自动生成</td><td>引用创建该实例的原型 ID。实体原型 JSON 不需要声明。</td></tr>
         <tr><td><code>Visual</code></td><td><code>model</code>, <code>texture</code>, <code>model_scale</code>, <code>animation</code>, <code>tint</code>, <code>parts</code>, <code>attachments</code>, <code>width</code>, <code>height</code>, <code>depth</code></td><td>实体外观。未声明时不渲染；GLB 支持独立部件装配、实例染色和命名节点显隐。<code>model: "biped"</code> 会自动生成默认头部视觉。</td></tr>
         <tr><td><code>Animation</code></td><td><code>enabled</code>, <code>walk_speed</code>, <code>walk_amplitude</code>, <code>idle_bob</code></td><td>启用 GLB 片段或 biped 程序动画；后三项用于 biped。</td></tr>
@@ -126,7 +127,7 @@
       <thead><tr><th>API</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>engine.colonists.list(Job_filter?, sort_key?)</code></td><td>返回殖民者列表摘要，字段包含名称、职业 ID/名称、等级、经验和心情；<code>sort_key</code> 支持 <code>name</code>、<code>Job</code>、<code>level</code>、<code>xp</code>、<code>mood</code>。</td></tr>
-		<tr><td><code>engine.colonists.detail(entity)</code></td><td>返回角色菜单数据：名称、职业、职业等级/经验、经历、心情、thoughts、基础/工作/战斗属性分组。分组逐键通过统一属性接口读取，包含已声明的 <code>battler.attack</code>、<code>battler.defense</code>、命中、格挡、攻击速度和射程；缺失属性不写入表。</td></tr>
+		<tr><td><code>engine.colonists.detail(entity)</code></td><td>返回个人信息页使用的角色数据：名称、职业、职业等级/经验、经历、心情、thoughts、基础/工作/战斗属性分组。分组逐键通过统一属性接口读取，包含已声明的 <code>battler.attack</code>、<code>battler.defense</code>、命中、格挡、攻击速度和射程；缺失属性不写入表。</td></tr>
 		<tr><td><code>engine.colonists.equipment(entity)</code></td><td>返回 ECS 装备槽、实体背包的所有者槽位内容及筛选/排序字段；背包内容没有独立 UUID。</td></tr>
       </tbody>
     </table>
@@ -141,7 +142,7 @@
     </table>
 
     <h3>殖民者 <code>core:colonist</code></h3>
-    <p>通用殖民者原型声明 <code>ai_state</code>，由 TaskPool 驱动实体 AI；初始 <code>Job</code> 等级为 0。原型显式提供生命、需求、心情和属性数据。招募待登记实体沿指定的 <code>Move</code> Task 前往登记点。若生成后的位置、姓名或待登记标记设置失败，招募流程立即销毁该实体，并在候选记录中保留具体失败原因以供重试。</p>
+    <p>通用殖民者原型声明 <code>ai_state</code>，由 TaskPool 驱动实体 AI；初始 <code>Job</code> 等级为 0。原型显式提供生命、需求、心情和属性数据。招募先生成实体、设置姓名和待登记标记，最后设置入场位置；这些初始化步骤失败时清理新实体，并在候选记录中保留具体原因。完成这组初始化后再应用经历并发布前往登记点的 <code>Move</code> Task。</p>
     <p>候选人的经历初始化、清理和登记完成接口只对仍存活、带 <code>colonist_tag</code>、空或非空 <code>Job</code> 组件且 <code>PendingRegistration.active</code> 的实体开放；职业种类与等级不参与这一引擎侧权限判定。登记完成仍须通过登记建筑与位置检查。</p>
     <p><code>engine.entities.spawn(entity_id, payload)</code> 会在解析 payload 时展开 capabilities 一次；Lua 修改后的 pack 和内联属性随后直接用于生成，不会重复展开。</p>
     <p>招募经历状态由 CoreMod Lua 根据状态 ID 通过统一属性接口写入 <code>condition.injuries</code> 或 <code>condition.dazed</code>；引擎只负责这些字段的类型、范围和组件投影。</p>
@@ -228,6 +229,7 @@ engine.ecs.clear_visual_parts(entity_uuid)</code></pre>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<p>2026-11-08：招募经历改为注册表数据和长期来源修正，资源上限、生成取满及城镇中心旗帜契约见 <a href="recruitment.md">招募与登记</a>。源码尚未运行验收。</p>
 <script src="wiki.js"></script>
 </body>
 </html>
