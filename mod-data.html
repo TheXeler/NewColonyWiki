@@ -181,7 +181,7 @@
 	"output_table_executions": 1,
 	"compatible_work_points": ["core:workbench"]
 }</code></pre>
-	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时仍会受到工人的制作速度乘数影响。CoreMod 工作台配方为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
+	<p><code>work_amount</code> 是可选的非负整数基础工时，单位为 1 倍速现实秒；按当前时间尺度，每 1 秒对应 1 游戏分钟。省略或设为 0 时，工作在完成激活、材料预留和到达条件后立即结算。正数工时的连续制作耗时为基础总 Tick 除以 <code>clamp(1 + colonist.work_efficiency + colonist.crafting_speed, 0.1, 10)</code>；这两个属性均默认 <code>0.0</code>，例如工作效率为 0.2、制作速度为 0.3 时倍率为 1.5。排队、走路和等待材料不计入纯制作耗时，Mod 开工事件可调整基础工时。CoreMod 工作台配方基础工时为 15（15 游戏分钟），木板、木地板和木棍为 5（5 游戏分钟）。</p>
     <p>生产完成时会触发 <code>core:recipe_crafted</code> 事件。制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</p>
     <p>生产订单支持目标次数、维持库存、优先级、指定工人、暂停、恢复和取消。创建生产订单不等于已经创建具体工作：只有材料、合格工人和兼容工作点条件满足时，订单才会向 TaskPool 发布 Craft 工作；命令结果通过 <code>task_created</code>、<code>status</code> 和 <code>waiting_reason</code> 区分两种状态。工作激活后通过所有者槽位预约材料，材料保留在原槽直到结算；完成时提交材料，并在工作点坐标生成 ECS 地面单品堆产物。取消或中断释放预约，未消费的材料仍留在原所有者槽位。</p>
 	<p>方块定义可用 <code>placeable:true</code> 加入底栏“放置”列表，并可用 <code>placement_duration</code> 指定单格工时；省略时使用正数 <code>hardness</code>。放置目标必须为空、有声明所需的支撑且没有实体/建筑碰撞。每格产生一项 Build 工作，激活时预留一个同 ID 物品，完成时由 Server 校验工作上下文后原子消费并写入体素。<code>placement_support:"below"</code> 可要求目标下方存在方块。CoreMod 树苗声明 <code>growth_target:"core:tree"</code> 和 <code>growth_ticks:600</code>；放置完成后成熟时间写入运行态存档，经过 30 游戏分钟（1 倍速现实 30 秒）且原位置仍为树苗时替换成树。工作台配方消耗 4 木板并产出 1 个可直接放置的工作台方块；<code>core:handcraft</code> 是无需实体建筑工作点的虚拟徒手制作路径，因此第一张工作台不会依赖既有工作台或制作点。徒手制作仍使用权威材料预留与结算；每个成功创建的合成产物都会立即产生幂等的入库搬运工作，周期扫描只负责恢复遗漏。工作台声明下方支撑，因此可以直接落在土、石或人工地板上，而不能贴墙或悬挂。</p>
