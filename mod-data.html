@@ -56,7 +56,7 @@
       <tbody>
         <tr><td><code>events/</code></td><td>事件字段、继承、取消及同步声明。监听器另外由 Lua 登记，不能用订阅未声明事件的方式创建 schema。</td><td><a href="mod-events.html">事件系统</a></td></tr>
         <tr><td><code>channels/</code></td><td>字段到 Server、Client 接收入口的映射；入口指向本 Mod 的 scripts 模块及直接导出函数。</td><td><a href="mod-network-sync.html">网络同步</a></td></tr>
-        <tr><td><code>commands/</code></td><td>命令 route、permission、before_event、parameters 与 execute 入口；处理函数由 Lua 提供，不是控制台原生命令清单。</td><td><a href="mod-lua-api.html">Lua API</a></td></tr>
+        <tr><td><code>commands/</code></td><td>命令 id、route、permission 与 execute 入口；before_event 可省略，提供时必须引用有效事件；parameters 可省略，默认空参数定义。处理函数由 Lua 提供，不是控制台原生命令清单。</td><td><a href="mod-lua-api.html">Lua API</a></td></tr>
         <tr><td><code>combat_rules/</code>、<code>combat_formations/</code>、<code>reactions/</code></td><td>战斗规则、阵型和事件反应定义。Reaction 的事件引用须有效，运行时再连接对应处理逻辑。</td><td><a href="engine-combat.html">战斗规则</a></td></tr>
         <tr><td><code>spell_runes/</code>、<code>spell_staff_work/</code></td><td>符文数据与法杖更新工作定义。更新工作提供时长、资格及工作点约束，玩家命令不提供这些规则值。</td><td><a href="spell-system.md">法术系统</a></td></tr>
         <tr><td><code>recipe_categories/</code></td><td>配方分类数据。科技界面分类使用独立 Lua 注册接口，不从本目录读取。</td><td><a href="mod-reciperegistry.html">配方数据</a></td></tr>

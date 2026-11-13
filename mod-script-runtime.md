@@ -2853,7 +2853,7 @@ CoreMod 已开始提供 `data/events/` 生命周期定义及 `scripts/listeners/
 
 运行宿主提供 schema=1 的世界脚本快照接口：state 与 FIFO 任务共同保存，调度计数以十进制字符串编码，避免 double 精度损失；恢复返回缺失模块或失败任务清单。服务端独占此持久入口，客户端不能写权威世界脚本档。SaveSystem 与确认界面的实际调用仍待迁移。
 
-命令候选格式已实现：`data/commands/` 定义 `id`、`route`（server/client）、`permission`、`before_event`、`parameters` 与 `execute`（file/function）。运行宿主先授权，再校验和派发事件，未取消才调用 `execute(current, context)`；context 的 issuer 来自宿主，执行函数返回 `{ok,error?,data?}`。框架固定 request_id。现有 UI 和网络调用仍需迁移，不能视为游戏已启用此命令格式。
+命令候选格式：`data/commands/` 必须定义非空 `id`、`route`（server/client）、`permission` 与有效 `execute`（file/function）。`before_event` 可省略；提供时要求非空字符串且引用已注册事件，空字符串、false 和未知事件仍拒绝候选。`parameters` 可省略或为 `{}`，省略时在所属 Lua VM 创建空参数定义；错误类型仍拒绝候选。运行宿主先授权，再按定义准备参数（只传递已声明字段）；声明前置事件时派发事件，未取消才调用 `execute(current, context)`，省略时直接传入准备后的参数。context 的 issuer 来自宿主，执行函数返回 `{ok,error?,data?}`，框架固定 request_id。可选字段不改变执行端、权限检查或原生操作的权威校验，也不新增持久化状态。本次可选字段调整未运行静态检查、编译或测试。
 
 ModLoader 已提供 `load_registered` 生产入口，数据和脚本候选整体构建，跳过 bootstrap，失败保留原注册表和候选运行宿主；所有模块先通过编译再执行任何模块体。游戏启动调用与 CoreMod 迁移尚未切换，旧 `load_all` 暂仍作为迁移中代码存在，不属于最终保留的兼容模式。
 
