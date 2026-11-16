@@ -18,6 +18,10 @@
     </div>
 
     <h2>当前状态（一句话）</h2>
+	<h3 id="world-seed-input">创建世界的种子输入（2026-11-17 源码修复，待执行验收）</h3>
+	<p>种子栏使用 RmlUI 原生 <code>input type="text"</code>，沿用现有位置与外观，空值通过本地化 placeholder 显示“自动生成”。光标移动、选择、退格、删除及复制粘贴由原生控件处理，系统剪贴板由 RmlUI SystemInterface 接到 GLFW；不再使用按钮和种子专用的字符编辑状态。世界名称仍沿用现有控件。</p>
+	<p><code>change</code> 事件经 <code>data-change-command="core:world_config.seed"</code> 提交完整的 <code>value</code> 字符串，沿用 <code>create_world_config</code> 快照与 <code>main_menu_seed_text</code> 绑定。种子不经浮点数转换，接收端检查完整十进制文本及无符号 64 位范围；空值或 0 保持自动生成语义。输入栏最多容纳 31 个字符；非法文本或越界值显示本地化错误，禁用开始按钮，创建命令也独立拒绝该状态，直至输入被修正。无效草稿不会覆盖已接受的种子或写入设置。有效种子继续由现有 <code>world_seed</code> 设置与世界初始化路径保存和使用，未新增世界存档字段。</p>
+	<p>公共 <code>payload_u32_value</code> 同时接受 JSON 整数和十进制字符串，拒绝负数、小数、越界及不完整转换，修复数字字符与编辑按键被解析成 0 的问题。原生表单控件获得焦点时，编辑按键不再同时发送给旧菜单字符编辑逻辑。本次未运行静态检查、构建、测试或游戏；待验收输入、光标定位、全选、系统粘贴、退格/Delete、清空、最大种子、溢出/非法输入、点击开始及重启后恢复，另需覆盖较小窗口和较长错误文案。</p>
     <h3 id="craft-screen">合成与生产独立窗口（2026-10-31 源码实现，待执行验收）</h3>
     <p><strong>列表左键拖动修正（2026-11-04）：</strong>配方与订单页共用左侧 <code>.craft-list</code>，长列表继续保留滚动。<code>craft_menu.rcss</code> 在 <code>#craft-overlay</code> 内补齐原生滚动条样式：纵向条宽 8px、横向条高 8px，轨道与滑块尺寸明确且可见，滑块有悬停/按下颜色，未使用的箭头尺寸为零。样式同时覆盖右侧详情及材料选择列表，避免未定义尺寸和外观的透明滚动条产生异常拖动命中区域。列表选择、双击及比例列宽不变。本次仅完成源码修正，原有命中区域和修复后的实机效果尚未测量；未运行静态检查、编译、测试或游戏。</p>
     <p>制造入口改为 <code>craft_menu.rml</code>，通过 Lua RML panel 生命周期加载，<code>craft_screen_state</code> 经 typed DataView 绑定到 <code>craft</code>。窗口居中并用遮罩捕获世界输入，不修改暂停或速度；Escape 先关闭材料/取消确认，再关闭主窗口。配方与订单分两个页签，列表和详情分别滚动，底部操作保持可见。</p>
