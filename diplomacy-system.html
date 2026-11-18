@@ -10,6 +10,7 @@
   <p>城邦用实例 UUID 标识；关系值、战争状态、条约和玩家与派系关系分别保存。开战、议和不隐式修改关系，也不改变原有战斗敌对判断。按本轮裁定，战争不限制贸易许可的签订或使用；已有许可不因开战被撤销或停用，双方可同意一边战争、一边贸易。此裁定覆盖策划文档的贸易许可非战争前置条件。</p>
   <p>策划列出的资源、人口、军力等是查询能力，不要求重复保存字段。Server 可用 <code>require("core:systems.diplomacy").register_metric(id, provider)</code> 注册数据来源，再调用 <code>query(colony_uuid, metric_id, parameters)</code>。未注册的指标返回 <code>nil, "diplomacy_metric_unavailable"</code>，不会伪装为零。内置 <code>core:available_item_count</code> 接受 <code>{item_id="core:stone"}</code>，累加 <code>engine.items.colony_sources</code> 的未预约数量；它不代表包括背包、所有地面物品和已预约内容在内的总资产。其他统计口径等待各系统确定。</p>
   <h2>Lua 注册</h2>
+  <p>提议和指标属于<a href="mod-coderegistry.html">代码注册表</a>。<code>data/diplomacy_proposals/</code> 仅保留旧 schema 兼容读取，新增该目录中的 JSON 不会注册当前谈判的执行回调。</p>
   <p>依赖 core 的 Mod 可在 Server 的 <code>core:mod_ready</code> 监听器中导入公共模块；不要在模块顶层访问尚未建立的世界状态。提议通过代码注册，无需 JSON 提议表。</p>
   <pre><code>local diplomacy = require("core:systems.diplomacy")
 diplomacy.register("example:proposal", {

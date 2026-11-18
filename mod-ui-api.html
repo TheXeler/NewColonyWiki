@@ -409,10 +409,11 @@ end</code></pre>
 
     <h3>生命周期与引擎接入</h3>
     <p>引擎通过 <code>engine.rml_ui()</code> 拿到 <code>RmlUiServer</code>。Server 在 <code>Engine::init()</code> 创建并加载 <code>&lt;core_assets&gt;/ui/rml/main.rml</code>；主循环每帧 <code>update(dt)</code>、<code>drain_commands()</code>，并由 renderer UI pass 调用 <code>render(cmd)</code> 合成到窗口；<code>shutdown()</code> 时释放。世界加载时触发 <code>on_world_init()</code>（重载文档 + 重推 <code>world_info</code>），回到主菜单触发 <code>on_return_to_main_menu()</code>，窗口尺寸变化调用 <code>resize()</code>。对应 <code>Engine.cpp</code> 中 <code>RmlUi</code> 帧采样段。</p>
-    <p>数据刷新走统一入口 <code>Engine::publish_rml_ui_snapshots()</code>：遍历 <code>RML_UI_SNAPSHOT_CHANNELS</code> 的经营通道和 Lua UI 兼容通道。经营通道逐个调用 <code>ScriptEngine::get_ui_snapshot(channel)</code>（内部走 Lua 数据桥 <code>engine.ui.data.snapshot</code> 并序列化为 JSON）后推入 <code>RmlUiBridge</code>；兼容通道由 <code>LuaUi</code> 直接生成 RML 片段。刷新按 <code>RML_UI_REFRESH_INTERVAL</code>（约 5 Hz）节流，避免每帧重复聚合快照；世界（重新）进入的那一帧强制立即刷新一次，保证新加载页面不会短暂空白。命令派发同样集中：<code>Engine::dispatch_rml_ui_command()</code> 调用 <code>ScriptEngine::run_ui_command(target, payload)</code>，由 Lua 桥 <code>engine.ui.command.run</code> 落到具体系统；命令返回的 <code>changed_channels</code> 会驱动局部刷新，返回 JSON 追加事件序号 <code>sequence</code> 后另写入 <code>command_result</code> 通道。</p>
+    <p>数据刷新走统一入口 <code>Engine::publish_rml_ui_snapshots()</code>。业务通道由所属客户端 Mod 在现有注册接口中声明：<code>engine.ui.data.register(channel, builder, {publish=true})</code>；引擎从当前 <code>ModRuntime</code> 发现这些提供者，按通道名排序后逐个生成 JSON 并推入 <code>RmlUiBridge</code>，不再维护 CoreMod 业务通道白名单。引擎自身只保留 Lua UI 兼容片段和调试诊断的原生生产者。刷新按 <code>RML_UI_REFRESH_INTERVAL</code> 节流并分帧执行，未完成一轮时不会因下一刷新周期到达而重置游标；世界重新进入时强制发布完整一轮。命令返回的 <code>data.changed</code> 或兼容字段 <code>changed_channels</code> 驱动局部刷新，实际发布以当前运行时的发布声明为准；命令结果追加 <code>sequence</code> 后另写入事件式 <code>command_result</code> 通道。</p>
 
     <h3>C++ → 文档：快照通道</h3>
-    <p>C++ 按通道名推送 JSON 快照，最新值覆盖旧值，文档侧自行轮询。经营数值由 <code>ScriptEngine::get_ui_snapshot(channel)</code> 调用 Lua 数据桥生成，避免把业务适配塞进文档层。十一个常规数据通道全部接通到宿主层，另有事件式 <code>command_result</code> 通道，数据来源如下：</p>
+    <p>C++ 按通道名推送 JSON 快照，最新值覆盖旧值。<code>register(channel, builder)</code> 仍只注册可供 Lua 显式查询的提供者，默认不会周期发布；需要接入 RmlUi 时使用第三参数 <code>{publish=true}</code>。注册和注销保留原有模块归属校验，同一所有者重新注册时替换构建函数及发布选项。注销或运行时替换后，引擎在下一次同步发布声明时将移除通道的缓存置为 <code>null</code>，不保留旧提供者的展示数据。现有 CoreMod 数据来源示例如下：</p>
+    <p>原生接收端根据发布声明动态绑定 JSON 字符串，新增通道不需要再修改 C++ 接收名单；用作原始模型变量的通道名须符合 RmlUi 变量命名规则，并避开现有模型字段及引擎通道。命名或绑定冲突会报告具体通道。绑定存储地址在数据模型存活期间保持稳定；迟到的注册使用 RmlUi 6.3 的缺失变量支持，绑定并标脏后生效。JSON 字符串不会自动变成可通过点号访问的对象，既有 typed DataView 仍负责相应页面的字段适配。本次发布机制迁移仅完成源码及回归场景，未运行静态检查、构建、测试或游戏验收。</p>
     <table>
       <thead><tr><th>通道名</th><th>数据来源（Lua 桥）</th><th>连接状态</th></tr></thead>
       <tbody>

@@ -9,6 +9,7 @@
 <p>小麦使用 Minecraft 四张双面竖片的作物模型，八张阶段贴图由已有工作区素材导入。作物方块为 <code>transparent</code>，角色可以穿过，不遮挡相邻面；它们没有物品方块形态，也不进入放置菜单。小麦的图标、掉落物使用独立的 <code>item/generated</code> 模型。耕地显示高度为 15/16 格；碰撞与射线选中仍采用引擎现有整格规则。</p>
 <p>前四阶段各100成长值，基础速度为400除以正常生长日数再除以28,800。温度按正常、缓长、停长优先级判断，全部未命中立即枯萎。阶段达到上限时新阶段进度归零，超额不带入；末阶段不再处理成长环境。原生、Lua及城邦派工／档案已接入共用配置，城邦完整生命周期交接仍在逐项核对，不能将静态检查视为运行验收。</p>
 <h2>新配置接口（已加入，运行态迁移中）</h2>
+<p>调试控制台指令 <code>crop_growth</code> 在所有作物64倍正向成长与正常速度之间切换，每次回显开关状态及倍率。<code>crop_growth 1</code> 显式关闭，<code>crop_growth 64</code> 显式开启，<code>crop_growth query</code> 只查询。倍率同时用于实际成长与剩余时间预测，温度、露天、地块限制继续生效；负向成长、种收工时及成熟腐坏不加速。仅本次服务端进程有效，不写入配置或存档，重启恢复1倍。用法见<a href="mod-console.html">控制台命令</a>；本次未编译或运行验收。</p>
 <p><code>data/crops/*.json</code> 新格式包含 <code>id</code>、可选 <code>tilled_block</code>（首次翻地目标，默认 core:farmland）、<code>withered_block</code>（默认 core:withered_crop）、<code>defaults</code> 与非空 <code>growth_stages</code>。阶段必须引用独立 <code>block</code>，其方块定义负责名称、文本、材质、模型和贴图。阶段 <code>growth_limit</code> 默认100，<code>outdoor_required</code> 默认true。<code>sow_ticks</code>、<code>harvest_ticks</code> 各默认60 Tick；可选正数 <code>storage_lifetime_days</code> 表示仓储寿命，省略或null表示不腐坏。<code>yam_harvest_loss</code> 仅山药启用。</p>
 <pre><code>{
   "id": "example:crop",

@@ -32,8 +32,29 @@
     <ul>
       <li>新增资源加载点时，优先使用库的 memory API；如果库只有路径 API，Windows 上必须走宽字符 API 或接入该库的 filesystem callback。</li>
       <li>从 <code>std::filesystem::directory_iterator</code> 得到的 <code>path</code> 应直接传给 <code>nc::io</code> 的 <code>std::filesystem::path</code> 重载，不要先转成 <code>path.string()</code> 再打开。</li>
-      <li><code>std::filesystem</code> 的 <code>exists</code>、<code>directory_iterator</code>、<code>last_write_time</code> 等路径查询可以继续使用；问题集中在实际打开文件的 char 路径 API。</li>
+      <li><code>EnginePaths</code> 返回 UTF-8 字符串。传给 <code>std::filesystem</code> 的 <code>exists</code>、<code>create_directories</code>、<code>remove</code>、<code>directory_iterator</code> 等操作之前，必须先用 <code>nc::io::path_from_utf8</code> 转成原生路径；直接传入窄字符串（包括隐式转换）会在 Windows 上按 ANSI 代码页解码，创建乱码目录或访问错误位置。</li>
     </ul>
+
+    <h2>中文安装目录下的配置</h2>
+    <p>用户配置位于可执行文件旁的 <code>config/</code>。例如从 <code>output/新殖民地/NewColony.exe</code> 启动时，应读写 <code>output/新殖民地/config/</code>。设置文件的父目录创建与写入共用原生路径；Mod 配置、已保存服务器列表，以及 <code>script-state/server.json</code>、<code>script-state/client.json</code> 的读写入口均显式转换 UTF-8 路径。无效设置文件的删除也使用同一转换规则。</p>
+    <p>2026-11-01 修复配置入口把 UTF-8 路径重新按 ANSI 解码的问题。本次未运行静态检查、构建、测试或游戏验证；已有乱码目录不会自动迁移或删除，需要保留旧配置时应在游戏关闭后手动备份、核对并迁入正确目录。</p>
+
+    <h2>中文安装目录下的启动资源</h2>
+    <p>2026-11-05 的中文目录启动日志显示，本地化目录未找到、MOD 发现数量为 0，shader 和天空贴图路径中的“新殖民地”被重新解码成“鏂版畺姘戝湴”，最终因渲染内容初始化失败退出。原因是调用点把 <code>EnginePaths</code> 返回的 UTF-8 字符串直接交给 <code>std::filesystem::path</code>；文件打开接口支持宽字符，不能补救此前已经损坏的路径。</p>
+    <p>本轮将 MOD 发现与清单/数据加载、模型/shader/Lua 预处理及缓存、图形和计算管线、天空/实体/物品贴图、主菜单背景、RmlUI 文档、音频、蓝图、存档和控制台文件操作统一接入 <code>FileIO</code>。glTF 和原生文件对话框不再维护独立的 UTF-8 转换实现。异步实体模型请求与存档工作目录等隐式路径参数也显式转换。</p>
+    <table>
+      <thead><tr><th>用途</th><th>统一接口</th></tr></thead>
+      <tbody>
+        <tr><td>UTF-8 字符串转原生路径</td><td><code>nc::io::path_from_utf8</code></td></tr>
+        <tr><td>原生路径转 UTF-8 字符串</td><td><code>nc::io::path_to_utf8</code></td></tr>
+        <tr><td>使用 / 分隔符的资源键、脚本快照键和 RmlUI 路径</td><td><code>nc::io::path_to_generic_utf8</code></td></tr>
+        <tr><td>环境变量中的工具路径</td><td><code>nc::io::path_from_environment</code>，Windows 读取 UTF-16 值</td></tr>
+        <tr><td>文件读写、JSON 读取和 Windows 宽字符 API 参数</td><td>继续使用 <code>FileIO</code>、<code>JsonIO</code> 和 <code>nc::io::utf8_to_wide</code></td></tr>
+      </tbody>
+    </table>
+    <p>不要在业务模块调用 <code>path.string()</code>、<code>path.generic_string()</code> 或复制 UTF-8/UTF-16 转换函数。已经是原生 <code>path</code> 的值继续直接传递；可执行文件定位等 Windows API 返回的宽字符路径可以直接构造原生 <code>path</code>。本轮执行了经授权的源码路径扫描与调用点检查，未执行编译、测试、导出或游戏启动验证。现有输出目录中的二进制文件需手动重新构建并导出后才能验证修复。</p>
+
+    <p>启动器 <code>Main.cpp</code> 与 <code>EnginePaths.cpp</code> 使用 <code>GetModuleFileNameW</code> 取得原生 UTF-16 路径，直接构造 <code>path</code> 不经过 ANSI 解码。启动器继续用宽字符 DLL API；EnginePaths 在需要字符串时通过 <code>nc::io::path_to_utf8</code> 输出 UTF-8。两处均在可执行文件路径缓冲区不足时扩容重试，避免固定 MAX_PATH 截断；这不代表所有 Windows 长路径限制均已解除。本轮未编译或运行验证。</p>
 
     <h2>C++20 路径弃用检查</h2>
     <p><code>bash/Build.bat</code> 在 CMake 配置和编译前先运行 <code>checker/start.py</code>。入口按文件名顺序自动发现 <code>checker/check_*.py</code> 并传入 <code>--fix</code>；任一检查器失败或仍有需人工处理的问题，构建立即停止。新增规则按同一命名及退出码约定放入 checker 目录即可接入。可单独运行 <code>python checker/start.py --check</code> 只检查，不修改源码、不启动构建。Windows 构建入口需要 Python 3.10+，依次尝试 <code>python</code> 和 <code>py -3</code>。</p>
@@ -59,6 +80,7 @@
     <p><code>core.dll</code> 提供 Logger、EnginePaths、Blake3、线程池、延迟任务调度、帧性能统计、RuntimeWatchdog 与脚本调用诊断，并统一持有方块材质/类别和光照 emitter/transparent 定义表；FileIO 已迁入 <code>io.dll</code>。光照传播算法仍在引擎中。PoolAllocator 与 ArenaAllocator 仍是头文件实现。音频及 miniaudio 位于 <code>audio.dll</code>。<code>rendererbackend.dll</code> 提供 Vulkan 上下文、设备、交换链和命令缓冲；<code>rendererassets.dll</code> 提供模型加载、缓存、GPU 模型生命周期及唯一的 stb_image 实现，图片解码与释放使用同 DLL 接口；<code>rendererresources.dll</code> 提供 Vulkan 纹理、描述符、计算管线和网格资源。<code>saveio.dll</code> 提供存档发布与 region IO，SaveSystem 仍在 <code>engine.dll</code>。Windows 下项目 DLL 位于 <code>engine/</code>，第三方运行库位于 <code>depend/</code>；启动器显式加载 engine.dll，并允许搜索系统目录。2026-10-09 的短名布局已有 Release 构建与主菜单启动记录，后续模块迁移的验证以 <code>docs/dll-module-expansion.md</code> 为准。</p>
 
     <p><code>io::write_binary_file_atomic(path, data, size)</code> 在同目录临时文件完整写入并关闭后替换目标；失败时保留原目标，父目录由调用方创建。Windows 使用宽字符 <code>MoveFileExW</code>，POSIX 使用同目录 <code>rename</code>。实体 NCEM 与组合依赖清单使用该接口，避免读取未写完的缓存；它不保证断电持久性。本轮源码尚未编译或运行测试，验证由项目所有者手动进行。</p>
+    <p><code>save::restore_entity_document</code> 用于恢复历史来源的独立候选，保留文档中可选组件的有无以及已记录的职业数值。它复用实体存档格式与校验，但不执行完整世界加载的旧存档补全：不会因存在 Job、ColonistTag 或 HeadVisual 就增加原文档中缺少的职业历史、冷却槽、兴趣点或状态组件。完整世界加载继续使用原有兼容规则；恢复失败不发布候选。已有历史领域协议仍可使用这一契约；新普通采掘路径不再依赖历史资产文档重建。服务器行为通过统一错误边界执行，后续错误只记 ERROR，不恢复此前已生效的行为。</p>
     <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>

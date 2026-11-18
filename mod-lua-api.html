@@ -10,6 +10,7 @@
 <div class="main">
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
+    <p><strong>受管状态自动演进：</strong>新增字段只需默认值，改名加 aliases，固定记录／动态 Map／缓存分别声明 fields／values／transient。世界、本地和热重载共用自动规范化；复杂语义变化可提供受限转换模块。结构信息由引擎保存，无需普通版本脚本。完整契约和示例见 <a href="mod-state-evolution.html">状态自动演进与别名</a>。源码未执行检查、构建或测试。</p>
     <h2>中立工作产出与结果确认</h2>
     <p><code>tasks.post_configured</code> 的配置可选 <code>work_point_uuid</code>，在私有调度候选中绑定原工作点与容量单位；已有联合 <code>prepare</code> 状态提交同时保存任务 UUID。跨有主设施归属不符会拒绝。中立资源派工使用这条既有事务路径，避免已发任务而 Lua 没有保存来源记录。</p>
     <p><code>buildings.route_work_outputs(task_uuid,products,ground_feet,clearing,state_commit?)</code> 接受稠密产品数组 <code>{id,count}</code> 和按 Lua 顺序排列的整数地面脚点 <code>{x,y,z}</code>。清缓冲只允许实际开工事件、原工人及已占用的中立工作点；创建产物只允许当前正在投递的原始完成任务和联合管理状态提交。原生验证设施完整性、支撑、实际库存与地面，再原子发布背包、地面、缓冲与状态。返回 <code>ok/empty/moved/buffered</code>；清不完是等待，不能当作已完成开采。来源已毁时使用 <code>reject_work_outputs</code> 明确拒绝原结果，原生重新验证销毁事实后才确认失败。</p>
@@ -567,7 +568,9 @@ end
 engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
-    <h2>要闻</h2>
+    <h2>玩家事件（原要闻）</h2>
+    <p><code>engine.focuses.trigger(id)</code> 在权威服务端发布已注册事件，返回 <code>{ok=true,focus_uuid=...}</code> 或 <code>{ok=false,error=...}</code>；一次性、启用与冷却仍由原生实例管理器验证。显式空 conditions 表示仅由 Lua 发布，可在暂停期间响应突发事情。不要向客户端开放直接世界写入。</p>
+    <p>效果回调返回 false 时保留待办，true 或旧回调的 nil 表示接受，其他类型是错误。拒绝前不得留下部分资产写入，必须使用既有原子操作。engine.focuses.active 新增 summary、event_type、color、priority；engine.focuses.dismiss 只能确认无选项通知，暂时忽略不移除待办。完整契约见 <a href="mod-focusregistry.html">玩家事件与待办</a>。</p>
     <p>要闻 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 要闻 被触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20

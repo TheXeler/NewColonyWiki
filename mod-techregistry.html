@@ -5,7 +5,56 @@
 <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>科技注册</div></div>
 <div class="content">
   <h1>科技注册</h1>
-  <p class="subtitle"><code>data/techs/</code> 保存研究项目定义。CoreMod 当前科技内容表为空；研究 schema、工作单元、付款、暂停/继续、存档和 Server 接口仍保留。</p>
+  <p class="subtitle"><code>data/techs/</code> 保存研究项目定义。CoreMod 当前提供七项科技：打制石器、磨制石器、水塔研究，以及中级、高级、精英、大师招募。每项科技都有独立的描述。</p>
+  <p>科技项目属于<a href="mod-data.html">数据文件注册表</a>；下面的界面分类属于<a href="mod-coderegistry.html">代码注册表</a>，两者使用不同入口。</p>
+  <h2>注册科技分类</h2>
+  <p>分类通过公共 Lua 模块 <code>core:ui.research_categories</code> 注册。其他 Mod 需在 manifest 中声明对 <code>core</code> 的依赖，并在 Client 生命周期中调用注册接口，例如：</p>
+  <pre><code>-- scripts/listeners/mod_ready/research_categories.lua
+-- @Event core:mod_ready
+-- @Priority 0
+-- @ClientSideEvent
+local Categories = require("core:ui.research_categories")
+return function(e)
+    Categories.register("example:agriculture", {
+        name_key = "ui.example:research.agriculture",
+        order = 15,
+    })
+end</code></pre>
+  <p>科技 JSON 继续用 <code>"category": "example:agriculture"</code> 引用分类。分类无需独立 JSON 定义；原先增加的分类数据加载入口和 <code>engine.research.ui_categories()</code> 已移除。</p>
+  <p><code>register(id, definition)</code> 要求完整命名空间 ID、非空 <code>name_key</code> 和有限整数 <code>order</code>，重复 ID 报错；<code>unregister(id)</code> 返回是否移除了已有分类；<code>list()</code> 返回按顺序排列的独立副本。注册时复制传入字段，外部修改定义或返回列表不会改变内部分类。更新分类可先注销再注册。</p>
+  <p>在该 Mod 的语言文件 <code>ui</code> 段注册 <code>example:research.agriculture</code> 的显示名称。分类按 <code>order</code> 升序排列，同值按完整 ID 排序；即使没有科技也保留注册的标签页。缺少翻译时显示分类 ID。未注册分类的科技仍显示在以分类 ID 命名的标签页中，排在注册分类之后，不因分类配置缺口隐藏条目。</p>
+  <p>CoreMod 的生产、建筑、战斗分别注册为 <code>core:production</code>、<code>core:building</code>、<code>core:combat</code>，排序值依次为 10、20、30。科技 JSON 必须提供非空字符串 <code>category</code>。省略命名空间时按所属 Mod 补全：CoreMod 中 <code>"category": "production"</code> 和 <code>"category": "core:production"</code> 都接受，读取后同为 <code>core:production</code>；<code>:production</code> 也表示所属 Mod 的分类。跨 Mod 引用应写完整 ID。</p>
+  <p>加载校验接受本地分类名或命名空间 ID，不再限制为五个内置名称，因此 <code>example:agriculture</code> 等 Lua 自定义分类也可使用。名称字符限小写英文字母、数字、下划线和连字符；命名空间与名称之间最多一个冒号，冒号后的名称不能为空。空值、非字符串、非法字符及多个冒号会使数据加载失败。</p>
+  <p>内置分类的注册调用集中在 <code>scripts/ui/research_category_defaults.lua</code>，客户端科技投影通过该模块取得公共分类模块。默认分类依赖模块缓存，每个 Client 脚本环境只注册一次。分类保存在模块局部变量中，不进入存档；重建 Mod 脚本环境时重新注册。不要在普通世界卸载时清空分类，否则同一 Mod 环境内下次进入世界会丢失标签页。</p>
+  <p>客户端投影每次读取 <code>Categories.list()</code> 并解析本地化名称，再通过 <code>research_categories</code> 类型数组生成 RML 按钮。快照刷新保留仍存在的选中分类，删除后回到排序第一项；分类多时标签栏可横向滚动。现有 <code>engine.research.categories()</code> 仍返回科技实际使用的分类 ID，<code>list_by_category(id)</code> 使用补全后的完整 ID 查询。</p>
+  <h2>科技描述</h2>
+  <p><code>description</code> 是科技 JSON 中用于说明研究目的和解锁效果的字符串，与名称 <code>name</code>、前置 <code>prerequisites</code> 和解锁列表 <code>unlocks</code> 分开保存。例如：</p>
+  <pre><code>{
+    "id": "example:stone_tools",
+    "name": "石制工具",
+    "description": "掌握石材成形与装柄技术，制作适合日常劳动的石制工具。"
+}</code></pre>
+  <p>以上只展示身份和文案字段；可研究项目仍需提供下文的分类、研究量、工作点和职业资格等契约。所有内置科技都提供非空描述。其他 Mod 缺少描述时，详情页隐藏说明段落，不虚构内容，也不把缺少文案作为研究屏障。</p>
+  <p>描述沿科技加载、<code>engine.research.get_tech()</code>、研究快照和客户端投影传递；原生 RmlUI 的节点视图与选中详情视图均接收 <code>description</code>，选中科技后在名称下方显示完整说明。说明使用文本绑定，不作为 RML 标记执行。兼容投影中只有 <code>desc</code> 的节点，按 <code>description</code> 优先、空值再读取 <code>desc</code> 的规则解析。</p>
+  <p>描述本地化使用语言文件的 <code>tech_descriptions</code> 段，以科技完整 ID 为键。客户端先查 <code>tech_descriptions.example:stone_tools</code>；缺少翻译时，若原始 <code>description</code> 是可解析的本地化引用，则解析该引用，否则显示原始文字。CoreMod 已提供全部七项科技的简体中文和英文说明。显示层的翻译不修改权威快照、科技身份、研究量、前置、解锁或研究进度。</p>
+  <h2>当前科技</h2>
+  <p>全部项目要求 <code>core:workbench</code> 工作点和 <code>core:scholar_2</code> 一级资格。研究量为工作单位，不是固定等待秒数。先建造工作台，制作无需科技的 <code>core:research_tablet</code>（2 石材，工时 10），把石板存入可达的方块库存，再通过转职入口让居民成为学者。开题材料独立消耗一次，不替代制作成品所需的材料。</p>
+  <table>
+    <thead><tr><th>科技 ID</th><th>名称</th><th>说明</th><th>前置</th><th>研究量</th><th>开题材料</th><th>解锁内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>core:stone_knapping</code></td><td>打制石器</td><td>掌握石材成形与装柄，制作劳动工具，并为磨制石器和水塔研究奠定基础。</td><td>无</td><td>100</td><td>2 石材</td><td><code>core:craft_stone_knife</code>、<code>core:craft_stone_axe</code>、<code>core:craft_stone_pickaxe</code>、<code>core:craft_stone_shovel</code>、<code>core:craft_stone_hoe</code></td></tr>
+      <tr><td><code>core:stone_polishing</code></td><td>磨制石器</td><td>通过研磨和加固装柄制作近战石制武器。</td><td>打制石器</td><td>160</td><td>3 石材、1 木棍</td><td><code>core:craft_stone_club</code>、<code>core:craft_stone_spear</code></td></tr>
+      <tr><td><code>core:irrigation_tower_technology</code></td><td>水塔研究</td><td>研究蓄水与灌溉结构，建立农田供水设施。</td><td>打制石器</td><td>200</td><td>4 木板、2 石材</td><td>配方 <code>core:craft_irrigation_tower</code>、建筑 <code>core:irrigation_tower</code></td></tr>
+      <tr><td><code>core:recruitment_intermediate</code></td><td>中级招募</td><td>完善人才寻访流程，寻找有更多职业积累的候选者。</td><td>无</td><td>100</td><td>4 木板、4 石材</td><td><code>recruitment:core:intermediate</code></td></tr>
+      <tr><td><code>core:recruitment_advanced</code></td><td>高级招募</td><td>拓展寻访渠道，扩大候选者选择并提高职业积累范围。</td><td>中级招募</td><td>200</td><td>8 木板、8 石材</td><td><code>recruitment:core:advanced</code></td></tr>
+      <tr><td><code>core:recruitment_elite</code></td><td>精英招募</td><td>寻找职业积累更深厚的候选者。</td><td>高级招募</td><td>400</td><td>16 木板、16 石材</td><td><code>recruitment:core:elite</code></td></tr>
+      <tr><td><code>core:recruitment_master</code></td><td>大师招募</td><td>完善资深人才寻访体系，提供更广的选择与更高的职业积累范围。</td><td>精英招募</td><td>800</td><td>32 木板、32 石材</td><td><code>recruitment:core:master</code></td></tr>
+    </tbody>
+  </table>
+  <p>工具和水塔研究归入 <code>core:production</code>，武器类归入 <code>core:combat</code>；跨分类前置仍为完整科技 ID。配方解锁使用 <code>recipe:core:craft_...</code>，由既有制作目录和 Server 下单入口限制。水塔研究另声明 <code>building:core:irrigation_tower</code>，同时限制建筑菜单和建造下单入口。所有成品在工作台制作，每批固定一件，详见 <a href="mod-reciperegistry.html">配方数据</a>。</p>
+  <p>四项招募科技归入 <code>core:colony_development</code>，按中级、高级、精英、大师顺序逐级前置。候选者数量、职业积累范围等实际招募参数由 <code>data/recruitment_rules/</code> 定义，描述文字不参与招募计算。</p>
+  <p>石刀、石斧、石镐、石铲、石锄分别支持 <code>hunter_2</code>、<code>lumberjack_2</code>、<code>miner_2</code>、<code>worker_2</code>、<code>farmer_2</code>，均增加 <code>colonist.work_efficiency</code> 0.1。石锤和石矛支持 <code>militia_2</code>，分别增加 <code>battler.melee_power</code> 4 和 6。研究石板支持 <code>scholar_2</code>，无数值加成。装备切换工时均为 3 秒，堆叠上限 1；本批暂复用石材图标，不声明工具专属采掘、翻土、长柄攻击距离或投掷机制。</p>
+  <p>本批为源数据实现，未运行静态校验、构建、测试或游戏验收；研究付款、暂停/继续、前置解锁、制作与转职的实际链路留待统一验证。</p>
   <h2>有效项目的必需契约</h2>
   <ul>
     <li><code>research_ticks</code> 必须显式为正数；不存在代码默认研究量。</li>
