@@ -3,61 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>项目完成度审计 · NewColony Wiki</title>
+  <title>系统现状 · NewColony Wiki</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="project-completion">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>项目完成度审计</div></div>
+  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>系统现状</div></div>
   <div class="content">
-    <h1>项目完成度审计</h1>
-    <p class="subtitle">本页记录当前源码树相对 NCDOCS 的对齐状态，不把旧示例内容、历史构建结果或尚未运行的测试当作完成证据。</p>
+    <h1>系统现状</h1>
+    <p class="subtitle">查阅 NewColony 各系统的使用范围、配置入口和兼容边界。</p>
 
-    <h2>当前结论</h2>
+    <h2>系统说明</h2>
     <table>
-      <thead><tr><th>范围</th><th>状态</th><th>当前事实</th></tr></thead>
+      <thead><tr><th scope="col">系统</th><th scope="col">范围</th></tr></thead>
       <tbody>
-        <tr><td>库存最终模型</td><td><span class="badge partial">待测试</span></td><td>地面单品堆是 ECS 实体，背包及方块容器槽属于所有者且没有独立物品 UUID；拾取、预约、搬运、消费、保存和网络源码已接线。库存相关测试尚未编译或运行，不能标记为验收通过。</td></tr>
-        <tr><td>经营与工作事务</td><td><span class="badge done">已实现</span></td><td>工作来源、个人队列、生产、研究、治疗、招募和经营日志使用 Server 权威事务；旧直接制作、直接研究、直接给物和即时招募入口不可结算。</td></tr>
-        <tr><td>职业与殖民者</td><td><span class="badge done">结构完成</span></td><td>66 个职业节点对齐职业表；经历、药材和性状内容允许为空。基础生命、需求、心情和属性没有文档数值时，殖民者生成返回配置屏障。</td></tr>
-        <tr><td>世界与内容</td><td><span class="badge partial">配置待补</span></td><td>可变高度区块列、六类群落接口、区域、建筑功能点、生态、天气、视野和矿井契约已建立；未给出具体形状、数值或内容的 CoreMod 表保持为空或阻止入口。</td></tr>
-        <tr><td>贸易外交与战斗</td><td><span class="badge partial">部分源码</span></td><td><a href="diplomacy-system.html">外交本体</a>已接入 Lua 提议、谈判和 Server 命令，独立战争状态不改战斗敌对规则；城邦 AI 和物资支付／商队交付待接入。外交新增源码未编译或运行，战斗分阶段状态见 <a href="engine-combat.html">战斗系统</a>。</td></tr>
-        <tr><td>保存与网络</td><td><span class="badge partial">静态完成</span></td><td>领域状态使用当前 schema 并拒绝缺失或未知版本；项目未发布，不维护旧开发存档兼容。当前网络握手协议重置为 v1。Windows MinGW Debug 完整构建与增量链接已经成功；未执行测试、程序运行、活体存档或网络往返，因此不能宣称运行验证通过。</td></tr>
+        <tr><td><a href="engine-save-system.html">存档</a></td><td>服务器存档槽、读档要求、自动保存与 MOD 持久状态。</td></tr>
+        <tr><td><a href="engine-combat.html">战斗</a></td><td>征召、小队血池、近战、冲锋、弹体及与法术和袭击的接口。</td></tr>
+        <tr><td><a href="city-simulation.html">城邦模拟</a></td><td>NPC 城邦的经营、实体与抽象模式，以及自动运行的可用边界。</td></tr>
+        <tr><td><a href="diplomacy-system.html">外交</a></td><td>Server 谈判、战争与条约状态、Lua 提议和查询指标。</td></tr>
+        <tr><td><a href="mod-network-sync.html">网络同步</a></td><td>Client／Server、逻辑消息通道和共享状态。</td></tr>
+        <tr><td><a href="ui-rmlui.html">游戏界面</a></td><td>RmlUI 文档、数据模型、命令、输入和面板生命周期。</td></tr>
+        <tr><td><a href="engine-resource-io.html">资源路径</a></td><td>MOD 资源及配置使用的 UTF-8 路径、Windows 原生路径和常见排查入口。</td></tr>
       </tbody>
     </table>
 
-    <h2>CoreMod 当前数据规模</h2>
-    <table>
-      <thead><tr><th>类型</th><th>条目</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><code>jobs</code></td><td>66</td><td>NCDOCS 职业节点表；新世界的初始殖民者实例以通用殖民者职业等级 1 开始。</td></tr>
-        <tr><td><code>blocks</code></td><td>135</td><td>可采方块的正数 <code>hardness</code> 表示采掘/伐木工时秒数；采集结果统一通过 <code>output_table</code> 引用产出表，不使用私有 <code>drops</code>。</td></tr>
-        <tr><td><code>biomes</code></td><td>6</td><td>森林、平原、山地、水域、雪地、荒漠。每条记录声明气候区间、地表/次地表方块、地形高度和植被权重，由 <code>TerrainGenerator</code> 读取。</td></tr>
-        <tr><td><code>entities</code></td><td>5</td><td>通用殖民者原型、测试动物、两名测试来袭者和一名小队士兵；不填写无文档来源的基础数值或背景经历。</td></tr>
-        <tr><td><code>items</code></td><td>28</td><td>独立物品定义已提供；方块记录仍会生成同 ID 的物品定义，显式 item 记录可覆盖。</td></tr>
-        <tr><td><code>zones</code></td><td>2</td><td>种植区和露天仓储区；采集、采掘与狩猎是一次性指令。</td></tr>
-        <tr><td><code>terrain</code></td><td>1</td><td>只引用基础石材和水体；涉水默认深度为 0。</td></tr>
-        <tr><td><code>recipes</code></td><td>7</td><td>木板、木棍、木地板、工作台、面包等固定配方，见配方数据页；结果与数量只由产出表决定。</td></tr>
-        <tr><td><code>output_tables</code></td><td>41</td><td>方块采集与固定配方使用的有限无环产出表。</td></tr>
-        <tr><td><code>buildings</code></td><td>4</td><td>徒手制作点、工作台、烟熏炉和灌溉塔；其余建筑等待有文档来源的形状、材料和工期。</td></tr>
-        <tr><td><code>manufacturing_rules</code></td><td>1</td><td>唯一一条全局制造规则，提供锻造工时、成败/品质公式、六级阈值和产出树深度。</td></tr>
-        <tr><td><code>name_pools</code></td><td>2 个语言文件</td><td>显示名称素材；不触发 NPC 阵营生成或外交玩法。</td></tr>
-        <tr><td><code>audio</code></td><td>7</td><td>表现层注册条目，不定义玩法规则。</td></tr>
-        <tr><td><code>crops / features</code></td><td>22 / 1</td><td>种植循环与地物形状仍无专项文档数值；CoreMod 已提供 22 条作物定义和 1 条地物定义。</td></tr>
-        <tr><td><code>raids</code></td><td>1</td><td><code>core:mvp_test_raid</code> 系统验证用袭击定义；另有 2 个来袭者实体原型和 1 张加权死亡产出表。</td></tr>
-        <tr><td><code>factions</code></td><td>2</td><td><code>core:player</code> 与 <code>core:mvp_test_raiders</code> 测试定义；影响半径和实例生成规则仍未定义。</td></tr>
-        <tr><td><code>civilizations / techs / focuses / faction_spawn_rules / diplomacy_proposals / ores / tags</code></td><td>0</td><td>无专项文档或旧内容已删除；矿物通过可空矿井规则存在，不作为普通矿石体素。</td></tr>
-      </tbody>
-    </table>
-
-    <h2>静态验收边界</h2>
+    <h2>MOD 开发</h2>
     <ul>
-      <li>玩法规则来源：源仓库 <code>NCDOCS/</code> 中保留的世界、殖民者、经营、制造、药剂与操作设计；本页保留阶段性对齐记录，历史状态不代表当前验收。</li>
-      <li>战斗规则与阶段入口：<code>NCDOCS/战斗系统实现文档.md</code>。旧跨系统实施计划及核对表已于 2026-10-11 清理。</li>
-      <li>内容 JSON 必须可解析，源码差异必须通过 <code>git diff --check</code>。</li>
-      <li>Codebase Memory 自动监听没有失效证据时不手动重绘；服务不可连接只记录为覆盖限制。</li>
-      <li>构建、CTest、测试二进制、存档往返和网络往返留给用户显式执行；在执行前均属于未验证，而不是失败或通过。</li>
+      <li><a href="mod-status.html">当前能力边界</a>介绍可使用的配置和脚本能力。</li>
+      <li><a href="mod-data.html">数据文件注册表</a>与 <a href="mod-coderegistry.html">代码注册表</a>说明内容和行为的登记方式。</li>
+      <li><a href="mod-lua-api-reference.html">Lua API 速查</a>与 <a href="mod-troubleshooting.html">常见问题</a>用于查询调用签名和排查问题。</li>
     </ul>
+
+    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
 <script src="wiki.js"></script>

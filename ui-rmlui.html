@@ -416,40 +416,9 @@
       <li><strong>shutdown：</strong><code>RemoveContext</code> + <code>Rml::Shutdown()</code>。真 backend 的 Vulkan 资源（管线、描述符池、纹理，以及 <code>Rml::Shutdown()</code> 触发释放的编译几何顶点/索引缓冲与纹理）随 backend 一起在 <code>RmlUiServer::shutdown()</code> 内释放，时机早于 <code>Renderer::shutdown()</code> 销毁 device，因此 RmlUI 侧不存在 device 失效后释放的风险。</li>
       <li><strong>shutdown 的 GPU 排空约束：</strong><code>RmlUiServer::shutdown()</code> 在 <code>Engine::shutdown()</code> 中位于 <code>Renderer::shutdown()</code> 之前调用，而 <code>Renderer::shutdown()</code> 才是引擎在退出阶段第一次排空 GPU 队列（<code>vkDeviceWaitIdle</code>）的地方。这意味着 RmlUI 释放资源时，最近一帧记录了 RmlUI 绘制的 command buffer 可能仍被 GPU 占用，其引用的顶点/索引缓冲、纹理 image view、sampler、管线会被 validation 层标记为"仍被 command buffer 使用"。运行中释放的 geometry 和 texture 进入按帧延迟回收队列；shutdown 时真 backend 在 <code>RealRmlUiRuntime::shutdown()</code> 入口、于 <code>Rml::Shutdown()</code> 之前调用 <code>vkDeviceWaitIdle(renderer device)</code>，并在 <code>VulkanRmlRenderInterface::shutdown()</code> 入口再排空一次（覆盖 backend 重建等独立析构路径），保证 GPU 不再持有 RmlUI 资源引用后才开始销毁。null stub 没有 Vulkan 资源，不受影响。</li>
     </ul>
-    <p><strong>退出顺序约束（引擎级，非 RmlUI 自身）：</strong>历史上短启动退出末尾的 0xC0000005 曾被怀疑为 RmlUI shutdown，实际根因是旧 MOD 生命周期回调持有的 Lua 函数引用在脚本引擎关闭后才析构。该入口脚本回调契约与 <code>ModLoader::release_lua_references()</code> 都已移除；RmlUI shutdown 本身顺序正确，无需为该崩溃调整。</p>
 
-    <h2 id="manual-visual-validation-2026-07-05">人工可视化验证记录（2026-07-05 prompt2）</h2>
-    <p>验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；旧调试验证构建目录 <code>build-rmlui-on</code> / <code>build-rmlui-off</code>。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
-    <ul>
-      <li><strong>构建：</strong><code>cmake --build build-rmlui-on</code> 通过；<code>cmake --build build-rmlui-off</code> 通过。</li>
-      <li><strong>ON 启动：</strong><code>build-rmlui-on/bin/NewColony.exe --DEBUG</code> 可启动，日志确认 real backend 初始化、当时的字体路径、<code>main.rml</code> 以及 <code>debug_input</code>、HUD、Build、Crafting、Research、Colonists、Minimap/Zone、Pause、Global Toast、DevConsole 副文档全部加载。当前字体实现已改为系统 <code>Unicode</code> 字体。</li>
-      <li><strong>主菜单：</strong>窗口直接截图可见主菜单矩形与背景；由于验证机器上外部全屏/置顶程序持续覆盖屏幕，普通屏幕截图无法稳定取得 NewColony 前台画面，New Game/Quit 的鼠标点击未能完成端到端确认，日志中未产生 <code>core:menu.new_game</code> 或 <code>core:menu.quit</code> 命令记录。</li>
-      <li><strong>世界内面板：</strong>HUD、Build Panel、Colonist、Research、Crafting、Minimap/Zone、Pause/Settings、DevConsole 的 RML 文档加载已确认；因 New Game 交互未能可靠送达，未进入世界进行实际面板打开/关闭和重叠检查。</li>
-      <li><strong>输入焦点与命令反馈：</strong>本轮未完成可视端到端确认；没有观察到 <code>build</code>、<code>research</code>、<code>crafting</code>、<code>colonist select</code> 或 <code>console submit</code> 的 <code>command_result</code> 更新。保留为下一轮在干净桌面环境下复验。</li>
-      <li><strong>日志检查：</strong>本轮未发现 RmlUI binding 诊断刷屏；未发现 Vulkan validation error；未发现 Lua error。仅有预期数据告警 <code>[farming] no crop definitions loaded</code>、外部窗口抢占导致的 <code>GLFW poll_events blocked</code> 性能告警，以及窗口最小化/覆盖过程触发的 swapchain suspend/resume。</li>
-      <li><strong>小修：</strong><code>Renderer::on_resize()</code> 将 <code>1x1</code> framebuffer 与 <code>0x0</code> 一样视为不可绘制挂起状态，避免被最小化/外部窗口覆盖时进入 <code>Swapchain created: 1x1</code> 的 present 失败重建循环。</li>
-    </ul>
-
-    <h2 id="manual-new-game-validation-2026-07-06">New Game 真人复验记录（2026-07-06 prompt2）</h2>
-    <p>验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；旧调试验证构建目录 <code>build-rmlui-on</code> / <code>build-rmlui-off</code>。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
-    <ul>
-      <li><strong>构建：</strong>旧调试验证构建 configure/build 通过。</li>
-      <li><strong>运行：</strong>启动 <code>build-rmlui-on/bin/NewColony.exe --DEBUG</code>，进程响应正常。真人观察到夜晚天空盒，左下角有类似 HUD/调试输入的控件（深灰/浅蓝条和一个类似滑块控件），但没有看到 RmlUI 主菜单面板或 New Game 按钮。</li>
-      <li><strong>New Game 链路：</strong>由于主菜单不可见，未能进行真人点击。<code>latest.log</code> 未出现 <code>core:menu.new_game</code>、<code>[RmlUi] main menu: New Game requested</code>、<code>[World] start_new_world(...)</code> 或 <code>World started</code>；启动初始帧显示 <code>world_active=no</code>。</li>
-      <li><strong>Lua seed 结论：</strong>本轮日志未出现 <code>integer value will be misrepresented in lua</code>，但没有越过 New Game 入口，不能把它判定为真人端到端已修复；当前新阻断点是 RmlUI 主菜单启动后不可见。</li>
-      <li><strong>世界数据：</strong>未进入世界，无法确认 HUD 是否开始显示真实 <code>world_info</code> / <code>resource_snapshot</code>，也无法观察 Build / Colonist / Research / Crafting 的真实数据刷新。</li>
-    </ul>
-
-    <h2 id="button-command-validation-2026-07-07">历史：业务面板按钮命令验证（2026-07-07 prompt1）</h2>
-    <p><strong>2026-11-18 更新：</strong>下列 AUTOFIRE 钩子与复验命令已移除，仅保留历史验证上下文，不作为当前操作说明。新的本机测试入口为 <code>--AI_TEST</code>，通过结构化 RML 界面与请求回显操作，见 <a href="ai-test.md">AI 操作与测试游戏</a>。下列旧启动阻断不代表当前版本已复现。</p>
-    <p>验证范围：Build / Colonist / Research / Crafting 四类业务面板按钮的 <code>core:build.begin</code> / <code>core:colonists.select</code> / <code>core:research.start</code> / <code>core:craft.queue</code> 命令链路。不涉及 Pause/Settings/DevConsole。验证环境：Windows，本仓库 <code>C:\GitRepository\NewColony</code>；旧调试验证构建目录 <code>build-rmlui-on</code> / <code>build-rmlui-off</code>。未运行 <code>ctest</code> 或 <code>NewColonyTests</code>。</p>
-    <ul>
-      <li><strong>按钮 payload 契约（静态端到端核对，全部对齐）。</strong>四类按钮均由 <code>RmlUiDataViews</code> 的 <code>*_rml</code> 渲染串生成，写成 <code>&lt;button data-command="..." data-param-...="..."&gt;</code>。click 监听器 <code>build_payload_from_params</code> 把 <code>data-param-*</code> 打包成 JSON 字符串值：Build/Research/Crafting 发 <code>{"id":"..."}</code>，Colonist 发 <code>{"entity":"..."}</code>。Lua 命令桥 <code>normalize_command</code> 把四个 target 分别映射到 <code>order.build</code> / <code>colonist.select</code> / <code>research.start</code> / <code>order.craft</code>，字段读取（<code>payload.id</code> / <code>payload.entity</code> / <code>payload.id</code> / <code>payload.id</code>）与按钮发出的字段一致。</li>
-      <li><strong>世界进入与真实数据刷新（历史验证）。</strong>用户交互运行（ON 构建）点击 New Game 后 <code>[World] World started</code>，<code>ui_phase='playing'</code>，静态经营面板曾验证过真实数据刷新到位：<code>build_defs rows=12</code>、<code>tech_tree nodes=5</code>、<code>colonist_list rows=1</code>、<code>craft_recipes rows=94</code>，<code>world_info</code> 持续刷新。当前这些经营菜单已改为通过 Lua 在 <code>core:mod_ready</code> 注册的入口显示；区域工具 UI 已从小地图静态面板移除。</li>
-	  <li><strong>命令派发路径。</strong>启动参数门控（<code>--UI-AUTOFIRE</code>，默认关）的开发验证钩子只使用当前快照实际存在的首行 ID；内容表为空时跳过对应命令，不再用 CoreMod 私有内容 ID 兜底。</li>
-      <li><strong>环境限制（未完成的活体观测）。</strong>本会话的自动化启动方式（PowerShell <code>Start-Process</code> / 后台 shell）在世界启动帧之后确定性挂起：进程存活但 CPU 近空闲、<code>latest.log</code> 冻结、mod 脚本的注册回调从未执行（故殖民者 0、<code>engine.ui.command</code> 表未注册）。记录该现象时 CoreMod 仍使用 <code>bootstrap.lua</code> 入口脚本，该入口机制现已移除。在该挂起点之前同步派发四条命令时，<code>run_ui_command</code> 因 Lua 命令表未就绪而返回 <code>{"ok":false,"reason":"ui_command_table_missing"}</code>——这证实 C++ 派发→command_result 链路本身正常，问题在于注册逻辑在世界启动后的帧循环里运行、而该帧循环在本环境挂起。用户交互运行（窗口有焦点、桌面会话完整）不存在此挂起，注册逻辑正常运行、殖民者生成、数据刷新（见上）。因此 Lua <code>command()</code> 内部逻辑的活体 command_result 留待在干净桌面环境下用同一 <code>--UI-AUTOFIRE</code> 钩子复验。</li>
-      <li><strong>在干净环境复验的命令。</strong>以 <code>build-rmlui-on/bin/NewColony.exe --DEBUG --UI-AUTOFIRE</code> 启动并保持窗口前台；约 8 秒后查看 <code>build-rmlui-on/bin/logs/latest.log</code> 中 <code>[RmlUi][autofire] enqueue core:build.begin ...</code> 与对应 <code>[RmlUi] command target='core:build.begin' result=...</code> 四行即为四类按钮的活体结果。</li>
-    </ul>
+    <h2 id="ui-diagnostics">界面诊断</h2>
+    <p>使用 <code>--DEBUG</code> 查看文档加载、绑定及命令日志。需要通过结构化 RML 观察和操作界面时，可使用 <a href="ai-test.md">本地 AI_TEST 接口</a>。</p>
 
     <h2 id="career-tree">个人信息与职业树</h2>
     <p>个人信息页的“字段 / 值 / 详情”表头下方使用 3px 灰蓝色分割线，与数据内容分开。兼容层表格支持可选的 <code>header_class</code> 字符串，将额外 RCSS 类名附加到表头行；未提供时保留默认样式。个人信息页通过 <code>colonists-personal-info-header</code> 单独设置分割线。此调整尚未构建、运行静态检查、测试或游戏内验收。</p>
