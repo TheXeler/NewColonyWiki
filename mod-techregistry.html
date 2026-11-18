@@ -54,7 +54,7 @@ end</code></pre>
   <p>工具和水塔研究归入 <code>core:production</code>，武器类归入 <code>core:combat</code>；跨分类前置仍为完整科技 ID。配方解锁使用 <code>recipe:core:craft_...</code>，由既有制作目录和 Server 下单入口限制。水塔研究另声明 <code>building:core:irrigation_tower</code>，同时限制建筑菜单和建造下单入口。所有成品在工作台制作，每批固定一件，详见 <a href="mod-reciperegistry.html">配方数据</a>。</p>
   <p>四项招募科技归入 <code>core:colony_development</code>，按中级、高级、精英、大师顺序逐级前置。候选者数量、职业积累范围等实际招募参数由 <code>data/recruitment_rules/</code> 定义，描述文字不参与招募计算。</p>
   <p>石刀、石斧、石镐、石铲、石锄分别支持 <code>hunter_2</code>、<code>lumberjack_2</code>、<code>miner_2</code>、<code>worker_2</code>、<code>farmer_2</code>，均增加 <code>colonist.work_efficiency</code> 0.1。石锤和石矛支持 <code>militia_2</code>，分别增加 <code>battler.melee_power</code> 4 和 6。研究石板支持 <code>scholar_2</code>，无数值加成。装备切换工时均为 3 秒，堆叠上限 1；本批暂复用石材图标，不声明工具专属采掘、翻土、长柄攻击距离或投掷机制。</p>
-  <p>本批为源数据实现，未运行静态校验、构建、测试或游戏验收；研究付款、暂停/继续、前置解锁、制作与转职的实际链路留待统一验证。</p>
+  <p>本批为源数据实现；研究付款、暂停/继续、前置解锁、制作与转职的实际链路留待统一验证。</p>
   <h2>有效项目的必需契约</h2>
   <ul>
     <li><code>research_ticks</code> 必须显式为正数；不存在代码默认研究量。</li>

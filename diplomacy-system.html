@@ -5,7 +5,7 @@
 <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>外交系统</div></div>
 <div class="content">
   <h1>外交系统本体</h1>
-  <p>2026-10-11：外交使用 Server 权威谈判、Lua 提议实现和 RmlUI 界面。城邦 AI 的生成、经营、发展及回应算法另行接入；没有临时自动接受或拒绝规则。新增源码和测试源码尚未编译或运行。</p>
+  <p>外交使用 Server 权威谈判、Lua 提议实现和 RmlUI 界面。城邦 AI 的生成、经营、发展及回应算法另行接入；没有临时自动接受或拒绝规则。</p>
   <h2>独立状态与数据来源</h2>
   <p>城邦用实例 UUID 标识；关系值、战争状态、条约和玩家与派系关系分别保存。开战、议和不隐式修改关系，也不改变原有战斗敌对判断。按本轮裁定，战争不限制贸易许可的签订或使用；已有许可不因开战被撤销或停用，双方可同意一边战争、一边贸易。此裁定覆盖策划文档的贸易许可非战争前置条件。</p>
   <p>策划列出的资源、人口、军力等是查询能力，不要求重复保存字段。Server 可用 <code>require("core:systems.diplomacy").register_metric(id, provider)</code> 注册数据来源，再调用 <code>query(colony_uuid, metric_id, parameters)</code>。未注册的指标返回 <code>nil, "diplomacy_metric_unavailable"</code>，不会伪装为零。内置 <code>core:available_item_count</code> 接受 <code>{item_id="core:stone"}</code>，累加 <code>engine.items.colony_sources</code> 的未预约数量；它不代表包括背包、所有地面物品和已预约内容在内的总资产。其他统计口径等待各系统确定。</p>
