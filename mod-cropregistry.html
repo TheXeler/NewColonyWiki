@@ -5,12 +5,12 @@
 <p>完整最终设计及首批22种作物数值见源码文档 <code>NCDOCS/种植系统设计.md</code>，药材资格与四性见 <code>NCDOCS/药材内容表.md</code>。面向新建世界，不迁移旧农业记录。本页的开发进度不代表运行验收通过。</p>
 <h2>当前状态</h2>
 <p>本轮先完成22种作物展示，再按用户要求补齐实体水塔的制作、搬运放置、拆除及供水宽限。更广的城邦农业整合仍单独记录。展示入口、全部稳定ID、环境和占位素材限制见 <code>NCDOCS/首批22种作物展示说明.md</code>，水塔操作与验证边界见 <code>NCDOCS/水塔实施说明.md</code>。</p>
-<p>CoreMod 已填写首批22种作物，每种使用 <code>stage0</code> 至 <code>stage4</code> 五个独立阶段方块，共110个阶段身份。包括谷物5种、薯类4种、蔬菜6种、纤维2种、药用植物5种。前四阶段为空产出，进入第五阶段即成熟；旧小麦 stage5、stage6、stage7 方块与模型映射已删除。本次只面向新世界。</p>
+<p>CoreMod 的 22 种作物各有一个稳定方块 ID，使用 <code>block_state</code> 的 <code>stage</code> 组件呈现阶段。每种作物仍有五个阶段，前四阶段为空产出，进入第五阶段即成熟。原 <code>stage0</code> 至 <code>stage4</code> 记录继续提供形态和旧方块 ID 映射，新存档的区块体素保存基础方块 ID 和阶段值。农务记录仍管理权威阶段、进度和植株身份。</p>
 <p>小麦使用 Minecraft 四张双面竖片的作物模型，八张阶段贴图由已有工作区素材导入。作物方块为 <code>transparent</code>，角色可以穿过，不遮挡相邻面；它们没有物品方块形态，也不进入放置菜单。小麦的图标、掉落物使用独立的 <code>item/generated</code> 模型。耕地显示高度为 15/16 格；碰撞与射线选中仍采用引擎现有整格规则。</p>
 <p>前四阶段各100成长值，基础速度为400除以正常生长日数再除以28,800。温度按正常、缓长、停长优先级判断，全部未命中立即枯萎。阶段达到上限时新阶段进度归零，超额不带入；末阶段不再处理成长环境。原生、Lua及城邦派工／档案已接入共用配置，城邦完整生命周期交接仍在逐项核对，不能将静态检查视为运行验收。</p>
 <h2>新配置接口（已加入，运行态迁移中）</h2>
 <p>调试控制台指令 <code>crop_growth</code> 在所有作物64倍正向成长与正常速度之间切换，每次回显开关状态及倍率。<code>crop_growth 1</code> 显式关闭，<code>crop_growth 64</code> 显式开启，<code>crop_growth query</code> 只查询。倍率同时用于实际成长与剩余时间预测，温度、露天、地块限制继续生效；负向成长、种收工时及成熟腐坏不加速。仅本次服务端进程有效，不写入配置或存档，重启恢复1倍。用法见<a href="mod-console.html">控制台命令</a>。</p>
-<p><code>data/crops/*.json</code> 新格式包含 <code>id</code>、可选 <code>tilled_block</code>（首次翻地目标，默认 core:farmland）、<code>withered_block</code>（默认 core:withered_crop）、<code>defaults</code> 与非空 <code>growth_stages</code>。阶段必须引用独立 <code>block</code>，其方块定义负责名称、文本、材质、模型和贴图。阶段 <code>growth_limit</code> 默认100，<code>outdoor_required</code> 默认true。<code>sow_ticks</code>、<code>harvest_ticks</code> 各默认60 Tick；可选正数 <code>storage_lifetime_days</code> 表示仓储寿命，省略或null表示不腐坏。<code>yam_harvest_loss</code> 仅山药启用。</p>
+<p><code>data/crops/*.json</code> 包含 <code>id</code>、可选 <code>tilled_block</code>（首次翻地目标，默认 core:farmland）、<code>withered_block</code>（默认 core:withered_crop）、<code>defaults</code> 与非空 <code>growth_stages</code>。阶段的 <code>block</code> 引用提供名称、材质、模型和贴图的形态。基础方块可以声明 <code>"block_state":{"property":"stage","crop":"mod:crop"}</code> 绑定这些形态。第一个生长阶段在方块状态中为 0，农务阶段编号仍从 1 开始。显式枯萎形态占用生长阶段之后的一个状态值。早期存档中的共用枯萎块仍可正常识别和清理。阶段 <code>growth_limit</code> 默认100，<code>outdoor_required</code> 默认true。<code>sow_ticks</code>、<code>harvest_ticks</code> 各默认60 Tick；可选正数 <code>storage_lifetime_days</code> 表示仓储寿命，省略或null表示不腐坏。<code>yam_harvest_loss</code> 仅山药启用。</p>
 <pre><code>{
   "id": "example:crop",
   "defaults": {

@@ -263,6 +263,7 @@ end</code></pre>
 
     <h2>世界操作</h2>
     <p>对体素世界进行方块级别的操作。CoreMod 的挖矿、搬运、建造系统使用这些 API。</p>
+    <p><code>get_block</code> 的 <code>base_id</code> 是稳定的方块 ID，<code>state</code> 在方块声明具名状态时提供字段和值，例如 <code>block.state.stage</code>。现有 <code>id</code>、<code>block_id</code> 和 <code>hash</code> 继续返回当前形态，供已有 Mod 查询。允许脚本写入的独立状态可通过服务端 <code>engine.world.set_block_state(x, y, z, property, expected, next)</code> 更新。方法校验声明、旧值及状态范围，保留方块 ID 和朝向。多格门及农务实例继续由各自的事务入口更新。</p>
     <pre><code>-- 移除方块
 engine.world.remove_block(x, y, z)
 

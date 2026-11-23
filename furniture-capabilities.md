@@ -74,10 +74,30 @@ Declare an alternate state on each affected blueprint cell:
 
 Cells without `active_block` remain part of the object and are not rewritten
 by a state switch. Variant block definitions supply their model and passability.
+The built-in door declares the `open` voxel state on both base blocks. Chunk
+storage keeps `core:door` and `core:door_top`, together with the state value
+and orientation. The open form IDs still select the configured models and
+passability and provide migration aliases for older chunks. Both cells go
+through the same native transaction and the existing occupied-closing check.
 The `c:toggleable` Lua command checks player ownership and requests the native
 transition. The current `core:door.set_open` command ID remains compatible,
 but its handler accepts any object with that capability. Selection of any
-occupied cell resolves the original object. Doors do not auto-open for walkers.
+occupied cell resolves the original object.
+
+Closed cells tagged `c:openable` can be included in paths for entities whose
+effective `navigation.can_open` attribute is true. The colony prototype grants
+this capability. A Mod can grant it through its own entity prototype. The
+building also needs `c:openable` and an active, passable form for the obstructing
+cell. Pathfinding charges extra for the interaction and keeps ordinary body
+clearance checks. Actual collision uses the current form for every entity.
+
+When a routed actor reaches a closed passable-after-opening component, the
+server sends `core:door_switch_requested` with `actor_uuid` and `opened=true`.
+The Core Mod listener admits `c:openable` buildings. A listener may cancel or
+adjust `allow_traversal`; native publication rechecks the actor, contact and
+building, and applies the shared component state transition. Refusal invalidates
+the route and briefly excludes opening from its next search. The door stays open
+until an explicit close, and all actors can pass through the open doorway.
 
 ## Universal block orientation
 
