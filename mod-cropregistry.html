@@ -2,11 +2,12 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>作物数据 - NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
 <body data-page="mod-cropregistry"><div class="main"><div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>作物注册</div></div><div class="content">
 <h1>作物数据</h1>
-<p>作物 schema 位于 <code>data/crops/*.json</code>，可表达耕地类型、生长阶段、最终温度条件和产出引用。</p>
+<p>作物规则位于 <code>data/crops/*.json</code>。<code>block</code> 引用基础方块，<code>defaults</code> 和 <code>growth_stages</code> 定义各阶段的成长条件和掉落。</p>
 <h2>当前状态</h2>
-<p>CoreMod 按当前素材需求加入 <code>core:wheat</code> 作物定义，位于 <code>data/crops/wheat.json</code>。提供 <code>core:wheat</code> 收获物、<code>core:farmland</code> 耕地，以及 <code>core:wheat_stage0</code> 至 <code>core:wheat_stage7</code> 八个作物阶段。</p>
+<p>CoreMod 的 22 种作物各注册一个方块。体素保存基础方块 ID 和阶段值。小麦的状态 0 到 4 依次选择五个生长模型，状态 5 选择枯萎模型。全部状态共用基础方块的材质、碰撞和可切割性。本格式适用于新建世界。</p>
 <p>小麦使用 Minecraft 四张双面竖片的作物模型，八张阶段贴图由已有工作区素材导入。作物方块为 <code>transparent</code>，角色可以穿过，不遮挡相邻面；它们没有物品方块形态，也不进入放置菜单。小麦的图标、掉落物使用独立的 <code>item/generated</code> 模型。耕地显示高度为 15/16 格；碰撞与射线选中仍采用引擎现有整格规则。</p>
-<p>当前定义的阶段间隔为每阶段 600 simulation tick（总计 4800 tick），温度范围为 5 至 35 摄氏度（与引擎统一的摄氏度口径一致，引擎气候跨度为 -20 至 40 摄氏度），单次产出为 1 小麦。每 20 tick 更新一次，已加载区块中处于室外且最终温度有效的植株累计进度；第八阶段满周期后进入自动收获。温度不适或区块未加载时暂停，不删除生长记录。成熟方块声明 <code>cuttable</code>、<code>crop_id</code> 并引用 <code>core:wheat_harvest</code> 产出表；未成熟阶段不开放收获产出。</p>
+<p>基础方块在 <code>block_state</code> 声明 <code>property = "stage"</code>、关联作物 <code>crop</code> 和有序模型列表 <code>models</code>。模型路径相对于当前 Mod 的 <code>assets/models/</code>，省略 <code>.json</code>。列表末项是枯萎形态，前面的条目与 <code>growth_stages</code> 一一对应。多个阶段可以引用同一个模型。</p>
+<p>农务阶段编号从 1 开始，体素状态从 0 开始。默认在最后一个生长阶段自动收获，产出由当时阶段的 <code>drops</code> 决定。小麦前四阶段产出为空，第五阶段使用 <code>core:wheat_harvest</code>。状态名称用 <code>core:wheat[stage=4]</code> 这样的本地化键显示。</p>
 <h2>接口边界</h2>
 <p>2026-10-12 城邦交接源码：农田 plots 新增 colony_uuid，待办行继续保存区域与任务归属；旧农田行省略归属时可从既有区域恢复。city_business 按归属停放、合并阶段、有效累计时间和待办身份，各候选用实际恢复解码器预检。已管理抽象城邦的区域不设置默认作物、不读取／修改农田地形、不推进生长或重下实体任务，即使区块仍加载；城邦原生任务使用所属城邦阵营。农业记录的停放已接入联合事务，抽象温度／增长／收获及地形校正仍需经营适配器，不能仅修改档案时点后恢复。本轮未编译、运行测试或启动游戏。</p>
 <p><code>systems.farming</code> 为 <code>core:growing</code> 默认设置 <code>crop=core:wheat</code>。泥土或草地下方对应的空区域格先派翻地工作，耕地空格派播种工作；两者使用 Build 工作与种植权限。播种与补种完全不消耗物品：不设置材料要求、不预约也不扣除背包和仓储物品，因此 CoreMod 不定义种子物品，作物 schema 也没有 <code>seed_item</code> 字段（引擎侧的格式校验、引用交叉校验和 <code>get_crop_info</code> 投影都已随种子物品一并移除）。原生完成结算仍校验任务、区域、作物、耕地、空位和碰撞，校验通过才放置幼苗，失败保留空格。</p>

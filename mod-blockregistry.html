@@ -14,6 +14,7 @@
     <p class="subtitle">方块定义放在 <code>data/blocks/</code> 下，引擎加载时自动扫描。存量方块记录会派生同 ID 的兼容物品定义；不需要成为体素的新物品应放在 <code>data/items/</code>。</p>
 
     <h2>JSON 格式</h2>
+    <p>作物可以用 <code>block_state</code> 的 <code>crop</code> 和 <code>models</code> 声明外观阶段，<code>property</code> 为 <code>stage</code>。各阶段共用基础方块的材质和物理属性。<a href="mod-cropregistry.html">作物模型与农务规则</a></p>
     <pre><code>{
   "id": "copper_age:copper_ore",
   "name": "Copper Ore",
