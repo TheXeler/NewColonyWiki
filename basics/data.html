@@ -59,7 +59,7 @@
         <tr><td><code>channels/</code></td><td>字段到 Server、Client 接收入口的映射；入口指向本 Mod 的 scripts 模块及直接导出函数。</td><td><a href="../advanced/network/sync.html">网络同步</a></td></tr>
         <tr><td><code>commands/</code></td><td>命令 id、route、permission 与 execute 入口；before_event 可省略，提供时必须引用有效事件；parameters 可省略，默认空参数定义。处理函数由 Lua 提供，不是控制台原生命令清单。</td><td><a href="../advanced/lua/guide.html">Lua API</a></td></tr>
         <tr><td><code>combat_rules/</code>、<code>combat_formations/</code>、<code>reactions/</code></td><td>战斗规则、阵型和事件反应定义。Reaction 的事件引用须有效，运行时再连接对应处理逻辑。</td><td><a href="../appendix/engine/combat.html">战斗规则</a></td></tr>
-        <tr><td><code>spell_runes/</code>、<code>spell_staff_work/</code></td><td>符文数据与法杖更新工作定义。更新工作提供时长、资格及工作点约束，玩家命令不提供这些规则值。</td><td><a href="../spell-system.md">法术系统</a></td></tr>
+        <tr><td><code>spell_runes/</code>、<code>spell_staff_work/</code></td><td>符文数据与法杖更新工作定义。更新工作提供时长、资格及工作点约束，玩家命令不提供这些规则值。</td><td><a href="../coremod/spell.html">法术系统</a></td></tr>
         <tr><td><code>recipe_categories/</code></td><td>配方分类数据。科技界面分类使用独立 Lua 注册接口，不从本目录读取。</td><td><a href="registry/recipe.html">配方数据</a></td></tr>
         <tr><td><code>fluid_rules/</code></td><td>流体传播规则，由 ModLoader 读取并交给 FluidSystem 使用。</td><td>源码：Engine/Voxel/FluidSystem.cpp</td></tr>
         <tr><td><code>attributes_pack/</code></td><td>属性包定义，供实体与相关能力系统读取。</td><td><a href="registry/entity.html">实体定义</a></td></tr>

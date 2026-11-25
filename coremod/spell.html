@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法术系统 · NewColony Wiki</title>
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="coremod-spell">
+<div class="main">
+  <div class="content">
+    <h1>法术系统</h1>
+    <p class="subtitle">符文注册、方案与版本、杖端更新、施法流程，以及现在的完成边界。</p>
+
+    <h2>当前范围</h2>
+    <p>已提供符文注册、方案管理、物品实例配置、工作池更新、权威施法命令、独立法术实体，以及游戏内法术编辑器。尚未提供法术 HUD、法杖编辑器、正式符文与法杖内容，也没有敌方自动施法策略。</p>
+
+    <h2>职业与法杖</h2>
+    <p>职业通过装备的 <code>supported_jobs</code> 许可使用法杖，法杖赋予施法能力。施法要求目标已征召且为单人小队（<code>soldier_cap = 0</code>）；未征召时可用法术列表为空，命令直接拒绝。</p>
+    <p>物品定义通过 <code>spell_staff</code> 配置法杖：</p>
+    <table>
+      <thead><tr><th>字段</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>mana_per_energy</code></td><td>杖芯倍率，每单位精力转换的魔力，必须大于零</td></tr>
+        <tr><td><code>slots</code></td><td>杖端法术槽数，正整数</td></tr>
+        <tr><td><code>maximum_mana</code></td><td>单个方案允许的最大投入量</td></tr>
+        <tr><td><code>update_work</code></td><td><code>spell_staff_work</code> 工作定义编号，控制更新时长、资格与工作台</td></tr>
+      </tbody>
+    </table>
+    <p>施法按 <code>方案投入量 / mana_per_energy</code> 扣除现有 <code>needs.fatigue</code>，不新增法力池，也没有脱战恢复。精力不足会在吟诵完成时中断，不会部分扣除；精力归零时解除征召，交给既有的 AI 睡眠路径。</p>
+    <p>每根法杖必须是数量为 1 的独立物品实例，实例的 <code>payload_json.spell_staff</code> 保存 <code>uuid</code> 与 <code>slots</code> 数组，每个槽存方案 UUID，空槽为 <code>""</code>。制作内容可调用 <code>Staffs.initialize(location)</code> 初始化，<code>location</code> 支持 <code>equipment</code>、<code>inventory</code>、<code>ground</code>、<code>block</code>。</p>
+
+    <h2>符文注册</h2>
+    <p>符文定义放在 <code>data/spell_runes/*.json</code>，由引擎加载，CoreMod 在 <code>mod_ready</code> 解析注册。空注册表是合法状态，不附带正式内容。</p>
+    <table>
+      <thead><tr><th>字段</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code>、<code>name</code></td><td>命名空间编号与名称</td></tr>
+        <tr><td><code>initially_unlocked</code></td><td>为 true 时开局即可使用</td></tr>
+        <tr><td><code>research</code></td><td>解锁研究的编号；研究完成后殖民地共享解锁</td></tr>
+        <tr><td><code>repeat_limit</code></td><td>单个方案内的重复上限，0 表示无限</td></tr>
+        <tr><td><code>fixed_cost</code></td><td>单次出现的固定魔力开销，默认 0</td></tr>
+        <tr><td><code>percent_cost</code></td><td>单次出现的投入比例，<code>0.1</code> 表示 10%，默认 0</td></tr>
+        <tr><td><code>chant_seconds</code></td><td>单次出现的吟诵秒数，默认 0</td></tr>
+        <tr><td><code>coefficients</code></td><td>六项系数的加法修改，允许负数</td></tr>
+        <tr><td><code>callbacks</code></td><td><code>release</code>、<code>update</code>、<code>hit</code>、<code>effect</code> 回调配置</td></tr>
+      </tbody>
+    </table>
+    <p>每个回调写为 <code>{module="mod_id:module.path", func="function_name"}</code>，省略模块命名空间时使用符文编号所属 Mod。回调最多返回一个值，返回值不参与默认结算；配置必须引用可解析的 Lua 函数。</p>
+
+    <h2>魔力计算</h2>
+    <p>投入量为 M、符文 i 出现 n 次时：</p>
+    <pre><code>剩余魔力 = M - sum(n * (fixed_cost + M * percent_cost))</code></pre>
+    <p>百分比一律以初始 M 为基数。总开销超过投入量时禁止保存。符文顺序无关；同编号数量合并，重复限制按总数量检查；属性系数叠加，吟诵时长求和；回调按编号排序、按重复次数调用。</p>
+    <p>六项系数默认全为 0：<code>damage</code>、<code>repulsion</code>、<code>speed</code>、<code>maximum_range</code>、<code>minimum_range</code>、<code>duration</code>。属性值等于使用时剩余魔力乘系数，速度是世界距离／秒，范围为世界距离，持续时间为秒（按 20 TPS 换算为 tick）。</p>
+    <ul>
+      <li>负伤害治疗，正伤害接入现有战斗伤害提交，伤害与治疗四舍五入到整数。</li>
+      <li>负斥力沿施法方向吸引。</li>
+      <li>负速度从地面目标处朝施法者方向运行。</li>
+      <li>范围取绝对值后交换，使最小值不大于最大值。</li>
+      <li>负持续时间控制释放后的延时，不是命中后的延时。</li>
+    </ul>
+
+    <h2>方案与版本</h2>
+    <p>公开模块在声明 CoreMod 依赖后引入：</p>
+    <pre><code>local Schemes = require("core:systems.spell_schemes")
+local Staffs  = require("core:systems.spell_staffs")
+local Spells  = require("core:systems.spells")</code></pre>
+    <p><code>Schemes.save({name=..., mana=..., runes={{id=...,count=...}}}, old_uuid?, colony_uuid?)</code> 返回方案 UUID 或 <code>nil, error</code>；<code>get</code>、<code>list</code>、<code>runes</code> 返回副本；<code>unlock(id, colony_uuid?)</code> 支持脚本解锁。不传殖民地时使用已认证的命令归属；没有命令上下文时只允许唯一的玩家殖民地，存在歧义则返回错误。</p>
+    <p>方案归属殖民地，解锁记录按殖民地 UUID 隔离。修改方案时，无引用则改原 UUID，有引用则创建新 UUID 并隐藏旧版本，已有杖端继续引用旧 UUID。配置与回调标识随方案保存，Mod 重载不会重新编译旧方案；回调代码始终使用当前加载的 Mod 代码，缺失回调时方案保留但标记不可用。</p>
+    <p>杖端更新用 <code>Staffs.request_update(staff_uuid, slots?, {work_point_uuid?})</code> 发布任务；省略 <code>slots</code> 时把已有槽位的旧版本升到同一方案族的最新版本。工作内容放在 <code>data/spell_staff_work/*.json</code>：<code>id</code>、<code>seconds</code>，可选 <code>qualification</code> 与 <code>workstation_type</code>；玩家命令只能选择工作点 UUID，不能提供时长或资格。</p>
+
+    <h2>权威命令</h2>
+    <table>
+      <thead><tr><th>命令</th><th>参数与结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:spell.query</code></td><td>可选 <code>colony_uuid</code>、<code>scheme_uuid</code>、<code>actor_uuid</code>；返回方案、符文与指定法师可释放的槽位，不打断吟诵</td></tr>
+        <tr><td><code>core:spell.save</code></td><td><code>scheme</code>（名称、投入、符文数量），可选旧 <code>scheme_uuid</code>、<code>colony_uuid</code>；返回保存后的 UUID</td></tr>
+        <tr><td><code>core:spell.staff</code></td><td><code>staff_uuid</code>，可选 <code>colony_uuid</code>；返回槽位、当前方案投影、最新版本 UUID 与杖端配置</td></tr>
+        <tr><td><code>core:spell.staff_update</code></td><td><code>staff_uuid</code>，可选 <code>slots</code>、<code>work_point_uuid</code>、<code>colony_uuid</code>；返回更新工作 UUID</td></tr>
+        <tr><td><code>core:spell.cast</code></td><td><code>entity_uuid</code>、<code>slot</code>、<code>x/y/z</code>；开始吟诵</td></tr>
+        <tr><td><code>core:spell.cancel</code></td><td><code>entity_uuid</code>；取消吟诵，不扣精力</td></tr>
+      </tbody>
+    </table>
+    <p>所有玩家命令都会核对已认证的殖民地上下文，请求传入的殖民地 UUID 不能改变认证归属。转交法杖的查询可以看到实际持有的旧方案投影，但不会因此开放原殖民地的整个方案库。</p>
+
+    <h2>施法与结算</h2>
+    <p>施法只支持地面位置，不支持指向实体，也不会自动征召。吟诵总时长为所有符文时长之和，按模拟 tick 计时。注册命令可以识别单个、嵌套与批量的接收者；原生移动、停止、防御、攻击、征召、阵型、解除征召、指定新工作与职业变更都会打断吟诵，实际血量伤害与 tick 血量变化同样打断，护盾吸收不打断。查看界面与法术查询不算游戏指令。</p>
+    <p>吟诵结束会重新校验装备与精力，准备 UUID、运行状态与引用后由原生分配实体、扣除精力并提交状态。执行失败时只移除本次未完成的法术实体并记录错误，已扣除的精力不恢复。</p>
+    <p>飞行使用扫掠碰撞，查询实体碰撞体与途经的非空气方块，取最早命中；默认发射位置取施法者碰撞体中心。命中时按剩余魔力结算固定伤害、斥力、范围与后效时长，正持续时间每 10 tick 重新查询范围并结算一次，到期删除。没有敌我筛选；零范围表示点与碰撞体的相交；同小队成员的重复兵模不会重复扣同一血池。</p>
+    <p>默认水平环使用引擎程序生成的 <code>spell_wave</code> 网格与白色材质，从内半径向外半径扩散，视觉不改变固定效应范围。回调上下文提供 <code>spell</code>、<code>values</code>、<code>source_uuid</code>、<code>rune_id</code>、<code>occurrence</code>，<code>update</code> 另含 <code>dt</code>，<code>effect</code> 另含 <code>targets</code>；原生侧接口在 <code>engine.spell_host</code>（<code>origin</code>、<code>contacts</code>、<code>terrain</code>、<code>range</code>、<code>ring</code>、<code>heal</code>、<code>impulse</code>、<code>scale</code>、<code>visual</code>、<code>wave</code>）。</p>
+
+    <h2>法术编辑器</h2>
+    <p>从游戏底栏打开居中的 RmlUI 窗口。左侧是保存配置、载入配置、撤回、复原、删除选中符文与复制选中符文；中间是槽位画布，从左侧拖入符文放入槽位会替换原内容，槽内可调整重复次数或移除；全部槽位填满时自动增加下一圈空槽，也可以用“添加插槽”手动追加，不设固定数量上限。撤回与复原最多保留 100 次记录。</p>
+    <p>“保存配置”把草稿复制到客户端本地状态（<code>presets</code>），不创建世界内方案，也不要求当前组合可施法；“保存”通过 <code>core:spell.save</code> 发布世界方案，遵循引用、版本与殖民地权限规则，并且不会修改法杖。提交等待期间冻结草稿修改，服务端仍做最终校验。</p>
+
+    <h2>相关页面</h2>
+    <ul>
+      <li>职业与装备许可：<a href="../basics/registry/job.html">职业注册</a></li>
+      <li>战斗伤害提交：<a href="../appendix/engine/combat.html">战斗系统现状</a></li>
+      <li>回调与模块加载：<a href="../advanced/lua/guide.html">Lua API 指南</a></li>
+      <li>命令与回复通道：<a href="../advanced/network/sync.html">网络同步与 Mod 数据</a></li>
+      <li>完整函数签名：<a href="../appendix/api-reference.html">Lua API 速查</a></li>
+    </ul>
+  </div>
+</div>
+<script src="../nav.js"></script>
+<script src="../wiki.js"></script>
+</body>
+</html>
