@@ -188,6 +188,68 @@
     return sidebar;
   }
 
+  // 三档主题滑块：日间 / 跟随系统 / 夜间。选择由 theme.js 持久化。
+  function createThemeSwitch() {
+    const OPTIONS = [
+      { mode: "light", icon: "\u2600", label: "日间" },
+      { mode: "auto", icon: "\u25D0", label: "跟随系统" },
+      { mode: "dark", icon: "\u263E", label: "夜间" }
+    ];
+    const THEME = window.__WIKI_THEME;
+    const OPTION_W = 30;
+
+    const group = document.createElement("div");
+    group.className = "theme-switch";
+    group.setAttribute("role", "radiogroup");
+    group.setAttribute("aria-label", "主题");
+
+    const thumb = document.createElement("span");
+    thumb.className = "theme-switch-thumb";
+    group.appendChild(thumb);
+
+    const buttons = [];
+    const sync = (mode) => {
+      let index = 0;
+      for (let i = 0; i < OPTIONS.length; i += 1) {
+        if (OPTIONS[i].mode === mode) index = i;
+      }
+      thumb.style.transform = "translateX(" + index * OPTION_W + "px)";
+      buttons.forEach((button, i) => {
+        button.setAttribute("aria-checked", i === index ? "true" : "false");
+        button.tabIndex = i === index ? 0 : -1;
+      });
+    };
+
+    for (const option of OPTIONS) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "theme-switch-option";
+      button.setAttribute("role", "radio");
+      button.title = option.label;
+      button.setAttribute("aria-label", option.label);
+      button.textContent = option.icon;
+      button.addEventListener("click", () => {
+        if (THEME && typeof THEME.set === "function") {
+          THEME.set(option.mode);
+        } else {
+          const dark = option.mode === "dark" ||
+            (option.mode === "auto" && window.matchMedia &&
+             window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        }
+        sync(option.mode);
+      });
+      buttons.push(button);
+      group.appendChild(button);
+    }
+
+    sync(THEME && typeof THEME.get === "function" ? THEME.get() : "auto");
+    window.addEventListener("wiki-theme-change", (event) => {
+      if (event && event.detail) sync(event.detail.mode);
+    });
+    return group;
+  }
+
   // Top-right search over the manifest's page list.
   function setupChapterSearch(topbar, prefix) {
     if (!topbar) return;
@@ -492,6 +554,7 @@
     const topbar = renderTopbar(shell.main, shell.content, entry, prefix);
     document.body.prepend(createSidebar(activeId, prefix));
     renderFooter(shell.content);
+    topbar.appendChild(createThemeSwitch());
     setupChapterSearch(topbar, prefix);
     renderLuaApiTable();
     setupApiSearch();
