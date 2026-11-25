@@ -179,7 +179,7 @@ body {
 
 .nav-sub-title {
   padding: 5px 20px 5px 28px;
-  font-size: .95rem;
+  font-size: .82rem;
   font-weight: 600;
   color: var(--color-muted);
   cursor: pointer;
@@ -286,7 +286,7 @@ body {
 }
 
 .breadcrumb {
-  font-size: .75rem;
+  font-size: .74rem;
   color: var(--color-muted);
 }
 
