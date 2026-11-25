@@ -251,7 +251,7 @@ window.__LUA_API_DATA = {
       ]
     },
     {
-      "name": "玩家事件（原要闻）",
+      "name": "焦点",
       "items": [
         { "api": "engine.focus.register_condition(name, fn)", "params": "string, function", "returns": "bool", "note": "注册焦点条件，回调返回 bool。" },
         { "api": "engine.focus.register_choice_action(name, fn)", "params": "string, function", "returns": "bool", "note": "注册事件效果；回调返回 false 保留待办，true 或旧回调 nil 表示接受。拒绝前须保留原资产。" },
@@ -330,10 +330,10 @@ window.__LUA_API_DATA = {
       "items": [
         { "api": "engine.terrain.height_at(x, z, cfg)", "params": "integer, integer, table?", "returns": "integer", "note": "查询地形高度（世界级 fbm，居中输出，已含 ridge 山脉抬升）。可传配置表覆盖 base_height/noise/amplitude/mountain 参数。" },
         { "api": "engine.terrain.standable_y_at(x, z)", "params": "integer, integer", "returns": "integer|nil", "note": "查询实体脚部可站立的实际 Y；已加载但没有任何实体表面的空列返回 nil，不会回退并复活程序地形。" },
-        { "api": "engine.terrain.list_biomes()", "params": "-", "returns": "table", "note": "列出群系 ID。" },
+        { "api": "engine.terrain.list_biomes()", "params": "-", "returns": "table", "note": "列出群落 ID。" },
         { "api": "engine.terrain.list_features()", "params": "-", "returns": "table", "note": "列出已注册地物 ID。" },
         { "api": "engine.terrain.find_feature(id)", "params": "string", "returns": "table", "note": "返回地物定义；找不到时返回空表。" },
-        { "api": "engine.terrain.select_biome(seed, cx, cz)", "params": "integer, integer, integer", "returns": "table", "note": "返回兼容查询用的群系描述；当前世界 seed 查询该 chunk 中心 column 的实际气候群系，其它 seed 走旧的 seed/cx/cz 加权随机选择。实际地形生成按 column 级气候选择群系。" }
+        { "api": "engine.terrain.select_biome(seed, cx, cz)", "params": "integer, integer, integer", "returns": "table", "note": "返回兼容查询用的群落描述；当前世界 seed 查询该 chunk 中心 column 的实际气候群落，其它 seed 走旧的 seed/cx/cz 加权随机选择。实际地形生成按 column 级气候选择群落。" }
       ]
     },
     {
