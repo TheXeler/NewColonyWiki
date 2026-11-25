@@ -128,7 +128,8 @@ window.__WIKI_MANIFEST = {
       pages: [
         { id: "city-simulation", title: "城邦模拟现状", path: "coremod/city.html" },
         { id: "coremod-stone", title: "石材矿脉与切石机", path: "coremod/stone.html" },
-        { id: "coremod-recruitment", title: "招募与城镇中心", path: "coremod/recruitment.html" }
+        { id: "coremod-recruitment", title: "招募与城镇中心", path: "coremod/recruitment.html" },
+        { id: "coremod-furniture", title: "家具能力与开关状态", path: "coremod/furniture.html" }
       ]
     },
     {

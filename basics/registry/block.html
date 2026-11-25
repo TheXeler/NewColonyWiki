@@ -18,7 +18,7 @@
     <h2>JSON 格式</h2>
     <p><code>block_state</code> 给体素声明一个具名且可选的状态组件。<code>property</code> 是 Lua 读取的字段名，<code>forms</code> 按从 0 开始的顺序列出 1 至 256 个形态，0 是初始状态。区块保存基础方块 ID、状态值和朝向，模型及物理查询按状态解析形态。已发布的状态顺序是存档契约。打开 <code>legacy_aliases</code> 可以把同命名空间内原有的方块 ID 映射到对应状态，供旧档及旧调用使用。其他定义可只引用形态。独立状态可显式声明 <code>script_writable</code>，此时服务端 Lua 可以用 <code>engine.world.set_block_state</code> 比较并更新状态，通行性变化仍由拥有该对象的原生事务处理。</p>
     <p>作物可用 <code>block_state</code> 的 <code>crop</code> 和 <code>models</code> 声明纯外观阶段，<code>property</code> 为 <code>stage</code>。每项模型路径相对于当前 Mod 的 <code>assets/models/</code>，最后一项为枯萎外观。所有阶段共用基础方块的材质和物理属性。<a href="crop.html">作物数据与示例</a></p>
-    <p>两格家具通过建筑安装创建：红床 <code>core:bed</code>＋<code>core:bed_foot</code> 横向两格，橡木门 <code>core:door</code>＋<code>core:door_top</code> 上下两格。独立成品为 <code>core:bed</code>、<code>core:door</code>，经工作台制作和建筑菜单搬运安装；内部状态方块不可直接放置或分别领取。<code>c:sleepable</code>／<code>c:toggleable</code> 驱动共用Lua行为，能力Tag在部件所有格共享。朝向由通用方块状态保存，门的开关变体复用同一朝向，无需四套方向ID。详见<a href="../../furniture-capabilities.md">家具能力与模型姿态</a>；尚未运行验证。</p>
+    <p>两格家具通过建筑安装创建：红床 <code>core:bed</code>＋<code>core:bed_foot</code> 横向两格，橡木门 <code>core:door</code>＋<code>core:door_top</code> 上下两格。独立成品为 <code>core:bed</code>、<code>core:door</code>，经工作台制作和建筑菜单搬运安装；内部状态方块不可直接放置或分别领取。<code>c:sleepable</code>／<code>c:toggleable</code> 驱动共用Lua行为，能力Tag在部件所有格共享。朝向由通用方块状态保存，门的开关变体复用同一朝向，无需四套方向ID。详见<a href="../../coremod/furniture.html">家具能力与模型姿态</a>；尚未运行验证。</p>
     <pre><code>{
   "id": "copper_age:copper_ore",
   "name": "Copper Ore",

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家具能力与开关状态 · NewColony Wiki</title>
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="coremod-furniture">
+<div class="main">
+  <div class="content">
+    <h1>家具能力与开关状态</h1>
+    <p class="subtitle">用能力 Tag 把行为挂到建筑定义上，以及共享状态、朝向和城市安装订单的约定。</p>
+
+    <h2>用 Tag 选择行为</h2>
+    <p>家具行为由能力 Tag 选择。<code>core:bed</code> 与 <code>core:door</code> 是内容定义，不是特殊的引擎对象类型。</p>
+    <table>
+      <thead><tr><th>Tag</th><th>启用的行为</th></tr></thead>
+      <tbody>
+        <tr><td><code>c:sleepable</code></td><td>共享的 Lua 睡眠行为</td></tr>
+        <tr><td><code>c:toggleable</code></td><td>共享的状态切换命令</td></tr>
+      </tbody>
+    </table>
+    <p>Tag 可以声明在建筑定义上，也可以声明在其蓝图方块上。引擎会把两处合并，并从每个占用格暴露同一套能力，单格与多格组件行为一致，没有额外的双格准入规则。Mod 只要在正常的建筑定义上写 <code>c:sleepable</code>，就能得到一个可睡的睡袋，同时仍需提供自己的模型、材料与放置定义。</p>
+
+    <h2>睡眠</h2>
+    <p>默认不需要任何睡眠专用字段：使用相邻的接入点、普通恢复速度、角色模型的 <code>sleep</code> 动画和一个派生的可视锚点。可选字段用于覆盖默认值：</p>
+    <pre><code>"tags": ["c:sleepable"],
+"interactions": {
+  "sleep": {
+    "anchor": [0.5, 0.78, 1.85],
+    "animation": "sleep",
+    "recovery_multiplier": 1.5
+  }
+}</code></pre>
+    <p>内置红床使用上例设置：疲劳到 95 才离开，遇到严重饥饿会让位；力竭强制睡眠仍走原有的就地倒下逻辑。使用点与锚点随建筑一起旋转。</p>
+    <p>移动本身不恢复疲劳。设施被中断、取消、破坏或移除时，由行为释放占用，不会留下第二份床位预约。</p>
+
+    <h2>组件共享状态</h2>
+    <p><code>engine.buildings.component_info(uuid)</code> 返回共享 Tag 与完整性；<code>component_state(uuid)</code> 读取通用的未激活／激活状态；<code>set_component_state(uuid, active)</code> 通过既有原生方块编辑原子地切换全部声明的状态格。切换接受任意组件尺寸，会检查已加载的原始格，并拒绝切换到已被实心方块占用的格；切换保留每格朝向，不替换原组件或建筑身份。</p>
+    <p>要为某个格声明替代状态，在蓝图格上加 <code>active_block</code>：</p>
+    <pre><code>{"block":"example:panel", "active_block":"example:panel_open", "pos":[0,0,0]}</code></pre>
+    <p>没有 <code>active_block</code> 的格仍属于该对象，但不会被状态切换重写。替代方块的模型与可通行性来自它自身的定义。</p>
+
+    <h2>门与自动开启</h2>
+    <p>带 <code>c:openable</code> 的关闭格可以进入寻路，前提是实体的有效 <code>navigation.can_open</code> 属性为真（殖民地原型已授予，Mod 可以在自己的实体原型上授予）。建筑也需要带 <code>c:openable</code>，并且阻挡格有可通行的开启形态；寻路会为这次交互额外计费，正常身体净空检查仍然保留。实际碰撞始终按方块当前形态计算。</p>
+    <p>被授权的角色走到这种组件前时，服务端发出 <code>core:door_switch_requested</code>（含 <code>actor_uuid</code> 与 <code>opened</code>）。监听器可以取消或调整 <code>allow_traversal</code>；原生发布阶段会重新核对角色、接触与建筑，再应用共享状态切换。被拒绝时该路线失效，并在下一次搜索中短暂排除开启动作。门会保持开启直到显式关闭，开启后所有角色都能通过。</p>
+
+    <h2>城市安装订单</h2>
+    <p>同时具备 <code>placement_item</code>、零 <code>construction_ticks</code> 与一份对应材料的建筑，走普通安装流程。城市类 Mod 可以通过 <code>core:systems.city_installation</code> 把实体策略接入该流程：在既有安装策略里加入 <code>ordinary_orders = {entity_policy_id = "mod:residents", choose = choose}</code>。选择器收到当前城市观测，每次分配可以返回一个请求，请求用 <code>building_uuid</code> 指向原始规划建筑、用 <code>designated_worker</code> 指定居民、用 <code>priority</code>（0 到 9）表示优先度；返回 <code>nil</code> 表示不改变订单，并可附带写进城市报告的原因。</p>
+    <p>规划建筑需要先由城市布局创建出来，再交给安装流程。若送货路线可能进入抽象模式，需在城市布局策略上注册 <code>capture_navigation_chunks</code>。准入会核对实际 NPC 归属、当前规划建筑、居民资格，以及殖民地地面或方块库存中是否有可用成品。暂时缺料或缺工人只是留待后续分配，不会取消规划。订单进入共享日志后，普通安装更新负责取货，原始携带物认领跟随 Build 任务；排队的订单不提供建筑容量，容量与安装结果都以实际送达为准，包括已准入并移交给抽象模拟之后。</p>
+    <p>搬运者死亡时，死亡事务会同时退役原始 Build 与其认领。后续分配可以为同一规划建筑选择合格替补，前提是死亡回执标识了原始任务，且确有可用成品；实体模拟与抽象模拟中的死亡都适用。新订单会带自己的受理记录，并关联到原始派发、任务与居民。</p>
+
+    <h2>通用方块朝向</h2>
+    <p>朝向属于既有的方块状态字节，不按方块 ID 区分，模型只需制作一份。六个原始安装法向保持 0 到 5；第 3、4 位为垂直安装增加绕世界 Y 的四分之一圈，例如 <code>up</code>、<code>up@1</code>、<code>up@2</code>、<code>up@3</code> 表达四个直立朝向。既有水平安装的旋转映射保持不变。蓝图格可以写 <code>direction</code> 字符串，建筑旋转会推导坐标与朝向。</p>
+    <p>方块批次会携带可选朝向，普通状态替换时保留原朝向；方块与自定义模型渲染、区域文件、地形包与蓝图库记录接受同一套朝向。因此不再需要 <code>_east</code>、<code>_south</code>、<code>_west</code>、<code>facing_blocks</code>、<code>open_blocks</code> 这类按朝向拆分的内容族。网络协议版本保持 1，对端需要使用同一版本的二进制。</p>
+
+    <h2>相关页面</h2>
+    <ul>
+      <li>Tag 定义：<a href="../basics/registry/tag.html">Tag 注册</a></li>
+      <li>方块与状态：<a href="../basics/registry/block.html">方块注册</a></li>
+      <li>建筑与蓝图格：<a href="../basics/registry/building.html">建筑蓝图注册</a></li>
+      <li>睡眠与工作流程的调度：<a href="city.html">城邦模拟现状</a></li>
+    </ul>
+  </div>
+</div>
+<script src="../nav.js"></script>
+<script src="../wiki.js"></script>
+</body>
+</html>

@@ -12,7 +12,7 @@
 <p>红床横向占两格，橡木门上下占两格，仍沿工作台成品制作、搬运安装和整体拆除流程使用。玩法通过共享能力Tag <code>c:sleepable</code> 和 <code>c:toggleable</code> 识别，不依赖床／门ID、部件type或固定格数。普通睡袋MOD在其建筑／部件定义或蓝图方块上声明 <code>c:sleepable</code> 即可复用睡眠脚本；入口、恢复倍率和模型动画名有默认约定，可选 <code>interactions.sleep</code> 调整。</p>
 <p><code>systems.furniture</code> 在Lua管理选址、独占、到达、体力恢复、醒来与清理；C++只提供通用需求任务回调、部件状态原子修改和模型动画控制。实际躺卧姿势属于模型中的 <code>sleep</code> 动画；引擎不写死床专用姿势或旋转。实体的通用可视偏移与朝向偏移由Lua申请，沿既有外观机制保存及同步，不移动物理位置。</p>
 <p>任意部件格都能解析共同身份、Tag 与开关状态。逐格 <code>active_block</code> 声明活动形态，原生一次提交所有状态格并保留朝向。橡木门的上下两格将开关值存为 <code>block_state.open</code>，原开门 ID 继续提供形态和旧档映射。建筑和关闭形态可声明 <code>c:openable</code>，使带有 <code>navigation.can_open</code> 的实体在走到门前时请求开门。无此能力的实体只能通过已经打开的门。关门时如果实体占用了门道，原生提交会拒绝。</p>
-<p>完整数据契约、睡袋示例、默认规则与待执行验收见<a href="../../furniture-capabilities.md">家具能力与模型姿态</a>。</p>
+<p>完整数据契约、睡袋示例、默认规则与待执行验收见<a href="../../coremod/furniture.html">家具能力与模型姿态</a>。</p>
 <h2>定义契约</h2>
 <ul>
   <li>稳定建筑 ID、体素占位、部件集合、碰撞、遮挡和通行。</li>
