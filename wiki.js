@@ -551,6 +551,16 @@
     const entry = findEntry(activeId);
     const prefix = prefixForPath(entry ? entry.page.path : "");
     const shell = ensureShell();
+    if (chapterList().length === 0) {
+      if (window.console && window.console.error) {
+        window.console.error("nav.js 未加载或解析失败：window.__WIKI_MANIFEST 为空，侧边栏与章节搜索不可用。");
+      }
+      const warn = document.createElement("div");
+      warn.className = "callout warn";
+      warn.textContent = "导航清单 nav.js 未加载或解析失败：侧边栏、面包屑与章节搜索不可用。" +
+        "请确认本页在 wiki.js 之前引入了路径正确的 nav.js。";
+      shell.content.prepend(warn);
+    }
     const topbar = renderTopbar(shell.main, shell.content, entry, prefix);
     document.body.prepend(createSidebar(activeId, prefix));
     renderFooter(shell.content);

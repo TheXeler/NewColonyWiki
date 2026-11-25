@@ -1,4 +1,4 @@
-﻿/ NewColony Wiki 的导航清单，也是页面清单的唯一真相。
+// NewColony Wiki 的导航清单，也是页面清单的唯一真相。
 // 渲染器 wiki.js 读取本文件生成侧边栏、面包屑、页脚与章节搜索。
 // 本文件不使用 fetch，站点可以直接以本地文件方式打开；页面内不再写 topbar 或 footer。
 window.__WIKI_MANIFEST = {
