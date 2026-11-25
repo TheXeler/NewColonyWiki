@@ -3,7 +3,7 @@ const WIKI_NAV = [
     title: "理解概念",
     links: [
       ["index", "总览", "index.html"],
-      ["project-completion", "项目完成度审计", "project-completion.html"],
+      ["project-completion", "系统现状", "project-completion.html"],
       ["mod-guide", "MOD 是怎样加载的", "mod-guide.html"],
       ["mod-status", "当前能力边界", "mod-status.html"]
     ]
@@ -16,7 +16,6 @@ const WIKI_NAV = [
       ["mod-examples", "MOD 示例", "mod-examples.html"],
       ["mod-directory", "MOD 目录结构", "mod-directory.html"],
       ["mod-manifest", "mod.json", "mod-manifest.html"],
-      ["mod-data", "注册物品、方块和规则", "mod-data.html"],
       ["mod-configfiles", "配置文件", "mod-configfiles.html"],
       ["mod-localization", "本地化与翻译", "mod-localization.html"],
       {
@@ -30,8 +29,16 @@ const WIKI_NAV = [
         ]
       },
       {
-        title: "注册表",
+        title: "代码注册表",
         children: [
+          ["mod-coderegistry", "代码注册总览", "mod-coderegistry.html"],
+          ["diplomacy-system", "外交提议与指标", "diplomacy-system.html"]
+        ]
+      },
+      {
+        title: "数据文件注册表",
+        children: [
+          ["mod-data", "数据注册总览", "mod-data.html"],
           ["mod-blockregistry", "方块注册", "mod-blockregistry.html"],
           ["mod-tagregistry", "Tag 注册", "mod-tagregistry.html"],
           ["mod-entityregistry", "实体注册", "mod-entityregistry.html"],
@@ -56,9 +63,9 @@ const WIKI_NAV = [
         title: "引擎参考",
         children: [
           ["engine-terraingeneration", "地形生成流程", "engine-terraingeneration.html"],
-          ["engine-combat", "战斗规则与法力", "engine-combat.html"],
+          ["engine-combat", "战斗系统现状", "engine-combat.html"],
           ["engine-lighting", "引擎光照", "engine-lighting.html"],
-          ["engine-save-system", "存档系统状态", "engine-save-system.html"],
+          ["engine-save-system", "存档系统现状", "engine-save-system.html"],
           ["engine-resource-io", "资源 IO / UTF-8 路径", "engine-resource-io.html"],
           ["engine-service-layer", "引擎服务层", "engine-service-layer.html"],
           ["engine-renderer-lod", "地形 LOD 渲染", "engine-renderer-lod.html"],

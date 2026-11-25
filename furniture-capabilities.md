@@ -99,6 +99,37 @@ building, and applies the shared component state transition. Refusal invalidates
 the route and briefly excludes opening from its next search. The door stays open
 until an explicit close, and all actors can pass through the open doorway.
 
+## City installation orders
+
+A building with `placement_item`, zero `construction_ticks`, and one unit of
+that material uses the ordinary installation workflow. A city Mod can opt an
+entity policy into that workflow through `core:systems.city_installation`.
+Include `ordinary_orders = {entity_policy_id = "mod:residents", choose = choose}`
+in the existing installation policy. The selector receives the current city
+observation and may return one request per allocation. The request identifies
+the original planned building as `building_uuid`, a resident as
+`designated_worker`, and a `priority` from 0 through 9. It may return `nil`
+to leave orders unchanged and optionally supply a reason for the city report.
+
+Create the planned building through city layout before offering it for
+installation. Register `capture_navigation_chunks` on the city's layout
+policy for delivery routes that may cross into abstract mode. Admission checks
+the actual NPC owner, current planned building, resident qualifications, and
+an available finished item in colony-owned ground or block inventory. A
+temporary shortage or unavailable worker leaves the plan available for a
+later allocation. Once the order enters the shared journal, the normal
+installation update posts the pickup and the original carried-item claim
+follows the Build task. A queued order gives no building capacity. Capacity and
+installation results follow the physical delivery, including after an admitted
+handover to abstract simulation.
+
+If a carrier dies, the death transaction retires the original Build and its
+claim. A later allocation can select a qualified replacement for the same
+planned building when the accepted death receipt identifies the original
+task and an actual finished item is available. This applies to deaths in
+both entity and abstract simulation. The new order receives its own
+acceptance entry linked to the original posting, task and resident.
+
 ## Universal block orientation
 
 Orientation belongs to the existing block-state byte, not block IDs. Models

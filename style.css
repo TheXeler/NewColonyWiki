@@ -328,6 +328,15 @@ pre code {
 }
 
 /* ===== Tables ===== */
+.table-scroll {
+  overflow-x: auto;
+  margin: 12px 0 20px;
+}
+
+.table-scroll > table {
+  margin: 0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -339,6 +348,7 @@ th, td {
   text-align: left;
   padding: 10px 14px;
   border: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
 }
 
 th {
@@ -348,6 +358,17 @@ th {
 }
 
 td { background: var(--color-bg); }
+
+.registration-table {
+  min-width: 42rem;
+  table-layout: fixed;
+}
+
+.registration-table col:nth-child(1) { width: 19%; }
+.registration-table col:nth-child(2) { width: 32%; }
+.registration-table col:nth-child(3) { width: 34%; }
+.registration-table col:nth-child(4) { width: 15%; }
+.registration-table td { vertical-align: top; }
 
 /* ===== Image Placeholder ===== */
 .image-placeholder {
@@ -481,10 +502,6 @@ td { background: var(--color-bg); }
 .api-row[hidden],
 [data-api-empty][hidden] {
   display: none;
-}
-
-.api-row td:first-child {
-  white-space: nowrap;
 }
 
 /* ===== Section search (topbar, top-right) ===== */

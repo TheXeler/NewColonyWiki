@@ -20,12 +20,24 @@
   scripts/
     systems/               —— Lua 系统脚本（可选）
     ui/                    —— Lua UI 脚本（可选）
+    listeners/             —— 带事件与执行端声明的监听器
+    timers/                —— 返回序列化接口的持久定时器类型
   data/                    —— JSON 数据
     blocks/                —— 方块定义（name、hardness、output_table、可选 placeable）
+    events/                —— 事件字段、继承与同步声明
+    channels/              —— 通道字段与双端 Lua 接收入口
+    commands/              —— 命令参数、权限、路由与 Lua 执行入口
     items/                 —— 独立物品定义
     tags/                  —— 分类 tag 接口
     entities/              —— 实体原型（顶层引擎字段与 capabilities）
+    attributes_pack/       —— 属性包定义
+    combat_rules/          —— 战斗规则
+    combat_formations/     —— 战斗阵型
+    reactions/             —— 事件反应定义
+    spell_runes/           —— 法术符文
+    spell_staff_work/      —— 法杖更新工作定义
     recipes/               —— 配方（inputs、target_item、output_table 和工作点）
+    recipe_categories/     —— 配方分类数据（不是科技界面分类）
     manufacturing_rules/   —— 全局制造公式、品质阈值和产出树深度
     quality_tables/        —— 品质修正表
     output_tables/         —— 固定制作与世界掉落共用的产出表
@@ -40,17 +52,19 @@
     wild_food_rules/       —— 野生食材刷新规则
     animal_distributions/  —— 动物分布规则
     weather_definitions/   —— 天气定义
+    fluid_rules/           —— 流体传播规则
     dynamic_weather_regions/ —— 动态天气区域
     visibility_rules/      —— 三态视野单记录规则
     mine_rules/            —— 矿井单记录规则
     difficulty_rules/      —— 难度选项和预设
     jobs/           —— 职业定义（等级 1-5, 转职条件, 工作类型, 解锁配方）
+    task_definitions/      —— 原生实体 Task 使用的定义数据
     civilizations/         —— 文明定义（可用职业、开局选项）
     techs/                 —— 科技定义与研究要求
     focuses/               —— 要闻（条件触发、玩家选择）
     factions/              —— NPC 阵营（关系范围、名称模板）
     faction_spawn_rules/   —— 新世界阵营生成规则
-    diplomacy_proposals/   —— 外交提议与条约效果
+    diplomacy_proposals/   —— 旧外交提议 schema，仅兼容读取
     name_pools/            —— 名称池（随机命名素材）
     features/              —— 地形地物
     crops/                 —— 作物生长阶段和产出
@@ -72,12 +86,23 @@
 
     <h2>自动注册的数据目录</h2>
     <p>加载器递归扫描物品、方块及其他内容目录；职业定义统一放在 <code>data/jobs/</code>。文件可以放在对应类型根目录的子目录中。</p>
+    <p>这些目录属于<a href="mod-data.html">数据文件注册表</a>；Lua 分类、效果回调、监听器和提供器见<a href="mod-coderegistry.html">代码注册表</a>。事件、通道和命令的 JSON 声明由脚本注册器进一步连接 Lua，不等于任意 Lua 模块都会自动执行。</p>
     <ul>
       <li><code>data/blocks/</code></li>
+      <li><code>data/events/</code></li>
+      <li><code>data/channels/</code></li>
+      <li><code>data/commands/</code></li>
       <li><code>data/items/</code></li>
       <li><code>data/tags/</code></li>
       <li><code>data/entities/</code></li>
+      <li><code>data/attributes_pack/</code></li>
+      <li><code>data/combat_rules/</code></li>
+      <li><code>data/spell_runes/</code></li>
+      <li><code>data/spell_staff_work/</code></li>
+      <li><code>data/combat_formations/</code></li>
+      <li><code>data/reactions/</code></li>
       <li><code>data/recipes/</code></li>
+      <li><code>data/recipe_categories/</code></li>
       <li><code>data/manufacturing_rules/</code></li>
       <li><code>data/quality_tables/</code></li>
       <li><code>data/output_tables/</code></li>
@@ -92,11 +117,13 @@
       <li><code>data/wild_food_rules/</code></li>
       <li><code>data/animal_distributions/</code></li>
       <li><code>data/weather_definitions/</code></li>
+      <li><code>data/fluid_rules/</code></li>
       <li><code>data/dynamic_weather_regions/</code></li>
       <li><code>data/visibility_rules/</code></li>
       <li><code>data/mine_rules/</code></li>
       <li><code>data/difficulty_rules/</code></li>
       <li><code>data/jobs/</code></li>
+      <li><code>data/task_definitions/</code></li>
       <li><code>data/civilizations/</code></li>
       <li><code>data/techs/</code></li>
       <li><code>data/focuses/</code></li>
@@ -121,6 +148,19 @@
         <tr><td><code>mod.json</code></td><td>是</td><td>MOD 清单文件，声明 ID、版本、依赖等。详见 <a href="mod-manifest.html">mod.json 清单</a>。</td></tr>
         <tr><td><code>data/blocks/</code></td><td>否</td><td>体素方块定义。声明物品身份的 block 记录同时生成同 ID 的当前物品定义；显式 item 记录可按稳定 ID 覆盖该定义。</td></tr>
         <tr><td><code>data/items/</code></td><td>否</td><td>独立物品定义。声明名称、图标、说明、主类别、用途标签、堆叠、价格、重量，以及可选腐坏、配方来源和装备元数据。</td></tr>
+        <tr><td><code>data/tags/</code></td><td>否</td><td>以 tag 为登记键的物品与方块分组，见<a href="mod-tagregistry.html">Tag 注册</a>。</td></tr>
+        <tr><td><code>data/events/</code></td><td>否</td><td>事件 schema、继承与同步声明；监听器单独使用 Lua 登记。</td></tr>
+        <tr><td><code>data/channels/</code></td><td>否</td><td>通道字段到两端 Lua 接收函数的映射。</td></tr>
+        <tr><td><code>data/commands/</code></td><td>否</td><td>脚本命令参数、权限、执行端、前置事件与 Lua 执行入口。</td></tr>
+        <tr><td><code>data/attributes_pack/</code></td><td>否</td><td>实体属性包定义。</td></tr>
+        <tr><td><code>data/combat_rules/</code></td><td>否</td><td>战斗规则数据，见<a href="engine-combat.html">战斗规则</a>。</td></tr>
+        <tr><td><code>data/combat_formations/</code></td><td>否</td><td>战斗阵型数据。</td></tr>
+        <tr><td><code>data/reactions/</code></td><td>否</td><td>事件反应定义与事件引用。</td></tr>
+        <tr><td><code>data/spell_runes/</code></td><td>否</td><td>法术符文定义，见<a href="spell-system.md">法术系统</a>。</td></tr>
+        <tr><td><code>data/spell_staff_work/</code></td><td>否</td><td>法杖更新工作时长、资格及工作点约束。</td></tr>
+        <tr><td><code>data/recipe_categories/</code></td><td>否</td><td>配方分类数据；科技界面分类使用 Lua 注册。</td></tr>
+        <tr><td><code>data/fluid_rules/</code></td><td>否</td><td>流体传播规则。</td></tr>
+        <tr><td><code>data/task_definitions/</code></td><td>否</td><td>原生实体 Task 定义数据；持久 Lua 定时器类型来自 scripts/timers。</td></tr>
 		<tr><td><code>data/entities/</code></td><td>否</td><td>实体原型，通过顶层引擎字段和 capabilities 定义实体类型。JSON 可声明位置、速度、生命、需求、心情、属性、名称、AI、职业、装备与视觉数据；背包物品由统一 ItemSystem 实例表达。声明 ai_state 时运行时附加 NavAgent、MovementTarget、MovementIntent、BlockInteractor 和 WorkPriorityConfig；Job 只在原型声明时附加。</td></tr>
         <tr><td><code>data/recipes/</code></td><td>否</td><td>制造配方。声明输入材料、目标物品、产出表、兼容工作点，以及可选的职业与等级要求。制作成功触发 <code>core:recipe_crafted</code> 事件。CoreMod 的工作台配方在手工制作点消耗 4 木板且没有职业门槛。</td></tr>
         <tr><td><code>data/manufacturing_rules/</code></td><td>否</td><td>全局制造规则，声明成败/品质线性公式、品质随机范围、六级阈值和产出树最大深度。内容数值可以留空；需要这些规则的配方会进入可见配置屏障。</td></tr>
@@ -147,7 +187,7 @@
         <tr><td><code>data/focuses/</code></td><td>否</td><td>要闻。展示给玩家的消息，可附带选择项。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>）或 Lua 注册的自定义条件。</td></tr>
         <tr><td><code>data/factions/</code></td><td>否</td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池。</td></tr>
         <tr><td><code>data/faction_spawn_rules/</code></td><td>否</td><td>新世界初始 NPC 阵营生成数量规则。</td></tr>
-        <tr><td><code>data/diplomacy_proposals/</code></td><td>否</td><td>外交提议、关系计分、条约效果和前置状态。</td></tr>
+        <tr><td><code>data/diplomacy_proposals/</code></td><td>否</td><td>旧外交提议 schema 的兼容读取入口，不驱动当前谈判。新提议、评分和执行回调通过 Server Lua 注册，见<a href="diplomacy-system.html">外交系统</a>。</td></tr>
         <tr><td><code>data/name_pools/</code></td><td>否</td><td>名称池。给 NPC 阵营随机生成名称提供词汇素材。<code>words</code> 字段为字符串数组。</td></tr>
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="mod-featureregistry.html">地物注册</a>。</td></tr>
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物阶段配置。新格式使用 defaults 与 growth_stages，按成长上限、任意下方方块速度表及三档温度计算成长；阶段地块和掉落覆盖为整表替换。共用解析与Lua投影已加入，内置内容和运行态迁移仍在进行，见 <a href="mod-cropregistry.html">作物数据</a>。</td></tr>
@@ -166,13 +206,13 @@
 
     <h2>数据文件的通用规则</h2>
     <ul>
-      <li>自动注册的数据 JSON 都必须有唯一的 <code>id</code>。可以写完整 ID（<code>&lt;mod_id&gt;:&lt;name&gt;</code>），也可以写本 MOD 内短 ID；加载器会补成 <code>&lt;mod_id&gt;:&lt;name&gt;</code>。</li>
+      <li>一般数据 JSON 使用非空 <code>id</code>。可以写完整 ID（<code>&lt;mod_id&gt;:&lt;name&gt;</code>），也可以写本 MOD 内短 ID；加载器会补前缀。<code>tags</code> 使用 <code>tag</code>，不要求 id；名称池登记键还包含语言文件名。</li>
       <li>跨 MOD 引用其他内容时必须写完整 ID，比如 <code>copper_age:copper_ingot</code>。</li>
       <li>文件可以放在对应类型目录下的任意位置（包括子目录），只要在正确的类型根目录下即可。例如 <code>data/blocks/materials/copper.json</code> 和 <code>data/blocks/copper.json</code> 都行。</li>
       <li>配方、职业、文明、方块掉落和作物会做跨引用校验。引用不存在会导致 MOD 加载失败，引擎会报出具体是哪个文件和哪条记录。</li>
-      <li>每个自动注册的数据 JSON 可选 <code>reload</code> 布尔字段，用于标记该条目是否参与热重载流程。</li>
+      <li>通用数据表以 <code>(type, id)</code> 为键。同键记录默认保留先加载者并记录警告；后加载记录显式声明 <code>reload: true</code> 才覆盖。它不是是否参与 DEBUG 热重载的开关；事件、通道和命令还需通过脚本注册器的额外校验。</li>
 
-      <li>能用 JSON 表达的内容优先放在 <code>data/</code>，Lua 只处理数据难以表达的规则、条件和选项行为。</li>
+      <li>按系统实际入口选择定义方式：受支持的静态数据使用 JSON，科技界面分类、外交提议和效果生命周期等使用对应 Lua 注册接口。不能用任意新增 data 子目录替代代码注册。</li>
     </ul>
 
     <div class="footer">NewColony Wiki · UTF-8</div>

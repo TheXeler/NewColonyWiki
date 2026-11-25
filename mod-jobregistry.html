@@ -65,12 +65,15 @@
     </ul>
     <pre><code>(#militia_2_5 AND #apothecary_2_5) OR #combat_medic_3_1</code></pre>
     <p>初始殖民者由 <code>core:colonist</code> 原型生成，保持该职业的无等级状态（<code>Job.level=0</code>）。招募候选人另有 <code>PendingRegistration</code> 标记；单凭 0 级不会把正式殖民者识别为候选人。</p>
+    <p>经验处理明确区分合法未奖励与数据错误。原生 <code>ExperienceResult</code> 的合法结果为 <code>Applied</code>、<code>ZeroReward</code>、<code>Unassigned</code>、<code>NoProgression</code> 和 <code>AtLevelCap</code>；后四种保持当前职业与完整履历不变，不新增履历槽位、不产生升级通知，也不要求经验成长配置。无等级职业使用 <code>level=0, xp=0</code>；已满级、零奖励及合法空职业均可正常完成工作。割除、挖掘、种植、制造和安装确认用结果有效性决定经验候选是否可用，仅在 <code>awarded()</code> 为真时记录经验。<code>add_experience</code> 兼容接口仍返回是否应用了经验，不能作为工作成功条件。</p>
+    <p><code>engine.jobs.prepare_experience</code> 保留 <code>valid</code>、<code>awarded</code>、<code>job</code> 和可选 <code>career</code>，增加 <code>outcome</code> 字符串。合法未奖励返回 <code>valid=true, awarded=false</code>；真实错误以 <code>reason</code> 区分缺失定义、非法职业／履历、成长配置、升级消耗或履历容量。零奖励不会掩盖非法职业状态。普通 AI 在经验数据错误时记录具体原因；联合事务仍保留原失败恢复约束。</p>
 
     <h2>能力与履历</h2>
     <p>当前节点只应用已达到 LEVEL 的能力；父节点和交叉前置节点按满级继承。切换职业后，普通能力不生效；只有数据中明确标为 <code>permanent</code> 或 <code>cross_career</code> 的能力可从独立履历继续生效。CoreMod 当前能力文本直接来自 NCDOCS，未定义数值的“提升”不会被引擎猜成倍率。</p>
 	<p>经验提交导致等级变化时，C++ 发布 <code>core:job_level_changed</code>，CoreMod 的 Lua 监听器同步新等级天赋；原生 AI 迭代产生的事件在迭代结束后投送。职业定义热重载保留原生等级变化回调，后续升级仍会通知 Lua。转职由 <code>core:job_assigned</code> 同步。普通 <code>task_completed</code> 不再为职业效果执行第二次同步；监听器错误由事件系统记录。若通知投送本身失败，原生记录 ERROR，已经提交的经验或转职仍向调用方报告成功；职业能力可能暂时滞后，后续读档或 Mod 重载会重新同步，不自动重试本次事件。</p>
+	<p>城邦归档交付在档案中计算职业状态和修正。实际等级变化的通知包含 <code>simulation_mode = "abstract"</code>，听取该事件的模块可用这个字段区分归档居民与当前世界中的实体。</p>
 
-    <p>没有职业定义的原型实体仍有空 <code>Job</code> 组件，初始职业 ID 为 0。空 Job 属于 Job，可以执行基础和生存 Task；具有 <code>ColonistTag</code> 的空 Job 实体也可以接取用于取得职业的 <code>JobChange</code>。缺少 Job 或 <code>ColonistTag</code> 的实体不能接取 <code>JobChange</code>，与转职提交条件一致。转职 Task 的目标是装备所在方块库存，导航会选择该方块邻近的可站立位置。<code>engine.jobs.transition_state(entity)</code> 对空职业返回 <code>current_job_id=0</code>、<code>current_level=0</code>、<code>career_count=0</code> 和空的 <code>levels</code>/<code>history</code> 表。Lua 资格回调若接受其转职，C++ 只把目标职业写入履历；空职业 ID 不会被记录为历史节点。</p>
+    <p>非殖民者原型未声明职业时，不再隐式创建空 <code>Job</code>。殖民者可保留空 Job 用于首次转职。缺少或空职业不会限制普通任务标签；执行仍须满足实际能力、阵营／城市、显式资格和任务入口要求，已声明职业仍按自身允许标签限制。缺少 Job 或 <code>ColonistTag</code> 的实体不能接取 <code>JobChange</code>，与转职提交条件一致。没有 Job 的存活实体结算经验返回合法的 <code>NoProfession</code>，不授予经验，也不补建 Job 或履历；不存在的实体返回 <code>MissingEntity</code> 错误。转职 Task 的目标是装备所在方块库存，导航选择邻近可站立位置。<code>engine.jobs.transition_state(entity)</code> 对空职业返回 <code>current_job_id=0</code>、<code>current_level=0</code>、<code>career_count=0</code> 和空的 <code>levels</code>/<code>history</code> 表；空职业 ID 不会被记录为历史节点。</p>
     <p>读档遇到未注册的职业 ID 时，引擎记录含该 ID 的 ERROR，并保留当前职业及履历中的原始 ID、等级、阶级和经验。后续存档继续保存这些值，重新启用缺失的 Mod 后仍可恢复职业定义。</p>
 
     <h2>Lua/UI 接口</h2>

@@ -258,6 +258,23 @@ also records the whole call separately. CPU preparation includes frustum
 checks, buffer writes, and changed table preparation. GPU timestamps bracket
 the entity draw interval and can include overlap with preceding GPU work.
 
+For reports where models disappear on another machine while ground items remain
+visible, collect `--DEBUG --DEBUG_OPT:GPU_STATS=2` logs from the affected machine.
+Startup logs include the selected GPU vendor/device IDs and raw vendor-defined
+driver version. Debug startup logs include descriptor/vertex limits and the exact
+vertex/fragment SPIR-V paths selected for each graphics pipeline. The periodic
+`Entity path` line records GPU culling selection/availability, GPU pose availability,
+extended material selection, culled instances, resident models, bindings, pending
+preparations, budget status and view mode. Ground items use a different mesh path;
+their visibility does not establish that GLB model drawing works. Compare the same
+exported package on both machines before attributing the difference to hardware.
+`visible` counts accepted instances and `draws` counts recorded draw calls; neither
+counter establishes that fragments survived clipping, depth testing or shader
+discard. The `geometry` field measures aggregate geometry residency, so zero is
+valid for ordinary model draws. Diagnostic logging changes require a new authorized
+build/export before they appear in a customer's executable; they do not repair
+model visibility or establish runtime verification by themselves.
+
 The benchmark uses a fixed camera and 256x256 hidden window, 100/1,000/10,000
 entities, 100% or 10% visible populations, static/animated/mixed playback plus
 animated entities with eight appearance variants, 30

@@ -52,6 +52,8 @@
 
     <h2>查询规则</h2>
     <p>翻译查询只查当前 locale；缺失对应翻译时，引擎直接返回原始 key 并写入缺失翻译日志，不会回退到其它语言。</p>
+    <p>MOD 清单中设置项的 <code>label_key</code> 和 <code>description_key</code> 也必须在该 MOD 的语言文件中提供；设置页刷新会重新查询这些键，缺失条目会重复产生警告。CoreMod 已补齐初始区块半径、初始殖民者姓名、星球半径、恒星距离和水域覆盖比例的中英文名称及说明，以及贸易点名称和工作属性标题；首页小标题的中文文案位于本体 <code>assets/lang/zh-cn.json</code>。本次修正补齐实际文案，不改变缺失翻译的警告规则。</p>
+    <p>配方名称放在 <code>recipes</code> 分类，key 使用配方定义的完整 <code>id</code>，例如 <code>core:cook_grain</code>，对应查询键为 <code>recipes.core:cook_grain</code>。新增配方时，请同时在 <code>CoreMod/lang/zh-cn.json</code> 和 <code>CoreMod/lang/en-us.json</code> 中补齐名称；产物在 <code>items</code> 分类中的翻译不能替代配方名称。</p>
     <pre><code>local current = engine.locale.current_locale()
 local start = engine.locale.translate("ui.menu.start")
 local same = engine.locale.translate_cat("ui", "menu.start")

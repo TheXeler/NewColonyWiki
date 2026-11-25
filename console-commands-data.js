@@ -70,6 +70,7 @@ window.__CONSOLE_COMMANDS_DATA = {
       "items": [
         { "command": "time", "usage": "time <set|add|query> [value]", "access": "developer", "side": "服务端", "note": "query 查询当前时间；set 设定时刻，支持 morning/noon 等名称、00:00 至 23:59 或日内数值；add 用正整数增量推进。目标时刻已过时前进到次日，不倒退模拟时钟。" },
         { "command": "tps", "usage": "tps", "access": "developer", "side": "服务端", "note": "显示固定模拟 Tick 率（SIMULATION_TPS = 20）。" },
+        { "command": "crop_growth", "usage": "crop_growth [1|64|query]", "access": "developer", "side": "服务端", "note": "直接输入在所有作物64倍正向生长与正常速度之间切换，回显ON/OFF和倍率；1显式关闭，64显式开启，query只查询。环境限制、负向成长、种收工时和腐坏时间不变。与游戏倍速相乘，仅本次服务端进程有效，不写存档，重启恢复1倍。" },
         { "command": "net_status", "usage": "net_status", "access": "developer", "side": "客户端", "note": "查看网络角色、连接状态、同步计数、MOD 同步状态与重连状态。" },
         { "command": "net_commands", "usage": "net_commands", "access": "developer", "side": "服务端", "note": "查看服务端收到的网络命令统计（received、last_seq），仅服务端有数据。" },
         { "command": "net_server", "usage": "net_server [port]", "access": "developer", "side": "客户端", "note": "启动服务端权威同步服务器，省略端口时使用 7777。" },

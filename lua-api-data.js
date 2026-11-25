@@ -20,6 +20,14 @@ window.__LUA_API_DATA = {
   },
   "groups": [
     {
+      "name": "服务器行为",
+      "items": [
+        { "api": "engine.server.run_step(operation, context, callback)", "params": "string, small table, function", "returns": "ok, value, error", "note": "服务器同步错误边界，异常统一记 ERROR；保留已生效行为，不回滚、不记补偿账本、不自动重试。业务 false 是正常返回值。回调沿用原有权限，不开放准备阶段写入。" },
+        { "api": "engine.server.destroy_task_blocks(task_uuid, cells)", "params": "UUID, array of {x,y,z,block_hash}", "returns": "bool", "note": "[experimental] 真实完成任务上下文内校验原目标并破坏指定方块；本次派发只执行一次，后续产出错误不恢复方块。" },
+        { "api": "engine.server.create_task_outputs(task_uuid, products, pickup)", "params": "UUID, array of {id,count}, bool", "returns": "asset outputs table", "note": "[experimental] 当前破坏任务后创建物品，可选入包拒绝时掉落；只处理执行者与相关物品堆，失败记 ERROR 后不自动重试。" }
+      ]
+    },
+    {
       "name": "版本与日志",
       "items": [
         { "api": "engine.api_version", "params": "属性", "returns": "string", "note": "[stable] 当前公共 MOD API 版本；推荐新脚本使用。" },
@@ -115,6 +123,7 @@ window.__LUA_API_DATA = {
       "items": [
         { "api": "engine.modding.get_data_json(type, id)", "params": "data type, data id", "returns": "string", "note": "返回注册表中的原始 JSON，未找到时返回空字符串。" },
         { "api": "engine.json.decode(text)", "params": "JSON string", "returns": "Lua value or nil", "note": "基础 API；在 MOD 脚本装载阶段即可用。解析无效或空 JSON 时返回 nil。" },
+        { "api": "engine.json.encode(value)", "params": "JSON-compatible Lua value", "returns": "JSON string", "note": "基础 API。连续数字索引和空表编码为数组，字符串键表编码为对象。拒绝循环、混合键、稀疏数组及非有限数字。" },
         { "api": "engine.modding.resolve_block_id(hash)", "params": "hashed id", "returns": "string", "note": "把方块哈希解析为数据 ID；未找到时返回空字符串。" },
         { "api": "engine.modding.list_by_type(type)", "params": "blocks/raids 等", "returns": "table", "note": "列出指定数据类型的全部 ID。" },
         { "api": "engine.modding.get_block_info(hash)", "params": "integer", "returns": "table", "note": "返回 id/hash/exists、material、category、food_value、has_item_block、mineable/cuttable/selectable、tree_feature、hardness 和统一产出表配置状态。" },
@@ -242,14 +251,15 @@ window.__LUA_API_DATA = {
       ]
     },
     {
-      "name": "焦点",
+      "name": "玩家事件（原要闻）",
       "items": [
         { "api": "engine.focus.register_condition(name, fn)", "params": "string, function", "returns": "bool", "note": "注册焦点条件，回调返回 bool。" },
-        { "api": "engine.focus.register_choice_action(name, fn)", "params": "string, function", "returns": "bool", "note": "注册焦点选项动作。" },
+        { "api": "engine.focus.register_choice_action(name, fn)", "params": "string, function", "returns": "bool", "note": "注册事件效果；回调返回 false 保留待办，true 或旧回调 nil 表示接受。拒绝前须保留原资产。" },
         { "api": "engine.focuses.list()", "params": "-", "returns": "table", "note": "列出焦点定义 ID。" },
-        { "api": "engine.focuses.active()", "params": "-", "returns": "table", "note": "列出当前活跃的焦点实例和 choices。" },
-        { "api": "engine.focuses.choose(instance, choice)", "params": "instance id, string", "returns": "bool", "note": "执行选项动作并触发 core:focus_chosen。" },
-        { "api": "engine.focuses.dismiss(instance)", "params": "instance id", "returns": "bool", "note": "关闭焦点并触发 core:focus_dismissed。" }
+        { "api": "engine.focuses.active()", "params": "-", "returns": "table", "note": "列出原 UUID、展示快照、summary、event_type、color、priority 和 choices。" },
+        { "api": "engine.focuses.trigger(id)", "params": "namespaced string", "returns": "{ok, focus_uuid?, error?}", "note": "权威服务端发布已注册事件，包含暂停期间；验证启用、一次性和冷却。conditions: [] 只由 Lua 发布。" },
+        { "api": "engine.focuses.choose(focus_uuid, choice_id)", "params": "UUID string, string", "returns": "bool", "note": "重查原实例与选项，接受效果后完成并通知 core:focus_chosen；拒绝保留待办。" },
+        { "api": "engine.focuses.dismiss(focus_uuid)", "params": "UUID string", "returns": "bool", "note": "只确认无选项通知并发送 core:focus_dismissed；不能跳过选择。暂时忽略是客户端展示操作。" }
       ]
     },
     {

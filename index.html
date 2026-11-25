@@ -11,21 +11,13 @@
   <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a></div></div>
   <div class="content">
     <h1>NewColony</h1>
-    <div class="callout info">
-      Engine implementation notes: <a href="engine-lighting.html">Engine Lighting</a> · <a href="engine-resource-io.html">Resource IO / UTF-8 Paths</a>.
-    </div>
     <p class="subtitle">一款殖民地模拟游戏。你带领一群殖民者来到新的土地，从零开始建造一个能运转的家园。每个殖民者有自己的名字、职业、技能和需求——饿了要找吃的，累了要休息，还需要和其他人交流。你的工作是给他们分配工作、规划生产线、应对各种事件，让他们活下去并且过得越来越好。游戏里的世界由体素（方块）组成，支持程序化地形生成、昼夜循环和动态天空。</p>
 
     <div class="callout info">
       这份 Wiki 是写给 MOD 作者的。我们不会讲引擎内部实现，只告诉你"能配置什么、脚本能调用什么、出了问题怎么查"。C++ 内部类和未列出的字段都不应作为兼容承诺依赖。
     </div>
 
-    <div class="callout info">
-      如果你想先判断整个项目现在做到什么程度，阅读 <a href="project-completion.html">项目完成度审计</a>。它按引擎、玩法、MOD 数据、测试覆盖和发布门槛整理当前工作树的完成度。
-    </div>
-    <div class="callout info">
-      存档系统的当前覆盖范围和限制见 <a href="engine-save-system.html">存档系统状态</a>；近战小队接触、命中公式和攻击冷却尚无专项规则，见 <a href="engine-combat.html">战斗规则</a>；袭击的加载、随机敌人组合和投送链路见 <a href="mod-raidregistry.html">袭击注册</a>。
-    </div>
+    <p>查阅<a href="project-completion.html">系统现状</a>，了解存档、战斗、城邦模拟、外交、网络和界面的使用范围与兼容边界。</p>
 
     <h2>推荐阅读顺序</h2>
     <ol class="step-list">
@@ -34,7 +26,7 @@
       <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、要闻条件和运行时逻辑，不是用来重建数据系统的。</li>
     </ol>
 
-    <h2>当前能稳定使用的能力</h2>
+    <h2>MOD 能力概览</h2>
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>说明</th></tr></thead>
       <tbody>
@@ -44,15 +36,15 @@
         <tr><td>Lua 生命周期</td><td><span class="badge done">可用</span></td><td><code>scripts/listeners/</code> 下的监听器按 <code>@Event</code>、<code>@Priority</code> 和执行端声明自动注册；其他模块按需 <code>require</code>。</td></tr>
         <tr><td>事件和定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 和 <code>engine.timers</code>。10+ 内置事件，支持自定义。</td></tr>
         <tr><td>控制台系统</td><td><span class="badge done">可用</span></td><td>75 个控制台命令，权限系统，别名，配置验证（doctor），快照和差异对比。</td></tr>
-        <tr><td>其他殖民地与外交</td><td><span class="badge partial">本体源码</span></td><td><a href="diplomacy-system.html">Lua 提议与谈判</a>、独立战争状态／条约、Server 命令和 RmlUI 操作已接入；未编译或运行验证。城邦 AI 生成、经营和回应等待独立算法文档。</td></tr>
-        <tr><td>体素世界</td><td><span class="badge partial">待执行验收</span></td><td>可变高度区块列、地形生成和六类群系已接入。新世界测试石材矿脉、切石机与共用搬运已接入源码，替代旧区块矿井；当前批次尚未构建或运行。详见 <a href="stone-mining.md">石材矿脉、切石机与搬运</a>。</td></tr>
+        <tr><td>其他殖民地与外交</td><td><span class="badge partial">部分支持</span></td><td>MOD 可注册 <a href="diplomacy-system.html">Lua 外交提议与查询指标</a>。谈判、战争状态和条约由服务器管理，RmlUI 提供操作界面。</td></tr>
+        <tr><td>体素世界</td><td><span class="badge partial">部分支持</span></td><td>支持可变高度区块列、地形生成与群系配置。石材开采和加工使用矿脉、切石机及共用搬运系统。详见 <a href="stone-mining.md">石材矿脉、切石机与搬运</a>。</td></tr>
         <tr><td>网络同步</td><td><span class="badge done">可用</span></td><td>Server/Client TCP 同步、快照广播、MOD 列表校验码交换。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体 <code>assets/lang/</code>、CoreMod/MOD <code>lang/</code> 合并、Lua 查询/切换/热重载 API 和控制台命令。详见 <a href="mod-localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>UI 框架</td><td><span class="badge partial">部分可用</span></td><td>玩家可见 UI 统一走 RmlUI；旧 Lua UI 注册 API 已通过 RmlUI HUD 兼容层显示底栏扩展、窗口和浮动提示，主题扫描仍只作旧配置兼容。</td></tr>
         <tr><td>经营界面</td><td><span class="badge partial">部分可用</span></td><td>游戏内底栏注册伐木、采掘、区域、指令、制造、仓储、科技、招募、策略和日志入口；区域打开持续区域二级菜单，运行中不显示难度入口。实现阶段暂时增加人员列表入口，双击殖民者会从上方聚焦该实体。其他专项管理面板只从对应聚合入口、对象摘要或状态跳转打开。旧小地图悬浮窗和底栏地图按钮已由进入世界时自动显示的战略地图悬浮窗取代。UI 主路线是游戏内 RmlUI（宿主层 <a href="mod-ui-api.html#rml-ui-server">RmlUiServer</a>），运行时文档位于 <code>CoreMod/assets/ui/rml/</code>。</td></tr>
         <tr><td>区域系统</td><td><span class="badge partial">部分可用</span></td><td>持续区域只注册露天仓储区和种植区；采集与采掘使用一次性选择工具，不存在旧收获区、采掘区或居住区类型。</td></tr>
         <tr><td>实体 AI 与 Task</td><td><span class="badge partial">部分</span></td><td>实体 AI 通过 TaskPool 调度与执行任务；使用需求、LOD、A* 和 NavMesh。战斗 Reaction 与漫游规则尚未实现。</td></tr>
-        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、动态天气区域、文明研究、建筑/区域实例、纪念记录、阵营、工作资源预留、要闻、统一物品和 Lua 订单/计划可保存；完整往返仍需活体验证。</td></tr>
+        <tr><td>存档</td><td><span class="badge partial">部分</span></td><td>实体、世界配置、动态天气区域、文明研究、建筑与区域实例、纪念记录、阵营、工作资源预留、要闻、统一物品和 Lua 订单与计划可保存。覆盖范围见 <a href="engine-save-system.html">存档系统现状</a>。</td></tr>
       </tbody>
     </table>
 

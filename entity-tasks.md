@@ -14,6 +14,14 @@ correctness.
 
 ## One entity AI execution path
 
+Live entities can declare `chunk_loading.enabled` and `chunk_loading.radius`.
+The authority derives their simulation footprint from effective world position
+and radius. Terrain must be resident and pass the city barrier for a chunk
+to become active. An entity belonging to a player-controlled faction uses the
+same footprint to trigger city and team handover. The `player_display` Lua
+observation reports camera coverage for presentation. Local and remote camera
+ranges request terrain for display and prefetch.
+
 `AISystem` schedules and advances `TaskInstance` records in `TaskPool`.
 `TaskRegistry`, `TaskExecution`, and `TaskNavigation` provide definitions,
 completion, and navigation. Entity AI no longer has a behavior-tree registry,
@@ -24,8 +32,68 @@ and `BlockInteractor` are not universal prerequisites. Need-driven tasks inspect
 `Needs`; colony interaction tasks require `BlockInteractor`; career and schedule
 checks remain attached to the applicable task. AI-enabled prototypes do not
 invent `Health`, `Needs`, `Mood`, or `Name` when these were not declared. The
-engine attaches an empty `Job` to entities without a job capability; its Task
-eligibility is limited to basic and survival Tasks.
+engine attaches a `Job` only when declared, or an empty `Job` for a colonist
+that needs the initial career-transition component. Other entities, including
+animals, retain no profession component. An absent or empty profession does not
+restrict ordinary task tags. Actual interaction/needs/navigation capabilities,
+faction/colony ownership, explicit qualifications and task entry rules still
+apply. A declared profession retains its own allowed-tag rules. `JobChange`
+continues to require a colonist with a Job component.
+
+Professionless actors receive `NoProfession` from experience application:
+valid, no award, no Job/CareerProgress creation. Shared block-result preparation
+and manufacturing reconstruction preserve this absence through entity snapshots.
+Extraction and native agriculture check `BlockInteractor` rather than using
+`ColonistTag` as an interaction capability. Their actual source, ownership and
+harvest rules still apply.
+
+## Physical crop damage without a profession
+
+`engine.tasks.post_configured("damage_crop", faction, x, y, z, seconds,
+crop_block_hash, nil, colony_uuid, config)` creates an explicit physical-damage
+task. It is stored as `Cut` with `Custom` payload; agricultural harvest is `Cut`
+with `Block` payload. `damage_crop` requires an existing crop block definition,
+an actor with AI/movement/block-interaction capabilities, and the actor's faction.
+Use `designated_worker` to direct an animal. The target field's colony does not
+become the animal's faction or colony.
+
+```lua
+local task = engine.tasks.post_configured(
+    "damage_crop", "core:neutral", x + 0.5, y, z + 0.5,
+    duration_seconds, crop_block_hash, nil, "",
+    {source_id=0, priority=5, designated_worker=animal_uuid,
+     required_job="", required_job_level=0, item_requirements={}})
+```
+
+The ordinary scheduler navigates and advances this task. After completion the
+native delivery cursor removes only the expected crop voxel via BlockEditService.
+It produces neither harvest output nor career experience and needs no farming
+zone or colonist tag. Existing work locks defer the edit; a replaced target is
+preserved and the old damage attempt retires. The completion cursor remembers
+the committed edit across notification retries, and pending completions continue
+to gate saving. Block update/light/fluid notifications use the usual pipeline;
+the farming update discards a plot when its crop block is gone. If the actor or
+definition no longer admits damage, the attempt retires without editing.
+
+Crop damage accepts finite coordinates representable as signed 32-bit block
+coordinates. It uses the actual block storage and editor admission, with no
+fixed 0..255 world-height restriction. `TERRAIN_GENERATION_HEIGHT` describes
+initial terrain generation, not the runtime coordinate bounds; the removed
+`WORLD_HEIGHT` name must not be used for this task.
+
+This adds the action mechanism for an animal/Mod decision, not an automatic
+wildlife target-selection policy. No animal is made a colonist or given a
+profession to use it. Source implementation and regression scenarios have not
+been compiled or executed in this batch.
+
+Regression source in `Tests/UnitTests/test_city_native_terminal.cpp` posts the
+documented Lua call, advances an already assigned actor at the work site through
+AI, and delivers the actual Engine completion queue. It covers repeated waiting
+under another task's work lock, unlock/retry acknowledgement, target replacement,
+and a later delivery pass preserving a newly planted crop. The scene checks no
+harvest piles, profession, career, colonist tag or inventory are created. It uses
+minimal definition inputs and an explicit arrived assignment; wildlife decisions
+and navigation are outside this scene. The assertions have not been executed.
 
 `AIState` content declares `lod_level`. Navigation and the entity physics chain
 continue to handle movement. No wander behavior is introduced by this migration.
@@ -526,26 +594,60 @@ See `item-storage-visuals.html` for destination rules, APIs and the optional
 `source_inventory_slot` persisted hauling-row field. Implementation and
 regression source are present; no verification was run.
 
-World block collapse uses `BuildingSupportSolver::evaluate_world_cell`, reversing
-the building design solver's upward support and eight-neighbor horizontal
-propagation, with the shared seven-cell horizontal span limit. Solid blocks at
+World block collapse uses a resumable `BlockSupportUpdate`, sharing
+the building design solver's upward support and eight-neighbor same-layer
+propagation. Support is boolean: it has no coefficient, distance decay or
+horizontal span limit. A transmitting supported block supports the cell above
+and adjacent cells on its own layer; it does not transmit downward. Solid blocks at
 y=0 anchor the runtime search; other solid blocks must trace support to that
 foundation through `can_support` predecessors. This applies to natural terrain
 and constructed blocks. Air, fluid, and passable blocks do not collapse.
-Missing strong chunks or exhausted query budgets defer the decision.
-Block changes queue local checks; a bounded rotating column scan discovers
-unsupported bottoms in existing worlds. Discovery uses each resident chunk's
-actual vertical block bounds, including coordinates outside the former fixed
-world-height range. Notifications and support queries guard the extreme vertical
-i32 coordinates so adjacent-cell Y arithmetic cannot overflow. The y=0 foundation
-rule above is unchanged. An unsupported block descends through
+Missing strong chunks defer dependent decisions; an exhausted per-Tick work
+budget retains the graph, queues and cursors for the next simulation update.
+Pending is an unfinished calculation, not a third physical support state.
+Connected floating blocks cannot establish support without a valid anchor.
+Only committed structural block changes activate checks. Each original changed
+position, its upper neighbor and all eight same-layer neighbors seed forward
+dependency discovery. Discovery then follows transmitting solid cells upward
+and across their layer, including nested walls/roofs and diagonal dependencies.
+Reverse-only dependency reads establish support sources without activating
+unmodified lower terrain. There is no periodic column/world scan: generation,
+ordinary chunk loading and old-save loading do not initiate collapse.
+Support and missing-data information propagate across the retained graph before
+unsupported affected cells are admitted to falling. Structural edits overlapping
+observed cells and residency changes invalidate detached calculations; unrelated
+edits and CPU-budget yields do not restart them. A bounded derived edit-history
+gap conservatively restarts the recorded roots. Structural notifications waiting behind the delivery cursor must
+finish before a calculation can publish movement decisions.
+Residency revisions wake retained loading waits without rescanning chunk lists.
+Work-lock revisions wake refused active falls; other native commit refusals
+also have a simulation-time retry deadline, rather than retrying every Tick.
+Content refresh reconsiders only already-recorded checks and active falls.
+Notifications and support queries guard extreme vertical i32 coordinates so
+adjacent-cell Y arithmetic cannot overflow. An unsupported block descends through
 air by at most one cell every two simulation ticks. Active falls continue until
 blocked, rather than treating a passing wall as a new foundation.
 Each downward relocation atomically preserves block data, orientation, voxel
 attributes, inventory contents, and inventory reservation records. Existing
 tasks still name their original target coordinates; moving a block does not
 retarget those tasks. Terrain, lighting, mesh and neighbor notifications use
-BlockEditService, and the fall queue resets when the world generation changes.
+BlockEditService. Relocation prepares only the touched one or two voxel
+sub-chunks, retains unrelated light volumes, and transfers original attribute
+and inventory nodes after preparing allocation capacity. It does not clone a
+whole chunk column or its entire sparse owner tables for each falling block.
+Collision targets are collected once per movement batch and narrowed by head
+height before testing horizontal overlap.
+World replacement clears all old generation work. `world.json` now includes
+optional `falling_blocks`: ordered `changes` and `moves` coordinate arrays plus
+`falling` records containing coordinates, namespaced `block_id`, `data`,
+`direction`, `last_step`, `retry_at` and canonical `hit` entity UUIDs. Save capture
+retains pending edit roots, loading waits, original fall state, movement order,
+retry deadlines and hit identities. Detached graph caches are rebuilt from those
+recorded roots after restore; restoring them is not a new world scan. Older
+saves without the field start with no recorded collapse obligations. Invalid
+present records are rejected before world activation. Remote clients receive
+world/terrain presentation and do not execute authoritative falling simulation;
+the pre-release network protocol remains version 1.
 When the falling block's bottom crosses an entity rigid box's top with strict
 horizontal overlap, it subtracts `falling_block_damage` from current health,
 clamped at zero. Each block's active fall records its hit entities to avoid

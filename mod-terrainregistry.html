@@ -34,7 +34,7 @@
 
     <h2>读取顺序</h2>
     <ul>
-      <li>引擎会先建立默认 <code>TerrainConfig</code>，其中海平面来自创建世界或存档中的世界设置。</li>
+      <li>引擎会先建立默认 <code>TerrainConfig</code>。新建世界的海平面暂时固定为 <code>DEFAULT_TERRAIN_SEA_LEVEL</code>（70），创建界面不再提供调整；读档时恢复存档中的海平面。</li>
       <li>随后从 <code>data/terrain/</code> 注册表中选择 <code>core:default</code>；如果没有该 ID，则使用第一个 terrain 条目。</li>
       <li>选中的 JSON 覆盖 <code>base_block</code>、<code>water_block</code> 和 <code>max_navigable_fluid_depth</code>。</li>
       <li>群系仍然负责每列的 <code>surface_block</code>、<code>subsurface_block</code>、气候匹配和高度轮廓；terrain 配置不是群系列表。</li>

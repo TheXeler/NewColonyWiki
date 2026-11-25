@@ -54,7 +54,8 @@
     </ol>
 
     <h2>什么时候写 JSON，什么时候写 Lua</h2>
-    <p>静态定义放在 <code>data/</code> 下。当前自动注册基础内容、经营规则、生态、动态天气、视野和难度等多类数据；职业定义使用 <code>data/jobs/</code>。Lua 用来实现事件响应与运行时逻辑。</p>
+    <p>注册表按定义来源分为两类：<a href="mod-data.html">数据文件注册表</a>扫描受支持的 <code>data/</code> JSON 类型目录；<a href="mod-coderegistry.html">代码注册表</a>通过 Lua 接口、监听器注释或模块返回值登记。物品、配方、职业和科技项目使用数据文件；科技界面分类、外交提议和效果生命周期使用代码注册。新增一个未受支持的 data 子目录不会自动创建新类型。</p>
+    <p>事件 schema、通道和命令属于数据声明，监听器和实际接收、执行函数属于 Lua 代码；两类入口会协同加载。普通 Lua 模块按需 require，不会因为放在 scripts 下就自动执行。</p>
 
     <div class="callout warn">
       不要在 Lua 里重新发明配方系统。新配方放在 <code>data/recipes</code> 下。也不要在 <code>core:tick</code> 监听器里每帧扫描所有实体——用事件订阅和定时器代替轮询。
