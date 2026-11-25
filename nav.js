@@ -15,7 +15,7 @@ window.__WIKI_MANIFEST = {
       pages: [
         { id: "index", title: "总览", path: "index.html" },
         { id: "mod-status", title: "当前能力边界", path: "overview/status.html" },
-        { id: "project-completion", title: "系统现状", path: "overview/boundary.html" }
+        { id: "project-completion", title: "系统边界", path: "overview/boundary.html" }
       ]
     },
     {
