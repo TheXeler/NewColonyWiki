@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOD 调试控制台 · NewColony Wiki</title>
+  <script src="../../theme.js"></script>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body data-page="mod-console">
+<div class="main">
+  <div class="content">
+    <h1>MOD 调试控制台</h1>
+    <p class="subtitle">控制台是你调试 MOD 最重要的工具。按键盘左上角的物理 Grave/反引号键打开；焦点在控制台时按 <code>Esc</code> 关闭。控制台会像 Source/CSGO 风格一样从屏幕顶部展开，占据上半屏，输入栏在面板底部。需要一次看全命令的用法、默认权限和执行侧时看 <a href="../../appendix/console-reference.html">控制台命令速查</a>。</p>
+
+    <div class="callout info">如果控制台没反应，先看 <code>logs/latest.log</code>。即使控制台不可见，日志通常还是会写到 <code>logs/</code> 目录。</div>
+
+    <h2>客户端输入与服务端执行</h2>
+    <p>控制台窗口、输入和历史记录属于客户端。世界命令通过已有网络命令通道发送 <code>core:console.execute</code> 请求，载荷为 <code>{"line":"raid start core:mvp_test_raid"}</code>；服务端在模拟线程中校验命令、权限和世界生命周期，然后执行。单机使用 loopback 会话，遵循相同的请求和回包流程。客户端不会在键盘回调中直接创建实体或修改 ECS。</p>
+    <p><code>raid</code>、<code>spawn_proto</code>、<code>tp</code>、<code>lua</code>、<code>echo</code>、<code>luafile</code>、<code>emit</code>、<code>time</code> 及世界查询都由服务端处理。<code>help</code>、相机、视图、语言、RML 重载、渲染调试、连接管理以及 <code>luac</code> / <code>luacfile</code> 由请求客户端处理；服务端拒绝执行客户端命令。没有可用服务端会话时，世界命令明确失败，不会回退到客户端执行。</p>
+    <p>提交后的 <code>Submitted to server: request=...</code> 只表示请求已提交。最终回包包含 <code>ok</code> 和 <code>console_rows</code> 数组，每行具有 <code>type</code>（output / warning / error）和 <code>text</code>。网络层按请求编号将结果交还发起者，客户端帧线程更新历史记录。断线和超时也会结束该请求，控制台回包不会进入普通游戏 UI 的命令结果通道。</p>
+    <p>玩家默认权限由服务端启动参数决定：服务端使用 <code>--DEBUG</code> 启动时，本机客户端和远程玩家均默认为 <code>developer</code>；否则均默认为 <code>player</code>。客户端自己的启动参数不会提升远程服务端授予的权限。服务端的 <code>config/console_permissions.json</code> 可用可选的 <code>access_level</code> 和 <code>remote_access_level</code> 显式覆盖本机与远程等级；CoreMod 默认文件不写这两个字段，以采用启动模式默认值。执行仍检查 <code>command_permissions</code> 中逐命令要求，普通模式的服务端会按 player 等级校验请求，不会一概禁用服务端命令入口。连接身份由网络层提供，客户端载荷中的权限或用户名不会授予执行权限。别名先展开，再检查实际目标命令权限。</p>
+
+    <h2>帮助和补全</h2>
+    <p>控制台输入框支持命令历史和行内编辑：左右方向键按字符移动光标，Ctrl+左右按词移动，Home/End 跳到行首行尾，Delete 删除光标后的字符，Ctrl+Backspace / Ctrl+Delete 按词删除。Ctrl+Enter 或 Shift+Enter 换行，输入框会随内容长高；上下方向键先在显示出来的行之间移动光标，到了首行或末行才改为翻阅历史，Ctrl+上下始终翻阅历史。当前 RML 伪输入尚未接入 Tab 补全；用 <code>help</code> 查看命令与用法：</p>
+    <pre><code>help                  -- 分页列出命令
+help 2 20             -- 查看第 2 页，每页 20 条
+help list_data        -- 查看单条命令用法
+help ?faction 1 20    -- 按关键词搜索命令和说明</code></pre>
+
+    <p>当前内置别名会在读取 <code>console_aliases.json</code> 前注册：</p>
+    <table>
+      <thead><tr><th>别名</th><th>目标命令</th></tr></thead>
+      <tbody>
+        <tr><td><code>lsd</code></td><td><code>list_data</code></td></tr>
+        <tr><td><code>lr</code></td><td><code>list_recipes</code></td></tr>
+        <tr><td><code>lp</code></td><td><code>list_protos</code></td></tr>
+        <tr><td><code>inv</code></td><td><code>inventory</code></td></tr>
+        <tr><td><code>ms</code></td><td><code>mod_settings</code></td></tr>
+        <tr><td><code>ems</code></td><td><code>export_mod_settings</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>另外注册了一个前缀简写 <code>=</code>：整行以它开头时按 <code>lua &lt;code&gt;</code> 展开，例如 <code>=engine.time.tps</code>。别名与简写都在权限和执行侧判断之前展开，所以它们只会指向目标命令，不会放宽权限；已注册的命令名不会被前缀覆盖。</p>
+
+    <h2>常用命令</h2>
+    <table>
+      <thead><tr><th>命令</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><code>mods</code></td><td>查看已安装的 MOD 列表与其中真正加载的数量；禁用（或已启用但需重启）的条目会带 <code>[disabled]</code> / <code>[enabled, restart required]</code> 标记。</td></tr>
+        <tr><td><code>help [page] [size]</code> / <code>help &lt;command&gt;</code> / <code>help ?keyword</code></td><td>列出命令、查看单条命令说明或按关键词搜索。</td></tr>
+        <tr><td><code>mod_settings [mod_id] [key]</code></td><td>查看 MOD 的最终配置值（禁用 MOD 的配置同样可查，条目会带 <code>[disabled]</code> 标记）。</td></tr>
+        <tr><td><code>list_data [type] [page] [size] [prefix=...] [mod=...] [sort=asc|desc]</code></td><td>分页查看注册表。type 只接受 blocks、entities、recipes、jobs、civilizations、techs、focuses；不写 type 时列出全部类型。</td></tr>
+        <tr><td><code>data &lt;type&gt; &lt;id&gt;</code> / <code>data type:&lt;type&gt;</code></td><td>查看单条数据的详情，或列出某类型全部数据。<code>data type:factions</code>、<code>data type:faction_spawn_rules</code> 和 <code>data type:name_pools</code> 可查看阵营、阵营生成规则和名称池。</td></tr>
+        <tr><td><code>list_recipes [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有已注册的配方。</td></tr>
+        <tr><td><code>list_protos [page] [size] [prefix=...] [sort=asc|desc]</code></td><td>查看所有实体原型。</td></tr>
+        <tr><td><code>spawn_proto &lt;id&gt;</code></td><td>按原型 ID 生成非殖民者实体；带 <code>ColonistTag</code> 的原型固定拒绝，自动补全也不会列出。</td></tr>
+        <tr><td><code>raid list</code> / <code>raid status</code></td><td><code>raid list</code> 列出全部袭击定义；<code>raid status</code> 列出全部活动袭击、袭击 UUID、定义 ID、波次、存活数、目标和 active/paused 状态。</td></tr>
+        <tr><td><code>raid start &lt;RaidID&gt;</code></td><td>通过服务端启动指定袭击。服务端为活动实例分配 UUID；定居点来源从该阵营的非玩家实例中按 UUID 稳定选择。生成失败时返回稳定原因。</td></tr>
+        <tr><td><code>raid stop [RaidUUID]</code> / <code>raid pause [RaidUUID]</code> / <code>raid resume [RaidUUID]</code></td><td>停止、暂停或恢复袭击。省略 UUID 时作用于全部活动袭击；停止会撤回并清理剩余袭击者。暂停冻结波次、目标刷新和时限计时，已生成袭击者仍按普通 AI、战斗和物理规则活动。UUID 会随存档和联机状态保留。</td></tr>
+        <tr><td><code>inventory &lt;entity_uuid&gt;</code> / <code>inventory_page &lt;entity_uuid&gt;</code></td><td>只读查看所有者背包内容和实体装备槽，显示槽位、定义 ID、数量与品质；穿戴装备没有独立库存 UUID。</td></tr>
+        <tr><td><code>list_factions</code> / <code>list_name_pools</code></td><td>查看已注册的 NPC 阵营定义和名称池。</td></tr>
+        <tr><td><code>list_faction_instances</code></td><td>查看已经生成的 NPC 阵营实例。</td></tr>
+        <tr><td><code>gen_name &lt;template&gt; [seed]</code></td><td>按名称模板生成调试名称。模板里可写 <code>${random_name}</code>。</td></tr>
+        <tr><td><code>net_status</code></td><td>查看网络角色、连接状态和同步计数。</td></tr>
+        <tr><td><code>net_server [port]</code> / <code>net_join server [port]</code></td><td>启动服务器或连接到服务器。</td></tr>
+        <tr><td><code>net_disconnect</code></td><td>断开网络连接。</td></tr>
+        <tr><td><code>mod_list</code> / <code>export_mod_list</code></td><td>列出/导出 MOD 列表及校验码（调试网络 MOD 一致性）。</td></tr>
+        <tr><td><code>lua &lt;code&gt;</code> / <code>=&lt;lua code&gt;</code></td><td>发送服务端命令，在服务器 Lua VM 执行代码，与 emit、echo 按网络接纳顺序处理，结果回传请求客户端。运行时不可用或世界正在迁移时拒绝。整行以 <code>=</code> 开头是同一命令的前缀简写：<code>=engine.time.tps</code> 等同 <code>lua engine.time.tps</code>，权限与执行侧仍按 <code>lua</code> 检查。</td></tr>
+        <tr><td><code>luafile &lt;mod_id:relative/path&gt;</code> / <code>luacfile &lt;mod_id:relative/path&gt;</code></td><td>执行某个 MOD <code>scripts</code> 目录下的 <code>.lua</code> 文件。<code>luafile</code> 在服务端 Lua VM 执行，<code>luacfile</code> 在请求客户端的 Lua VM 执行。<code>core:tests/probe</code> 解析为 <code>mods/core/scripts/tests/probe.lua</code>，省略 <code>.lua</code> 会自动补上。只接受已安装 MOD，且路径在读取前完成规范化检查：绝对路径、盘符与 NTFS 流冒号、纯点号段（<code>.</code> / <code>..</code> / <code>...</code>），以及解析后落在 <code>scripts</code> 目录之外的符号链接都会被拒绝。</td></tr>
+        <tr><td><code>luac &lt;code&gt;</code></td><td>在请求客户端的 Lua VM 执行代码，不经过服务端，适合调 UI 与本地状态；还没有创建世界（例如主菜单）时会报告客户端 Lua 运行时不可用。</td></tr>
+        <tr><td><code>echo &lt;lua_expression&gt;</code></td><td>发送服务端命令求值 Lua 表达式。暂停时仍可处理，结果由客户端主线程显示；错误详情见服务端日志。执行由统一 watchdog 监测。</td></tr>
+        <tr><td><code>time query</code> / <code>time set &lt;时刻&gt;</code> / <code>time add &lt;增量&gt;</code></td><td>发送服务端命令查询或调整时间。时刻支持 morning/noon 等名称、00:00 至 23:59 或日内数值，增量为正整数。按每个模拟 Tick 的时间精度取整；目标时刻已过则前进到次日，不倒退模拟时钟。增量保留日内取模行为。</td></tr>
+        <tr><td><code>locale_list</code> / <code>locale_set &lt;id&gt;</code> / <code>locale_reload</code></td><td>查看、切换和重载本地化资源。</td></tr>
+        <tr><td><code>reload</code> / <code>reload rml</code></td><td>仅 <code>--DEBUG</code> 可用。<code>reload</code> 向服务端发送注册表重载请求，由服务端在可用帧间准备双端 Lua、状态、UI、原生定义和渲染资源；候选准备失败保留旧环境。保存或载入期间延后。Lua 文件变化由自动监听单独处理，不能传 Lua 路径给此命令。<code>reload rml</code> 在请求客户端重载游戏内 RML/RCSS。</td></tr>
+        <tr><td><code>ui_lab</code> / <code>ui_lab show</code> / <code>ui_lab hide</code> / <code>ui_lab toggle</code> / <code>ui_lab components</code> / <code>ui_lab tech_tree</code></td><td>切换、显示、隐藏真实 RmlUI 设计实验室，或直接打开指定预览场景。仅 <code>--DEBUG</code> 运行会加载该文档；普通/Release 路径不可用。Components 与 Tech Tree fixture 场景都使用真实共享 RCSS；修改后执行 <code>reload rml</code> 即可刷新。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>作物生长加速</h2>
+    <p>以 <code>--DEBUG</code> 启动游戏后，在控制台直接输入 <code>crop_growth</code> 即可切换所有作物的生长加速开关：关闭时开启64倍正向生长，开启时恢复正常速度。每次回显 ON／OFF 与当前倍率。<code>crop_growth 1</code> 显式关闭；<code>crop_growth 64</code> 显式开启；<code>crop_growth query</code> 只查询，不切换。</p>
+    <p>命令要求 developer 权限，倍率应用于共用作物成长计算与剩余时间预测，已种植和随后播种的作物均受影响。温度缓长、停长、致死、露天与地块规则继续生效；负向成长不加速。播种、翻地、收获工时及成熟留田腐坏时间不变，未加载区块仍暂停生长。倍率与游戏倍速相乘：正常环境下小麦在1倍游戏速度时约3分钟成熟，在4倍游戏速度时约45秒成熟。</p>
+    <p>这是本次服务端进程的临时开关，不写入存档或作物JSON；同一次运行中切换世界、读档或热重载仍保留设置，重启服务端恢复1倍。</p>
+
+    <h2>标准检查流程</h2>
+    <p>做好 MOD 后，按这个顺序跑一遍，基本能把注册问题都找出来：</p>
+    <ol>
+      <li><code>mods</code> —— 确认 MOD 出现在加载列表中。</li>
+      <li><code>list_data blocks prefix=copper_age:</code> —— 检查方块是否注册。</li>
+      <li><code>list_data jobs prefix=copper_age:</code> —— 检查职业是否注册。</li>
+      <li><code>list_data civilizations prefix=copper_age:</code> —— 检查文明是否注册。</li>
+      <li><code>list_data focuses prefix=copper_age:</code> —— 检查 要闻 是否注册。</li>
+      <li><code>data type:factions</code> —— 检查 NPC 阵营定义是否注册。</li>
+      <li><code>data &lt;type&gt; copper_age:copper_clan</code> —— 查看单条记录详情。</li>
+      <li><code>list_recipes 1 20 prefix=copper_age:</code> —— 检查配方是否注册。</li>
+    </ol>
+
+    <h2>说明</h2>
+    <p><code>doctor_*</code>、<code>diff_*snapshot*</code>、<code>*doctor_archives*</code> 这些命令主要给引擎维护者用。普通 MOD 作者一般不需要关心它们。</p>
+
+  </div>
+</div>
+<script src="../../nav.js"></script>
+<script src="../../wiki.js"></script>
+</body>
+</html>

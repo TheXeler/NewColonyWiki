@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配方数据 · NewColony Wiki</title>
+  <script src="../../theme.js"></script>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body data-page="mod-reciperegistry">
+<div class="main">
+  <div class="content">
+    <h1>配方数据</h1>
+    <p class="subtitle">固定制作配方位于 <code>data/recipes/*.json</code>。配方只声明材料、目标物品、工时和兼容工作点，实际结果与数量由产出表决定。</p>
+
+    <h2>材料可用性预览</h2>
+    <p>箱子配方 <code>core:craft_chest</code> 位于 <code>data/recipes/chest.json</code>：在 <code>core:workbench</code> 使用8个木板，标准工作量15秒，执行一次 <code>core:chest_output</code>，固定产出1个 <code>core:chest</code> 成品。安装与20槽仓储说明见<a href="building.html">建筑数据</a>。本次新增内容尚未构建或运行验证。</p>
+    <p>制作界面通过 <code>systems.production_options.preview(inputs, limits, available, batches)</code> 对材料共同分配库存，重叠的候选材料不能在不同输入行中重复计数。<code>available(id)</code> 的第一个返回值是数值库存；库存读取器还可返回 <code>known</code> 等附加信息，预览算法先将第一个返回值保存为局部数值，再限制容量不低于零，不能把函数的全部返回值直接传给 <code>math.max</code>。数量之后的布尔值由展示调用方按需使用，不参与数值比较。此修正解决 <code>craft_screen_state</code> 快照报 <code>bad argument #3 to 'max' (number expected, got boolean)</code> 的源码原因。</p>
+
+    <h2>格式</h2>
+    <pre><code>{
+  "id": "core:craft_wood_plank",
+  "inputs": [
+    { "tag": "c:logs", "count": 1 }
+  ],
+  "target_item": "core:wood_plank",
+  "manufacturing_mode": "none",
+  "work_amount": 5,
+  "processing_difficulty": 0,
+  "output_table": "core:wood_plank_output",
+  "output_table_executions": 1,
+  "compatible_work_points": ["core:handcraft", "core:workbench"]
+}</code></pre>
+
+    <h2>字段</h2>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>是</td><td>稳定配方 ID。缺失时文件解析失败，配方表加载中止。</td></tr>
+        <tr><td><code>inputs</code></td><td>object[]</td><td>是</td><td>材料清单。缺失或不是数组时加载失败；条目规则见下节。</td></tr>
+        <tr><td><code>target_item</code></td><td>string</td><td>是</td><td>目标物品数据 ID，用于展示与维持库存统计，不决定产出数量。缺失或不是合法数据 ID 时加载失败。</td></tr>
+        <tr><td><code>compatible_work_points</code></td><td>string[]</td><td>是</td><td>非空的工作点类型数据 ID 数组。缺失、不是数组或为空时加载失败。</td></tr>
+        <tr><td><code>manufacturing_mode</code></td><td>string</td><td>否</td><td>只能是 <code>none</code>、<code>failure</code> 或 <code>quality</code>；其他取值解析失败。可写作 <code>mode</code>，默认 <code>none</code>。</td></tr>
+        <tr><td><code>work_amount</code></td><td>integer</td><td>否</td><td>基础工时，单位为 1 倍速现实秒（1 现实秒对应 1 游戏分钟）。必须是 0 到 2^32-1 的整数，否则加载失败。省略或为 0 时，工作在完成激活、材料预留和到达条件后立即结算；正数工时的连续制作耗时为基础总 Tick 除以 <code>clamp(1 + colonist.work_efficiency + colonist.crafting_speed, 0.1, 10)</code>，这两个加成属性均默认 0.0。Mod 开工事件可调整基础工时，实际完成按 Tick 推进。</td></tr>
+        <tr><td><code>processing_difficulty</code></td><td>number</td><td>否</td><td>基础加工难度。默认 <code>0</code>。</td></tr>
+        <tr><td><code>output_table</code></td><td>string</td><td>实际是</td><td>产出表数据 ID。结果与数量只由产出表决定。留空时配方保留但标记 <code>output_table_missing</code>；引用不存在的产出表时标记 <code>output_table_not_found</code>。</td></tr>
+        <tr><td><code>output_table_executions</code></td><td>integer</td><td>实际是</td><td>本次完成执行产出表的次数，必须为正数。缺失或为 0 时标记 <code>output_table_executions_invalid</code>。执行次数不与材料消耗自动换算。</td></tr>
+        <tr><td><code>quality_table</code></td><td>string</td><td>条件必填</td><td>仅当 <code>manufacturing_mode</code> 为 <code>quality</code> 时必填。缺失时标记 <code>quality_table_missing</code>，引用不存在时标记 <code>quality_table_not_found</code>。</td></tr>
+        <tr><td><code>job</code></td><td>object</td><td>否</td><td>制作资格。<code>job.id</code> 为职业数据 ID（必填且合法），<code>job.level</code> 为 1-5，默认 1。未写 <code>job</code> 时，资格改由职业定义的 <code>unlocks_recipes</code> 推导。</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><code>output</code> 是禁止字段：产出只能由 <code>output_table</code> 定义，出现它会让文件加载失败。配方同样不能声明产出数量。</div>
+
+    <h2>输入条目（inputs[]）</h2>
+    <p>每个条目必须同时满足下列规则，否则加载失败：</p>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>string</td><td>物品类数据 ID，必须合法。与 <code>tag</code> <strong>二选一</strong>。</td></tr>
+        <tr><td><code>tag</code></td><td>string</td><td>Tag 名称，必须非空。与 <code>id</code> <strong>二选一</strong>。</td></tr>
+        <tr><td><code>count</code></td><td>integer</td><td>消耗数量，必须是正整数。</td></tr>
+      </tbody>
+    </table>
+    <p><code>id</code> 与 <code>tag</code> 必须恰好出现一个：同时出现（语义歧义）或都不出现都会被拒绝。</p>
+    <p><code>tag</code> 面向通用物品组，既支持独立 <code>items</code>，也支持有物品身份的方块，适用于木材、木板、食材等。成员来自内联 <code>tags</code>/<code>usage_tags</code> 和 <code>data/tags/</code>。例如 <code>{ "tag": "c:logs", "count": 4 }</code> 可用两种木头各 2 份满足；多个输入重叠时联合分配，既不重复占用库存，也不会让宽泛组抢走指定材料。空组不能发布制作工作。分组格式及 Lua 查询见 <a href="tag.html">标签数据</a>。</p>
+
+    <h2>校验与配置屏障</h2>
+    <p>字段类型、取值和结构性错误会让整个文件加载失败；语义缺失则保留配方并写入稳定原因，使入口进入配置屏障而不是静默回退默认值。</p>
+    <table>
+      <thead><tr><th>情况</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code>、<code>inputs</code>、<code>target_item</code> 或 <code>compatible_work_points</code> 缺失/类型错误</td><td>加载失败，文件被拒绝。</td></tr>
+        <tr><td><code>work_amount</code> 越界；<code>manufacturing_mode</code> 取值非法；<code>job.id</code> 非法或 <code>job.level</code> 不在 1-5；出现 <code>output</code></td><td>加载失败，文件被拒绝。</td></tr>
+        <tr><td><code>output_table</code> 为空</td><td>配方保留，<code>configuration_error = output_table_missing</code>。</td></tr>
+        <tr><td><code>output_table</code> 不在 <code>output_tables</code> 注册表</td><td>配方保留，<code>output_table_not_found</code>，原因携带产出表 ID。</td></tr>
+        <tr><td><code>output_table_executions</code> 缺失或为 0</td><td>配方保留，<code>output_table_executions_invalid</code>。</td></tr>
+        <tr><td>模式为 <code>quality</code> 但 <code>quality_table</code> 为空或不存在</td><td>配方保留，<code>quality_table_missing</code> 或 <code>quality_table_not_found</code>。</td></tr>
+        <tr><td>被引用品质表的 <code>modifiers[].attribute</code> 不在引擎属性名表内</td><td>该品质表无效，<code>quality_table_attribute_unknown</code>；配置期即生效，配方保留并写入该原因，不必等一次真实制造。属性名表见 <a href="../data.html">数据格式</a> 的锻造物品基型一节。</td></tr>
+        <tr><td>产出表结构错误、存在循环或超过深度上限</td><td>配方保留，写入产出表的稳定 <code>error_id</code> 并携带来源路径。</td></tr>
+        <tr><td>全局制造规则缺失或多记录</td><td>配方保留，写入制造规则的稳定 <code>error_id</code>；空内容表不会获得代码默认值。</td></tr>
+      </tbody>
+    </table>
+
+    <h2>CoreMod 当前内容</h2>
+    <p>CoreMod 当前提供 18 条固定配方，全部使用 <code>manufacturing_mode: "none"</code>、<code>processing_difficulty: 0</code> 和 <code>output_table_executions: 1</code>。</p>
+    <table>
+      <thead><tr><th>配方 ID</th><th>材料</th><th>目标物品</th><th>工时</th><th>兼容工作点</th><th>产出表（结果）</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:craft_wood_plank</code></td><td>1 x <code>c:logs</code> Tag（当前成员 <code>core:wood</code>）</td><td><code>core:wood_plank</code></td><td>5</td><td><code>core:handcraft</code>、<code>core:workbench</code></td><td><code>core:wood_plank_output</code>（4 木板）</td></tr>
+        <tr><td><code>core:craft_stick</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:stick</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:stick_output</code>（4 木棍）</td></tr>
+        <tr><td><code>core:craft_wood_floor</code></td><td>2 x <code>core:wood_plank</code></td><td><code>core:wood_floor</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:wood_floor_output</code>（2 木地板）</td></tr>
+        <tr><td><code>core:craft_workbench</code></td><td>4 x <code>core:wood_plank</code></td><td><code>core:workbench_item</code></td><td>15</td><td><code>core:handcraft</code></td><td><code>core:workbench_output</code>（1 工作台）</td></tr>
+        <tr><td><code>core:craft_smoker</code></td><td>8 x <code>core:stone</code>、4 x <code>core:wood</code></td><td><code>core:smoker</code></td><td>15</td><td><code>core:workbench</code></td><td><code>core:smoker_output</code>（1 烟熏炉）</td></tr>
+        <tr><td><code>core:craft_irrigation_tower</code></td><td>16 x <code>core:wood_plank</code>、8 x <code>core:stone</code></td><td><code>core:irrigation_tower</code></td><td>30</td><td><code>core:workbench</code></td><td><code>core:irrigation_tower_output</code>（1 小型灌溉水塔）</td></tr>
+        <tr><td><code>core:bake_bread</code></td><td>1 x <code>core:wheat</code></td><td><code>core:bread</code></td><td>10</td><td><code>core:smoker</code></td><td><code>core:bread_output</code>（1 面包）</td></tr>
+        <tr><td><code>core:cook_grain</code></td><td>1 x <code>core:raw_cooking_grains</code> Tag</td><td><code>core:cooked_grain</code></td><td>10</td><td><code>core:smoker</code></td><td><code>core:cooked_grain_output</code>（1 谷物熟食）</td></tr>
+        <tr><td><code>core:cook_tuber</code></td><td>1 x <code>core:raw_cooking_tubers</code> Tag</td><td><code>core:cooked_tuber</code></td><td>10</td><td><code>core:smoker</code></td><td><code>core:cooked_tuber_output</code>（1 薯类熟食）</td></tr>
+        <tr><td><code>core:mill_cassava</code></td><td>1 x <code>core:cassava</code></td><td><code>core:cassava_flour</code></td><td>5</td><td><code>core:workbench</code></td><td><code>core:cassava_flour_output</code>（1 木薯粉）</td></tr>
+      </tbody>
+    </table>
+    <p>产出表位于 <code>data/output_tables/</code>，全局制造规则位于 <code>data/manufacturing_rules/</code>。CoreMod 未提供 <code>quality_tables</code> 内容，因此当前没有可用品质表；使用 <code>quality</code> 模式的第三方配方必须自带品质表。</p>
+    <p>小型灌溉水塔的制作配方和建筑入口均由生产分类的 <code>core:irrigation_tower_technology</code>（水塔研究）解锁。该项目以前置打制石器为基础，要求工作台和一级学者，研究量 200，开题消耗 4 木板、2 石材。制作水塔本身仍需 16 木板、8 石材，工时 30；研究材料与制作材料分别消耗。详见 <a href="tech.html">科技注册</a>。</p>
+    <h2>石器测试配方</h2>
+    <p>以下配方全部在 <code>core:workbench</code> 制作，每批执行对应产出表一次，固定产出一件目标物品。除研究石板外，均由 <a href="tech.html">石器测试科技</a> 解锁。配方 ID 为 <code>core:craft_</code> 加物品名，产出表 ID 为物品 ID 加 <code>_output</code>；例如石斧对应 <code>core:craft_stone_axe</code> 和 <code>core:stone_axe_output</code>。</p>
+    <table>
+      <thead><tr><th>目标物品</th><th>材料</th><th>工时</th><th>解锁科技</th></tr></thead>
+      <tbody>
+        <tr><td><code>core:research_tablet</code> 研究石板</td><td>2 石材</td><td>10</td><td>无需科技</td></tr>
+        <tr><td><code>core:stone_knife</code> 石刀</td><td>2 石材</td><td>10</td><td>打制石器</td></tr>
+        <tr><td><code>core:stone_axe</code> 石斧</td><td>3 石材、2 木棍</td><td>15</td><td>打制石器</td></tr>
+        <tr><td><code>core:stone_pickaxe</code> 石镐</td><td>4 石材、2 木棍</td><td>20</td><td>打制石器</td></tr>
+        <tr><td><code>core:stone_shovel</code> 石铲</td><td>2 石材、2 木棍</td><td>15</td><td>打制石器</td></tr>
+        <tr><td><code>core:stone_hoe</code> 石锄</td><td>3 石材、2 木棍</td><td>15</td><td>打制石器</td></tr>
+        <tr><td><code>core:stone_club</code> 石锤</td><td>3 石材、1 木棍</td><td>15</td><td>磨制石器</td></tr>
+        <tr><td><code>core:stone_spear</code> 石矛</td><td>2 石材、3 木棍</td><td>20</td><td>磨制石器</td></tr>
+      </tbody>
+    </table>
+    <p>物品、配方、产出表均在各自目录使用同名 JSON，例如 <code>data/items/stone_axe.json</code>、<code>data/recipes/stone_axe.json</code>、<code>data/output_tables/stone_axe.json</code>。这些是用于研究解锁和职业装备流程的基础测试数据；运行验收尚未执行。</p>
+    <h2>首批基础料理</h2>
+    <p>谷物原料为小麦、玉米、高粱、燕麦、水稻；薯类原料为马铃薯、芋头、山药、木薯粉。专用原料Tag不接受面包、已成熟食或原木薯。基础加工对普通制作资格开放，无需燃料。蔬菜本批保持生食用途，不新增厨师成长、品质或心情效果。</p>
+    <p>两类熟食的营养来自本次实际消耗的原料，与其 <code>cooking.nutrition</code> 一致。通常完整保鲜寿命为原料标准寿命两倍，地面寿命为熟食仓储寿命一半；木薯粉及其熟食均为仓储20日、地面10日，不能连续加工翻倍。普通进食、口粮、治疗及招募共用可食用组件读取；维持库存仍按成品份数，食用方案沿用玩家已有 <code>food</code> 类别许可。组件格式见 <a href="../data.html">数据格式</a>。</p>
+    <p>烟熏炉先在工作台制作，再从建筑菜单建造 <code>core:smoker</code> 建筑以登记烘烤工作点。建筑只放置一格炉体，北侧一格为空的入口与操作位置；入口需要道路连通并可通行。普通方块放置仅放置炉体，不会登记建筑工作点。面包配方只消耗小麦，没有额外燃料消耗。实际加工时，引擎依据 <code>working_visuals</code> 显示点火炉口动画、顶部烟雾和炉口火焰；完成或中断恢复静态外观，暂停冻结效果。面包为独立物品，饱腹值为 10.24，进食方案需许可 <code>food</code> 分类。</p>
+
+    <h2>边界</h2>
+    <ul>
+      <li>配方不能声明产出数量或 <code>output</code>；实际结果和数量只由有限无环产出表决定。</li>
+      <li>激活时预留材料与工作点；完成时原子提交材料并把结果写入输出暂存，清空前工作点不接新单。</li>
+      <li>取消或中断会释放预留并安排输入材料返还。</li>
+      <li><code>core:handcraft</code> 是无需实体建筑工作点的徒手制作路径，因此第一张工作台不依赖既有工作台或制作点。</li>
+      <li>制作由 CoreMod <code>systems.production</code> 创建生产订单，再由 <code>systems.crafting.queue</code> 发布工作；不存在直接制作入口。</li>
+      <li>制作完成触发 <code>core:recipe_crafted</code> 事件。</li>
+      <li>旧 <code>core:wood_saw</code> 及其固定 <code>core:workbench</code> 引用已经删除。</li>
+      <li>锻造不使用固定配方产出表，按物品基型和设计方案契约执行。</li>
+    </ul>
+
+  </div>
+</div>
+<script src="../../nav.js"></script>
+<script src="../../wiki.js"></script>
+</body>
+</html>
