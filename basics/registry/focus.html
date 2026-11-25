@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>要闻注册 · NewColony Wiki</title><script src="../../theme.js"></script>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>焦点注册 · NewColony Wiki</title><script src="../../theme.js"></script>
 <link rel="stylesheet" href="../../style.css"></head>
 <body data-page="mod-focusregistry"><div class="main">
 <div class="content">
-  <h1>玩家事件与待办</h1>
-  <p class="subtitle">按《事件系统》替换旧要闻界面，继续使用 <code>data/focuses/</code> 及既有实例、历史、存档和同步能力。内部 Lua 事件总线仍使用 data/events，不是玩家事件内容目录。</p>
+  <h1>焦点注册</h1>
+  <p class="subtitle">按《事件系统》替换旧的待办界面，继续使用 <code>data/focuses/</code> 及既有实例、历史、存档和同步能力。内部 Lua 事件总线仍使用 data/events，不是玩家事件内容目录。</p>
   <h2>当前状态</h2>
   <p>设计文档规定了交互和配表字段，没有提供具体事件内容表。CoreMod 不自动创建首位殖民者、宣战、奖励等实际事件。第三方 Mod 使用相同注册契约提供内容。</p>
   <h2>入口与处理流程</h2>
@@ -31,9 +31,9 @@
   <p>assets/ui/rml/events.rml 与 events.rcss 由原生面板注册表加载；ui.events_panel 提供 events_state，类型化 events 数据视图绑定列表、选项、文本和禁用状态。core:events.action 管理客户端展示，core:events.act 请求服务端处理。常规 Escape 先关详情再关总览，重大详情不可跳过。列表、正文和选项滚动，窗口按视口比例布局，窄窗口选项换行。没有浏览器运行时或源目录加载旁路。</p>
   <h2>第三方记录契约</h2>
   <p>第三方记录仍需显式声明稳定 ID、显示文本、触发条件、一次性状态和选择项。引擎只执行已注册内容，不补概率、周期、奖励或关系变化。</p>
-	<h2>要闻历史与存档摘要</h2>
+	<h2>焦点历史与存档摘要</h2>
 	<p>focuses 文档新增 format_version: 2，活跃项完整保存 summary、event_type、color、severity、icon、priority 和 choices（包括 action / enabled / reason）。磁盘与网络共用候选恢复，读档保留原选项。无版本或版本 1 沿旧定义补齐选项和类型，概括使用历史正文；旧格式没有保存的信息无法还原。无效快照或其他版本拒绝恢复。网络协议版本保持 1。</p>
-	<p>每次已提交的要闻触发均以原实例编号、UUID、定义 ID、Tick、标题和正文进入原生要闻历史。选择或关闭仅移除待处理项，历史保留；重载内容保留已记录文本，新世界／卸载清空运行态。历史通过既有 <code>focuses</code> 磁盘和网络文档保存／恢复，不重发触发通知；恢复校验完整身份和活跃项关联。历史记录可保留已移除定义，待处理选择仍要求定义存在。</p>
-	<p>存档浏览器“最近要闻”投影最近 5 条历史，按 Tick、实例编号倒序排列；展示记录的标题、正文和游戏日期，保留模组命名空间和本地化引用。没有要闻时显示空状态，经营结算日志和内部事件不会进入此列表。这里只提供记录能力，不新增触发策略、概率或私有要闻内容。</p>
+	<p>每次已提交的焦点触发均以原实例编号、UUID、定义 ID、Tick、标题和正文进入原生焦点历史。选择或关闭仅移除待处理项，历史保留；重载内容保留已记录文本，新世界／卸载清空运行态。历史通过既有 <code>focuses</code> 磁盘和网络文档保存／恢复，不重发触发通知；恢复校验完整身份和活跃项关联。历史记录可保留已移除定义，待处理选择仍要求定义存在。</p>
+	<p>存档浏览器“最近焦点”投影最近 5 条历史，按 Tick、实例编号倒序排列；展示记录的标题、正文和游戏日期，保留模组命名空间和本地化引用。没有焦点记录时显示空状态，经营结算日志和内部事件不会进入此列表。这里只提供记录能力，不新增触发策略、概率或私有焦点内容。</p>
 </div></div><script src="../../nav.js"></script>
 <script src="../../wiki.js"></script></body></html>

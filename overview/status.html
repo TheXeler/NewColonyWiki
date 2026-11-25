@@ -25,14 +25,16 @@
         <tr><td>Lua 事件与定时器</td><td><span class="badge done">可用</span></td><td><code>engine.events</code> 支持订阅、发布和取消订阅；<code>engine.timers</code> 支持持久任务 <code>create</code>、临时回调 <code>temporary</code>，以及 <code>cancel</code>、<code>freeze</code>、<code>resume</code>、<code>status</code>、<code>query</code> 和 <code>current_tick</code>。</td></tr>
         <tr><td>Lua 随机数 API</td><td><span class="badge done">可用</span></td><td><code>engine.random.seed/float/int/bool</code> 使用 Xoshiro256** 确定性 RNG。</td></tr>
         <tr><td>职业与配方</td><td><span class="badge done">可用</span></td><td>职业 1-5 级、装备实例许可、前置职业、配方输入、职业要求、文明配方限制和解锁均已从注册表初始化。公开直通制作已禁用，CoreMod 制作统一走带资源预留的生产订单；固定制作结果由产出表决定。</td></tr>
-        <tr><td>文明</td><td><span class="badge partial">接口</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
-        <tr><td>要闻系统</td><td><span class="badge partial">接口</span></td><td>要闻 schema、运行态和存档接口保留；CoreMod 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。</td></tr>
-        <tr><td>派系、城邦与外交</td><td><span class="badge partial">本体源码</span></td><td><a href="../advanced/systems/diplomacy.html">外交本体</a>支持 Lua 注册开战／议和／贸易许可、不可移除的基础诉求、反议、双方状态与条约、存档同步和界面；战争与贸易可共存。城邦 AI 留空，新增源码未编译或运行。</td></tr>
-        <tr><td>战斗</td><td><span class="badge partial">接口</span></td><td>职业战斗属性、伤病/倒地/死亡和小队身份/成员状态摘要保留；专项文档未建立前不推进小队移动、接敌、命中、伤害、冷却、压制、阵型或区域法力，所有战斗命令无副作用拒绝，HUD 只显示接口未定。</td></tr>
+        <tr><td>文明</td><td><span class="badge partial">部分</span></td><td>文明注册、运行态和存档接口保留；NCDOCS 没有文明专项内容，CoreMod 当前定义为空，不生成初始方块、职业或配方修正。</td></tr>
+        <tr><td>焦点（<code>focuses</code>）</td><td><span class="badge partial">部分</span></td><td>焦点 schema、运行态、历史与存档接口保留；CoreMod <code>data/focuses/</code> 内容为空，不生成未在 NCDOCS 定义的随机事件、选项或效果。游戏内界面把焦点显示为「事件／待办」。</td></tr>
+        <tr><td>派系、城邦与外交</td><td><span class="badge partial">部分</span></td><td><a href="../advanced/systems/diplomacy.html">外交本体</a>支持 Lua 注册开战／议和／贸易许可、不可移除的基础诉求、反议、双方状态与条约、存档同步和界面；战争与贸易可共存。城邦 AI 留空，新增源码未编译或运行。</td></tr>
+        <tr><td>战斗</td><td><span class="badge partial">部分</span></td><td>征召、阵型（<code>core:line</code>／<code>core:pair</code>／<code>core:rectangle</code>）、集结与解散、小队血池、近战命中与伤害提交、冲锋与击飞、弹体飞行与一次性命中领取均已接入服务端主流程；战斗命令会真实改变 <code>combat_state</code>，只在征召资格不满足、目标无效或无路径时返回 <code>ok=false</code>。战斗 HUD 由 <code>battle_hud</code> 数据视图驱动，显示兵模数、血池、队长生命与冲锋状态。缺口：<code>systems/combat_projectile_weapons.lua</code> 策略表为空，本体没有内置投射武器；压制与独立法力池／区域法力未实现，法术按一次性 <code>mana</code> 投入折算疲劳。</td></tr>
         <tr><td>本地化</td><td><span class="badge done">可用</span></td><td>本体语言文件、CoreMod/MOD 翻译合并、UI 文本查询、Lua locale API 和运行时热重载已接入。详见<a href="../basics/localization.html">本地化与翻译</a>。</td></tr>
         <tr><td>ECS 基础</td><td><span class="badge done">可用</span></td><td>Archetype 存储、组件查询、实体 ID 代际和标准组件集可用；组件集合会随殖民者生存、选择和渲染状态继续演进，不以旧固定数量作为兼容承诺。</td></tr>
         <tr><td>网络同步</td><td><span class="badge partial">部分</span></td><td>TCP Server/Client、Server 权威 UiCommand、命令结果、重连恢复、增量快照和 MOD 数据交换已实现；活体网络往返仍待显式验证。</td></tr>
         <tr><td>控制台调试</td><td><span class="badge done">可用</span></td><td>当前注册 75 个命令（另有 6 个内置别名），覆盖 MOD、数据、配方、实体、背包、阵营、网络、Lua 热重载、配置诊断和归档对比。</td></tr>
+        <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载分类、前置、unlocks 和研究成本；运行时还读取开题材料、工作站、职业要求及暂停状态。CoreMod 现有 10 条科技定义。详见 <a href="../basics/registry/tech.html">科技注册</a>。</td></tr>
+        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td><code>export-release</code> 预设使用 MSVC/Ninja 与 x64-windows 双 triplet；CMake 安装规则导出可执行文件、引擎模块到 <code>engine/</code>、依赖库到 <code>depend/</code>、<code>tools/glslang</code>、引擎资源、<code>wiki/</code> 与 <code>CoreMod</code>（→ <code>mods/core</code>）；<code>bash/Export.bat</code> 把 <code>build/bin</code> 复制到 <code>output/NewColony</code>，<code>bash/DebugExport.bat</code> 再生成 <code>output/NewColony-MMdd-NN.zip</code>。仓库内已有完整包与 zip 产物；运行态可用性未做自动化验证。</td></tr>
       </tbody>
     </table>
 
@@ -80,17 +82,17 @@
         <tr>
           <td>存档</td>
           <td><span class="badge partial">部分</span></td>
-          <td>保存/加载框架、存档列表、原子写入、世界配置、天气、实体、文明研究、殖民者纪念记录、阵营、Job、工作资源预留、要闻状态和 MOD 差异诊断。详见<a href="../appendix/engine/save-system.html">存档系统现状</a>。</td>
+          <td>保存/加载框架、存档列表、原子写入、候选目录发布；顶层文档 <code>world.json</code>（世界配置、世界地图参数、天气与天气历史、文明与研究进度、建筑与工作点、区域实例、可见性、袭击、下落方块、殖民者纪念记录）、<code>entities.json</code>（实体组件，含 Job／CareerProgress 与战斗的 Squad／MeleeCooldown／ChargeCooldown／ProjectileFlight）、<code>factions.json</code>、<code>tasks.json</code>（任务进度与工作资源预留）、<code>owner_items.json</code>（背包、方块容器、仓储策略）、<code>designs.json</code>、<code>focuses.json</code>（事件状态与历史）、<code>economy_log.json</code>、<code>economy_problems.json</code>、<code>runtime_states.json</code>、<code>scripts.json</code>（Lua 受管状态与持久定时器）、<code>mods.json</code> 与 <code>manifest.json</code>，以及 <code>regions/</code> 区块二进制。详见<a href="../appendix/engine/save-system.html">存档系统现状</a>。</td>
           <td>存档依赖引擎版本和可解析的内容引用。自定义玩法数据可使用受管状态，格式与别名规则见 <a href="../advanced/network/state-evolution.html">状态自动演进</a>。</td>
         </tr>
         <tr>
           <td>渲染与方块模型</td>
-          <td><span class="badge partial">实验</span></td>
+          <td><span class="badge partial">部分</span></td>
           <td>Vulkan 管线、Chunk 网格、纹理图集、BlockTextureRegistry 和多元素方块模型解析已实现。</td>
           <td>渲染后端和复杂模型兼容性仍属于实验层，不作为 MOD API 稳定承诺。</td>
         </tr>
         <tr>
-          <td>体素地形与群系</td>
+          <td>体素地形与群落</td>
           <td><span class="badge partial">部分</span></td>
           <td><code>data/biomes</code> 和 <code>data/terrain</code> 作为标准 mod_data 加载、校验并注册到 TerrainGenerator；支持权重、地表/次地表方块、地图颜色和默认地形方块。旧 <code>data/ores</code> 已移除，矿物由矿井规则提供。</td>
           <td>世界生成整体仍属实验层，复杂装饰和脚本扩展契约还在收敛。</td>
@@ -98,18 +100,21 @@
       </tbody>
     </table>
 
-    <h2>未完成或未接入</h2>
+    <h2>未接入</h2>
+    <p>以下能力目前没有实现，不要把它们写进 MOD 依赖。</p>
     <table>
       <thead><tr><th>能力</th><th>状态</th><th>当前情况</th></tr></thead>
       <tbody>
-        <tr><td><code>data/techs</code> 通用加载</td><td><span class="badge done">可用</span></td><td>TechTree 查找 <code>techs</code>，ModLoader 已加载分类、前置、unlocks 和研究成本；运行时还读取开题材料、工作站、职业要求及暂停状态。详见 <a href="../basics/registry/tech.html">科技注册</a>。</td></tr>
-        <tr><td>MOD 打包发布</td><td><span class="badge done">可用</span></td><td><code>export-release</code> 预设使用 MSVC/Ninja；CMake 安装规则导出可执行文件、运行库、glslang 工具、引擎资源和 CoreMod，<code>bash/Export.bat</code>/<code>Export.sh</code> 负责复制既有输出。Windows MinGW Debug 已完整构建，并通过 <code>bash/DebugExport.bat build-mingw</code> 导出到 <code>game/</code>；Release 包、测试和运行态内容仍未验证。</td></tr>
+        <tr><td>战斗压制</td><td><span class="badge planned">未接入</span></td><td>没有压制机制；仓库内 <code>suppress</code> 只出现在物理接触抑制的注释里。</td></tr>
+        <tr><td>独立法力池／区域法力</td><td><span class="badge planned">未接入</span></td><td>没有持久法力池；法术的 <code>mana</code> 是一次性投入量，按 <code>mana_per_energy</code> 折算成疲劳消耗。</td></tr>
+        <tr><td>投射武器内容</td><td><span class="badge planned">未接入</span></td><td>弹体飞行与命中领取的能力已接入，但 <code>systems/combat_projectile_weapons.lua</code> 的策略表为空，本体没有内置投射武器。</td></tr>
+        <tr><td>CoreMod 内容：玩家事件与文明</td><td><span class="badge planned">未接入</span></td><td><code>data/focuses/</code> 与文明定义在 CoreMod 中为空，只有 schema 与接口，没有实际内容。</td></tr>
       </tbody>
     </table>
 
     <h2>给 MOD 作者的建议</h2>
     <div class="callout info">
-      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、要闻、NPC 阵营、名称池、动作、地物、作物、建筑、群系、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为和复杂 UI 扩展仍不建议作为强依赖；MOD 打包发布已有 Windows 流程。
+      当前最适合开发内容型 MOD：方块、实体原型、配方、职业、文明、焦点、NPC 阵营、名称池、动作、地物、作物、建筑、群落、音频、本地化和少量 Lua 辅助逻辑。AI 高级行为和复杂 UI 扩展仍不建议作为强依赖；MOD 打包发布已有可用的 Windows 流程。
     </div>
 
   </div>

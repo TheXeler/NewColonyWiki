@@ -11,7 +11,7 @@
 <div class="main">
   <div class="content">
     <h1>地形配置注册</h1>
-    <p class="subtitle">地形配置放在 <code>data/terrain/</code> 下，用 JSON 提供默认地形方块和部分全局地形参数。它与<a href="biome.html">群系注册</a>配合使用：群系决定地表/次地表，地形配置提供基础方块、水方块和导航流体深度等全局选项。矿物由矿井规则按区块提供，不作为普通地下矿物体素生成。</p>
+    <p class="subtitle">地形配置放在 <code>data/terrain/</code> 下，用 JSON 提供默认地形方块和部分全局地形参数。它与<a href="biome.html">群落注册</a>配合使用：群落决定地表/次地表，地形配置提供基础方块、水方块和导航流体深度等全局选项。矿物由矿井规则按区块提供，不作为普通地下矿物体素生成。</p>
 
     <h2>JSON 格式</h2>
     <pre><code>{
@@ -26,7 +26,7 @@
       <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td><code>id</code></td><td>string</td><td>是</td><td>唯一标识。当前 chunk 地形配置优先查找 <code>core:default</code>；如果没有这个 ID，则使用注册表中的第一个 terrain 条目。</td></tr>
-        <tr><td><code>base_block</code></td><td>string</td><td>是</td><td>基础实心方块 ID，必须引用已注册方块。世界生成在没有群系覆盖时使用它作为默认地下方块。</td></tr>
+        <tr><td><code>base_block</code></td><td>string</td><td>是</td><td>基础实心方块 ID，必须引用已注册方块。世界生成在没有群落覆盖时使用它作为默认地下方块。</td></tr>
         <tr><td><code>water_block</code></td><td>string</td><td>否</td><td>水体方块 ID，必须引用已注册方块。省略时使用运行时默认水方块。</td></tr>
         <tr><td><code>max_navigable_fluid_depth</code></td><td>int</td><td>否</td><td>寻路可通过的最大流体深度，必须是非负整数。省略时为 0；0 表示不可涉水，1 表示可以穿过一格深的浅水。</td></tr>
       </tbody>
@@ -37,7 +37,7 @@
       <li>引擎会先建立默认 <code>TerrainConfig</code>。新建世界的海平面暂时固定为 <code>DEFAULT_TERRAIN_SEA_LEVEL</code>（70），创建界面不再提供调整；读档时恢复存档中的海平面。</li>
       <li>随后从 <code>data/terrain/</code> 注册表中选择 <code>core:default</code>；如果没有该 ID，则使用第一个 terrain 条目。</li>
       <li>选中的 JSON 覆盖 <code>base_block</code>、<code>water_block</code> 和 <code>max_navigable_fluid_depth</code>。</li>
-      <li>群系仍然负责每列的 <code>surface_block</code>、<code>subsurface_block</code>、气候匹配和高度轮廓；terrain 配置不是群系列表。</li>
+      <li>群落仍然负责每列的 <code>surface_block</code>、<code>subsurface_block</code>、气候匹配和高度轮廓；terrain 配置不是群落列表。</li>
     </ul>
 
     <div class="callout info">
@@ -52,9 +52,9 @@
     <table>
       <thead><tr><th>注册表</th><th>职责</th></tr></thead>
       <tbody>
-        <tr><td><a href="biome.html">群系注册</a></td><td>决定某个气候位置使用哪种表层方块、次表层方块、植被概率和高度修正。</td></tr>
+        <tr><td><a href="biome.html">群落注册</a></td><td>决定某个气候位置使用哪种表层方块、次表层方块、植被概率和高度修正。</td></tr>
         <tr><td><a href="feature.html">地物注册</a></td><td>在地表装饰阶段放置树木、石堆等地物。</td></tr>
-        <tr><td><a href="block.html">方块注册</a></td><td>提供 <code>base_block</code>、<code>water_block</code>、群系方块和矿物方块引用的实体数据。</td></tr>
+        <tr><td><a href="block.html">方块注册</a></td><td>提供 <code>base_block</code>、<code>water_block</code>、群落方块和矿物方块引用的实体数据。</td></tr>
       </tbody>
     </table>
 

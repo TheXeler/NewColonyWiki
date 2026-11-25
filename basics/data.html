@@ -284,10 +284,10 @@ squad_size_limit, max_hp, vision_range, inventory_slots</code></pre>
   ]
 }</code></pre>
 
-    <h2>玩家事件（原要闻）</h2>
+    <h2>焦点</h2>
     <p>显式 conditions: [] 声明由服务端 Lua 使用 engine.focuses.trigger(id) 发布的事件，不自动触发；非空条件列表继续沿原条件机制。发布只接受已注册定义，返回实际 UUID 或拒绝原因。</p>
-    <p>事件界面提供右侧提醒、待办总览、详情选项与重大事件暂停。定义继续放在 data/focuses，新增 summary、event_type: regular | major、color: #RRGGBB。默认值、效果语义、共享范围及保存迁移见 <a href="registry/focus.html">玩家事件与待办契约</a>；data/events 是内部事件总线声明目录。</p>
-    <p>要闻是展示给玩家的消息。放在 <code>data/focuses/</code> 下。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>），也可以是 Lua 注册的自定义条件。<code>colonist_need</code> 通过统一属性接口读取解析后的 <code>needs.hunger</code>、<code>needs.fatigue</code> 或 <code>mood.mood_value</code>，因此会包含生效的属性修正。</p>
+    <p>事件界面提供右侧提醒、待办总览、详情选项与重大事件暂停。定义继续放在 data/focuses，新增 summary、event_type: regular | major、color: #RRGGBB。默认值、效果语义、共享范围及保存迁移见 <a href="registry/focus.html">焦点注册</a>；data/events 是内部事件总线声明目录。</p>
+    <p>焦点是展示给玩家的消息。放在 <code>data/focuses/</code> 下。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>），也可以是 Lua 注册的自定义条件。<code>colonist_need</code> 通过统一属性接口读取解析后的 <code>needs.hunger</code>、<code>needs.fatigue</code> 或 <code>mood.mood_value</code>，因此会包含生效的属性修正。</p>
     <pre><code>{
   "id": "copper_age:copper_found",
   "title": "Copper Discovered",

@@ -69,7 +69,7 @@ local removed = engine.events.unsubscribe(handler_id)</code></pre>
         <tr><td><code>core:building_completed</code></td><td>建筑完成（CoreMod）</td><td>building_uuid, def_id, x, y, z</td></tr>
         <tr><td><code>core:research_started</code> / <code>core:research_completed</code></td><td>科技状态变化</td><td>tech_id, civilization_uuid</td></tr>
         <tr><td><code>core:colonist_died</code></td><td>死亡殖民者写入纪念记录并销毁实体前通知</td><td>entity_uuid, name, tick, x, y, z</td></tr>
-        <tr><td><code>core:focus_chosen</code> / <code>core:focus_dismissed</code></td><td>要闻被选择或关闭</td><td>focus_uuid, focus_id, choice_id, choice_action, tick</td></tr>
+        <tr><td><code>core:focus_chosen</code> / <code>core:focus_dismissed</code></td><td>焦点被选择或关闭</td><td>focus_uuid, focus_id, choice_id, choice_action, tick</td></tr>
         <tr><td><code>core:faction_spawned</code></td><td>阵营实例生成</td><td>faction_uuid, def_id, display_name, relation, spawned_tick, reason</td></tr>
       </tbody>
     </table>

@@ -11,7 +11,7 @@
 <div class="main">
   <div class="content">
     <h1>Lua 怎么用</h1>
-    <p class="subtitle">Lua 入口用来连接事件、定时器、要闻、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
+    <p class="subtitle">Lua 入口用来连接事件、定时器、焦点、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
 
     <div class="callout info">
       <strong>脚本运行时</strong>：LuaJIT 2.1（Lua 5.1 语言）。不要使用 5.3+ 才有的位运算符（<code>&amp;</code> <code>|</code> <code>~</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code>）和整除运算符 <code>//</code>——需要位运算时改用 <code>bit</code> 库（<code>bit.band</code>、<code>bit.bor</code>、<code>bit.bxor</code>、<code>bit.lshift</code>、<code>bit.rshift</code>）。注意 <code>bit</code> 库只在 32 位上运算。
@@ -319,10 +319,10 @@ end
 engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
-    <h2>玩家事件（原要闻）</h2>
+    <h2>玩家事件（原焦点）</h2>
     <p><code>engine.focuses.trigger(id)</code> 在权威服务端发布已注册事件，返回 <code>{ok=true,focus_uuid=...}</code> 或 <code>{ok=false,error=...}</code>；一次性、启用与冷却仍由原生实例管理器验证。显式空 conditions 表示仅由 Lua 发布，可在暂停期间响应突发事情。不要向客户端开放直接世界写入。</p>
     <p>效果回调返回 false 时保留待办，true 或旧回调的 nil 表示接受，其他类型是错误。拒绝前不得留下部分资产写入，必须使用既有原子操作。engine.focuses.active 新增 summary、event_type、color、priority；engine.focuses.dismiss 只能确认无选项通知，暂时忽略不移除待办。完整契约见 <a href="../../basics/registry/focus.html">玩家事件与待办</a>。</p>
-    <p>要闻 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 要闻 被触发、选择或关闭。</p>
+    <p>焦点 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 焦点 被触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20
 end)
@@ -336,7 +336,7 @@ engine.events.subscribe("core:focus_chosen", 0, function(evt)
 end, false)</code></pre>
 
     <h2>地形扩展</h2>
-    <p>地形 API 提供世界初始化后的只读查询。群系和地物只能通过 <code>data/biomes</code> 与 <code>data/features</code> 注册；世界生成由 C++ <code>TerrainGenerator</code> 加载 JSON 数据，不存在 Lua worldgen 注册旁路。旧普通矿脉注册入口已移除，矿物由 <code>mine_rules</code> 的区块矿井契约提供。</p>
+    <p>地形 API 提供世界初始化后的只读查询。群落和地物只能通过 <code>data/biomes</code> 与 <code>data/features</code> 注册；世界生成由 C++ <code>TerrainGenerator</code> 加载 JSON 数据，不存在 Lua worldgen 注册旁路。旧普通矿脉注册入口已移除，矿物由 <code>mine_rules</code> 的区块矿井契约提供。</p>
     <pre><code>-- scripts/listeners/world_load_completed/log_height.lua
 -- @Event core:world_load_completed
 -- @ServerSideEvent
@@ -379,7 +379,7 @@ engine.log.info(locale .. ": " .. engine.locale.translate_cat("ui", "menu.start"
 
     <h2>城邦模拟</h2>
     <p>城邦模式切换及资产托管由 CoreMod 的服务端流程管理。使用边界与公开配置入口见 <a href="../../coremod/city.html">城邦模拟现状</a>。</p>
-    <p><code>engine.world_map.city_site(chunk_x, chunk_z)</code> 查询规范区块坐标和宏观气候。成功时，<code>map_q</code>、<code>map_r</code> 和 <code>map_color</code> 来自用于确定群系的同一块最近世界地图瓦片。<code>chunk_x</code> 和 <code>chunk_z</code> 用于区块间距与实体驻留，<code>map_q</code> 和 <code>map_r</code> 用于世界地图定位。地图不可用时返回 <code>available = false</code> 及 <code>reason</code>。</p>
+    <p><code>engine.world_map.city_site(chunk_x, chunk_z)</code> 查询规范区块坐标和宏观气候。成功时，<code>map_q</code>、<code>map_r</code> 和 <code>map_color</code> 来自用于确定群落的同一块最近世界地图瓦片。<code>chunk_x</code> 和 <code>chunk_z</code> 用于区块间距与实体驻留，<code>map_q</code> 和 <code>map_r</code> 用于世界地图定位。地图不可用时返回 <code>available = false</code> 及 <code>reason</code>。</p>
 
   </div>
 </div>

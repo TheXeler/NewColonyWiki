@@ -61,7 +61,7 @@
     task_definitions/      —— 原生实体 Task 使用的定义数据
     civilizations/         —— 文明定义（可用职业、开局选项）
     techs/                 —— 科技定义与研究要求
-    focuses/               —— 要闻（条件触发、玩家选择）
+    focuses/               —— 焦点（条件触发、玩家选择）
     factions/              —— NPC 阵营（关系范围、名称模板）
     faction_spawn_rules/   —— 新世界阵营生成规则
     diplomacy_proposals/   —— 旧外交提议 schema，仅兼容读取
@@ -69,7 +69,7 @@
     features/              —— 地形地物
     crops/                 —— 作物生长阶段和产出
     terrain/               —— 默认地形参数
-    biomes/                —— 群系定义（ModLoader 自动注册，地形系统读取）
+    biomes/                —— 群落定义（ModLoader 自动注册，地形系统读取）
     buildings/             —— 建筑定义（ModLoader 自动注册，建筑系统读取）
     raids/                 —— 袭击定义（敌人权重表与投送参数，RaidSystem 读取）
     zones/                 —— 区域类型定义（ModLoader 自动注册，区域系统读取）
@@ -184,7 +184,7 @@
         <tr><td><code>data/jobs/</code></td><td>否</td><td>职业定义。等级范围 1-5，可声明前置职业、允许接取的工作类型和各等级解锁配方；可转职装备由物品的 <code>supported_jobs</code> 声明。</td></tr>
         <tr><td><code>data/civilizations/</code></td><td>否</td><td>文明定义。组织可用职业、开局选项（初始方块和殖民者）、配方限制。</td></tr>
         <tr><td><code>data/techs/</code></td><td>否</td><td>科技定义：分类、前置、研究成本、开题材料、工作站/职业要求和解锁内容。</td></tr>
-        <tr><td><code>data/focuses/</code></td><td>否</td><td>要闻。展示给玩家的消息，可附带选择项。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>）或 Lua 注册的自定义条件。</td></tr>
+        <tr><td><code>data/focuses/</code></td><td>否</td><td>焦点。展示给玩家的消息，可附带选择项。条件可以是内置条件（<code>tick_at_least</code>、<code>entity_count_at_least</code>、<code>entity_count_at_most</code>、<code>colonist_need</code>）或 Lua 注册的自定义条件。</td></tr>
         <tr><td><code>data/factions/</code></td><td>否</td><td>NPC 阵营定义。包含关系范围、名称模板（支持 <code>${random_name}</code> 占位符）和引用的名称池。</td></tr>
         <tr><td><code>data/faction_spawn_rules/</code></td><td>否</td><td>新世界初始 NPC 阵营生成数量规则。</td></tr>
         <tr><td><code>data/diplomacy_proposals/</code></td><td>否</td><td>旧外交提议 schema 的兼容读取入口，不驱动当前谈判。新提议、评分和执行回调通过 Server Lua 注册，见<a href="../advanced/systems/diplomacy.html">外交系统</a>。</td></tr>
@@ -192,7 +192,7 @@
         <tr><td><code>data/features/</code></td><td>否</td><td>地形装饰阶段生成的地物定义，例如石堆、灌木或遗迹碎片。详见 <a href="registry/feature.html">地物注册</a>。</td></tr>
         <tr><td><code>data/crops/</code></td><td>否</td><td>作物阶段配置。新格式使用 defaults 与 growth_stages，按成长上限、任意下方方块速度表及三档温度计算成长；阶段地块和掉落覆盖为整表替换。共用解析与Lua投影已加入，内置内容和运行态迁移仍在进行，见 <a href="registry/crop.html">作物数据</a>。</td></tr>
         <tr><td><code>data/terrain/</code></td><td>否</td><td>地形默认方块配置。CoreMod 使用 <code>core:default</code> 定义基础方块、水和河床方块。</td></tr>
-        <tr><td><code>data/biomes/</code></td><td>否</td><td>群系数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
+        <tr><td><code>data/biomes/</code></td><td>否</td><td>群落数据。加载器会注册为 <code>biomes</code> 类型，地形生成器可在世界初始化时读取。</td></tr>
         <tr><td><code>data/buildings/</code></td><td>否</td><td>建筑定义目录。<code>BuildingSystem</code> 会按 <code>buildings</code> 类型读取注册表。</td></tr>
         <tr><td><code>data/raids/</code></td><td>否</td><td>袭击定义目录。每条记录声明阵营、加权敌人组、投送距离和持续时间；<code>RaidSystem</code> 按 <code>raids</code> 类型读取注册表并生成来袭者。详见 <a href="registry/raid.html">袭击注册</a>。</td></tr>
         <tr><td><code>data/zones/</code></td><td>否</td><td>区域类型定义目录。<code>ZoneSystem</code> 会按 <code>zones</code> 类型读取注册表。</td></tr>

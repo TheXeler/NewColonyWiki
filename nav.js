@@ -51,7 +51,7 @@ window.__WIKI_MANIFEST = {
             { id: "mod-cropregistry", title: "作物注册", path: "basics/registry/crop.html" },
             { id: "mod-buildingregistry", title: "建筑蓝图注册", path: "basics/registry/building.html" },
             { id: "mod-terrainregistry", title: "地形配置注册", path: "basics/registry/terrain.html" },
-            { id: "mod-biomeregistry", title: "群系注册", path: "basics/registry/biome.html" },
+            { id: "mod-biomeregistry", title: "群落注册", path: "basics/registry/biome.html" },
             { id: "mod-zoneregistry", title: "区域注册", path: "basics/registry/zone.html" },
             { id: "mod-raidregistry", title: "袭击注册", path: "basics/registry/raid.html" },
             { id: "mod-audioregistry", title: "音频注册", path: "basics/registry/audio.html" }

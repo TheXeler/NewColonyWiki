@@ -155,7 +155,7 @@
     <p><code>engine.ui.window.unregister(handle_or_id)</code> 注销窗口；<code>engine.ui.window.update(handle_or_id, patch)</code> 局部更新；<code>engine.ui.window.is_open(handle_or_id)</code> 查询打开状态；<code>engine.ui.window.clear(mod_id)</code> 清理指定 MOD 的窗口。</p>
 
     <h2>经营数据桥</h2>
-    <p>经营页面不要直接散落调用 ECS、库存、工作池、科技树和要闻系统。CoreMod 在启动时注册 <code>engine.ui.data</code> 和 <code>engine.ui.command</code>，作为 Lua UI 与 RmlUI 文档层共用的数据桥。</p>
+    <p>经营页面不要直接散落调用 ECS、库存、工作池、科技树和焦点系统。CoreMod 在启动时注册 <code>engine.ui.data</code> 和 <code>engine.ui.command</code>，作为 Lua UI 与 RmlUI 文档层共用的数据桥。</p>
     <table>
       <thead><tr><th>接口</th><th>说明</th></tr></thead>
       <tbody>
@@ -175,7 +175,7 @@
         <tr><td><code>engine.ui.data.snapshot("colonists")</code></td><td>返回人员界面所需的名称、状态、职业等级/经验、心情 thoughts、基础/工作/战斗属性、单一 <code>equipment.item</code>、物品栏和转职树。</td></tr>
 		<tr><td>人员工作数据</td><td><code>colonist_list</code> 返回当前激活工作和该人的已领取队列；底栏工作池窗口通过只读 <code>engine.tasks.list()</code> 列出当前玩家殖民地的全部活动工作。</td></tr>
         <tr><td><code>engine.ui.data.snapshot("research/tech")</code></td><td>返回科技节点、分类、前置、解锁、已研究/可研究/当前研究状态。</td></tr>
-        <tr><td><code>engine.ui.data.snapshot("events/focuses")</code></td><td>返回事件/要闻列表、严重度、详情和可执行动作。</td></tr>
+        <tr><td><code>engine.ui.data.snapshot("events/focuses")</code></td><td>返回事件/焦点列表、严重度、详情和可执行动作。</td></tr>
         <tr><td><code>engine.ui.data.snapshot(name)</code></td><td>按通道名读取单个快照；未登记的通道返回 <code>nil</code>。</td></tr>
       </tbody>
     </table>
@@ -420,7 +420,7 @@ end</code></pre>
         <tr><td><code>world_info</code></td><td><code>engine.time.get_day/season/year</code> + 当前 locale</td><td>已接通</td></tr>
         <tr><td><code>resource_snapshot</code></td><td><code>systems.hauling</code> 账本 + 殖民者手持物汇总</td><td>已接通</td></tr>
         <tr><td><code>colonist_list</code></td><td><code>engine.ecs.query_colonists</code> 返回 UUID 列表；名称和位置等实体属性使用 <code>engine.entities.attribute</code> 查询</td><td>已接通</td></tr>
-        <tr><td><code>event_list</code></td><td><code>engine.focuses.active</code> 要闻列表</td><td>已接通</td></tr>
+        <tr><td><code>event_list</code></td><td><code>engine.focuses.active</code> 焦点列表</td><td>已接通</td></tr>
         <tr><td><code>tech_tree</code></td><td><code>engine.research.list_techs/get_tech</code>，按分类分组</td><td>已接通</td></tr>
         <tr><td><code>view_modes</code></td><td><code>engine.view.state</code>（模式 + 地形透视）</td><td>已接通</td></tr>
         <tr><td><code>orders_kinds</code></td><td>采集/挖矿指令入口（静态目录）</td><td>已接通（静态目录）</td></tr>
