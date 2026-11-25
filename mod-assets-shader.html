@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-assets-shader">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>着色器格式</div></div>
   <div class="content">
     <h1>着色器格式</h1>
     <p class="subtitle">着色器源码放在 <code>assets/shaders/</code> 下，使用 GLSL 编写。启动预处理阶段会通过打包的 glslangValidator 编译为 Vulkan SPIR-V 字节码。</p>
@@ -110,9 +109,9 @@ void main() {
       目前没有公开的“新增自定义渲染或模拟管线”MOD API。MOD 可以提供会被预处理的 shader 源码，但只有被 C++ 代码按固定名称引用的 shader 会实际进入管线。
     </div>
 
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

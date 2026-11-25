@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-biomeregistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>群系注册</div></div>
   <div class="content">
     <h1>群落数据</h1>
     <p>群落由 C++ <code>TerrainGenerator</code> 直接读取 <code>data/biomes/*.json</code>。不存在 Lua 注册或运行时改写入口。</p>
@@ -38,9 +37,9 @@
       <li><code>engine.modding.get_data_json("biomes", id)</code>：读取成功加载的定义（原始 JSON 文本，不存在时返回空字符串）。</li>
       <li><code>engine.terrain.select_biome(seed, cx, cz)</code>：配置无效或没有定义时返回空表，不生成 fallback 群落。</li>
     </ul>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

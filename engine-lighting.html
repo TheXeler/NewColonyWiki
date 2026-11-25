@@ -8,7 +8,6 @@
 </head>
 <body data-page="engine-lighting">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>引擎光照</div></div>
   <div class="content">
     <h1>引擎光照</h1>
     <p class="subtitle">体素光照以 CPU 为权威：区块数据持有光照 overlay，<code>GpuLightRegistry</code> 在模拟线程上做稀疏传播。</p>
@@ -83,9 +82,9 @@
       <li>跨 chunk mesh 边界光照通过显式 <code>neighbor_light(wx,y,wz)</code> accessor 读取已加载 neighbor snapshot 的 block-light overlay，并根据邻区列遮挡补充直接天空光。</li>
     </ul>
 
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

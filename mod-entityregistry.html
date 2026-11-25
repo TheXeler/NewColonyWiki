@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-entityregistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>实体注册</div></div>
   <div class="content">
     <h1>实体注册</h1>
     <p class="subtitle">实体原型定义在 <code>data/entities/</code> 下，以顶层引擎字段和 <code>capabilities</code> 数组描述初始状态。职业由实体的 <code>job</code> 能力声明，不需要为每个职业创建一种实体原型。</p>
@@ -228,9 +227,9 @@ engine.ecs.clear_visual_parts(entity_uuid)</code></pre>
     <p>传统模型通过 <code>HeadVisual</code> 组件加入这个行为。使用 <code>center_x</code>、<code>center_y</code>、<code>center_z</code>、<code>width</code>、<code>height</code> 和 <code>depth</code> 描述模型局部空间中的头部盒。</p>
 
     <p>实体原型的模型和装配部件会随渲染内容提交，Renderer 对最多 32 种不同结构进行 CPU 预热；换色不产生新结构，未预热的外貌仍由运行时快照按需请求。组合 NCEM 的 <code>.deps</code> 清单支持输入更新、删除或禁用 MOD 后的失效清理，并以最近使用时间控制默认 512 MiB／2,048 项磁盘缓存；有效的动态外貌组合可以继续保留。具体格式与限制见 <a href="entity-assembly.md">实体装配说明</a>。这些新增实现与整世界／网络回归源码尚待手动验证。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

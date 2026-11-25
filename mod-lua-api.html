@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-lua-api">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>Lua 怎么用</div></div>
   <div class="content">
     <h1>Lua 怎么用</h1>
     <p class="subtitle">Lua 入口用来连接事件、定时器、要闻、实体和地形扩展。能用 JSON 的内容仍然优先写 JSON。</p>
@@ -381,9 +380,9 @@ engine.log.info(locale .. ": " .. engine.locale.translate_cat("ui", "menu.start"
     <p>城邦模式切换及资产托管由 CoreMod 的服务端流程管理。使用边界与公开配置入口见 <a href="city-simulation.html">城邦模拟现状</a>。</p>
     <p><code>engine.world_map.city_site(chunk_x, chunk_z)</code> 查询规范区块坐标和宏观气候。成功时，<code>map_q</code>、<code>map_r</code> 和 <code>map_color</code> 来自用于确定群系的同一块最近世界地图瓦片。<code>chunk_x</code> 和 <code>chunk_z</code> 用于区块间距与实体驻留，<code>map_q</code> 和 <code>map_r</code> 用于世界地图定位。地图不可用时返回 <code>available = false</code> 及 <code>reason</code>。</p>
 
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

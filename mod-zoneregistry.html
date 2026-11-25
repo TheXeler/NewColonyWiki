@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-zoneregistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>区域注册</div></div>
   <div class="content">
     <h1>区域注册</h1>
     <p class="subtitle">区域类型（Zone Type）定义在 <code>data/zones/</code> 下，以 JSON 描述。每种区域类型定义了名称和显示颜色。玩家在游戏中通过拖拽指定矩形的区域范围，系统根据区域类型决定该区域的用途——储存、种植、居住、收获等。</p>
@@ -121,9 +120,9 @@ data zones core:growing          -- 查看种植区类型的注册记录</code><
 <p>2026-10-13 第75节增加抽象edit_archive_farm_zone，候选区域与规范zones、作物日志、地块环境及next_zone_instance_id共同托管；初始模板只追加新区域定义证据。新增地块从冻结完整列和经营日志求当前土壤／空气，不读取live store，不临时加入区域。第76节保存请求完整几何和扩张原区域签名，提交前原身份／设置／几何必须仍一致；托管模式变化排除于源签名。该接线已有源码，自动选地策略和实际运行验证仍待完成。</p>
 <p>2026-10-13 第77节显式土地政策接入城邦焦点和前置规划。新增zone目标需实际前置满足后联合提交，完成目标覆盖按当前真实区域精确几何／选择查询；保存收据不代表土地永久保持。原生区域事务仍独立验证全部几何、身份、占用和托管，供应器只是候选来源。直接item前瞻扩田路线及执行验收继续。</p>
 <p>2026-10-13 第78节farm_zone_site／archive_farm_zone_site提供只读候选土地事实，复用活动／托管模式的区域编辑准入；handle只用于内部验证，不发布或消费。新增土地可进入物品需求的完整农业路线比较；区域effect成功之后，后续真实农业才可执行。候选坐标不会代替zone权威或提前创建plot，多个独立区可合并规划，同区互斥／重叠仍拒绝。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

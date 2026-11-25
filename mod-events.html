@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-events">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a> / Lua 事件系统</div></div>
   <div class="content">
     <h1>Lua 事件系统</h1>
     <p class="subtitle">Lua 可以监听引擎/CoreMod 事件，也可以在 MOD 之间发布自定义 Lua 事件。</p>
@@ -80,6 +79,7 @@ local removed = engine.events.unsubscribe(handler_id)</code></pre>
     <p>对“某件事发生后才需要运行”的逻辑使用事件；只有需要按固定模拟 tick 轮询的逻辑才使用 <code>core:tick</code> 事件或 <code>engine.timers</code>。事件回调中避免修改正在遍历的同一业务集合，复杂操作可记录状态后交给下一 tick 处理。</p>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

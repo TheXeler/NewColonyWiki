@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-audioregistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>音频注册</div></div>
   <div class="content">
     <h1>音频注册</h1>
     <p class="subtitle"><code>data/audio/</code> 是标准自动注册目录。每个 <code>.json</code> 文件注册一个可播放声音定义，顶层 <code>id</code> 就是 Lua 和引擎播放接口使用的声音 ID；不再使用 sound bank / <code>sounds[]</code> 包装。</p>
@@ -69,6 +68,7 @@ engine.audio.play("my_mod:bgm_title", 1.0, true)</code></pre>
     </div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

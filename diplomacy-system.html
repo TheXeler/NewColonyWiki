@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>外交系统 · NewColony Wiki</title><link rel="stylesheet" href="style.css"></head>
 <body data-page="diplomacy-system"><div class="main">
-<div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>外交系统</div></div>
 <div class="content">
   <h1>外交系统本体</h1>
   <p>外交使用 Server 权威谈判、Lua 提议实现和 RmlUI 界面。城邦 AI 的生成、经营、发展及回应算法另行接入；没有临时自动接受或拒绝规则。</p>
@@ -42,5 +41,5 @@ diplomacy.reject(negotiation_uuid, actor_uuid, expected_version)</code></pre>
   <h2>保存、同步与后续 AI</h2>
   <p>战争和条约复用 <code>factions.json</code> 的 pair_relations；谈判通过公共模块的 <code>@State diplomacy</code> 世界状态自动保存。<code>core:diplomacy</code> 共享状态含 factions、definitions、proposals、negotiations、perspectives 和 world_id。perspectives 为每个玩家城邦提供其与其他城邦的关系、状态、条约及提议预览，不把旧的全局玩家关系套用到联机双方。旧 C++/JSON 提议 schema 保留兼容读取，旧 evaluate_proposal 等占位接口不负责新谈判。</p>
   <p>加载与热重载恢复会检查谈判身份和结构。缺少 Lua 提议实现时保留事实、显示 unavailable_reason，并拒绝执行；重新注册后可重新评估。Client 不保存或执行 Server 回调，断线／卸载清空显示缓存。新增 <a href="city-simulation.html">城邦算法底座</a>以 city_diplomacy 接入同一 begin/preview/list/accept/counter/reject，并保存冷静与保护时点；正式城邦政策和全城实体桥仍未完成。战争、敌对与贸易的独立语义不变。</p>
-  <div class="footer">NewColony Wiki · UTF-8</div>
-</div></div><script src="wiki.js"></script></body></html>
+</div></div><script src="nav.js"></script>
+<script src="wiki.js"></script></body></html>

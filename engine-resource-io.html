@@ -8,7 +8,6 @@
 </head>
 <body data-page="engine-resource-io">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a> / 资源 IO</div></div>
   <div class="content">
     <h1>资源 IO 与 UTF-8 路径</h1>
     <p class="subtitle">引擎运行时资源、MOD 数据、配置、存档和日志路径统一按 UTF-8 处理。Windows 上不要直接把 UTF-8 字符串交给 <code>fopen</code>、<code>std::ifstream</code>、<code>std::ofstream</code> 或第三方库的 char 路径 API。</p>
@@ -61,9 +60,9 @@
 
     <h2>文件替换</h2>
     <p><code>io::write_binary_file_atomic(path, data, size)</code> 将内容写入同目录临时文件，写入完成后替换目标。失败时保留原目标，父目录由调用方创建。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

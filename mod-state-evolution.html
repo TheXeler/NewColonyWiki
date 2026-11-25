@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-state-evolution">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span><a href="mod-lua-api.html">Lua API</a><span class="sep">/</span>状态自动演进</div></div>
   <div class="content">
     <h1>状态自动演进与别名</h1>
     <p>日常只需维护当前数据声明：新增字段写类型和默认值，改名加别名，改变含义时才提供转换函数。不需要为普通字段变化手动递增版本号。该能力属于现有 <code>@State</code> 受管状态机制，应用于世界存档、本地设置和候选热重载。源码已接线；尚未执行检查、构建或测试。</p>
@@ -74,5 +73,7 @@ end</code></pre>
     <p>任务完成回执、待确认通知、奖励去重记录不因“时间很旧”自动删除。是否还能重试或被引用，仍由所属共享机制定义。本功能没有添加定时全世界清理器，也没有恢复招募来源的专项旧存档清理。</p>
   </div>
 </div>
+<script src="nav.js"></script>
+<script src="wiki.js"></script>
 </body>
 </html>

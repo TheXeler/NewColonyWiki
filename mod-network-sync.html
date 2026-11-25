@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-network-sync">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>网络同步与 Mod 数据</div></div>
   <div class="content">
     <h1>网络同步与 Mod 数据</h1>
     <p class="subtitle">理解 NewColony 的服务器-客户端架构、Mod 数据如何在网络间传输，以及 Lua 脚本怎样在联机环境中正确工作。</p>
@@ -157,9 +156,9 @@
 
     <h2>城邦实体准备屏障</h2>
     <p>2026-10-13 <code>runtime:city_loading_barriers</code>为schema_version=1的派生状态通道，payload是<code>{"chunks":[[cx,cz],...]}</code>，坐标沿当前星球标准化并稳定排序。全量或刷新后的差分替换整个集合，未发送通道时保留合成旧值，空数组明确解除；未知／重复字段、重复格子、错误数值／schema／缺完整合成通道拒绝。Engine先准备屏障和强加载候选，再与原生SaveSystem及runtime_state发布一起提交，失败不清旧状态。NETWORK_VERSION仍为1，无新包类型。首快照前客户端等待，新会话重建准入；服务器仍重新检查命令实际目标。验收源码仅静态检查，多人／重连执行验证尚未运行。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

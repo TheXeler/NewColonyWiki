@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-blockregistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>方块注册</div></div>
   <div class="content">
     <h2>可破坏能力与站立表面</h2>
     <p><code>mining_whitelist</code> 缺省表示不限制，空列表拒绝；非空列表按顺序检查 OR 组，每组必须是非空 AND 条件数组。条件仅支持 <code>{"type":"technology","id":"mod:tech"}</code> 和 <code>{"type":"job_level","id":"mod:job","minimum_level":3}</code>，不支持黑名单、NOT 或空组。职业条件只看当前职业链，祖先按其等级上限，不计无关历史职业。派工预筛及实际开工检查，已接纳的一轮可完整完成。攻击在实际伤害结算重新检查完整白名单，未通过乘 0.5；无来源环境伤害不变。<code>surface_standable</code> 缺省为普通表面规则，false 禁止将方块顶部作为导航站立面，与视觉和通行能力分开。</p>
@@ -114,9 +113,9 @@ data blocks copper_age:copper_ore        —— 查看单个方块的完整 JSON
     </ul>
 
     <p>城邦抽象采伐／采矿复用原生方块 output_table、output_table_executions 和 hardness；整树使用显式组件格子，按与来源方块相同的树干数量乘执行次数。产物继续经过 resource_extracting 扩展；实际材料形态由 item_facts 准备，来源消耗与产物／经验在一个候选提交。被托管来源不会根据名称或相邻格子再生成资源。未完成任务转换、农田收获和新生树再提取仍待接入，详见 <a href="city-simulation.html">城邦模拟</a>。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

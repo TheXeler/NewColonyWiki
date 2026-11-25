@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-coderegistry">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>代码注册表</div></div>
   <div class="content">
     <h1>代码注册表</h1>
     <p class="subtitle">通过 Lua 注册函数、模块返回值或监听器注释登记可执行行为。静态 JSON 定义见<a href="mod-data.html">数据文件注册表</a>。</p>
@@ -45,9 +44,9 @@
       <li>重复定义、覆盖和撤销规则由具体接口决定。数据文件的 reload 覆盖字段不能用于控制这些代码注册接口。</li>
     </ul>
     <p>实现入口：<code>Engine/Scripting/ScriptRegistry.cpp</code> 收集脚本及 JSON 声明，<code>Engine/Scripting/ModRuntime.cpp</code> 连接监听器、定时器类型、通道接收函数和命令处理函数；CoreMod 模块维护各自的业务注册表。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

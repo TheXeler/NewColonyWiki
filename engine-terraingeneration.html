@@ -8,7 +8,6 @@
 </head>
 <body data-page="engine-terraingeneration">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形生成流程</div></div>
   <div class="content">
     <h1>地形生成</h1>
     <p>世界生成由 C++ <code>TerrainGenerator</code> 执行，内容只从 Mod Registry 的 JSON 记录读取；不存在 Lua worldgen 脚本或运行时注册旁路。</p>
@@ -48,9 +47,9 @@
       <strong>种子派生字段不能由 <code>init()</code> 负责（已修复）：</strong>三个气候扰动 Perlin 场（<code>m_climate_perturb_temperature</code> / <code>_moisture</code> / <code>_elevation</code>，供 <code>WorldMap::sample_climate_for_block</code> 的块级中频扰动使用）原本只在 <code>ChunkManager::init()</code> 里按当时的 <code>m_config.world_seed</code> 重建。而 <code>init()</code> 只在引擎启动与 <code>return_to_main_menu()</code>（拆除时）被调用，世界启动路径只在 <code>!initialized()</code> 时补调；启动时 <code>world_seed</code> 还是 <code>EngineConfig</code> 的默认值 <strong>12345</strong>，拆除时又是正在关闭的那个世界的种子。结果是：每个会话的<strong>第一个世界</strong>用 12345 的扰动场，之后每个世界用<strong>上一个世界</strong>的种子 —— 同种子在不同会话里可能生成不同地形（群落宏观选择传入的是当前种子，不受影响，所以差异只体现在块内中频气候/群落过渡上）。现在扰动场重建与世界启动同处（<code>rebuild_world_derived_state()</code>），<code>init()</code> 复用同一实现只为启动期提供默认值。若存在按旧行为生成、尚未走完的存档，其未生成区块会与新生成区块在气候过渡上出现接缝。</div>
 
     <p>城邦抽象期间的既有树木种植生长复用 TerrainGenerator::tree_at 的确定格子集合，不重新随机生成树形。撤出捕获源／目标定义、几何和实际障碍，返回将整棵树与世界组件身份放入原子地形／资产事务；幼苗或预期空格变化时拒绝交接。多树以成熟时点和坐标排序解决重叠，仍受全城范围约束。详见 <a href="city-simulation.html">城邦模拟</a>。</p>
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

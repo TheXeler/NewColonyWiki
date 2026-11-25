@@ -8,7 +8,6 @@
 </head>
 <body data-page="engine-service-layer">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>引擎服务层</div></div>
   <div class="content">
     <h1>引擎服务层</h1>
     <p class="subtitle">把 <code>Engine.cpp</code> 中的 UI 命令分发、地形查询、方块修改三类逻辑抽成独立服务类，降低 <code>Engine</code> 的体量与耦合。</p>
@@ -53,9 +52,9 @@
     <p><code>EngineEntry.cpp</code> 在创建引擎之前注册 <code>Core/Debug/CrashDiagnostics.hpp</code> 的 SEH 异常处理器。未处理的异常记录异常代码、访问类型和目标地址，并在 <code>latest.log</code> 中增加一条 <code>[CRASH][module]</code>：包含崩溃线程 ID、故障模块路径、加载基址和模块相对偏移（RVA）。仅查询故障指令所在模块，不展开调用栈、不加载 DbgHelp、不生成转储文件。</p>
     <p>分析模块偏移时保留对应版本的 DLL 和 PDB；模块信息不代表导致崩溃的业务问题已修复。本次精简未编译或运行测试。</p>
 
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

@@ -8,7 +8,6 @@
 </head>
 <body data-page="mod-data">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>注册物品、方块和规则</div></div>
   <div class="content">
     <h2>基础料理物品组件</h2>
     <p>提供营养的物品定义使用 <code>edible: {"nutrition": 10}</code>；原料使用独立 <code>cooking: {"nutrition": 10, "duration_ticks": 2016000}</code>，该寿命是最终熟食的完整仓储寿命。原粮不会因烹饪营养而成为可直接食用物品。营养必须是有限非负数，缺省为0；寿命为非负32位整数。既有 <code>food_value</code>、<code>directly_edible</code>、<code>cooking_ingredient</code> 和 <code>cooked_nutrition</code> 在定义加载时兼容读取，显式组件优先。</p>
@@ -364,9 +363,9 @@ spawn_proto copper_age:pack_animal</code></pre>
 }</code></pre>
     <p>如果实体贴图加载失败，引擎会使用 missing texture；这不会阻止实体模型和动画渲染。</p>
 
-    <div class="footer">NewColony Wiki · UTF-8</div>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body>
 </html>

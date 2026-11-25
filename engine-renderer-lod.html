@@ -8,7 +8,6 @@
 </head>
 <body data-page="engine-renderer-lod">
 <div class="main">
-  <div class="topbar"><div class="breadcrumb"><a href="index.html">Wiki</a><span class="sep">/</span>地形 LOD 渲染</div></div>
   <div class="content">
 <h1>Terrain LOD rendering</h1>
 
@@ -38,5 +37,6 @@
 <p>Transitions from a coarse chunk mesh to full-detail sub-chunk meshes always rebuild the complete resident sub-chunk set, ignoring any stale partial-dirty subset accumulated while the coarse mesh was active. Partial results prepared before a newer coarse mesh are discarded and rescheduled as complete rebuilds. The finished set is then published as one atomic renderer replacement, so the old LOD remains visible until every replacement mesh is ready. LOD surfaces consume the representative model face's UV range, UV rotation, tint index, directional-shading flag, and light emission. This applies uniformly to every registered block rather than special-casing terrain materials.</p>
   </div>
 </div>
+<script src="nav.js"></script>
 <script src="wiki.js"></script>
 </body></html>
