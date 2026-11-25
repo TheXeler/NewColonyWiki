@@ -319,10 +319,10 @@ end
 engine.random.seed(42)
 local debug_roll = engine.random.int(1, 6)</code></pre>
 
-    <h2>玩家事件（原焦点）</h2>
+    <h2>焦点</h2>
     <p><code>engine.focuses.trigger(id)</code> 在权威服务端发布已注册事件，返回 <code>{ok=true,focus_uuid=...}</code> 或 <code>{ok=false,error=...}</code>；一次性、启用与冷却仍由原生实例管理器验证。显式空 conditions 表示仅由 Lua 发布，可在暂停期间响应突发事情。不要向客户端开放直接世界写入。</p>
-    <p>效果回调返回 false 时保留待办，true 或旧回调的 nil 表示接受，其他类型是错误。拒绝前不得留下部分资产写入，必须使用既有原子操作。engine.focuses.active 新增 summary、event_type、color、priority；engine.focuses.dismiss 只能确认无选项通知，暂时忽略不移除待办。完整契约见 <a href="../../basics/registry/focus.html">玩家事件与待办</a>。</p>
-    <p>焦点 数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听 焦点 被触发、选择或关闭。</p>
+    <p>效果回调返回 false 时保留待办，true 或旧回调的 nil 表示接受，其他类型是错误。拒绝前不得留下部分资产写入，必须使用既有原子操作。engine.focuses.active 新增 summary、event_type、color、priority；engine.focuses.dismiss 只能确认无选项通知，暂时忽略不移除待办。完整契约见 <a href="../../basics/registry/focus.html">焦点注册</a>。</p>
+    <p>焦点数据写在 <code>data/focuses</code>。Lua 可以注册条件、注册选项动作，也可以监听焦点的触发、选择或关闭。</p>
     <pre><code>engine.focus.register_condition("copper_age:has_copper", function(ctx)
   return ctx.tick >= 20
 end)
