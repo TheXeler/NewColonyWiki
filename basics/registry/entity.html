@@ -145,7 +145,7 @@
     <h3>殖民者 <code>core:colonist</code></h3>
     <p>通用殖民者原型声明 <code>ai_state</code>，由 TaskPool 驱动实体 AI；初始 <code>Job</code> 等级为 0。原型显式提供生命、需求、心情和属性数据。招募先生成实体、设置姓名和待登记标记，最后设置入场位置；这些初始化步骤失败时清理新实体，并在候选记录中保留具体原因。完成这组初始化后再应用经历并发布前往登记点的 <code>Move</code> Task。</p>
     <p>候选人的经历初始化、清理和登记完成接口只对仍存活、带 <code>colonist_tag</code>、空或非空 <code>Job</code> 组件且 <code>PendingRegistration.active</code> 的实体开放；职业种类与等级不参与这一引擎侧权限判定。登记完成仍须通过登记建筑与位置检查。</p>
-    <p>招募经历由注册表定义，属性加成按长期来源记录。生命等资源的上限、入场时的资源填充及城镇中心旗帜规则见 <a href="../../recruitment.md">招募与城镇中心登记</a>。</p>
+    <p>招募经历由注册表定义，属性加成按长期来源记录。生命等资源的上限、入场时的资源填充及城镇中心旗帜规则见 <a href="../../coremod/recruitment.html">招募与城镇中心登记</a>。</p>
     <p><code>engine.entities.spawn(entity_id, payload)</code> 会在解析 payload 时展开 capabilities 一次；Lua 修改后的 pack 和内联属性随后直接用于生成，不会重复展开。</p>
     <p>招募经历状态由 CoreMod Lua 根据状态 ID 通过统一属性接口写入 <code>condition.injuries</code> 或 <code>condition.dazed</code>；引擎只负责这些字段的类型、范围和组件投影。</p>
 

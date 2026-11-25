@@ -81,7 +81,8 @@ window.__WIKI_MANIFEST = {
           pages: [
             { id: "mod-lua-api", title: "Lua 怎么用", path: "advanced/lua/guide.html" },
             { id: "mod-events", title: "Lua 事件系统", path: "advanced/lua/events.html" },
-            { id: "mod-coderegistry", title: "代码注册总览", path: "advanced/lua/coderegistry.html" }
+            { id: "mod-coderegistry", title: "代码注册总览", path: "advanced/lua/coderegistry.html" },
+            { id: "advanced-script-runtime", title: "脚本运行契约", path: "advanced/lua/script-runtime.html" }
           ]
         },
         {
@@ -98,7 +99,8 @@ window.__WIKI_MANIFEST = {
           title: "网络与状态",
           pages: [
             { id: "mod-network-sync", title: "网络同步与 Mod 数据", path: "advanced/network/sync.html" },
-            { id: "mod-state-evolution", title: "状态自动演进与别名", path: "advanced/network/state-evolution.html" }
+            { id: "mod-state-evolution", title: "状态自动演进与别名", path: "advanced/network/state-evolution.html" },
+            { id: "advanced-shared-state", title: "共享状态", path: "advanced/network/shared-state.html" }
           ]
         },
         {
@@ -125,7 +127,8 @@ window.__WIKI_MANIFEST = {
       title: "核心实现",
       pages: [
         { id: "city-simulation", title: "城邦模拟现状", path: "coremod/city.html" },
-        { id: "coremod-stone", title: "石材矿脉与切石机", path: "coremod/stone.html" }
+        { id: "coremod-stone", title: "石材矿脉与切石机", path: "coremod/stone.html" },
+        { id: "coremod-recruitment", title: "招募与城镇中心", path: "coremod/recruitment.html" }
       ]
     },
     {

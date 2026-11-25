@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招募与城镇中心 · NewColony Wiki</title>
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="coremod-recruitment">
+<div class="main">
+  <div class="content">
+    <h1>招募与城镇中心登记</h1>
+    <p class="subtitle">招募等级、候选生成、经历系统与城镇中心入场的实际规则。</p>
+
+    <h2>概览</h2>
+    <p>从底栏打开招募窗口，选择招募等级并准备费用。候选就绪后可以确认或放弃；确认的人选需要前往城镇中心旗帜完成登记。</p>
+    <p>每个逻辑殖民地同时只有一批寻访或待选候选。等待中不可取消，界面只显示“寻访中”；关闭面板不终止流程。确认一人不再收费，也可整批放弃且不退款；两者都会立即释放入口，待入场队列独立。</p>
+
+    <h2>等级与费用</h2>
+    <table>
+      <thead><tr><th>等级</th><th>基础营养</th><th>游戏内小时</th><th>候选数</th><th>金币</th><th>职业总等级</th><th>正面经历概率</th></tr></thead>
+      <tbody>
+        <tr><td>初级</td><td>25</td><td>2</td><td>2</td><td>0</td><td>5-15</td><td>60%</td></tr>
+        <tr><td>中级</td><td>50</td><td>4</td><td>2</td><td>0</td><td>10-20</td><td>65%</td></tr>
+        <tr><td>高级</td><td>100</td><td>8</td><td>3</td><td>20</td><td>15-25</td><td>70%</td></tr>
+        <tr><td>精英</td><td>200</td><td>16</td><td>3</td><td>20</td><td>20-30</td><td>75%</td></tr>
+        <tr><td>大师</td><td>400</td><td>24</td><td>4</td><td>40</td><td>25-35</td><td>80%</td></tr>
+      </tbody>
+    </table>
+    <p>营养为 <code>ceil(基础营养 * (1 + 已登记人口 * 0.05))</code>，未登记者不计人口。金币为 <code>(候选数 - 2) * 20</code>，指定职业方向时每批加 10。只接受有实际营养的成品食物，不接受原料，不限品质。</p>
+    <p>自动付款先消耗剩余保质时间最短的实际库存栈，留下会补足营养的最后一份；再在剩余合格库存中挑单份足够且营养最小者，同条件按物品 ID 与稳定来源排序。玩家可以手动调整，服务端会校验具体来源、整数数量、实际组件与费用。同名物品不保证营养相同。</p>
+
+    <h2>候选与经历</h2>
+    <p>目标总等级在等级范围内均匀取整数随机。分配从初始可达的二阶职业开始，每轮抽未抽过的可达职业，取 <code>min(剩余等级, Random(1, 职业上限))</code>；判断可达时已有职业暂按 5 级计。指定方向时首次 100% 选中该二阶职业，后续该路线可达组 70%、其他组 30%。</p>
+    <p>候选当前仍是无装备的殖民者；持有等级的职业视为已解锁，实际转职仍需正常装备与资格。</p>
+    <p>经历数 0/1/2/3 的概率为 20%/30%/30%/20%，各等级相同。经历分正面与负面两档，同档等权；某档无可选经历时改用另一档。同名不重复，巧手与笨手笨脚、聪慧与愚笨互斥。</p>
+    <table>
+      <thead><tr><th>经历</th><th>属性修正</th></tr></thead>
+      <tbody>
+        <tr><td>健壮</td><td><code>max_hp</code> 基础百分比 +10%</td></tr>
+        <tr><td>敏捷</td><td><code>colonist.move_speed_modifier</code> 固定 +0.1</td></tr>
+        <tr><td>巧手 / 笨手笨脚</td><td><code>colonist.crafting_speed</code> 固定 +0.1 / -0.1</td></tr>
+        <tr><td>聪慧 / 愚笨</td><td><code>colonist.experience_gain_multiplier</code> 基础百分比 +10% / -10%</td></tr>
+        <tr><td>大胃王</td><td><code>colonist.satiety_capacity</code>、<code>colonist.energy_capacity</code> 各 +25</td></tr>
+      </tbody>
+    </table>
+    <p>经历以 <code>colonist.experience</code> 长期来源组保存，不改出生基础值，重复安装会替换该组。经历通过 <code>data/experiences/*.json</code> 注册，必需 <code>id</code>、<code>name</code>、<code>quality</code>、<code>weight</code>，属性模式为 <code>add</code> 或 <code>base_percent</code>，<code>excludes</code> 引用其他经历 ID。当前只提供属性类经历；<code>initial_careers</code> 或 <code>initial_states</code> 非空会明确报告不支持，不会静默丢弃效果。</p>
+
+    <h2>城镇中心与入场</h2>
+    <p>旗帜同时具有 <code>core:town_center</code> 与 <code>core:squad_assembly</code>，分别负责登记与集结；Mod 方块可以只提供城镇中心标签。放置时随方块记录归属与稳定实例 UUID，按本殖民地的放置顺序选择最早的有效可达目标，在相邻可站位置登记。</p>
+    <p>入场按候选确认顺序进行，从距可见区最远、可站立且可达登记点的无视野区块生成。无出生点或路径时保留队列并显示原因。登记前仅可查看：不派工、不征召、不换装、不转职、不提供视野、不计人口，也不受攻击与环境致死。</p>
+    <p>目标不可用时返程最近可达的无视野区块，到达后移除地图实体、保留候选重新排队；持续无返程路线满 1 游戏小时后从当前位置移除并重新排队。</p>
+
+    <h2>科技与配方</h2>
+    <p>初级默认开放；中级、高级、精英、大师逐级研发，分类为殖民地发展。材料为木板与石材各 4/8/16/32，工作量 100/200/400/800 研发 Tick，统一使用工作台与学者 1 级。研究与招募解锁按实际殖民地 UUID 归属。</p>
+    <p>旗帜默认可制作，使用工作台、工作量 10、产出 1；配方为木板 5 + 棉纤维 5 或木板 5 + 亚麻纤维 5，不能混合。金币物品为 <code>core:gold_coin</code>，每堆上限 100；新开局的测试物资额外包含 1000 金币，已完成开局安置的旧存档不补发。</p>
+
+    <h2>相关页面</h2>
+    <ul>
+      <li>职业与等级：<a href="../basics/registry/job.html">职业注册</a></li>
+      <li>实体属性与经历组：<a href="../basics/registry/entity.html">实体注册</a></li>
+      <li>旗帜与工作台定义：<a href="../basics/registry/building.html">建筑蓝图注册</a></li>
+      <li>研究项与解锁：<a href="../basics/registry/tech.html">科技注册</a>、<a href="../basics/registry/recipe.html">配方注册</a></li>
+      <li>状态如何随存档恢复：<a href="../appendix/engine/save-system.html">存档系统现状</a></li>
+    </ul>
+  </div>
+</div>
+<script src="../nav.js"></script>
+<script src="../wiki.js"></script>
+</body>
+</html>

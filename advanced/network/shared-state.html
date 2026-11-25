@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>共享状态 · NewColony Wiki</title>
+  <script src="../../theme.js"></script>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body data-page="advanced-shared-state">
+<div class="main">
+  <div class="content">
+    <h1>共享状态</h1>
+    <p class="subtitle">服务端发布、客户端只读的非持久化状态仓，用于把玩法视图推给界面。</p>
+
+    <h2>基本约定</h2>
+    <p><code>engine.shared_state</code> 是服务端拥有的非持久化状态仓。服务端 Lua 用命名空间键写入 JSON 兼容值，客户端 Lua 只能读取本地副本。客户端修改世界仍须发送经过鉴权的命令，不能调用 <code>set</code> 修改共享状态。</p>
+
+    <h2>接口行为</h2>
+    <table>
+      <thead><tr><th>调用</th><th>约定</th></tr></thead>
+      <tbody>
+        <tr><td><code>set(key, value)</code></td><td>仅服务端可用。键必须带命名空间；值必须可编码。写入相同内容不增加版本。</td></tr>
+        <tr><td><code>get(key)</code></td><td>返回解码后的独立值；从未收到该键时返回 <code>nil</code>。修改返回的表不会改动共享状态，必须重新 <code>set</code>。</td></tr>
+        <tr><td><code>version(key)</code></td><td>该侧可见内容变化时递增；键不存在时返回 <code>0</code>。</td></tr>
+        <tr><td><code>clear(key)</code></td><td>仅服务端可用。删除后版本与内容都视为不存在；重复删除不产生变化。</td></tr>
+      </tbody>
+    </table>
+    <p>推荐客户端写法：先比较 <code>version(key)</code>，只有变化时才调用 <code>get(key)</code> 解码，避免每次轮询都重建视图。</p>
+    <pre><code>-- LogicServer
+engine.shared_state.set("core:resources", {world_id = world_id, resources = rows})
+
+-- Client
+local version = engine.shared_state.version("core:resources")
+local value = engine.shared_state.get("core:resources")</code></pre>
+
+    <h2>生命周期与同步</h2>
+    <ul>
+      <li>共享状态不写入存档，与世界生命周期一同清空；进入世界后由各系统重新生成需要展示的值。</li>
+      <li>权威玩法状态仍由各系统的受管状态或原生组件保存，共享状态只是派生视图。</li>
+      <li>网络层按内容比较决定是否发送，未变化的键不会重复传输；频繁变化的键仍会产生同步成本，写入粒度应贴近实际展示需求。</li>
+      <li>全局共享键会广播给所有客户端。</li>
+    </ul>
+
+    <h2>不适用于什么</h2>
+    <p>需要按请求参数关联结果、或必须明确返回“目标不存在”的查询，不适合用全局共享键表达——这类请求仍应通过注册的命令与定向通道完成，并返回一次性结果。</p>
+
+    <h2>相关页面</h2>
+    <ul>
+      <li>命令、通道与执行端：<a href="sync.html">网络同步与 Mod 数据</a></li>
+      <li>状态字段的版本与别名：<a href="state-evolution.html">状态自动演进</a></li>
+      <li>脚本生命周期与提交语义：<a href="../lua/script-runtime.html">脚本运行契约</a></li>
+      <li>可调用的完整函数表：<a href="../../appendix/api-reference.html">Lua API 速查</a></li>
+    </ul>
+  </div>
+</div>
+<script src="../../nav.js"></script>
+<script src="../../wiki.js"></script>
+</body>
+</html>
