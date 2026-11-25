@@ -139,7 +139,7 @@ body {
 
 .nav-section-title {
   padding: 0 20px 6px;
-  font-size: .85rem;
+  font-size: .9rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -152,13 +152,13 @@ body {
 }
 
 /* 三角固定 14px 盒宽，标题文字偏移因此可预测：20 + 14 + 6 = 40px。
-   子项链接使用同一偏移，实现首字严格对齐。 */
+   子项链接使用同一偏移，实现首字严格对齐；字形大小不影响该偏移。 */
 .nav-section-title::before {
   content: "▾";
   flex: 0 0 14px;
   width: 14px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 1.05rem;
   transition: transform .2s;
 }
 
@@ -179,7 +179,7 @@ body {
 
 .nav-sub-title {
   padding: 5px 20px 5px 28px;
-  font-size: .9rem;
+  font-size: .95rem;
   font-weight: 600;
   color: var(--color-muted);
   cursor: pointer;
@@ -195,7 +195,7 @@ body {
   flex: 0 0 14px;
   width: 14px;
   text-align: center;
-  font-size: .95rem;
+  font-size: 1rem;
   transition: transform .2s;
 }
 
