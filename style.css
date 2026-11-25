@@ -139,7 +139,7 @@ body {
 
 .nav-section-title {
   padding: 0 20px 6px;
-  font-size: .7rem;
+  font-size: .9rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -154,7 +154,7 @@ body {
 .nav-section-title::before {
   content: "▾";
   display: inline-block;
-  font-size: .75rem;
+  font-size: 1.05rem;
   transition: transform .2s;
 }
 
@@ -175,7 +175,7 @@ body {
 
 .nav-sub-title {
   padding: 5px 20px 5px 28px;
-  font-size: .78rem;
+  font-size: .95rem;
   font-weight: 600;
   color: var(--color-muted);
   cursor: pointer;
@@ -188,7 +188,7 @@ body {
 .nav-sub-title::before {
   content: "▾";
   display: inline-block;
-  font-size: .7rem;
+  font-size: 1rem;
   transition: transform .2s;
 }
 
@@ -264,8 +264,15 @@ body {
   background: var(--color-topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
-  padding: 14px 40px;
   z-index: 50;
+}
+
+/* 与 .content 使用同一栏宽和内边距，保证面包屑左边缘、搜索框右边缘
+   与正文标题左边缘、正文右边缘对齐。 */
+.topbar-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 14px 40px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -793,7 +800,7 @@ td { background: var(--color-bg); }
   .main { margin-left: 0; }
   .page-shell { margin-left: 0; }
   .content { padding: 24px 20px 60px; }
-  .topbar { padding: 12px 20px; }
+  .topbar-inner { padding: 12px 20px; }
   .theme-switch { margin-left: 0; }
   .section-search { min-width: 0; flex: 1; }
 }

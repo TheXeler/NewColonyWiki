@@ -82,6 +82,10 @@
     }
     topbar.textContent = "";
 
+    const inner = document.createElement("div");
+    inner.className = "topbar-inner";
+    topbar.appendChild(inner);
+
     const crumb = document.createElement("div");
     crumb.className = "breadcrumb";
 
@@ -103,8 +107,8 @@
       addPart(entry.page.title);
     }
 
-    topbar.appendChild(crumb);
-    return topbar;
+    inner.appendChild(crumb);
+    return inner;
   }
 
   function renderFooter(content) {
@@ -561,11 +565,11 @@
         "请确认本页在 wiki.js 之前引入了路径正确的 nav.js。";
       shell.content.prepend(warn);
     }
-    const topbar = renderTopbar(shell.main, shell.content, entry, prefix);
+    const topbarInner = renderTopbar(shell.main, shell.content, entry, prefix);
     document.body.prepend(createSidebar(activeId, prefix));
     renderFooter(shell.content);
-    topbar.appendChild(createThemeSwitch());
-    setupChapterSearch(topbar, prefix);
+    topbarInner.appendChild(createThemeSwitch());
+    setupChapterSearch(topbarInner, prefix);
     renderLuaApiTable();
     setupApiSearch();
   });
