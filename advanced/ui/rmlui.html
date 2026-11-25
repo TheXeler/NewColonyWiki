@@ -419,7 +419,7 @@
     </ul>
 
     <h2 id="ui-diagnostics">界面诊断</h2>
-    <p>使用 <code>--DEBUG</code> 查看文档加载、绑定及命令日志。需要通过结构化 RML 观察和操作界面时，可使用 <a href="../../ai-test.md">本地 AI_TEST 接口</a>。</p>
+    <p>使用 <code>--DEBUG</code> 查看文档加载、绑定及命令日志。需要通过结构化 RML 观察和操作界面时，可用 <code>--AI_TEST</code> 启动本机自动化接口：它读取真实 RML 界面树、选择控件、提交该控件的界面命令，再取回执与变化后的界面树。</p>
 
     <h2 id="career-tree">个人信息与职业树</h2>
     <p>个人信息页的“字段 / 值 / 详情”表头下方使用 3px 灰蓝色分割线，与数据内容分开。兼容层表格支持可选的 <code>header_class</code> 字符串，将额外 RCSS 类名附加到表头行；未提供时保留默认样式。个人信息页通过 <code>colonists-personal-info-header</code> 单独设置分割线。此调整尚未构建、运行静态检查、测试或游戏内验收。</p>

@@ -63,7 +63,7 @@
         <tr><td><code>recipe_categories/</code></td><td>配方分类数据。科技界面分类使用独立 Lua 注册接口，不从本目录读取。</td><td><a href="registry/recipe.html">配方数据</a></td></tr>
         <tr><td><code>fluid_rules/</code></td><td>流体传播规则，由 ModLoader 读取并交给 FluidSystem 使用。</td><td>源码：Engine/Voxel/FluidSystem.cpp</td></tr>
         <tr><td><code>attributes_pack/</code></td><td>属性包定义，供实体与相关能力系统读取。</td><td><a href="registry/entity.html">实体定义</a></td></tr>
-        <tr><td><code>task_definitions/</code></td><td>原生实体 Task 使用的定义数据；与 scripts/timers 下的持久 Lua 定时器类型分开。</td><td><a href="../entity-tasks.md">实体 Task</a></td></tr>
+        <tr><td><code>task_definitions/</code></td><td>原生实体 Task 使用的定义数据；与 scripts/timers 下的持久 Lua 定时器类型分开。</td><td>—</td></tr>
       </tbody>
     </table>
     <p>事件、通道和命令既进入通用内容数据，也由 ScriptRegistry 根据同一捕获快照建立脚本声明。它们需通过所属 Mod、重复定义和入口引用校验，不能只依据通用表的覆盖规则判断是否可加载。网络接收也不允许用不同的声明替换本地已经加载的这三类脚本注册内容。</p>

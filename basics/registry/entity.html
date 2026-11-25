@@ -178,7 +178,7 @@ spawn_proto my_mod:pack_animal   -- 在世界中生成非殖民者实体</code><
     <p>例如在实体 <code>capabilities</code> 中同时声明 <code>{"type":"visual","model":"gltf:my_mod/colonist","texture":"textures/entity/colonist.png"}</code> 与 <code>{"type":"animation","enabled":true}</code>。当前 CoreMod 临时 GLB 没有动画片段，仍会以静态姿势显示。</p>
     <p>运行时按模型与贴图绑定缓存数字句柄，动画片段名称在切换时解析；位置和播放时间变化会复用既有实例分组。GLB 实例、传统实体网格和地面物品网格分别更新，因此 GLB 播放动画不会重建地面物品网格。实例和 CPU 回退姿态缓冲区在分配存活期间保持映射，在当前帧栅栏完成后写入并刷新，释放分配前解除映射。内容重载会使模型、贴图区域与动画句柄失效，并重新生成依赖旧内容的网格。</p>
     <h3>独立 GLB 部件装配</h3>
-    <p><code>visual.attachments</code> 支持最多 16 个独立模型组成实体，可按主体的命名节点绑定帽子、头发、武器等，也可使用 <code>rig:true</code> 按共同节点名称绑定衣服或身体部件。主体可以是只有节点和动画、没有网格的 GLB；装配后的部件提供全部可见几何。主体是动画权威，部件继承其刚性节点动画。相同结构共享合成模型与预采样姿态，整套装配仍只上传一个 60 字节实体实例；染色与显隐不进入几何缓存键。完整格式、导出规则和 Lua 接口见 <a href="../../entity-assembly.md">GLB 实体装配</a>。</p>
+    <p><code>visual.attachments</code> 支持最多 16 个独立模型组成实体，可按主体的命名节点绑定帽子、头发、武器等，也可使用 <code>rig:true</code> 按共同节点名称绑定衣服或身体部件。主体可以是只有节点和动画、没有网格的 GLB；装配后的部件提供全部可见几何。主体是动画权威，部件继承其刚性节点动画。相同结构共享合成模型与预采样姿态，整套装配仍只上传一个 60 字节实体实例；染色与显隐不进入几何缓存键。导出规则与 Lua 接口由引擎的 GLB 装配实现提供，本页只列出可配置字段。</p>
     <pre><code>{ "type": "visual", "model": "gltf:my_mod/rig", "attachments": [
   { "slot": "body", "model": "gltf:my_mod/body", "rig": true },
   { "slot": "hair", "model": "gltf:my_mod/hair_short", "node": "head", "tint": 4281558681 }
@@ -227,7 +227,7 @@ engine.ecs.clear_visual_parts(entity_uuid)</code></pre>
     <p>传统 box／biped 路径中，带有 <code>HeadVisual</code> 的实体会跟踪运行时 <code>InterestPoint</code>；没有 active interest point 时，头部使用身体朝向。执行中的工作会关注方块／计划方块中心，或实体的当前解析位置（有碰撞体时使用其半高），涵盖物品、工作台和实体交互。赶路时保持行走朝向，停下工作后面向目标。近战接触对象优先于远处的攻击指令目标；没有近战接触时，征召队长及兵模关注当前 Battle 目标，战斗身体朝向优先于行走和编队对齐。兴趣点在发布网络／渲染快照前重新计算，无需声明 <code>HeadVisual</code> 或 <code>BlockInteractor</code>。GLB 整体通过 <code>rotation.yaw</code> 面向目标，头部目前跟随导出的节点动画，尚未接入独立抬头／低头。</p>
     <p>传统模型通过 <code>HeadVisual</code> 组件加入这个行为。使用 <code>center_x</code>、<code>center_y</code>、<code>center_z</code>、<code>width</code>、<code>height</code> 和 <code>depth</code> 描述模型局部空间中的头部盒。</p>
 
-    <p>实体原型的模型和装配部件会随渲染内容提交，Renderer 对最多 32 种不同结构进行 CPU 预热；换色不产生新结构，未预热的外貌仍由运行时快照按需请求。组合 NCEM 的 <code>.deps</code> 清单支持输入更新、删除或禁用 MOD 后的失效清理，并以最近使用时间控制默认 512 MiB／2,048 项磁盘缓存；有效的动态外貌组合可以继续保留。具体格式与限制见 <a href="../../entity-assembly.md">实体装配说明</a>。这些新增实现与整世界／网络回归源码尚待手动验证。</p>
+    <p>实体原型的模型和装配部件会随渲染内容提交，Renderer 对最多 32 种不同结构进行 CPU 预热；换色不产生新结构，未预热的外貌仍由运行时快照按需请求。组合 NCEM 的 <code>.deps</code> 清单支持输入更新、删除或禁用 MOD 后的失效清理，并以最近使用时间控制默认 512 MiB／2,048 项磁盘缓存；有效的动态外貌组合可以继续保留。具体格式与限制由引擎的 GLB 装配实现提供，本页只列出可配置字段。这些新增实现与整世界／网络回归源码尚待手动验证。</p>
   </div>
 </div>
 <script src="../../nav.js"></script>

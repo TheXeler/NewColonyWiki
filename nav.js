@@ -124,7 +124,8 @@ window.__WIKI_MANIFEST = {
       id: "coremod",
       title: "核心实现",
       pages: [
-        { id: "city-simulation", title: "城邦模拟现状", path: "coremod/city.html" }
+        { id: "city-simulation", title: "城邦模拟现状", path: "coremod/city.html" },
+        { id: "coremod-stone", title: "石材矿脉与切石机", path: "coremod/stone.html" }
       ]
     },
     {
@@ -148,7 +149,8 @@ window.__WIKI_MANIFEST = {
             { id: "engine-service-layer", title: "引擎服务层", path: "appendix/engine/service-layer.html" },
             { id: "engine-renderer-lod", title: "地形 LOD 渲染", path: "appendix/engine/renderer-lod.html" },
             { id: "building-design-system", title: "建筑设计系统", path: "appendix/engine/building-design.html" },
-            { id: "item-storage-visuals", title: "物品存储与搬运表现", path: "appendix/engine/item-storage.html" }
+            { id: "item-storage-visuals", title: "物品存储与搬运表现", path: "appendix/engine/item-storage.html" },
+            { id: "appendix-selection-outline", title: "方块与多格对象选中描边", path: "appendix/engine/selection-outline.html" }
           ]
         }
       ]

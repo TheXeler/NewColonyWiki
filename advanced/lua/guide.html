@@ -38,7 +38,7 @@
     <p><code>buildings.damage(instance_id,amount,source_uuid?)</code> 以原点方块结算；<code>damage_at(x,y,z,amount,source_uuid?)</code> 以实际命中格结算。显式来源追溯投射物和士兵的原行为者，使用完整方块白名单，未通过时乘 0.5；省略来源的环境伤害不减半。<code>combat.commit_projectile_building_damage</code> 联合验证真实飞行轨迹、一次命中与建筑耐久，Lua 武器的 block 命中可以调用通用 submit_damage 动作。提交后的通知失败不会重做伤害。</p>
     <h2>无职业实体与作物破坏</h2>
     <p>没有 Job 的实体可以依实际能力执行任务，经验处理返回合法的 <code>NoProfession</code>，不创建职业或履历。AIState 原型若不是殖民者且未声明职业，生成时也不会补建空 Job。普通采掘和农业结果以 BlockInteractor、实际任务及归属检查执行者；职业不再是提交物理结果的前提。</p>
-    <p><code>engine.tasks.post</code>／<code>post_configured</code> 新增类型 <code>damage_crop</code>：参数使用实际作物方块 hash、持续秒数、执行者阵营，建议通过 configured 的 designated_worker 指定野兽。目标作物所属城市不应填写为野兽的 colony_uuid。该任务导航和工作后只破坏预期作物格，不生成收获产物、不授予职业经验，不需要农业待办或收获精度。工作锁占用时等待，目标变化时保留替换方块。内部保存为 Cut／Custom，普通 cut／plant 发布为 Block 载荷；CoreMod 农业与采掘监听器不将 damage_crop 当成收获。完整调用例子见 <code>wiki/entity-tasks.md</code>。</p>
+    <p><code>engine.tasks.post</code>／<code>post_configured</code> 新增类型 <code>damage_crop</code>：参数使用实际作物方块 hash、持续秒数、执行者阵营，建议通过 configured 的 designated_worker 指定野兽。目标作物所属城市不应填写为野兽的 colony_uuid。该任务导航和工作后只破坏预期作物格，不生成收获产物、不授予职业经验，不需要农业待办或收获精度。工作锁占用时等待，目标变化时保留替换方块。内部保存为 Cut／Custom，普通 cut／plant 发布为 Block 载荷；CoreMod 农业与采掘监听器不将 damage_crop 当成收获。</p>
     <p>野兽或其他 Mod 行为可通过该任务入口指定作物目标。</p>
     <h2>脚本各阶段 API 权限</h2>
     <p>2026-11-07，候选加载与原生准备阶段的允许列表集中到 <code>Engine/Scripting/ScriptApiPolicy.hpp</code>，按具体 API 路径授权。候选加载可使用 UUID 校验、哈希、JSON 编解码和日志；注册表读取仍由 ModLoader 提供当前候选的数据。候选发布前不开放真实世界读取、世界 UUID 分配、命令或网络发送。发布后的普通初始化、Tick、事件、保存／加载完成及卸载通知沿各自生命周期与原生权限规则运行，不额外套用准备阶段白名单。</p>
