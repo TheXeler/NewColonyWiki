@@ -139,7 +139,7 @@ body {
 
 .nav-section-title {
   padding: 0 20px 6px;
-  font-size: .9rem;
+  font-size: .85rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -151,10 +151,14 @@ body {
   gap: 6px;
 }
 
+/* 三角固定 14px 盒宽，标题文字偏移因此可预测：20 + 14 + 6 = 40px。
+   子项链接使用同一偏移，实现首字严格对齐。 */
 .nav-section-title::before {
   content: "▾";
-  display: inline-block;
-  font-size: 1.05rem;
+  flex: 0 0 14px;
+  width: 14px;
+  text-align: center;
+  font-size: 1rem;
   transition: transform .2s;
 }
 
@@ -175,20 +179,23 @@ body {
 
 .nav-sub-title {
   padding: 5px 20px 5px 28px;
-  font-size: .95rem;
+  font-size: .9rem;
   font-weight: 600;
   color: var(--color-muted);
   cursor: pointer;
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
+/* 分组标题文字偏移：28 + 14 + 6 = 48px，分组内链接使用同一偏移。 */
 .nav-sub-title::before {
   content: "▾";
-  display: inline-block;
-  font-size: 1rem;
+  flex: 0 0 14px;
+  width: 14px;
+  text-align: center;
+  font-size: .95rem;
   transition: transform .2s;
 }
 
@@ -202,7 +209,7 @@ body {
 
 .nav-section .nav-sub-group > a {
   display: block;
-  padding: 5px 20px 5px 42px;
+  padding: 5px 20px 5px 48px;
   color: var(--color-text);
   text-decoration: none;
   font-size: .86rem;
@@ -225,7 +232,7 @@ body {
 
 .nav-section a {
   display: block;
-  padding: 5px 20px 5px 28px;
+  padding: 5px 20px 5px 40px;
   color: var(--color-text);
   text-decoration: none;
   font-size: .88rem;
@@ -279,7 +286,7 @@ body {
 }
 
 .breadcrumb {
-  font-size: .82rem;
+  font-size: .75rem;
   color: var(--color-muted);
 }
 
