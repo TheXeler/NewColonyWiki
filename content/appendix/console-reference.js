@@ -22,7 +22,6 @@ window.__WIKI_PAGES["mod-console-reference"] = [
 "         data-api-fields=\"command,usage,access,side,note\"",
 "         data-api-columns=\"命令,用法,权限,侧,说明\"",
 "         data-api-code-fields=\"command,usage\">",
-"      <p><em>正在加载命令列表…</em></p>",
 "    </div>",
 "",
 "    <p data-api-empty hidden>没有匹配的命令。换一个关键词试试。</p>",
@@ -37,4 +36,5 @@ window.__WIKI_PAGES["mod-console-reference"] = [
 "      <li><code>doctor_*</code>、<code>diff_*snapshot*</code>、<code>*doctor_archives*</code> 主要给引擎维护者使用，普通 MOD 作者不需要关心。</li>",
 "    </ul>"
 ];
+
 

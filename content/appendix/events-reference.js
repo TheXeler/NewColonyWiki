@@ -15,9 +15,9 @@ window.__WIKI_PAGES["mod-lua-events-reference"] = [
 "    </div>",
 "",
 "    <div data-lua-api-container data-lua-api-source=\"__LUA_EVENTS_DATA\">",
-"      <p><em>正在加载事件列表…</em></p>",
 "    </div>",
 "",
 "    <p data-api-empty hidden>没有匹配的事件。换一个关键词试试。</p>"
 ];
+
 

@@ -18,9 +18,9 @@ window.__WIKI_PAGES["mod-lua-api-reference"] = [
 "    </div>",
 "",
 "    <div data-lua-api-container>",
-"      <p><em>正在加载 API 列表…</em></p>",
 "    </div>",
 "",
 "    <p data-api-empty hidden>没有匹配的 API。换一个关键词试试。</p>"
 ];
+
 
