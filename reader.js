@@ -337,7 +337,14 @@
       }
       var escape = window.__WIKI_MD ? window.__WIKI_MD.escapeHtml : function (s) { return s; };
       var html = "<h1>" + escape(entry.page.title) + "</h1>";
-      if (meta.path) html += '<p class="reg-path"><code>' + escape(meta.path) + "</code></p>";
+      if (meta.path) {
+        var pathHtml = String(meta.path).split(/(<[^>]+>)/).map(function (segment) {
+          if (/^<[^>]+>$/.test(segment)) return '<span class="reg-var">' + escape(segment) + "</span>";
+          return '<span class="reg-literal">' + escape(segment) + "</span>";
+        }).join("");
+        html += '<p class="reg-path"><span class="reg-path-label">位置</span>' +
+          '<code class="reg-path-value">' + pathHtml + "</code></p>";
+      }
       if (meta.subtitle) {
         html += '<p class="subtitle">' +
           window.__WIKI_MD.render([meta.subtitle]).replace(/^<p>|<\/p>$/g, "") + "</p>";
