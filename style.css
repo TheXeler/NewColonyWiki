@@ -330,10 +330,8 @@ body {
 /* 与 .content 使用同一栏宽和内边距，保证面包屑左边缘、搜索框右边缘
    与正文标题左边缘、正文右边缘对齐。 */
 .topbar-inner {
-  max-width: 900px;
-  margin: 0 auto;
   height: 100%;
-  padding: 0 40px;
+  padding: 0 24px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -396,9 +394,9 @@ body {
 }
 
 .content {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 40px 80px;
+  padding: 40px 48px 80px;
 }
 
 /* ===== Typography ===== */
