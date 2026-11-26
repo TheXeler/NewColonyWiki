@@ -8,6 +8,7 @@
 */
 :root {
   --sidebar-w: 260px;
+  --sidebar-rail: 18px;
 
   /* 与主题无关的派生色，引用上面的通道值 */
   --color-accent-hover-bg: rgba(var(--color-accent-rgb), .10);
@@ -97,16 +98,52 @@ body {
 }
 
 /* ===== Sidebar ===== */
+/* 默认只留一条窄栏；悬停或键盘聚焦时展开，直接覆盖正文而不挤压正文。 */
 .sidebar {
   position: fixed;
   top: 0; left: 0;
-  width: var(--sidebar-w);
+  width: var(--sidebar-rail);
   height: 100vh;
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-border);
-  overflow-y: auto;
+  overflow: hidden;
   z-index: 100;
-  padding: 0 0 24px;
+  padding: 0;
+  transition: width .18s ease, box-shadow .18s ease;
+}
+
+.sidebar:hover,
+.sidebar:focus-within {
+  width: var(--sidebar-w);
+  overflow-y: auto;
+  padding-bottom: 24px;
+  box-shadow: 0 0 28px var(--color-shadow);
+}
+
+/* 展开过程中不让内部内容重排 */
+.sidebar > * {
+  min-width: var(--sidebar-w);
+}
+
+/* 窄栏上的提示箭头，展开后隐藏 */
+.sidebar::after {
+  content: "›";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: var(--sidebar-rail);
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: .9rem;
+  line-height: 1;
+  color: var(--color-muted);
+  pointer-events: none;
+  transition: opacity .12s ease;
+}
+
+.sidebar:hover::after,
+.sidebar:focus-within::after {
+  opacity: 0;
 }
 
 .sidebar-logo {
@@ -260,7 +297,7 @@ body {
 
 /* ===== Main Content ===== */
 .main {
-  margin-left: var(--sidebar-w);
+  margin-left: var(--sidebar-rail);
   flex: 1;
   min-width: 0;
 }
@@ -805,7 +842,7 @@ td { background: var(--color-bg); }
 
 /* Safety net: legacy `.page-shell` pages still get the sidebar offset. */
 .page-shell {
-  margin-left: var(--sidebar-w);
+  margin-left: var(--sidebar-rail);
   flex: 1;
   min-width: 0;
 }
