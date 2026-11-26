@@ -569,8 +569,11 @@
     const topbarInner = renderTopbar(shell.main, shell.content, entry, prefix);
     document.body.prepend(createSidebar(activeId, prefix));
     renderFooter(shell.content);
-    topbarInner.appendChild(createThemeSwitch());
-    setupChapterSearch(topbarInner, prefix);
+    const actions = document.createElement("div");
+    actions.className = "topbar-actions";
+    topbarInner.appendChild(actions);
+    actions.appendChild(createThemeSwitch());
+    setupChapterSearch(actions, prefix);
     renderLuaApiTable();
     setupApiSearch();
   });

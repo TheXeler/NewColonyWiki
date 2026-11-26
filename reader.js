@@ -289,8 +289,12 @@
     }
 
     bar.appendChild(crumb);
-    bar.appendChild(createThemeSwitch());
-    bar.appendChild(createSearch());
+
+    var actions = document.createElement("div");
+    actions.className = "topbar-actions";
+    actions.appendChild(createThemeSwitch());
+    actions.appendChild(createSearch());
+    bar.appendChild(actions);
     return bar;
   }
 
