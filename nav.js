@@ -85,6 +85,20 @@ window.__WIKI_MANIFEST = {
             { id: "advanced-script-runtime", title: "脚本运行契约", path: "advanced/lua/script-runtime.html" }
           ]
         },
+          {
+            id: "code",
+            title: "代码注册",
+            pages: [
+              { id: "code-research-categories", title: "科技界面分类", path: "advanced/lua/code/research-categories.html" },
+              { id: "code-diplomacy", title: "外交提议与指标", path: "advanced/lua/code/diplomacy.html" },
+              { id: "code-effects", title: "效果生命周期", path: "advanced/lua/code/effects.html" },
+              { id: "code-static-listeners", title: "静态监听器", path: "advanced/lua/code/static-listeners.html" },
+              { id: "code-dynamic-listeners", title: "动态监听器", path: "advanced/lua/code/dynamic-listeners.html" },
+              { id: "code-timer-types", title: "持久定时器类型", path: "advanced/lua/code/timer-types.html" },
+              { id: "code-ui-data", title: "UI 数据提供器", path: "advanced/lua/code/ui-data.html" },
+              { id: "code-ui-windows", title: "UI 窗口与面板", path: "advanced/lua/code/ui-windows.html" }
+            ]
+          },
         {
           id: "ui",
           title: "界面",
