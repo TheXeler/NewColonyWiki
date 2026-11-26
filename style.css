@@ -109,7 +109,7 @@ body {
   border-right: 1px solid var(--color-border);
   overflow-y: auto;
   z-index: 100;
-  padding: 0 0 24px;
+  padding: 6px 0 24px;
   transition: width .18s ease, box-shadow .18s ease;
   /* 隐藏滚动条但保留滚轮/触板滚动 */
   scrollbar-width: none;
@@ -206,8 +206,9 @@ body {
 }
 
 /* 与 .nav-sub-title 的 5px 上下留白保持一致，全站统一节奏 */
+/* 大章节容器不再额外留白，节奏只由各元素的 5px 决定 */
 .nav-section {
-  padding: 5px 0;
+  padding: 0;
 }
 
 .nav-section-title {
@@ -252,7 +253,7 @@ body {
 
 .nav-sub-title {
   padding: 5px 20px 5px 20px;
-  font-size: .82rem;
+  font-size: .88rem;
   font-weight: 400;
   color: var(--color-muted);
   cursor: pointer;
@@ -268,7 +269,7 @@ body {
   flex: 0 0 14px;
   width: 14px;
   text-align: center;
-  font-size: 1rem;
+  font-size: .88rem;
   transition: transform .2s;
 }
 
