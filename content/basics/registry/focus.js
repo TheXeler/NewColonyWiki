@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-focusregistry"] = [
 "@path: <modid>/data/focuses/**/*.json",
-"@subtitle: 声明可触发的玩家事件：触发条件、展示文字、可选选项及回调名称。",
+"@subtitle: 玩家事件由触发条件、展示文字、可选选项与回调名称组成。",
 "",
 "## 数据契约",
 "",

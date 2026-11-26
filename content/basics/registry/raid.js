@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-raidregistry"] = [
 "@path: <modid>/data/raids/**/*.json",
-"@subtitle: 声明一次袭击：袭击者阵营与来源、加权敌群、每波抽组数、波数与生成距离。",
+"@subtitle: 袭击定义描述袭击者阵营与来源、加权敌群、每波抽组数、波数与生成距离。",
 "",
 "## 数据契约",
 "",

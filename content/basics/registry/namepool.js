@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-namepoolregistry"] = [
 "@path: <modid>/data/name_pools/**/*.json",
-"@subtitle: 提供某一种语言的词汇池，供派系名称模板随机取名。文件名的主体（不含扩展名）决定语言。",
+"@subtitle: 名称池提供某一种语言的词汇，供派系名称模板随机取名；文件名主体决定语言。",
 "",
 "## 数据契约",
 "",

@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-techregistry"] = [
 "@path: <modid>/data/techs/**/*.json",
-"@subtitle: 声明研究项目：分类、研究量、开题材料、所需设施与职业，以及前置与解锁目标。",
+"@subtitle: 研究项目描述分类、研究量、开题材料、所需设施与职业，以及前置与解锁目标。",
 "",
 "## 数据契约",
 "",

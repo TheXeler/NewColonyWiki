@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-civilizationregistry"] = [
 "@path: <modid>/data/civilizations/**/*.json",
-"@subtitle: 声明一个文明：可选职业节点、按职业的配方修正、开局选项与其方块职业，以及可选开局建筑。",
+"@subtitle: 文明定义描述可选职业节点、按职业的配方修正、开局选项与可选开局建筑。",
 "",
 "## 数据契约",
 "",

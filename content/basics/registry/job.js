@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-jobregistry"] = [
 "@path: <modid>/data/jobs/**/*.json",
-"@subtitle: 声明职业节点：身份、等级上限、逐级能力、转职前置与可解锁配方。文件名不参与登记，按 `id` 键入，支持任意子目录。",
+"@subtitle: 职业节点描述身份、等级上限、逐级能力、转职前置与可解锁配方；文件名不参与登记，按 `id` 键入。",
 "",
 "## 数据契约",
 "",

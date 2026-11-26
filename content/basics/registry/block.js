@@ -3,7 +3,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-blockregistry"] = [
 "@path: <modid>/data/blocks/<文件>.json",
-"@subtitle: 声明一个体素方块及其派生的兼容物品形态，引擎在加载阶段扫描 `data/blocks/` 下的全部 JSON 并登记。方块记录会派生同 ID 的兼容物品定义；不需要成为体素的新物品应放在 `data/items/`。",
+"@subtitle: 方块定义放在 `data/blocks/` 下，引擎加载时自动扫描；存量方块会派生同 ID 的兼容物品，不需要成为体素的新物品应放在 `data/items/`。",
 "",
 "## 数据契约",
 "",

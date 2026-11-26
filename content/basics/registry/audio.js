@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-audioregistry"] = [
 "@path: <modid>/data/audio/**/*.json",
-"@subtitle: 登记音效、环境音与音乐条目，指定音频文件、混音分类与默认增益。",
+"@subtitle: 音频条目登记文件、混音分类与默认增益，用于音效、环境音与音乐。",
 "",
 "## 数据契约",
 "",

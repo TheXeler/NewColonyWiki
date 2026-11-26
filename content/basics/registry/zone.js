@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-zoneregistry"] = [
 "@path: <modid>/data/zones/**/*.json",
-"@subtitle: 声明一种区域类型：选区几何、垂直范围、可查询的目标类别与过滤条件。",
+"@subtitle: 区域类型描述选区几何、垂直范围、可查询的目标类别与过滤条件。",
 "",
 "## 数据契约",
 "",

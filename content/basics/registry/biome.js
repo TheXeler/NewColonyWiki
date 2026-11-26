@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-biomeregistry"] = [
 "@path: <modid>/data/biomes/<文件>.json",
-"@subtitle: 描述一类群落的气候区间、地表材料与生成权重，由地形生成器在世界生成阶段读取。",
+"@subtitle: 群落定义给出气候区间、地表材料与生成权重，由地形生成器在世界生成阶段读取。",
 "",
 "## 数据契约",
 "",

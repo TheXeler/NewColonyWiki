@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-terrainregistry"] = [
 "@path: <modid>/data/terrain/**/*.json",
-"@subtitle: 指定世界使用的基础实心方块、水体方块与导航流体深度阈值。",
+"@subtitle: 地形配置给出世界使用的基础实心方块、水体方块与导航流体深度阈值。",
 "",
 "## 数据契约",
 "",

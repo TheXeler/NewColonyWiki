@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-reciperegistry"] = [
 "@path: <modid>/data/recipes/**/*.json",
-"@subtitle: 声明一条制作配方：材料、目标物品、可承接的工作点、工量与产出表。",
+"@subtitle: 配方描述用什么材料、做成什么、在哪些工作点能做，以及工量与产出表。",
 "",
 "## 数据契约",
 "",

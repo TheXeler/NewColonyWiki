@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-buildingregistry"] = [
 "@path: <modid>/data/buildings/**/*.json",
-"@subtitle: 声明建筑蓝图：占地尺寸、部件体素、耐久与修理、建造来源与拆除产出。",
+"@subtitle: 建筑蓝图描述占地尺寸、部件体素、耐久与修理、建造来源与拆除产出。",
 "",
 "## 数据契约",
 "",

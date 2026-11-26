@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-cropregistry"] = [
 "@path: <modid>/data/crops/**/*.json",
-"@subtitle: 声明一种作物的生长阶段、地块速率、温度区间、掉落与农务工时。",
+"@subtitle: 作物定义描述生长阶段、地块速率、温度区间、掉落与农务工时。",
 "",
 "## 数据契约",
 "",

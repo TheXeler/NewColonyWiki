@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-entityregistry"] = [
 "@path: <modid>/data/entities/**/*.json",
-"@subtitle: 声明实体原型：名称、生命、移动与视野、背包容量、能力组件，以及死亡产出。",
+"@subtitle: 实体原型描述名称、生命、移动与视野、背包容量、能力组件，以及死亡时产出的物品。",
 "",
 "## 数据契约",
 "",
