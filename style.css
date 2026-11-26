@@ -206,7 +206,7 @@ body {
 }
 
 .nav-section {
-  padding: 16px 0 4px;
+  padding: 10px 0 3px;
 }
 
 .nav-section-title {
@@ -250,9 +250,9 @@ body {
 }
 
 .nav-sub-title {
-  padding: 5px 20px 5px 28px;
+  padding: 5px 20px 5px 20px;
   font-size: .82rem;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--color-muted);
   cursor: pointer;
   user-select: none;
