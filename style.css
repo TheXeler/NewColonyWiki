@@ -9,7 +9,7 @@
 :root {
   --sidebar-w: 260px;
   --sidebar-rail: 18px;
-  --topbar-h: 56px;
+  --topbar-h: 64px;
 
   /* 与主题无关的派生色，引用上面的通道值 */
   --color-accent-hover-bg: rgba(var(--color-accent-rgb), .10);
@@ -172,15 +172,15 @@ body {
 }
 
 .topbar-brand .logo-icon {
-  width: 30px; height: 30px;
+  width: 45px; height: 45px;
   background: var(--color-accent);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px; color: var(--color-on-accent);
+  font-weight: 700; font-size: 18px; color: var(--color-on-accent);
 }
 
 .topbar-brand-name {
-  font-size: 1.16rem;
+  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: .2px;
   white-space: nowrap;
@@ -273,7 +273,6 @@ body {
 .nav-section .nav-sub-group > a:hover {
   background: var(--color-accent-hover-bg);
   color: var(--color-link-hover);
-  border-left-color: var(--color-accent);
 }
 
 .nav-section .nav-sub-group > a.active,
@@ -296,7 +295,6 @@ body {
 .nav-section a:hover {
   background: var(--color-accent-hover-bg);
   color: var(--color-link-hover);
-  border-left-color: var(--color-accent);
 }
 
 .nav-section a.active {
@@ -349,16 +347,14 @@ body {
 .breadcrumb a:hover { text-decoration: underline; }
 .breadcrumb .sep { margin: 0 6px; }
 
-/* 注册页标题下的第一行：数据位置胶囊 */
+/* 注册页标题下的第一行：数据位置胶囊（标签与路径同在框内） */
 .reg-path {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin: 6px 0 2px;
 }
 
 .reg-path-label {
-  flex: 0 0 auto;
+  margin-right: 8px;
+  font-family: var(--font-sans);
   font-size: .78rem;
   letter-spacing: .5px;
   color: var(--color-muted);

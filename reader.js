@@ -342,8 +342,8 @@
           if (/^<[^>]+>$/.test(segment)) return '<span class="reg-var">' + escape(segment) + "</span>";
           return '<span class="reg-literal">' + escape(segment) + "</span>";
         }).join("");
-        html += '<p class="reg-path"><span class="reg-path-label">位置</span>' +
-          '<code class="reg-path-value">' + pathHtml + "</code></p>";
+        html += '<p class="reg-path"><code class="reg-path-value">' +
+          '<span class="reg-path-label">位置</span>' + pathHtml + "</code></p>";
       }
       if (meta.subtitle) {
         html += '<p class="subtitle">' +
