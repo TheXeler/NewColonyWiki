@@ -1,0 +1,32 @@
+// 正文：Markdown 与内嵌 HTML 混写，由 md.js 解析；改完直接刷新 reader.html。
+window.__WIKI_PAGES = window.__WIKI_PAGES || {};
+window.__WIKI_PAGES["patterns-publishing"] = [
+"@subtitle: 打包、版本与发布前检查：让别人的游戏能稳定加载你的 MOD。",
+"",
+"## 打包",
+"",
+"Windows 下由 `bash/Export.bat` 与 `bash/DebugExport.bat` 负责导出与打 zip；`export-release` 预设使用 MSVC/Ninja 与 x64-windows 双 triplet。发布内容进入 `output/NewColony/`，压缩包名为 `output/NewColony-MMdd-NN.zip`。",
+"",
+"MOD 自身的发布物只需要 `mod.json` 加上 `data/`、`scripts/`、`assets/`、`lang/` 等你实际使用的目录；不要把 `generate/` 这类可重建缓存提交进去。",
+"",
+"## 版本与依赖",
+"",
+"- `manifest.json`（即 `mod.json`）里声明 `dependencies`、`load_after`、`load_before`，不要假设加载顺序。",
+"- 依赖别人 MOD 的 ID 时写进依赖，而不是在注释里说明。",
+"- 内容引用的合法性由加载器校验：引用缺失会拒绝加载，这是发布前最容易踩的坑。",
+"",
+"## 发布前检查",
+"",
+"- [ ] 在干净环境里从零加载一次：`mods` 命令能看到你的 MOD",
+"- [ ] `data type:<类型>` 能查到你的每条记录，且来源路径正确",
+"- [ ] 没有重复 ID、没有指向不存在定义的引用",
+"- [ ] 本地化键齐全，缺 key 时不会显示原始键名",
+"- [ ] 存档写入与读取各走一遍，且换存档不串状态",
+"- [ ] 客户端与服务端使用同一版本内容",
+"",
+"## 实例",
+"",
+"- 加载顺序与清单字段：<a href=\"../../basics/manifest.html\">mod.json</a>",
+"- 目录放置规则：<a href=\"../../basics/directory.html\">MOD 目录结构</a>",
+"- 能力边界（别把未接入的能力写进依赖）：<a href=\"../../overview/status.html\">能力状态</a>"
+];
