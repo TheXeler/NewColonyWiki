@@ -10,14 +10,8 @@ window.__WIKI_PAGES["mod-lua-events-reference"] = [
 "      <code>engine.events</code> 只有 <code>subscribe</code>、<code>unsubscribe</code> 和 <code>emit</code>，没有按来源或前缀批量清理的入口；事件 ID 必须在 <code>data/events</code> 中声明，回调字段在 <code>current</code> 里。事件的背景说明见 <a href=\"#/advanced/lua/events\">Lua 事件系统</a>。",
 "    </div>",
 "",
-"    <div class=\"search-box\">",
-"      <input data-api-search type=\"search\" placeholder=\"搜索事件，例如 tick、inventory、focus、work\">",
-"    </div>",
 "",
-"    <div data-lua-api-container data-lua-api-source=\"__LUA_EVENTS_DATA\">",
-"    </div>",
-"",
-"    <p data-api-empty hidden>没有匹配的事件。换一个关键词试试。</p>"
+""
 ];
 
 

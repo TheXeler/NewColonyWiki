@@ -13,14 +13,8 @@ window.__WIKI_PAGES["mod-lua-api-reference"] = [
 "      当前公共 API 版本是 <code>0.1</code>。版本入口 <code>engine.api_version</code> 和 <code>engine.version.api</code> 是 <code>stable</code>。备注里的 <code>[experimental]</code> 表示低级或开发向能力，常见于 ECS 直接组件写入、世界修改、网络命令、编辑器和文件内容加载入口。",
 "    </div>",
 "",
-"    <div class=\"search-box\">",
-"      <input data-api-search type=\"search\" placeholder=\"搜索 API，例如 focus、inventory、spawn、terrain、locale\">",
-"    </div>",
 "",
-"    <div data-lua-api-container>",
-"    </div>",
-"",
-"    <p data-api-empty hidden>没有匹配的 API。换一个关键词试试。</p>"
+""
 ];
 
 
