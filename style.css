@@ -211,7 +211,7 @@ body {
 }
 
 .nav-section-title {
-  padding: 0 20px 6px;
+  padding: 5px 20px;
   font-size: .9rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -247,7 +247,7 @@ body {
 
 /* ===== Nested Sub-Group ===== */
 .nav-sub-group {
-  padding: 2px 0;
+  padding: 0;
 }
 
 .nav-sub-title {
