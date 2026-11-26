@@ -15,6 +15,7 @@
   var IS_READER = document.body && document.body.dataset.page === "reader";
 
   function hrefOf(route) {
+    if (route === HOME_ROUTE || route === "") return "index.html";
     return (IS_READER ? "#/" : "reader.html#/") + route;
   }
   var currentEntry = null;
@@ -486,6 +487,10 @@
   }
 
   function navigate() {
+    var requested = currentRoute();
+    if (!requested || requested === HOME_ROUTE) {
+      if (IS_READER) { window.location.replace("index.html"); return; }
+    }
     if (!IS_READER) {
       renderSidebar(null);
       renderTopbar(null);
@@ -502,4 +507,5 @@
   window.addEventListener("hashchange", navigate);
   window.addEventListener("DOMContentLoaded", navigate);
 })();
+
 
