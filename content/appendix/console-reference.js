@@ -2,6 +2,8 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-console-reference"] = [
 "@subtitle: 按当前引擎命令注册表整理的表：命令、用法、默认权限、执行侧与说明。用搜索框过滤命令名、用法、权限或关键词。背景与工作流见 控制台命令。",
+"@datasource: appendix/data/console-commands-data.js",
+"@datatable: __CONSOLE_COMMANDS_DATA",
 "",
 "    <div class=\"callout warn\">",
 "      命令分客户端与服务端两侧。<code>help</code>、相机、视图、选择、本地化、RML 重载、GPU 调试和连接管理命令由请求客户端执行；其余命令（包括只读查询）都会发送到服务端执行。没有可用服务端会话时世界命令明确失败，不会回退到客户端执行。",
@@ -35,3 +37,4 @@ window.__WIKI_PAGES["mod-console-reference"] = [
 "      <li><code>doctor_*</code>、<code>diff_*snapshot*</code>、<code>*doctor_archives*</code> 主要给引擎维护者使用，普通 MOD 作者不需要关心。</li>",
 "    </ul>"
 ];
+

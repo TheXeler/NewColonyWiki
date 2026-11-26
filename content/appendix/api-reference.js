@@ -2,6 +2,8 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-lua-api-reference"] = [
 "@subtitle: 按当前引擎绑定整理的函数表。用搜索框过滤模块、函数名、参数或说明。事件订阅与事件列表已拆到 Lua 事件 速查。",
+"@datasource: appendix/data/lua-api-data.js",
+"@datatable: __LUA_API_DATA|api,params,returns,note|API,参数,返回,备注|api",
 "",
 "    <div class=\"callout warn\">",
 "      <code>math.random</code> 在脚本环境中会报错。需要确定性随机时，请使用 <code>engine.random</code>。<br>脚本沙箱不暴露 <code>os</code>、<code>io</code>、<code>debug</code>、<code>dofile</code>、<code>loadfile</code>、<code>load</code> 或 <code>loadstring</code>；加载同 MOD 的 Lua 模块请使用 <code>require</code>。",
@@ -21,3 +23,4 @@ window.__WIKI_PAGES["mod-lua-api-reference"] = [
 "",
 "    <p data-api-empty hidden>没有匹配的 API。换一个关键词试试。</p>"
 ];
+

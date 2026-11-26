@@ -11,6 +11,12 @@
   var HOME_ROUTE = "index";
   var FOOTER_TEXT = SITE.footer || "NewColony Wiki · UTF-8";
   var loaded = Object.create(null);
+
+  var IS_READER = document.body && document.body.dataset.page === "reader";
+
+  function hrefOf(route) {
+    return (IS_READER ? "#/" : "reader.html#/") + route;
+  }
   var currentEntry = null;
 
   function chapterList() {
@@ -63,7 +69,7 @@
 
     function addLink(container, page, state) {
       var a = document.createElement("a");
-      a.href = "#/" + routeOf(page);
+      a.href = hrefOf(routeOf(page));
       a.textContent = page.title;
       if (page.id === activeId) {
         a.className = "active";
@@ -197,7 +203,7 @@
       matches.forEach(function (entry) {
         var item = document.createElement("a");
         item.className = "section-search-result";
-        item.href = "#/" + routeOf(entry.page);
+        item.href = hrefOf(routeOf(entry.page));
         item.setAttribute("role", "option");
         var label = document.createElement("span");
         label.className = "section-search-result-label";
@@ -263,7 +269,7 @@
 
     var brand = document.createElement("a");
     brand.className = "topbar-brand";
-    brand.href = "#/" + HOME_ROUTE;
+    brand.href = hrefOf(HOME_ROUTE);
     brand.innerHTML = '<span class="logo-icon">NC</span>';
     var brandText = document.createElement("span");
     brandText.textContent = SITE.title || "NewColony Wiki";
@@ -355,6 +361,7 @@
       }
       html += window.__WIKI_MD.render(body);
       content.innerHTML = html;
+      mountDataTable(meta, content);
       renderFooter(content);
       window.scrollTo(0, 0);
     }
@@ -379,7 +386,111 @@
 
   /* ---------- 路由 ---------- */
 
+  /* ---------- 速查表渲染（正文用 @datasource / @datatable 声明） ---------- */
+
+  function mountDataTable(meta, content) {
+    if (!meta.datatable) return;
+    var spec = String(meta.datatable).split("|");
+    var varName = (spec[0] || "").trim();
+    if (!varName) return;
+
+    var box = document.createElement("div");
+    box.className = "search-box";
+    var input = document.createElement("input");
+    input.type = "search";
+    input.setAttribute("data-api-search", "");
+    input.placeholder = "搜索…";
+    box.appendChild(input);
+
+    var wrap = document.createElement("div");
+    wrap.setAttribute("data-lua-api-container", "");
+
+    var empty = document.createElement("p");
+    empty.setAttribute("data-api-empty", "");
+    empty.hidden = true;
+    empty.textContent = "没有匹配项。";
+
+    content.appendChild(box);
+    content.appendChild(wrap);
+    content.appendChild(empty);
+
+    function esc(value) {
+      return window.__WIKI_MD ? window.__WIKI_MD.escapeHtml(value) : String(value);
+    }
+
+    function pick(list, fallback) {
+      var parts = String(list || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+      return parts.length > 0 ? parts : fallback;
+    }
+
+    function render() {
+      var data = window[varName];
+      if (!data || !data.groups) {
+        wrap.innerHTML = '<div class="callout warn">数据 ' + esc(meta.datasource || varName) + " 未加载。</div>";
+        return;
+      }
+      var first = (data.groups[0] && data.groups[0].items && data.groups[0].items[0]) || {};
+      var allKeys = Object.keys(first);
+      var fields = pick(spec[1], allKeys);
+      var columns = pick(spec[2], fields);
+      if (columns.length !== fields.length) columns = fields;
+      var codeFields = pick(spec[3], [fields[0]]);
+
+      var html = "";
+      data.groups.forEach(function (group) {
+        html += '<h3 class="api-group-title">' + esc(group.name || "") + "</h3><table><thead><tr>";
+        columns.forEach(function (column) { html += "<th>" + esc(column) + "</th>"; });
+        html += "</tr></thead><tbody>";
+        (group.items || []).forEach(function (item) {
+          html += '<tr class="api-row" data-api-row>';
+          fields.forEach(function (field) {
+            var value = item[field] === undefined || item[field] === null ? "" : String(item[field]);
+            html += "<td>" + (codeFields.indexOf(field) >= 0 ? "<code>" + esc(value) + "</code>" : esc(value)) + "</td>";
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+      });
+      wrap.innerHTML = html;
+
+      function update() {
+        var query = input.value.trim().toLowerCase();
+        var visible = 0;
+        Array.prototype.forEach.call(wrap.querySelectorAll("table"), function (table) {
+          var heading = table.previousElementSibling;
+          var headingMatch = heading && heading.classList.contains("api-group-title") &&
+            heading.textContent.toLowerCase().indexOf(query) >= 0;
+          var shown = 0;
+          Array.prototype.forEach.call(table.querySelectorAll("[data-api-row]"), function (row) {
+            var match = query === "" || headingMatch || row.textContent.toLowerCase().indexOf(query) >= 0;
+            row.hidden = !match;
+            if (match) { shown++; visible++; }
+          });
+          table.hidden = shown === 0;
+          if (heading && heading.classList.contains("api-group-title")) heading.hidden = shown === 0;
+        });
+        empty.hidden = visible !== 0;
+      }
+      input.addEventListener("input", update);
+      update();
+    }
+
+    if (window[varName] || !meta.datasource) { render(); return; }
+    var script = document.createElement("script");
+    script.src = String(meta.datasource).trim();
+    script.onload = render;
+    script.onerror = function () {
+      wrap.innerHTML = '<div class="callout warn">数据脚本加载失败：' + esc(meta.datasource) + "</div>";
+    };
+    document.head.appendChild(script);
+  }
+
   function navigate() {
+    if (!IS_READER) {
+      renderSidebar(null);
+      renderTopbar(null);
+      return;
+    }
     var route = currentRoute() || HOME_ROUTE;
     var entry = findByRoute(route);
     currentEntry = entry;
@@ -391,3 +502,4 @@
   window.addEventListener("hashchange", navigate);
   window.addEventListener("DOMContentLoaded", navigate);
 })();
+

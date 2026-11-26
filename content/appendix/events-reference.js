@@ -2,6 +2,8 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-lua-events-reference"] = [
 "@subtitle: 从 Lua API 速查 中拆出的全部事件：事件订阅接口与引擎/CoreMod/UI 事件。用搜索框过滤事件名、字段或说明。",
+"@datasource: appendix/data/lua-events-data.js",
+"@datatable: __LUA_EVENTS_DATA",
 "",
 "    <p>2026-10-13 新增 <code>core:city_resident_added</code>：原生抽象城邦新增提交成功后延迟派发，非可取消、非auto_sync。字段为uuid／city_uuid／tick／key／reason／x／y／z／in_fluid／requires_support；表示居民已加入该城邦，不替代玩家recruitment_registered的candidate_uuid／town_hall_uuid语义。纯准备或提交拒绝不派发，清除意图后的重复Runtime提交不重发。系统仍关闭，场景未执行。</p>",
 "    <div class=\"callout warn\">",
@@ -18,3 +20,4 @@ window.__WIKI_PAGES["mod-lua-events-reference"] = [
 "",
 "    <p data-api-empty hidden>没有匹配的事件。换一个关键词试试。</p>"
 ];
+
