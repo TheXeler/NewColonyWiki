@@ -113,7 +113,9 @@ body {
   transition: width .18s ease, box-shadow .18s ease;
 }
 
-@media (max-width: 1199px) {
+/* 断点 = 正文上限 1200 + 2×280 空位 = 1760px：
+   窗口比它宽时侧边栏常驻展开且不压正文；比它窄时回缩成窄栏，悬停展开。 */
+@media (max-width: 1759px) {
   .sidebar {
     width: var(--sidebar-rail);
     overflow: hidden;
