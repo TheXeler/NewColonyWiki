@@ -205,8 +205,9 @@ body {
   white-space: nowrap;
 }
 
+/* 与 .nav-sub-title 的 5px 上下留白保持一致，全站统一节奏 */
 .nav-section {
-  padding: 10px 0 3px;
+  padding: 5px 0;
 }
 
 .nav-section-title {
