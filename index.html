@@ -14,43 +14,20 @@
     <p class="subtitle">一款殖民地模拟游戏。你带领一群殖民者来到新的土地，从零开始建造一个能运转的家园。每个殖民者有自己的名字、职业、技能和需求——饿了要找吃的，累了要休息，还需要和其他人交流。你的工作是给他们分配工作、规划生产线、应对各种事件，让他们活下去并且过得越来越好。游戏里的世界由体素（方块）组成，支持程序化地形生成、昼夜循环和动态天空。</p>
 
     <div class="callout info">
-      这份 Wiki 是写给 MOD 作者的。我们不会讲引擎内部实现，只告诉你"能配置什么、脚本能调用什么、出了问题怎么查"。C++ 内部类和未列出的字段都不应作为兼容承诺依赖。
-    </div><h2>从这里开始</h2>
-    <div class="card-grid">
-      <a class="card" href="reader.html#/overview/status">
-        <h3>能力状态</h3>
-        <p>现在能稳定依赖什么、哪些还只是接口或实验层。判断能不能做的唯一权威页。</p>
-      </a>
-      <a class="card" href="reader.html#/basics/guide">
-        <h3>MOD 开发基础</h3>
-        <p>加载顺序、目录结构、<code>mod.json</code>、数据注册表与素材格式。</p>
-      </a>
-      <a class="card" href="reader.html#/advanced/lua/guide">
-        <h3>MOD 开发高级</h3>
-        <p>事件、界面、网络同步、共享状态与脚本运行契约。</p>
-      </a>
-      <a class="card" href="reader.html#/coremod/city">
-        <h3>核心实现</h3>
-        <p>本体已有的系统是怎么做的：城邦模拟、石材矿脉、招募、法术、家具。</p>
-      </a>
-      <a class="card" href="reader.html#/appendix/engine/terrain-generation">
-        <h3>引擎参考</h3>
-        <p>渲染、光照、存档、资源路径等平台能力与使用边界。</p>
-      </a>
-      <a class="card" href="reader.html#/appendix/api-reference">
-        <h3>速查</h3>
-        <p>Lua API、事件与控制台命令的确切签名，写作时随手查。</p>
-      </a>
+      这份 Wiki 是写给 MOD 作者的。我们不讲引擎内部实现，只告诉你「能配置什么、脚本能调用什么、出了问题怎么查」。C++ 内部类和未列出的字段都不应作为兼容承诺依赖。
     </div>
 
-    <h2>推荐阅读顺序</h2>
+    <h2>怎么用这份 Wiki</h2>
     <ol class="step-list">
-      <li><strong>先看概念。</strong>了解 MOD 如何被加载，理解目录结构、加载顺序、多类数据注册和 Lua 生命周期。这样后面看 <code>data/blocks</code> 和监听器时不会混淆。</li>
-      <li><strong>再注册新东西。</strong>从 <code>mod.json</code> 开始，按系统入口选择<a href="reader.html#/basics/data">数据文件注册表</a>或<a href="reader.html#/advanced/lua/coderegistry">代码注册表</a>。物品、方块、科技项目等使用 JSON；科技界面分类、外交提议、效果生命周期等使用 Lua 注册。</li>
-      <li><strong>最后写 Lua。</strong>Lua 用来处理事件响应、定时器、焦点条件和运行时逻辑，不是用来重建数据系统的。</li>
+      <li><strong>先确认能不能做。</strong>查<a href="reader.html#/overview/status">能力状态</a>：你要做的事属于「可用」「部分」还是「未接入」。判断可用性是唯一权威，其他页面都是它的展开说明。</li>
+      <li><strong>再看概念。</strong>读<a href="reader.html#/basics/guide">MOD 是怎样加载的</a>，理解目录结构、加载顺序与 Lua 生命周期，后面看 <code>data/</code> 和监听器时不会混淆。</li>
+      <li><strong>然后注册内容。</strong>从 <code>mod.json</code> 开始，按系统入口选择<a href="reader.html#/basics/data">数据文件注册表</a>或<a href="reader.html#/advanced/lua/coderegistry">代码注册表</a>。物品、方块、科技项目等使用 JSON；科技界面分类、外交提议、效果生命周期等使用 Lua 注册。</li>
+      <li><strong>最后写行为。</strong>事件响应、定时任务、界面与跨系统编排写在 Lua 里，规则见<a href="reader.html#/advanced/lua/guide">Lua 怎么用</a>。Lua 不是用来重建数据系统的。</li>
     </ol>
 
-    <p>查阅<a href="reader.html#/overview/boundary">系统边界</a>，了解存档、战斗、城邦模拟、外交、网络和界面的使用范围。</p>
+    <h2>目录怎么组织</h2>
+    <p>左侧导航按读者阶段分章：<strong>概览</strong>给出能力与边界，<strong>MOD 开发基础</strong>讲数据注册与素材，<strong>MOD 开发高级</strong>讲 Lua、界面与网络，<strong>核心实现</strong>记录本体已经做出来的东西，<strong>附录</strong>放三张速查表。</p>
+    <p>需要了解存档、战斗、城邦模拟、外交、网络和界面的使用范围时，查<a href="reader.html#/overview/boundary">系统边界</a>；想对照本体实现时，从<a href="reader.html#/core/overview">核心实现</a>进入。</p>
 
     <div class="callout info">
       当前最适合开发内容型 MOD：物品、方块、配方、职业、实体原型、NPC 阵营、作物、区域和少量 Lua 辅助逻辑。逐项的可用性判断见<a href="reader.html#/overview/status">能力状态</a>；参考 <code>CoreMod/</code> 了解目录结构和数据格式。

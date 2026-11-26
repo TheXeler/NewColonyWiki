@@ -8,7 +8,7 @@
 
 ```
 wiki/
-  index.html        首页：站点简介 + 六张章节入口卡片
+  index.html        首页：站点简介与阅读指引（不放导航卡片，导航在侧边栏）
   reader.html       阅读器：唯一承载正文的外壳
   404.html          GitHub Pages 的兜底页
   nav.js            导航清单（唯一真相）
