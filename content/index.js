@@ -9,7 +9,7 @@ window.__WIKI_PAGES["index"] = [
 "",
 "    <h2>阅读器预览</h2>",
 "    <div class=\"callout info\">",
-"      新的单页阅读器已就绪（正文抽成 Markdown 数据，侧边栏不再整页刷新）。示范页是<a href=\"#/reader#/basics/registry/block\">方块注册</a>；未迁移的页面会显示占位说明并给出旧页链接。",
+"      新的单页阅读器已就绪（正文抽成 Markdown 数据，侧边栏不再整页刷新）。示范页是<a href=\"#/basics/registry/block\">方块注册</a>；未迁移的页面会显示占位说明并给出旧页链接。",
 "    </div>",
 "",
 "    <h2>从这里开始</h2>",
