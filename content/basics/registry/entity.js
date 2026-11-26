@@ -38,7 +38,6 @@ window.__WIKI_PAGES["mod-entityregistry"] = [
 "  </tbody>",
 "</table>",
 "",
-"已移除字段：旧的 `components` 块与旧行为树字段，出现即拒绝。",
 "",
 "## 注册示例",
 "",
@@ -100,3 +99,4 @@ window.__WIKI_PAGES["mod-entityregistry"] = [
 "",
 "`engine.modding.list_by_type(\"entities\")`、`engine.modding.get_data_json(\"entities\", id)`。控制台可用 `list_data entities` 筛选，或用 `data type:entities`、`data entities <id>`。"
 ];
+

@@ -26,7 +26,6 @@ window.__WIKI_PAGES["mod-reciperegistry"] = [
 "  </tbody>",
 "</table>",
 "",
-"已移除字段：`output`。产物只能由产出表决定，出现该字段会被拒绝。",
 "",
 "## 注册示例",
 "",
@@ -74,7 +73,7 @@ window.__WIKI_PAGES["mod-reciperegistry"] = [
 "",
 "### 产出只能来自产出表",
 "",
-"不要写 `output`：该字段已移除，出现即拒绝。产出由 `output_table` 与 `output_table_executions` 决定；`quality` 模式还需要 `quality_table`，缺失时定义保留但设配置屏障，配方不可用。",
+"产出由 `output_table` 与 `output_table_executions` 决定；`quality` 模式还需要 `quality_table`，缺失时定义保留但设配置屏障，配方不可用。",
 "",
 "### CoreMod 现有配方",
 "",
@@ -84,3 +83,4 @@ window.__WIKI_PAGES["mod-reciperegistry"] = [
 "",
 "`engine.modding.list_by_type(\"recipes\")`、`engine.modding.get_data_json(\"recipes\", id)`；`engine.crafting.list_recipes()`、`engine.crafting.get_recipe(id)`，控制台 `list_recipes`。也可用 `list_data recipes` 筛选，或 `data type:recipes`、`data recipes <id>`。"
 ];
+

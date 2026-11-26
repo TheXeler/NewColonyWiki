@@ -41,7 +41,6 @@ window.__WIKI_PAGES["mod-jobregistry"] = [
 "  </tbody>",
 "</table>",
 "",
-"已移除字段：`tree_parent`、`allowed_task_types`、`allowed_job_types`。定义里出现任一项都会被拒绝。",
 "",
 "## 注册示例",
 "",
@@ -117,3 +116,4 @@ window.__WIKI_PAGES["mod-jobregistry"] = [
 "",
 "`max_level` 缺省是 5，而 `level_abilities` 即使零级也必须写成数组且长度与 `max_level` 一致——写 `\"max_level\": 0` 时该数组应为空数组。"
 ];
+
