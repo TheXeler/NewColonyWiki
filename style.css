@@ -206,13 +206,27 @@ body {
 }
 
 /* 与 .nav-sub-title 的 5px 上下留白保持一致，全站统一节奏 */
-/* 大章节容器不再额外留白，节奏只由各元素的 5px 决定 */
+/* 层级节奏：同级相邻 5px，跨层级 10px。
+   条目自身 2.5px 上下 → 相邻同级自然得到 5px；
+   下面四条只在不同层级的边界补 5px。 */
 .nav-section {
   padding: 0;
 }
 
+.nav-section:not(.collapsed) + .nav-section {
+  margin-top: 5px;
+}
+
+/* 小章节与其下的标题视为同级，不加跨层间距 */
+
+/* 折叠后大章节标题与下一个大章节同级，不应保留子项间距 */
+.nav-section.collapsed .nav-section-title {
+  margin-bottom: 0;
+}
+
 .nav-section-title {
-  padding: 5px 20px;
+  padding: 2.5px 20px;
+  margin-bottom: 5px;
   font-size: .9rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -252,7 +266,7 @@ body {
 }
 
 .nav-sub-title {
-  padding: 5px 20px 5px 20px;
+  padding: 2.5px 20px 2.5px 20px;
   font-size: .88rem;
   font-weight: 400;
   color: var(--color-text);
@@ -283,7 +297,7 @@ body {
 
 .nav-section .nav-sub-group > a {
   display: block;
-  padding: 5px 20px 5px 48px;
+  padding: 2.5px 20px 2.5px 45px;
   color: var(--color-text);
   text-decoration: none;
   font-size: .88rem;
@@ -305,7 +319,7 @@ body {
 
 .nav-section a {
   display: block;
-  padding: 5px 20px 5px 40px;
+  padding: 2.5px 20px 2.5px 37px;
   color: var(--color-text);
   text-decoration: none;
   font-size: .88rem;
