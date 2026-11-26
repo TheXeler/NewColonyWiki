@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-tagregistry"] = [
 "@path: <modid>/data/tags/<文件>.json",
-"@subtitle: 功能简介：把一个标签名映射到一组可互相替代的物品／方块 ID，配方按标签匹配材料，而不是逐个枚举具体物品。",
+"@subtitle: 把一个标签名映射到一组可互相替代的物品／方块 ID，配方按标签匹配材料，而不是逐个枚举具体物品。",
 "",
 "## 数据契约",
 "",

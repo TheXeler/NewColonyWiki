@@ -2,7 +2,7 @@
 window.__WIKI_PAGES = window.__WIKI_PAGES || {};
 window.__WIKI_PAGES["mod-featureregistry"] = [
 "@path: <modid>/data/features/<文件>.json",
-"@subtitle: 功能简介：定义树木等世界部件的形状、生成密度与可出现的群落，由世界生成器整体放置。",
+"@subtitle: 定义树木等世界部件的形状、生成密度与可出现的群落，由世界生成器整体放置。",
 "",
 "## 数据契约",
 "",
