@@ -9,6 +9,7 @@
 :root {
   --sidebar-w: 260px;
   --sidebar-rail: 18px;
+  --topbar-h: 56px;
 
   /* 与主题无关的派生色，引用上面的通道值 */
   --color-accent-hover-bg: rgba(var(--color-accent-rgb), .10);
@@ -101,9 +102,9 @@ body {
 /* 默认只留一条窄栏；悬停或键盘聚焦时展开，直接覆盖正文而不挤压正文。 */
 .sidebar {
   position: fixed;
-  top: 0; left: 0;
+  top: var(--topbar-h); left: 0;
   width: var(--sidebar-rail);
-  height: 100vh;
+  height: calc(100vh - var(--topbar-h));
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-border);
   overflow: hidden;
@@ -146,28 +147,37 @@ body {
   opacity: 0;
 }
 
-.sidebar-logo {
+# 顶栏左侧品牌：原侧边栏 logo 移到这里
+.topbar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid var(--color-border);
+  gap: 9px;
+  flex: 0 0 auto;
+  padding-right: 14px;
+  margin-right: 2px;
+  border-right: 1px solid var(--color-border);
   text-decoration: none;
   color: var(--color-heading);
 }
 
-.sidebar-logo .logo-icon {
-  width: 32px; height: 32px;
-  background: var(--color-accent);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 14px; color: var(--color-on-accent);
+.topbar-brand:hover {
+  text-decoration: none;
+  color: var(--color-heading);
 }
 
-.sidebar-logo span {
-  font-size: 1.1rem;
+.topbar-brand .logo-icon {
+  width: 26px; height: 26px;
+  background: var(--color-accent);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: var(--color-on-accent);
+}
+
+.topbar-brand span {
+  font-size: .98rem;
   font-weight: 700;
-  letter-spacing: .5px;
+  letter-spacing: .4px;
+  white-space: nowrap;
 }
 
 .nav-section {
@@ -305,6 +315,7 @@ body {
 .topbar {
   position: sticky;
   top: 0;
+  min-height: var(--topbar-h);
   background: var(--color-topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);

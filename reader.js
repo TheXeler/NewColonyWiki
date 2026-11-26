@@ -60,14 +60,6 @@
     var aside = document.createElement("aside");
     aside.className = "sidebar";
 
-    var logo = document.createElement("a");
-    logo.className = "sidebar-logo";
-    logo.href = "#/" + HOME_ROUTE;
-    logo.innerHTML = '<div class="logo-icon">NC</div>';
-    var logoText = document.createElement("span");
-    logoText.textContent = SITE.title || "NewColony Wiki";
-    logo.appendChild(logoText);
-    aside.appendChild(logo);
 
     function addLink(container, page, state) {
       var a = document.createElement("a");
@@ -269,21 +261,28 @@
     var bar = topbar.querySelector(".topbar-inner");
     bar.textContent = "";
 
+    var brand = document.createElement("a");
+    brand.className = "topbar-brand";
+    brand.href = "#/" + HOME_ROUTE;
+    brand.innerHTML = '<span class="logo-icon">NC</span>';
+    var brandText = document.createElement("span");
+    brandText.textContent = SITE.title || "NewColony Wiki";
+    brand.appendChild(brandText);
+    bar.appendChild(brand);
+
     var crumb = document.createElement("div");
     crumb.className = "breadcrumb";
-    var home = document.createElement("a");
-    home.href = "#/" + HOME_ROUTE;
-    home.textContent = "Wiki";
-    crumb.appendChild(home);
 
     if (entry) {
       [entry.chapter.title, entry.group ? entry.group.title : null, entry.page.title]
         .filter(Boolean)
-        .forEach(function (text) {
-          var sep = document.createElement("span");
-          sep.className = "sep";
-          sep.textContent = "/";
-          crumb.appendChild(sep);
+        .forEach(function (text, index) {
+          if (index > 0) {
+            var sep = document.createElement("span");
+            sep.className = "sep";
+            sep.textContent = "/";
+            crumb.appendChild(sep);
+          }
           crumb.appendChild(document.createTextNode(text));
         });
     }

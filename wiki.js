@@ -86,20 +86,28 @@
     inner.className = "topbar-inner";
     topbar.appendChild(inner);
 
+    const brand = document.createElement("a");
+    brand.className = "topbar-brand";
+    brand.href = prefix + HOME;
+    brand.innerHTML = '<span class="logo-icon">NC</span>';
+    const brandText = document.createElement("span");
+    brandText.textContent = SITE.title || "NewColony Wiki";
+    brand.appendChild(brandText);
+    inner.appendChild(brand);
+
     const crumb = document.createElement("div");
     crumb.className = "breadcrumb";
 
-    const home = document.createElement("a");
-    home.href = prefix + HOME;
-    home.textContent = "Wiki";
-    crumb.appendChild(home);
-
     if (entry && entry.page.id !== "index") {
+      let firstCrumb = true;
       const addPart = (text) => {
-        const sep = document.createElement("span");
-        sep.className = "sep";
-        sep.textContent = "/";
-        crumb.appendChild(sep);
+        if (!firstCrumb) {
+          const sep = document.createElement("span");
+          sep.className = "sep";
+          sep.textContent = "/";
+          crumb.appendChild(sep);
+        }
+        firstCrumb = false;
         crumb.appendChild(document.createTextNode(text));
       };
       addPart(entry.chapter.title);
@@ -125,14 +133,6 @@
     const sidebar = document.createElement("aside");
     sidebar.className = "sidebar";
 
-    const logo = document.createElement("a");
-    logo.href = prefix + HOME;
-    logo.className = "sidebar-logo";
-    logo.innerHTML = '<div class="logo-icon">NC</div>';
-    const logoText = document.createElement("span");
-    logoText.textContent = SITE.title || "NewColony Wiki";
-    logo.appendChild(logoText);
-    sidebar.appendChild(logo);
 
     const addLink = (container, page, state) => {
       const a = document.createElement("a");
