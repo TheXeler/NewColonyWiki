@@ -111,6 +111,14 @@ body {
   z-index: 100;
   padding: 0 0 24px;
   transition: width .18s ease, box-shadow .18s ease;
+  /* 隐藏滚动条但保留滚轮/触板滚动 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 /* 断点 = 正文上限 1200 + 2×280 空位 = 1760px：
