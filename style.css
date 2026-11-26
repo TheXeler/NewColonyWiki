@@ -294,6 +294,20 @@ body {
 .breadcrumb a:hover { text-decoration: underline; }
 .breadcrumb .sep { margin: 0 6px; }
 
+/* 注册页标题下的第一行：数据地址 */
+.reg-path {
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.reg-path code {
+  background: none;
+  padding: 0;
+  color: var(--color-accent-light);
+}
+
 .content {
   max-width: 900px;
   margin: 0 auto;
