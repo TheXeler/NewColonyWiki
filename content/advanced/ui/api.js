@@ -454,7 +454,7 @@ window.__WIKI_PAGES["mod-ui-api"] = [
 "    </ol>",
 "    <p>旧 Lua UI 的可见输出通过 <code>lua_ui_bottom_bar</code>、<code>lua_ui_windows</code>、<code>lua_ui_floating</code> 三个 RmlUI 快照通道进入 <code>manage_hud.rml</code>。按钮和窗口内 action 使用 <code>lua_ui:&lt;handle&gt;:...</code> 内部命令回调原 Lua 函数；table row 与 button 的回调 target 会优先基于声明的 <code>id</code>（没有 <code>id</code> 时基于稳定遍历位置）生成，避免节流刷新时仅因临时 action id 变化而重建 RML、打断 hover 状态。</p>",
 "    <div class=\"callout info\">",
-"      真 backend 的实现文件 <code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code> 是当前受维护玩家可见 UI 路线。详见 <a href=\"#/advanced/ui/rmlui#enable-real-rmlui\">游戏内 RmlUI · 接入真 backend</a>。",
+"      真 backend 的实现文件 <code>Engine/UI/RmlUiRealRuntime.{hpp,cpp}</code> 是当前受维护玩家可见 UI 路线。详见 <a href=\"#/advanced/ui/rmlui\">游戏内 RmlUI · 接入真 backend</a>。",
 "    </div>",
 "",
 "    <h3>与旧 Lua UI 的关系</h3>",

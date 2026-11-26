@@ -179,22 +179,9 @@ window.__WIKI_MANIFEST = {
         { id: "mod-lua-api-reference", title: "Lua API 速查", path: "appendix/api-reference.html" },
         { id: "mod-lua-events-reference", title: "Lua 事件 速查", path: "appendix/events-reference.html" },
         { id: "mod-console-reference", title: "控制台命令速查", path: "appendix/console-reference.html" }
-      ],
-      groups: [
-        {
-          id: "patterns",
-          title: "工程范式",
-          pages: [
-            { id: "patterns-overview", title: "从零组织一个 MOD", path: "appendix/patterns/overview.html" },
-            { id: "patterns-content", title: "内容与数据", path: "appendix/patterns/content-and-data.html" },
-            { id: "patterns-behavior", title: "行为与 Lua", path: "appendix/patterns/behavior-and-lua.html" },
-            { id: "patterns-state", title: "状态与存档", path: "appendix/patterns/state-and-persistence.html" },
-            { id: "patterns-compat", title: "兼容与弃用", path: "appendix/patterns/compatibility.html" },
-            { id: "patterns-publishing", title: "发布与检查", path: "appendix/patterns/publishing.html" }
-          ]
-        }
       ]
     }
   ]
 };
+
 

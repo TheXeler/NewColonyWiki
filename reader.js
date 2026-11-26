@@ -57,7 +57,7 @@
 
   function currentRoute() {
     var hash = String(window.location.hash || "");
-    if (hash.indexOf("#/") === 0) return decodeURIComponent(hash.slice(2));
+    if (hash.indexOf("#/") === 0) { var route = decodeURIComponent(hash.slice(2)); var cut = route.indexOf("#"); return cut >= 0 ? route.slice(0, cut) : route; }
     return "";
   }
 

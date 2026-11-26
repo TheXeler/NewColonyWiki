@@ -43,6 +43,6 @@ window.__WIKI_PAGES["mod-assets-ui"] = [
 "    </ul>",
 "",
 "    <div class=\"callout info\">",
-"      完整桥契约（C++ ↔ 文档的快照与命令）、生命周期、当前支持/未支持能力，见 <a href=\"#/advanced/ui/api#rml-ui-server\">UI 框架 · 游戏内 RmlUI 宿主层</a>。",
+"      完整桥契约（C++ ↔ 文档的快照与命令）、生命周期、当前支持/未支持能力，见 <a href=\"#/advanced/ui/api\">UI 框架 · 游戏内 RmlUI 宿主层</a>。",
 "    </div>"
 ];

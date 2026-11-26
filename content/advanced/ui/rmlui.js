@@ -423,7 +423,7 @@ window.__WIKI_PAGES["ui-rmlui"] = [
 "",
 "    <h2>相关页面</h2>",
 "    <ul>",
-"      <li><a href=\"#/advanced/ui/api#rml-ui-server\">UI 框架 · 游戏内 RmlUI 宿主层</a>——接口、数据通道、命令契约的权威说明。</li>",
+"      <li><a href=\"#/advanced/ui/api\">UI 框架 · 游戏内 RmlUI 宿主层</a>——接口、数据通道、命令契约的权威说明。</li>",
 "      <li><a href=\"#/basics/assets/ui\">UI 图片资源</a>——<code>assets/ui/</code> 目录约定（含 RML/RCSS 入口）。</li>",
 "    </ul>",
 "",
