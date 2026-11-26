@@ -102,9 +102,9 @@ body {
 /* 默认只留一条窄栏；悬停或键盘聚焦时展开，直接覆盖正文而不挤压正文。 */
 .sidebar {
   position: fixed;
-  top: var(--topbar-h); left: 0;
+  top: calc(var(--topbar-h) + 1px); left: 0;
   width: var(--sidebar-rail);
-  height: calc(100vh - var(--topbar-h));
+  height: calc(100vh - var(--topbar-h) - 1px);
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-border);
   overflow: hidden;
@@ -147,7 +147,7 @@ body {
   opacity: 0;
 }
 
-# 顶栏左侧品牌：原侧边栏 logo 移到这里
+/* 顶栏左侧品牌：原侧边栏 logo 移到这里 */
 .topbar-brand {
   display: flex;
   align-items: center;
@@ -173,7 +173,7 @@ body {
   font-weight: 700; font-size: 12px; color: var(--color-on-accent);
 }
 
-.topbar-brand span {
+.topbar-brand-name {
   font-size: .98rem;
   font-weight: 700;
   letter-spacing: .4px;
@@ -315,7 +315,7 @@ body {
 .topbar {
   position: sticky;
   top: 0;
-  min-height: var(--topbar-h);
+  height: var(--topbar-h);
   background: var(--color-topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
@@ -327,7 +327,8 @@ body {
 .topbar-inner {
   max-width: 900px;
   margin: 0 auto;
-  padding: 14px 40px;
+  height: 100%;
+  padding: 0 40px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -888,7 +889,7 @@ td { background: var(--color-bg); }
   .main { margin-left: 0; }
   .page-shell { margin-left: 0; }
   .content { padding: 24px 20px 60px; }
-  .topbar-inner { padding: 12px 20px; }
+  .topbar-inner { padding: 0 20px; }
   .theme-switch { margin-left: 0; }
   .section-search { min-width: 0; flex: 1; }
 }

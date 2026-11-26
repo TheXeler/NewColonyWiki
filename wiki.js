@@ -92,6 +92,7 @@
     brand.innerHTML = '<span class="logo-icon">NC</span>';
     const brandText = document.createElement("span");
     brandText.textContent = SITE.title || "NewColony Wiki";
+    brandText.className = "topbar-brand-name";
     brand.appendChild(brandText);
     inner.appendChild(brand);
 
