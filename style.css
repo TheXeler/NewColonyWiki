@@ -320,7 +320,6 @@ body {
 
 /* ===== Main Content ===== */
 .main {
-  margin-left: var(--sidebar-w);
   flex: 1;
   min-width: 0;
 }
@@ -329,7 +328,6 @@ body {
   position: sticky;
   top: 0;
   height: var(--topbar-h);
-  margin-left: calc(-1 * var(--sidebar-rail));
   background: var(--color-topbar-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
@@ -340,7 +338,7 @@ body {
    与正文标题左边缘、正文右边缘对齐。 */
 .topbar-inner {
   height: 100%;
-  padding: 0 24px 0 calc(24px + var(--sidebar-rail));
+  padding: 0 24px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -880,7 +878,6 @@ td { background: var(--color-bg); }
 
 /* Safety net: legacy `.page-shell` pages still get the sidebar offset. */
 .page-shell {
-  margin-left: var(--sidebar-w);
   flex: 1;
   min-width: 0;
 }
@@ -910,16 +907,9 @@ td { background: var(--color-bg); }
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 1199px) {
-  .main { margin-left: var(--sidebar-rail); }
-  .page-shell { margin-left: var(--sidebar-rail); }
-}
 
 @media (max-width: 860px) {
   .sidebar { display: none; }
-  .topbar { margin-left: 0; }
-  .main { margin-left: 0; }
-  .page-shell { margin-left: 0; }
   .content { padding: 24px 20px 60px; }
   .topbar-inner { padding: 0 20px; grid-template-columns: auto 1fr; column-gap: 12px; }
   .topbar-inner .breadcrumb { display: none; }
