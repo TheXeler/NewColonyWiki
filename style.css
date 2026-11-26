@@ -161,8 +161,8 @@ body {
   align-items: center;
   gap: 9px;
   flex: 0 0 auto;
-  margin-left: -16px;
-  margin-right: 12px;
+  margin-left: -24px;
+  margin-right: 28px;
   text-decoration: none;
   color: var(--color-heading);
 }
