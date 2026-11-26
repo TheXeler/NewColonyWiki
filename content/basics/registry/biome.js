@@ -6,7 +6,6 @@ window.__WIKI_PAGES["mod-biomeregistry"] = [
 "",
 "## 数据契约",
 "",
-"群落由 C++ `TerrainGenerator` 直接读取 `data/biomes/*.json`，不存在 Lua 注册或运行时改写入口。",
 "",
 "<table>",
 "  <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>",
