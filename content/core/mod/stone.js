@@ -27,6 +27,6 @@ window.__WIKI_PAGES["coremod-stone"] = [
 "      <li>配方输入、工量与产出：<a href=\"#/basics/registry/recipe\">配方注册</a></li>",
 "      <li>研究解锁：<a href=\"#/basics/registry/tech\">科技注册</a></li>",
 "      <li>切石机定义：<a href=\"#/basics/registry/building\">建筑蓝图注册</a></li>",
-"      <li>矿脉与多格对象的选中显示：<a href=\"#/appendix/engine/selection-outline\">方块与多格对象选中描边</a></li>",
+"      <li>矿脉与多格对象的选中显示：<a href=\"#/core/engine/selection-outline\">方块与多格对象选中描边</a></li>",
 "    </ul>"
 ];

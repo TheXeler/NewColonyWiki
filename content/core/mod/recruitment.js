@@ -52,6 +52,6 @@ window.__WIKI_PAGES["coremod-recruitment"] = [
 "      <li>实体属性与经历组：<a href=\"#/basics/registry/entity\">实体注册</a></li>",
 "      <li>旗帜与工作台定义：<a href=\"#/basics/registry/building\">建筑蓝图注册</a></li>",
 "      <li>研究项与解锁：<a href=\"#/basics/registry/tech\">科技注册</a>、<a href=\"#/basics/registry/recipe\">配方注册</a></li>",
-"      <li>状态如何随存档恢复：<a href=\"#/appendix/engine/save-system\">存档系统现状</a></li>",
+"      <li>状态如何随存档恢复：<a href=\"#/core/engine/save-system\">存档系统现状</a></li>",
 "    </ul>"
 ];

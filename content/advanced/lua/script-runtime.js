@@ -23,7 +23,7 @@ window.__WIKI_PAGES["advanced-script-runtime"] = [
 "        <tr><td>服务端提供给客户端的展示数据</td><td>已注册的同步通道或共享状态</td></tr>",
 "      </tbody>",
 "    </table>",
-"    <p>字段结构、默认值与改名别名在模块状态契约中声明，见<a href=\"#/advanced/network/state-evolution\">状态自动演进</a>。世界中的 Lua 状态与持久定时器由服务器的存档流程捕获，见<a href=\"#/appendix/engine/save-system\">存档系统现状</a>。</p>",
+"    <p>字段结构、默认值与改名别名在模块状态契约中声明，见<a href=\"#/advanced/network/state-evolution\">状态自动演进</a>。世界中的 Lua 状态与持久定时器由服务器的存档流程捕获，见<a href=\"#/core/engine/save-system\">存档系统现状</a>。</p>",
 "    <p>候选加载用于建立模块、声明与接口；读取世界事实、准备候选与实际提交各自使用开放的能力。世界加载与卸载会改变可访问的状态范围，跨端数据通过注册的通道传输。</p>",
 "",
 "    <h2>事务与错误</h2>",

@@ -88,7 +88,7 @@ window.__WIKI_PAGES["coremod-spell"] = [
 "    <h2>相关页面</h2>",
 "    <ul>",
 "      <li>职业与装备许可：<a href=\"#/basics/registry/job\">职业注册</a></li>",
-"      <li>战斗伤害提交：<a href=\"#/appendix/engine/combat\">战斗系统现状</a></li>",
+"      <li>战斗伤害提交：<a href=\"#/core/engine/combat\">战斗系统现状</a></li>",
 "      <li>回调与模块加载：<a href=\"#/advanced/lua/guide\">Lua API 指南</a></li>",
 "      <li>命令与回复通道：<a href=\"#/advanced/network/sync\">网络同步与 Mod 数据</a></li>",
 "      <li>完整函数签名：<a href=\"#/appendix/api-reference\">Lua API 速查</a></li>",

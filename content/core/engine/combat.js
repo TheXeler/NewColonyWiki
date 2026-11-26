@@ -17,7 +17,7 @@ window.__WIKI_PAGES["engine-combat"] = [
 "    <h2>相关扩展</h2>",
 "    <ul>",
 "      <li><a href=\"#/basics/registry/raid\">袭击注册</a>说明如何定义来袭者组合、投送及结束条件。</li>",
-"      <li><a href=\"#/coremod/spell\">法术系统</a>说明符文、法杖方案、精力及施放接口。</li>",
+"      <li><a href=\"#/core/mod/spell\">法术系统</a>说明符文、法杖方案、精力及施放接口。</li>",
 "      <li><a href=\"#/basics/registry/entity\">实体注册</a>说明如何声明战斗能力和属性；<a href=\"#/appendix/api-reference\">Lua API 速查</a>提供可用战斗接口的索引。</li>",
 "    </ul>"
 ];

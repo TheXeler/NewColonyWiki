@@ -19,7 +19,7 @@ window.__WIKI_PAGES["appendix-selection-outline"] = [
 "",
 "    <h2>相关页面</h2>",
 "    <ul>",
-"      <li>矿脉与切石机的玩法行为：<a href=\"#/coremod/stone\">石材矿脉与切石机</a></li>",
+"      <li>矿脉与切石机的玩法行为：<a href=\"#/core/mod/stone\">石材矿脉与切石机</a></li>",
 "      <li>建筑实例与蓝图：<a href=\"#/basics/registry/building\">建筑蓝图注册</a></li>",
 "    </ul>"
 ];

@@ -137,14 +137,39 @@ window.__WIKI_MANIFEST = {
       ]
     },
     {
-      id: "coremod",
+      id: "core",
       title: "核心实现",
       pages: [
-        { id: "city-simulation", title: "城邦模拟现状", path: "coremod/city.html" },
-        { id: "coremod-stone", title: "石材矿脉与切石机", path: "coremod/stone.html" },
-        { id: "coremod-recruitment", title: "招募与城镇中心", path: "coremod/recruitment.html" },
-        { id: "coremod-furniture", title: "家具能力与开关状态", path: "coremod/furniture.html" },
-        { id: "coremod-spell", title: "法术系统", path: "coremod/spell.html" }
+        { id: "core-overview", title: "本章导览", path: "core/overview.html" }
+      ],
+      groups: [
+        {
+          id: "mod",
+          title: "CoreMod 系统",
+          pages: [
+              { id: "city-simulation", title: "城邦模拟现状", path: "core/mod/city.html" },
+              { id: "coremod-stone", title: "石材矿脉与切石机", path: "core/mod/stone.html" },
+              { id: "coremod-recruitment", title: "招募与城镇中心", path: "core/mod/recruitment.html" },
+              { id: "coremod-furniture", title: "家具能力与开关状态", path: "core/mod/furniture.html" },
+              { id: "coremod-spell", title: "法术系统", path: "core/mod/spell.html" }
+          ]
+        },
+        {
+          id: "engine",
+          title: "引擎实现",
+          pages: [
+              { id: "engine-terraingeneration", title: "地形生成流程", path: "core/engine/terrain-generation.html" },
+              { id: "engine-combat", title: "战斗系统现状", path: "core/engine/combat.html" },
+              { id: "engine-lighting", title: "引擎光照", path: "core/engine/lighting.html" },
+              { id: "engine-save-system", title: "存档系统现状", path: "core/engine/save-system.html" },
+              { id: "engine-resource-io", title: "资源 IO / UTF-8 路径", path: "core/engine/resource-io.html" },
+              { id: "engine-service-layer", title: "引擎服务层", path: "core/engine/service-layer.html" },
+              { id: "engine-renderer-lod", title: "地形 LOD 渲染", path: "core/engine/renderer-lod.html" },
+              { id: "building-design-system", title: "建筑设计系统", path: "core/engine/building-design.html" },
+              { id: "item-storage-visuals", title: "物品存储与搬运表现", path: "core/engine/item-storage.html" },
+              { id: "appendix-selection-outline", title: "方块与多格对象选中描边", path: "core/engine/selection-outline.html" }
+          ]
+        }
       ]
     },
     {
@@ -155,24 +180,6 @@ window.__WIKI_MANIFEST = {
         { id: "mod-lua-events-reference", title: "Lua 事件 速查", path: "appendix/events-reference.html" },
         { id: "mod-console-reference", title: "控制台命令速查", path: "appendix/console-reference.html" }
       ],
-      groups: [
-        {
-          id: "engine",
-          title: "引擎参考",
-          pages: [
-            { id: "engine-terraingeneration", title: "地形生成流程", path: "appendix/engine/terrain-generation.html" },
-            { id: "engine-combat", title: "战斗系统现状", path: "appendix/engine/combat.html" },
-            { id: "engine-lighting", title: "引擎光照", path: "appendix/engine/lighting.html" },
-            { id: "engine-save-system", title: "存档系统现状", path: "appendix/engine/save-system.html" },
-            { id: "engine-resource-io", title: "资源 IO / UTF-8 路径", path: "appendix/engine/resource-io.html" },
-            { id: "engine-service-layer", title: "引擎服务层", path: "appendix/engine/service-layer.html" },
-            { id: "engine-renderer-lod", title: "地形 LOD 渲染", path: "appendix/engine/renderer-lod.html" },
-            { id: "building-design-system", title: "建筑设计系统", path: "appendix/engine/building-design.html" },
-            { id: "item-storage-visuals", title: "物品存储与搬运表现", path: "appendix/engine/item-storage.html" },
-            { id: "appendix-selection-outline", title: "方块与多格对象选中描边", path: "appendix/engine/selection-outline.html" }
-          ]
-        }
-      ]
     }
   ]
 };

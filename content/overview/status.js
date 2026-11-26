@@ -72,7 +72,7 @@ window.__WIKI_PAGES["mod-status"] = [
 "        <tr>",
 "          <td>存档</td>",
 "          <td><span class=\"badge partial\">部分</span></td>",
-"          <td>保存/加载框架、存档列表、原子写入、候选目录发布；顶层文档 <code>world.json</code>（世界配置、世界地图参数、天气与天气历史、文明与研究进度、建筑与工作点、区域实例、可见性、袭击、下落方块、殖民者纪念记录）、<code>entities.json</code>（实体组件，含 Job／CareerProgress 与战斗的 Squad／MeleeCooldown／ChargeCooldown／ProjectileFlight）、<code>factions.json</code>、<code>tasks.json</code>（任务进度与工作资源预留）、<code>owner_items.json</code>（背包、方块容器、仓储策略）、<code>designs.json</code>、<code>focuses.json</code>（事件状态与历史）、<code>economy_log.json</code>、<code>economy_problems.json</code>、<code>runtime_states.json</code>、<code>scripts.json</code>（Lua 受管状态与持久定时器）、<code>mods.json</code> 与 <code>manifest.json</code>，以及 <code>regions/</code> 区块二进制。详见<a href=\"#/appendix/engine/save-system\">存档系统现状</a>。</td>",
+"          <td>保存/加载框架、存档列表、原子写入、候选目录发布；顶层文档 <code>world.json</code>（世界配置、世界地图参数、天气与天气历史、文明与研究进度、建筑与工作点、区域实例、可见性、袭击、下落方块、殖民者纪念记录）、<code>entities.json</code>（实体组件，含 Job／CareerProgress 与战斗的 Squad／MeleeCooldown／ChargeCooldown／ProjectileFlight）、<code>factions.json</code>、<code>tasks.json</code>（任务进度与工作资源预留）、<code>owner_items.json</code>（背包、方块容器、仓储策略）、<code>designs.json</code>、<code>focuses.json</code>（事件状态与历史）、<code>economy_log.json</code>、<code>economy_problems.json</code>、<code>runtime_states.json</code>、<code>scripts.json</code>（Lua 受管状态与持久定时器）、<code>mods.json</code> 与 <code>manifest.json</code>，以及 <code>regions/</code> 区块二进制。详见<a href=\"#/core/engine/save-system\">存档系统现状</a>。</td>",
 "          <td>存档依赖引擎版本和可解析的内容引用。自定义玩法数据可使用受管状态，格式与别名规则见 <a href=\"#/advanced/network/state-evolution\">状态自动演进</a>。</td>",
 "        </tr>",
 "        <tr>",

@@ -33,6 +33,6 @@ window.__WIKI_PAGES["city-simulation"] = [
 "      <li><a href=\"#/basics/registry/focus\">焦点注册</a></li>",
 "      <li><a href=\"#/basics/registry/faction\">NPC 阵营注册</a></li>",
 "      <li><a href=\"#/advanced/systems/diplomacy\">外交提议与查询指标</a></li>",
-"      <li><a href=\"#/appendix/engine/save-system\">存档系统现状</a></li>",
+"      <li><a href=\"#/core/engine/save-system\">存档系统现状</a></li>",
 "    </ul>"
 ];

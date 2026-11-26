@@ -51,6 +51,6 @@ window.__WIKI_PAGES["coremod-furniture"] = [
 "      <li>Tag 定义：<a href=\"#/basics/registry/tag\">Tag 注册</a></li>",
 "      <li>方块与状态：<a href=\"#/basics/registry/block\">方块注册</a></li>",
 "      <li>建筑与蓝图格：<a href=\"#/basics/registry/building\">建筑蓝图注册</a></li>",
-"      <li>睡眠与工作流程的调度：<a href=\"#/coremod/city\">城邦模拟现状</a></li>",
+"      <li>睡眠与工作流程的调度：<a href=\"#/core/mod/city\">城邦模拟现状</a></li>",
 "    </ul>"
 ];
