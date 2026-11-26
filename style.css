@@ -322,9 +322,8 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* 路径中的 <modid>、<文件> 占位符 */
+/* 路径中的 <modid>、<文件> 占位符：只做颜色区分 */
 .reg-var {
-  font-style: italic;
   color: var(--color-accent-light);
 }
 
